@@ -1,0 +1,15 @@
+{
+  "timeZone": "Europe/Amsterdam",
+  "dependencies": {},
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "sheets": {
+    "macros": [
+      {
+        "menuName": "Sort transactions by date and refnum",
+        "functionName": "Sorttransactionsbydateandrefnum",
+        "defaultShortcut": "Ctrl+Alt+Shift+0"
+      }
+    ]
+  }
+}

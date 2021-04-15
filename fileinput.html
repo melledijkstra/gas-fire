@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js" integrity="sha512-rKFvwjvE4liWPlFnvH4ZhRDfNZ9FOpdkD/BU5gAIA3VS3vOQrQ5BjKgbO3kxebKhHdHcNUHLqxQYSoxee9UwgA==" crossorigin="anonymous"></script>
+    <?!= include('test.html'); ?>
+    <script>
+      // Prevent forms from submitting.
+      function preventFormSubmit() {
+        var forms = document.querySelectorAll('form');
+        for (var i = 0; i < forms.length; i++) {
+          forms[i].addEventListener('submit', function(event) {
+            event.preventDefault();
+          });
+        }
+      }
+      window.addEventListener('load', preventFormSubmit);
+
+      const onSuccess = () => alert('Action successful!')
+      const onFailure = () => alert('Action failed!')
+
+      function handleFormSubmit() {
+        const fileElement = document.getElementById('csvFile');
+        if (fileElement.files.length > 0) {
+          console.log(fileElement.files);
+          const file = fileElement.files[0];
+          if (file.type !== 'text/csv') {
+            alert('Please upload a CSV file')
+            return
+          }
+          Papa.parse(fileElement.files[0], {
+            complete: (results) => {
+              google.script.run
+                .withSuccessHandler(onSuccess)
+                .withFailureHandler(onFailure)
+                .processCSV(results);
+            }
+          });
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <form id="myForm" onsubmit="handleFormSubmit()">
+      <input id="csvFile" name="csvFile" type="file" />
+      <input type="submit" value="Submit" />
+    </form>
+ </body>
+</html>
