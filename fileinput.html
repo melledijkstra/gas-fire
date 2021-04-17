@@ -1,49 +1,135 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <base target="_top">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js" integrity="sha512-rKFvwjvE4liWPlFnvH4ZhRDfNZ9FOpdkD/BU5gAIA3VS3vOQrQ5BjKgbO3kxebKhHdHcNUHLqxQYSoxee9UwgA==" crossorigin="anonymous"></script>
-    <?!= include('test.html'); ?>
-    <script>
-      // Prevent forms from submitting.
-      function preventFormSubmit() {
-        var forms = document.querySelectorAll('form');
-        for (var i = 0; i < forms.length; i++) {
-          forms[i].addEventListener('submit', function(event) {
-            event.preventDefault();
-          });
-        }
-      }
-      window.addEventListener('load', preventFormSubmit);
-
-      const onSuccess = () => alert('Action successful!')
-      const onFailure = () => alert('Action failed!')
-
-      function handleFormSubmit() {
-        const fileElement = document.getElementById('csvFile');
-        if (fileElement.files.length > 0) {
-          console.log(fileElement.files);
-          const file = fileElement.files[0];
-          if (file.type !== 'text/csv') {
-            alert('Please upload a CSV file')
-            return
-          }
-          Papa.parse(fileElement.files[0], {
-            complete: (results) => {
-              google.script.run
-                .withSuccessHandler(onSuccess)
-                .withFailureHandler(onFailure)
-                .processCSV(results);
-            }
-          });
-        }
-      }
-    </script>
+    <base target="_top" />
+    <link
+      href="https://unpkg.com/tabulator-tables@4.9.3/dist/css/tabulator.min.css"
+      rel="stylesheet"
+    />
+    <!-- Compiled and minified CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+    />
+    <?!= include('page-css.html'); ?>
   </head>
   <body>
-    <form id="myForm" onsubmit="handleFormSubmit()">
-      <input id="csvFile" name="csvFile" type="file" />
-      <input type="submit" value="Submit" />
+    <form onsubmit="handleFormSubmit()">
+      <div class="row">
+        <div class="col s6">
+          <div class="file-field input-field">
+            <div class="btn green darken-3">
+              <span>Select File</span>
+              <input
+                required
+                id="csvFiles"
+                type="file"
+                onchange="handleOnFileSelect()"
+                accept="text/csv"
+                name="csvFiles"
+              />
+            </div>
+            <div class="file-path-wrapper">
+              <input class="file-path validate" type="text" />
+            </div>
+          </div>
+        </div>
+
+        <div class="col s6">
+          <label>Select Bank</label>
+          <select required id="import-strategy" class="browser-default">
+            <option value="" disabled selected>Choose Bank</option>
+            <option value="n26">N26</option>
+            <option value="rabobank">Rabobank</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="right-align">
+          <button class="btn green darken-3" type="submit">IMPORT</button>
+        </div>
+      </div>
     </form>
- </body>
+
+    <div class="row">
+      <h5>Preview data</h5>
+      <div id="import-table"></div>
+    </div>
+  </body>
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"
+    integrity="sha512-rKFvwjvE4liWPlFnvH4ZhRDfNZ9FOpdkD/BU5gAIA3VS3vOQrQ5BjKgbO3kxebKhHdHcNUHLqxQYSoxee9UwgA=="
+    crossorigin="anonymous"
+  ></script>
+  <script
+    type="text/javascript"
+    src="https://unpkg.com/tabulator-tables@4.9.3/dist/js/tabulator.min.js"
+  ></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <?!= include('page-js.html'); ?>
+  <script>
+    const preventFormSubmit = () => {
+      document.querySelectorAll("form").forEach((form) => {
+        form.addEventListener("submit", (e) => e.preventDefault());
+      });
+    };
+    window.addEventListener("load", preventFormSubmit);
+    document.addEventListener("DOMContentLoaded", () => {
+      M.FormSelect.init(document.querySelectorAll("select"));
+    });
+
+    const onSuccess = (response) => {
+      if ('data' in response) setTableData(csvToJson(response.data));
+      alert(`Action successful! ${response.message}`);
+    };
+    const onFailure = (error) => alert(`Action failed! ${error}`);
+
+    const setPreview = (result) => {
+      const data = result.data;
+      setTableData(csvToJson(data));
+    };
+
+    const submitDataToServer = (result, importStrategy) => {
+      google.script.run
+        .withSuccessHandler(onSuccess)
+        .withFailureHandler(onFailure)
+        .processCSV(result, importStrategy);
+    };
+
+    const getFile = () => {
+      const fileElement = document.getElementById("csvFiles");
+      if (fileElement.files.length < 1) return;
+      return fileElement.files[0];
+    };
+
+    const onParseError = (error) => {
+      console.log(error);
+      alert(`Parsing error: ${error}`);
+    };
+
+    function handleOnFileSelect() {
+      const file = getFile();
+      if (!file) return;
+      if (file.type !== "text/csv") {
+        alert("Please upload a CSV file");
+        return;
+      }
+      Papa.parse(file, {
+        complete: setPreview,
+        error: onParseError,
+      });
+    }
+
+    function handleFormSubmit() {
+      const file = getFile();
+      if (!file) return;
+      if (file.type !== "text/csv") return;
+      const importStrategy = document.getElementById("import-strategy").value;
+      Papa.parse(file, {
+        complete: (result) => submitDataToServer(result.data, importStrategy),
+        error: onParseError,
+      });
+    }
+  </script>
 </html>
