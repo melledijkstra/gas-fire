@@ -56,6 +56,10 @@
       <h5>Preview data</h5>
       <div id="import-table"></div>
     </div>
+
+    <div class="row">
+      <p id="status"></p>
+    </div>
   </body>
   <script
     src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"
@@ -81,7 +85,7 @@
 
     const onSuccess = (response) => {
       if ('data' in response) setTableData(csvToJson(response.data));
-      alert(`Action successful! ${response.message}`);
+      document.getElementById('status').innerHTML = `Action successful! ${response.message}`;
     };
     const onFailure = (error) => alert(`Action failed! ${error}`);
 

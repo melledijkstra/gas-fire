@@ -4,7 +4,7 @@
 * @param xpath simplified xpath as string
 * @customfunction
 */
-function IMPORTJSON(url, xpath) {
+function IMPORTJSON(url: string, xpath: string) {
   try{
     // /rates/EUR
     var res = UrlFetchApp.fetch(url);
