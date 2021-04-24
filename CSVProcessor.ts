@@ -1,21 +1,3 @@
-const sourceSheetId = 1093484485
-const AUTO_FILL_COLUMNS = [9, 12, 14]
-const FireColumns = [
-  'ref',
-  'iban',
-  'date',
-  'amount',
-  'balance',
-  'contra_account',
-  'description',
-  'satisfaction',
-  'icon',
-  'category',
-  'label',
-  'hours',
-  'contra_iban'
-]
-
 enum n26Cols {
   Date,
   Payee,
@@ -41,8 +23,13 @@ enum StrategyOption {
   // RABO = "rabobank"
 }
 
-const PROP_REFNUM = 'refNum'
-const PROP_BALANCE = 'balance'
+const sourceSheetId = 1093484485
+const AUTO_FILL_COLUMNS = [
+  5, // balance column
+  9, // category icon
+  12, // hours column
+  14, // disabled column
+]
 
 const FireSpreadsheet = SpreadsheetApp.getActiveSpreadsheet()
 const sheets = FireSpreadsheet.getSheets()
@@ -61,16 +48,30 @@ function getSheetById(id: number): GoogleAppsScript.Spreadsheet.Sheet {
  */
 type ColumnRule<T> = (data: Table) => T[]
 
+const FireColumns = [
+  'ref',
+  'iban',
+  'date',
+  'amount',
+  'balance',
+  'contra_account',
+  'description',
+  'satisfaction',
+  'icon',
+  'category',
+  'label',
+  'hours',
+  'contra_iban'
+]
+
 interface FireColumnRules {
   ref: ColumnRule<number>,
   iban: ColumnRule<string>,
   date: ColumnRule<Date>,
   amount: ColumnRule<number>,
-  balance: ColumnRule<number>,
   contra_account?: ColumnRule<string>,
   description?: ColumnRule<string>,
   satisfaction?: ColumnRule<number>,
-  I?: null,
   category: ColumnRule<string>,
   label?: ColumnRule<string>,
   contra_iban: ColumnRule<string>,
@@ -106,27 +107,6 @@ function buildColumn<T>(
   }
 }
 
-function generateRefColumn(data: Table): number[] 
-{
-  let refNum = parseInt(Props.getProperty(PROP_REFNUM)) || 0
-  const column = Array.from(Array(data.length), () => ++refNum)
-  Props.setProperty(PROP_REFNUM, refNum.toString())
-  return column
-}
-
-function calculateBalance(amountCol: InputColumn): (data: Table) => number[] 
-{
-  return (data: Table) => {
-    let lastBalance = 9144.61999999999 //parseFloat(Props.getProperty(PROP_BALANCE))
-    const column = Array.from(
-      Array(data.length),
-      (_, i) => lastBalance += parseFloat(data[i][amountCol])
-    )
-    Props.setProperty(PROP_BALANCE, lastBalance.toString())
-    return column
-  }
-}
-
 function deleteFirstRow(data: Table): Table {
   data.shift()
   return data
@@ -140,7 +120,7 @@ function deleteLastRow(data: Table): Table {
 function sortByDate(dateColumn: InputColumn) {
   return (data: Table) => {
     data.sort(
-      (row1, row2) => new Date(row1[dateColumn]).getTime() - new Date(row2[dateColumn]).getTime()
+      (row1, row2) => new Date(row1[dateColumn]).getUTCDate() - new Date(row2[dateColumn]).getUTCDate()
     ).reverse()
     return data
   }
@@ -155,14 +135,15 @@ const strategies: Strategy = {
     ],
     columnImportRules: {
       ref: null,
-      iban: (data) => new Array(data.length).fill("ES1915632626343266143636"),
+      iban: (data) => new Array(data.length).fill(BankAccount.N26),
       date: buildColumn(n26Cols.Date, (val) => new Date(val)),
       amount: buildColumn(n26Cols.Amount, parseFloat),
       category: buildColumn(n26Cols.Category, String),
-      balance: calculateBalance(n26Cols.Amount),
       contra_account: buildColumn(n26Cols.Payee, String),
+      label: buildColumn(n26Cols.TransactionType, String),
       description: buildColumn(n26Cols.PaymentReference, String),
       contra_iban: buildColumn(n26Cols.AccountNumber, String),
+      currency: buildColumn(n26Cols.ForeignCurrencyType, String),
     },
     afterImport: [
       (table) => autoFillColumns(table, AUTO_FILL_COLUMNS)
