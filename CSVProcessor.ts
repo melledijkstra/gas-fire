@@ -12,15 +12,35 @@ enum n26Cols {
 }
 
 enum raboCols {
-  Ref,
-  Date
+  Iban,
+  Munt,
+  BIC,
+  Volgnr,
+  Datum,
+  RenteDatum,
+  Bedrag,
+  Saldo,
+  Tegenrekening,
+  NaamTegenpartij,
+  NaamUiteindelijkePartij,
+  NaamInitierendePartij,
+  BICTegenpartij,
+  Code,
+  BatchID,
+  TransactieReferentie,
+  MachtigingsKenmerk,
+  IncassantID,
+  BetalingsKenmerk,
+  Omschrijving1,
+  Omschrijving2,
+  Omschrijving3,
 }
 
 type InputColumn = n26Cols | raboCols
 
 enum StrategyOption {
   N26 = "n26",
-  // RABO = "rabobank"
+  RABO = "rabobank"
 }
 
 const sourceSheetId = 1093484485
@@ -61,7 +81,9 @@ const FireColumns = [
   'category',
   'label',
   'hours',
-  'contra_iban'
+  'contra_iban',
+  'disabled',
+  'currency',
 ]
 
 interface FireColumnRules {
@@ -148,6 +170,28 @@ const strategies: Strategy = {
     afterImport: [
       (table) => autoFillColumns(table, AUTO_FILL_COLUMNS)
     ],
+  },
+  'rabobank': {
+    beforeImport: [
+      deleteLastRow,
+      deleteFirstRow,
+      sortByDate(raboCols.Datum)
+    ],
+    columnImportRules: {
+      ref: buildColumn(raboCols.Volgnr, parseInt),
+      iban: buildColumn(raboCols.Iban, String),
+      date: buildColumn(raboCols.Datum, (val) => new Date(val)),
+      amount: buildColumn(raboCols.Bedrag, parseFloat),
+      category: null,
+      contra_account: buildColumn(raboCols.NaamTegenpartij, String),
+      contra_iban: buildColumn(raboCols.Tegenrekening, String),
+      currency: buildColumn(raboCols.Munt, String),
+      description: buildColumn(raboCols.Omschrijving1, String),
+      label: buildColumn(raboCols.Omschrijving2, String),
+    },
+    afterImport: [
+      (table) => autoFillColumns(table, AUTO_FILL_COLUMNS)
+    ]
   }
 }
 

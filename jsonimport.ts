@@ -14,7 +14,7 @@ function IMPORTJSON(url: string, xpath: string) {
     var patharray = xpath.split(".");
     //Logger.log(patharray);
     
-    for(var i=0;i<patharray.length;i++){
+    for(let i = 0; i < patharray.length; i++){
       json = json[patharray[i]];
     }
 
