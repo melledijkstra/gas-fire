@@ -86,6 +86,7 @@
     const onSuccess = (response) => {
       if ('data' in response) setTableData(csvToJson(response.data));
       document.getElementById('status').innerHTML = `Action successful! ${response.message}`;
+      google.script.host.close();
     };
     const onFailure = (error) => alert(`Action failed! ${error}`);
 

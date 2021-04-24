@@ -1,118 +1,225 @@
+const sourceSheetId = 1093484485
+const AUTO_FILL_COLUMNS = [9, 12, 14]
+const FireColumns = [
+  'ref',
+  'iban',
+  'date',
+  'amount',
+  'balance',
+  'contra_account',
+  'description',
+  'satisfaction',
+  'icon',
+  'category',
+  'label',
+  'hours',
+  'contra_iban'
+]
+
+enum n26Cols {
+  Date,
+  Payee,
+  AccountNumber,
+  TransactionType,
+  PaymentReference,
+  Category,
+  Amount,
+  AmountForeignCurrency,
+  ForeignCurrencyType,
+  ExchangeRate
+}
+
+enum raboCols {
+  Ref,
+  Date
+}
+
+type InputColumn = n26Cols | raboCols
+
+enum StrategyOption {
+  N26 = "n26",
+  // RABO = "rabobank"
+}
+
+const PROP_REFNUM = 'refNum'
+const PROP_BALANCE = 'balance'
+
 const FireSpreadsheet = SpreadsheetApp.getActiveSpreadsheet()
 const sheets = FireSpreadsheet.getSheets()
-const sourceSheet = getSheetById(1093484485) // "source" sheet ID
+const Props = PropertiesService.getUserProperties()
+const sourceSheet = getSheetById(sourceSheetId)
+
+type Table = string[][]
 
 function getSheetById(id: number): GoogleAppsScript.Spreadsheet.Sheet {
   return sheets.find(sheet => sheet.getSheetId() === id)
 }
 
-enum StrategyOption {
-  N26 = "n26",
-  RABO = "rabobank"
-}
+/**
+ * A column function returns the values for that column
+ * it can generate the column based on the data in the CSV
+ */
+type ColumnRule<T> = (data: Table) => T[]
 
-type CSV = string[][]
-
-type n26Columns = {
-  "Date": string
-  "Payee": string
-  "Account number": string
-  "Transaction type": string
-  "Payment reference": string
-  "Category": string
-  "Amount (EUR)": number
-  "Amount (Foreign Currency)": number
-  "Type Foreign Currency": string
-  "Exchange Rate": number
+interface FireColumnRules {
+  ref: ColumnRule<number>,
+  iban: ColumnRule<string>,
+  date: ColumnRule<Date>,
+  amount: ColumnRule<number>,
+  balance: ColumnRule<number>,
+  contra_account?: ColumnRule<string>,
+  description?: ColumnRule<string>,
+  satisfaction?: ColumnRule<number>,
+  I?: null,
+  category: ColumnRule<string>,
+  label?: ColumnRule<string>,
+  contra_iban: ColumnRule<string>,
+  currency?: ColumnRule<string>
 }
 
 type Strategy = {
   [key in StrategyOption]: {
-    importRules: Array<(data: CSV, ...args: any[]) => CSV>,
+    beforeImport: Array<(data: Table) => Table>,
+    columnImportRules: FireColumnRules,
+    afterImport: Array<(data: Table) => void>,
     autoFillColumns?: number[]
   }
 }
 
-const FireColumnNames = []
-type FireColumns = [number, string, string, number, number]
-
 type ServerResponse = {
-  message: string,
-  data?: CSV
+  message: string
 }
 
-const strategies: Strategy = {
-  'n26': {
-    importRules: [
-      deleteLastRow,
-      deleteFirstRow,
-      (data) => moveColumns(data, [])
-    ],
-    autoFillColumns: [9, 13, 15]
-  },
-  'rabobank': {
-    importRules: [
-      deleteLastRow
-    ]
+function buildColumn<T>(
+  column: InputColumn,  
+  transformer: (value: string, index?: number, array?: string[]) => T
+): (data: Table) => T[]
+{
+  return (data: Table): T[] => {
+    const rowCount = data.length
+    const columnTable = transpose(data) // try to transpose somewhere else
+    if (columnTable[column] !== undefined) {
+      return columnTable[column].map((val) => transformer(val))
+    } else {
+      return new Array(rowCount)
+    }
   }
 }
 
-function deleteFirstRow(data: CSV) {
+function generateRefColumn(data: Table): number[] 
+{
+  let refNum = parseInt(Props.getProperty(PROP_REFNUM)) || 0
+  const column = Array.from(Array(data.length), () => ++refNum)
+  Props.setProperty(PROP_REFNUM, refNum.toString())
+  return column
+}
+
+function calculateBalance(amountCol: InputColumn): (data: Table) => number[] 
+{
+  return (data: Table) => {
+    let lastBalance = 9144.61999999999 //parseFloat(Props.getProperty(PROP_BALANCE))
+    const column = Array.from(
+      Array(data.length),
+      (_, i) => lastBalance += parseFloat(data[i][amountCol])
+    )
+    Props.setProperty(PROP_BALANCE, lastBalance.toString())
+    return column
+  }
+}
+
+function deleteFirstRow(data: Table): Table {
   data.shift()
   return data
 }
 
-function deleteLastRow(data: CSV) {
+function deleteLastRow(data: Table): Table {
   data.pop()
   return data
 }
 
-function moveColumns(data: CSV, columnIds: [number, number][]): CSV {
-  for (const movement of columnIds) {
-
+function sortByDate(dateColumn: InputColumn) {
+  return (data: Table) => {
+    data.sort(
+      (row1, row2) => new Date(row1[dateColumn]).getTime() - new Date(row2[dateColumn]).getTime()
+    ).reverse()
+    return data
   }
-  return data
 }
 
-function autoFillColumns(columns: number[], rowCount: number) {
-  for (const column of columns) {
-    const sourceRange = sourceSheet.getRange(2 + rowCount, column)
-    const destinationRange = sourceSheet.getRange(2, column, rowCount + 1) // + 1 because sourceRange needs to be included
-    Logger.log(['source', sourceRange.getA1Notation(), 'destination', destinationRange.getA1Notation()])
-    sourceRange.autoFill(destinationRange, SpreadsheetApp.AutoFillSeries.DEFAULT_SERIES)
+const strategies: Strategy = {
+  'n26': {
+    beforeImport: [
+      deleteLastRow,
+      deleteFirstRow,
+      sortByDate(n26Cols.Date),
+    ],
+    columnImportRules: {
+      ref: null,
+      iban: (data) => new Array(data.length).fill("ES1915632626343266143636"),
+      date: buildColumn(n26Cols.Date, (val) => new Date(val)),
+      amount: buildColumn(n26Cols.Amount, parseFloat),
+      category: buildColumn(n26Cols.Category, String),
+      balance: calculateBalance(n26Cols.Amount),
+      contra_account: buildColumn(n26Cols.Payee, String),
+      description: buildColumn(n26Cols.PaymentReference, String),
+      contra_iban: buildColumn(n26Cols.AccountNumber, String),
+    },
+    afterImport: [
+      (table) => autoFillColumns(table, AUTO_FILL_COLUMNS)
+    ],
   }
+}
+
+function buildNewTableData(input: Table, columnImportRules: FireColumnRules) {
+  let output: Table = []
+  const rowCount = input.length
+  for (const columnName of FireColumns) {
+    if (!(columnName in columnImportRules) || !columnImportRules[columnName]) {
+      output.push(new Array(rowCount))
+      continue
+    }
+    const colRule = columnImportRules[columnName] as ColumnRule<any>
+    let column: any[]
+    try {
+      column = colRule(input)
+      if (column.length < rowCount) {
+        column = column.fill(null, column.length, rowCount - 1)
+      }
+    } catch(e) {
+      Logger.log(e)
+      column = new Array(rowCount)
+    }
+    output.push(column)
+  }
+  output = transpose(output) // flip columns to rows
+  return output
 }
 
 /**
  * This function gets called by client side script 
  * @see file-input.html
  */
-function processCSV(input: CSV, importStrategy: StrategyOption): ServerResponse 
-{
+function processCSV(input: Table, importStrategy: StrategyOption): ServerResponse {
   sourceSheet.activate()
   sourceSheet.showSheet()
-  Logger.log(['input', importStrategy, input])
   if (!(importStrategy in strategies)) {
     throw new Error(`Import strategy ${importStrategy} is not defined!`)
   }
-  const strategy = strategies[importStrategy]
-  let output: CSV
-  for (const rule of strategy.importRules) {
-    output = rule(input)
+
+  const { beforeImport, columnImportRules, afterImport } = strategies[importStrategy]
+
+  for (const rule of beforeImport) {
+    input = rule(input)
   }
-  const rowCount = 1 // output.length
-  const colCount = 6 // output[0].length
-  sourceSheet
-    .insertRowsBefore(2, rowCount)
-    .getRange(2, 1, rowCount, colCount)
-    .setValues([
-      [1, "ES1915632626343266143636", new Date("2021-04-05"), -15.70, "Rocio Zaragoza", "wifi"],
-    ])
-  autoFillColumns(strategy.autoFillColumns, rowCount)
-  const msg = `${strategy.importRules.length} import rule(s), imported ${rowCount} rows!`
-  Logger.log([`output after ${msg}`, output])
+  let output = buildNewTableData(input, columnImportRules)
+  importData(output)
+  for (const rule of afterImport) {
+    rule(output)
+  }
+
+  const msg = `imported ${output.length} rows!`
+  Logger.log(`processCSV done: ${msg}`)
   return {
     message: msg,
-    data: output
   }
 }
