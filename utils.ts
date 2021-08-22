@@ -64,4 +64,8 @@ class Utils {
       return data
     }
   }
+
+  static transformMoneyColumn = (value: string, decimalSeparator: string = ',') => parseFloat(
+    value.replace(/\./g,'').replace(decimalSeparator, '.')
+  )
 }

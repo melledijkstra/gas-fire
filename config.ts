@@ -33,7 +33,7 @@ class Config {
           ref: buildColumn(raboCols.Volgnr, parseInt),
           iban: buildColumn(raboCols.Iban, String),
           date: buildColumn(raboCols.Datum, (val) => new Date(val)),
-          amount: buildColumn(raboCols.Bedrag, parseFloat),
+          amount: buildColumn(raboCols.Bedrag, Utils.transformMoneyColumn),
           category: null,
           contra_account: buildColumn(raboCols.NaamTegenpartij, String),
           contra_iban: buildColumn(raboCols.Tegenrekening, String),

@@ -34,8 +34,8 @@ const FireColumns = [
 ]
 
 function buildColumn<T>(
-  column: InputColumn,  
-  transformer: (value: string, index?: number, array?: string[]) => T
+  column: InputColumn,
+  transformer: (value: string) => T
 ): (data: Table) => T[]
 {
   return (data: Table): T[] => {
