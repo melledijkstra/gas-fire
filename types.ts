@@ -36,11 +36,24 @@ enum raboCols {
   Omschrijving3,
 }
 
-type InputColumn = n26Cols | raboCols
+enum bbvaCols {
+  Date,
+  EffectiveDate,
+  SubjectLine,
+  Movement,
+  Amount,
+  Currency,
+  Available, // <-- balance
+  CurrencyOfAvailable,
+  Comments
+}
+
+type InputColumn = n26Cols | raboCols | bbvaCols
 
 enum StrategyOption {
   N26 = "n26",
-  RABO = "rabobank"
+  RABO = "rabobank",
+  BBVA = "bbva"
 }
 
 type Table = string[][]

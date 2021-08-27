@@ -1,3 +1,8 @@
+
+const defaultAfterImport = [
+  (table: Table) => Utils.autoFillColumns(table, AUTO_FILL_COLUMNS)
+]
+
 class Config {
   static getConfig(): Strategy {
     return {
@@ -19,9 +24,7 @@ class Config {
           contra_iban: buildColumn(n26Cols.AccountNumber, String),
           currency: buildColumn(n26Cols.ForeignCurrencyType, String),
         },
-        afterImport: [
-          (table) => Utils.autoFillColumns(table, AUTO_FILL_COLUMNS)
-        ],
+        afterImport: defaultAfterImport,
       },
       'rabobank': {
         beforeImport: [
@@ -41,9 +44,26 @@ class Config {
           description: buildColumn(raboCols.Omschrijving1, String),
           label: buildColumn(raboCols.Omschrijving2, String),
         },
-        afterImport: [
-          (table) => Utils.autoFillColumns(table, AUTO_FILL_COLUMNS)
-        ]
+        afterImport: defaultAfterImport
+      },
+      "bbva": {
+        beforeImport: [
+          Utils.deleteLastRow,
+          Utils.deleteFirstRow,
+          Utils.sortByDate(bbvaCols.Date)
+        ],
+        columnImportRules: {
+          ref: null,
+          iban: (data) => new Array(data.length).fill(BankAccount.BBVA),
+          date: buildColumn(bbvaCols.Date, (val) => new Date(val)),
+          amount: buildColumn(bbvaCols.Amount, parseFloat),
+          category: null,
+          contra_iban: null,
+          currency: buildColumn(bbvaCols.Currency, String),
+          description: buildColumn(bbvaCols.Comments, String),
+          label: buildColumn(bbvaCols.SubjectLine, String)
+        },
+        afterImport: defaultAfterImport
       }
     }
   }
