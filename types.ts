@@ -4,7 +4,6 @@ enum n26Cols {
   AccountNumber,
   TransactionType,
   PaymentReference,
-  Category,
   Amount,
   AmountForeignCurrency,
   ForeignCurrencyType,

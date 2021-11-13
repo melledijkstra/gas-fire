@@ -17,7 +17,7 @@ class Config {
           iban: (data) => new Array(data.length).fill(BankAccount.N26),
           date: buildColumn(n26Cols.Date, (val) => new Date(val)),
           amount: buildColumn(n26Cols.Amount, parseFloat),
-          category: buildColumn(n26Cols.Category, String),
+          category: null,
           contra_account: buildColumn(n26Cols.Payee, String),
           label: buildColumn(n26Cols.TransactionType, String),
           description: buildColumn(n26Cols.PaymentReference, String),
