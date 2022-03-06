@@ -1,0 +1,28 @@
+{
+  "name": "gas-fire",
+  "version": "1.0.0",
+  "author": "Melle Dijkstra",
+  "description": "Google App Script utilities to automate the FIRE google sheet",
+  "license": "MIT",
+  "scripts": {
+    "publish": "clasp push"
+  },
+  "devDependencies": {
+    "@google/clasp": "^2.4.1",
+    "@types/google-apps-script": "^1.0.45",
+    "typescript": "^3.8.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/melledijkstra/gas-fire.git"
+  },
+  "keywords": [
+    "google-apps-script",
+    "typescript",
+    "financial",
+    "automation"
+  ],
+  "bugs": {
+    "url": "https://github.com/melledijkstra/gas-fire/issues"
+  }
+}
