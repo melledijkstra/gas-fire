@@ -47,12 +47,17 @@ enum bbvaCols {
   Comments
 }
 
+enum openbankCols {
+  
+}
+
 type InputColumn = n26Cols | raboCols | bbvaCols
 
 enum StrategyOption {
   N26 = "n26",
   RABO = "rabobank",
-  BBVA = "bbva"
+  BBVA = "bbva",
+  OPENBANK = "openbank"
 }
 
 type Table = string[][]
@@ -79,9 +84,9 @@ interface FireColumnRules {
 
 type Strategy = {
   [key in StrategyOption]: {
-    beforeImport: Array<(data: Table) => Table>,
+    beforeImport?: Array<(data: Table) => Table>,
     columnImportRules: FireColumnRules,
-    afterImport: Array<(data: Table) => void>,
+    afterImport?: Array<(data: Table) => void>,
     autoFillColumns?: number[]
   }
 }

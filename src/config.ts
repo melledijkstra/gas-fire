@@ -64,6 +64,20 @@ class Config {
           label: buildColumn(bbvaCols.SubjectLine, String)
         },
         afterImport: defaultAfterImport
+      },
+      "openbank": {
+        columnImportRules: {
+          ref: null,
+          iban: (data) => new Array(data.length).fill(BankAccount.OPENBANK),
+          date: null,
+          amount: null,
+          category: null,
+          contra_account: null,
+          label: null,
+          description: null,
+          contra_iban: null,
+          currency: null,
+        }
       }
     }
   }

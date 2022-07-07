@@ -9,7 +9,7 @@
   },
   "devDependencies": {
     "@google/clasp": "^2.4.1",
-    "@types/google-apps-script": "^1.0.45",
+    "@types/google-apps-script": "^1.0.51",
     "typescript": "^3.8.2"
   },
   "repository": {

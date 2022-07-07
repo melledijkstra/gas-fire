@@ -29,9 +29,6 @@
         <label>Select Bank</label>
         <select required id="import-strategy" class="browser-default">
           <option value="" disabled selected>Choose Bank</option>
-          <option value="n26">N26</option>
-          <option value="rabobank">Rabobank</option>
-          <option value="bbva">BBVA</option>
         </select>
       </div>
     </div>
@@ -59,7 +56,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 <?!= include('page-js.html'); ?>
 <script>
-  const acceptedMimeTypes = ["text/csv", "application/vnd.ms-excel"]
+  const acceptedMimeTypes = ["text/csv", "application/vnd.ms-excel"];
 
   const preventFormSubmit = () => {
     document.querySelectorAll("form").forEach((form) => {
@@ -76,6 +73,7 @@
     document.getElementById('status').innerHTML = `Action successful! ${response.message}`;
     google.script.host.close();
   };
+
   const onFailure = (error) => alert(`Action failed! ${error}`);
 
   const setPreview = (result) => {
@@ -97,12 +95,11 @@
   };
 
   const onParseError = (error) => {
-    console.log(error);
+    console.error(error);
     alert(`Parsing error: ${error}`);
   };
 
   const isAllowedFile = (mimeType) => {
-    console.log(mimeType);
     if (!acceptedMimeTypes.includes(mimeType)) {
       alert(`Please upload a CSV file, ${mimeType} is not accepted!`);
       return false;
@@ -112,8 +109,7 @@
 
   function handleOnFileSelect() {
     const file = getFile();
-    if (!file) return;
-    if (!isAllowedFile(file.type)) return;
+    if (!file || !isAllowedFile(file.type)) return;
     Papa.parse(file, {
       complete: setPreview,
       error: onParseError,
@@ -122,9 +118,8 @@
 
   function handleFormSubmit() {
     const file = getFile();
-    if (!file) return;
-    if (!isAllowedFile(file.type)) return;
-    const importStrategy = document.getElementById("import-strategy").value;
+    if (!file || !isAllowedFile(file.type)) return;
+    const importStrategy = document.getElementById("import-strategy")?.value;
     Papa.parse(file, {
       complete: (result) => submitDataToServer(result.data, importStrategy),
       error: onParseError,

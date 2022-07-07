@@ -1,6 +1,13 @@
 <script>
   let table;
 
+  const renderStrategyOptions = (strategies) => {
+    const elemSelect = document.getElementById('import-strategy');
+    for (const strategy in strategies) {
+      elemSelect.add(new Option(strategy, strategies[strategy]))
+    }
+  };
+
   const csvToJson = (csvData) => {
     const headers = csvData.shift();
     return csvData.map((row) => {
@@ -10,20 +17,25 @@
       });
       return jsonRow;
     });
-  }
+  };
 
   const setTableData = (data) => {
     if (table) {
       table.setData(data);
     }
-  }
+  };
 
   const onLoad = () => {
+    google.script.run
+      .withSuccessHandler(renderStrategyOptions)
+      .withFailureHandler(onFailure)
+      .getStrategyOptions();
+
     table = new Tabulator("#import-table", {
       autoColumns: true,
       // layout: "fitColumns",
       autoColumnsDefinitions: (definitions) => {
-        definitions.forEach(definition => definition['headerSort'] = false)
+        definitions.forEach(definition => definition['headerSort'] = false);
         return definitions;
       }
     });

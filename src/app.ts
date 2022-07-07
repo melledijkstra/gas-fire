@@ -18,3 +18,7 @@ function fileUploadDialog(): void {
 function include(filename: string): string {
   return HtmlService.createHtmlOutputFromFile(filename).getContent()
 }
+
+function getStrategyOptions() {
+  return StrategyOption
+}
