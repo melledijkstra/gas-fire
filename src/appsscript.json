@@ -1,14 +1,15 @@
 {
   "timeZone": "Europe/Amsterdam",
-  "dependencies": {
-  },
+  "dependencies": {},
   "exceptionLogging": "STACKDRIVER",
   "runtimeVersion": "V8",
   "sheets": {
-    "macros": [{
-      "menuName": "Delete duplicate transaction",
-      "functionName": "macroDeleteDuplicateTransaction",
-      "defaultShortcut": "Ctrl+Alt+Shift+5"
-    }]
+    "macros": [
+      {
+        "menuName": "Delete duplicate transaction",
+        "functionName": "macroDeleteDuplicateTransaction",
+        "defaultShortcut": "Ctrl+Alt+Shift+5"
+      }
+    ]
   }
 }

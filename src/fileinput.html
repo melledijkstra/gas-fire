@@ -1,130 +1,148 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <base target="_top" />
+    <link
+      href="https://unpkg.com/tabulator-tables@4.9.3/dist/css/tabulator.min.css"
+      rel="stylesheet"
+    />
+    <!-- Compiled and minified CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+    />
+    <?!= include('page-css.html'); ?>
+  </head>
 
-<head>
-  <base target="_top" />
-  <link href="https://unpkg.com/tabulator-tables@4.9.3/dist/css/tabulator.min.css" rel="stylesheet" />
-  <!-- Compiled and minified CSS -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" />
-  <?!= include('page-css.html'); ?>
-</head>
+  <body>
+    <form onsubmit="handleFormSubmit()">
+      <div class="row">
+        <div class="col s6">
+          <div class="file-field input-field">
+            <div class="btn green darken-3">
+              <span>Select File</span>
+              <input
+                required
+                id="csvFiles"
+                type="file"
+                onchange="handleOnFileSelect()"
+                accept="text/csv"
+                name="csvFiles"
+              />
+            </div>
+            <div class="file-path-wrapper">
+              <input class="file-path validate" type="text" />
+            </div>
+          </div>
+        </div>
 
-<body>
-  <form onsubmit="handleFormSubmit()">
-    <div class="row">
-      <div class="col s6">
-        <div class="file-field input-field">
-          <div class="btn green darken-3">
-            <span>Select File</span>
-            <input required id="csvFiles" type="file" onchange="handleOnFileSelect()" accept="text/csv"
-              name="csvFiles" />
-          </div>
-          <div class="file-path-wrapper">
-            <input class="file-path validate" type="text" />
-          </div>
+        <div class="col s6">
+          <label>Select Bank</label>
+          <select required id="import-strategy" class="browser-default">
+            <option value="" disabled selected>Choose Bank</option>
+          </select>
         </div>
       </div>
 
-      <div class="col s6">
-        <label>Select Bank</label>
-        <select required id="import-strategy" class="browser-default">
-          <option value="" disabled selected>Choose Bank</option>
-        </select>
+      <div class="row">
+        <div class="right-align">
+          <button class="btn green darken-3" type="submit">IMPORT</button>
+        </div>
       </div>
+    </form>
+
+    <div class="row">
+      <h5>Preview data</h5>
+      <div id="import-table"></div>
     </div>
 
     <div class="row">
-      <div class="right-align">
-        <button class="btn green darken-3" type="submit">IMPORT</button>
-      </div>
+      <p id="status"></p>
     </div>
-  </form>
+  </body>
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"
+    integrity="sha512-rKFvwjvE4liWPlFnvH4ZhRDfNZ9FOpdkD/BU5gAIA3VS3vOQrQ5BjKgbO3kxebKhHdHcNUHLqxQYSoxee9UwgA=="
+    crossorigin="anonymous"
+  ></script>
+  <script
+    type="text/javascript"
+    src="https://unpkg.com/tabulator-tables@4.9.3/dist/js/tabulator.min.js"
+  ></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <?!= include('page-js.html'); ?>
+  <script>
+    const acceptedMimeTypes = ['text/csv', 'application/vnd.ms-excel'];
 
-  <div class="row">
-    <h5>Preview data</h5>
-    <div id="import-table"></div>
-  </div>
-
-  <div class="row">
-    <p id="status"></p>
-  </div>
-</body>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"
-  integrity="sha512-rKFvwjvE4liWPlFnvH4ZhRDfNZ9FOpdkD/BU5gAIA3VS3vOQrQ5BjKgbO3kxebKhHdHcNUHLqxQYSoxee9UwgA=="
-  crossorigin="anonymous"></script>
-<script type="text/javascript" src="https://unpkg.com/tabulator-tables@4.9.3/dist/js/tabulator.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-<?!= include('page-js.html'); ?>
-<script>
-  const acceptedMimeTypes = ["text/csv", "application/vnd.ms-excel"];
-
-  const preventFormSubmit = () => {
-    document.querySelectorAll("form").forEach((form) => {
-      form.addEventListener("submit", (e) => e.preventDefault());
+    const preventFormSubmit = () => {
+      document.querySelectorAll('form').forEach((form) => {
+        form.addEventListener('submit', (e) => e.preventDefault());
+      });
+    };
+    window.addEventListener('load', preventFormSubmit);
+    document.addEventListener('DOMContentLoaded', () => {
+      M.FormSelect.init(document.querySelectorAll('select'));
     });
-  };
-  window.addEventListener("load", preventFormSubmit);
-  document.addEventListener("DOMContentLoaded", () => {
-    M.FormSelect.init(document.querySelectorAll("select"));
-  });
 
-  const onSuccess = (response) => {
-    if ('data' in response) setTableData(csvToJson(response.data));
-    document.getElementById('status').innerHTML = `Action successful! ${response.message}`;
-    google.script.host.close();
-  };
+    const onSuccess = (response) => {
+      if ('data' in response) setTableData(csvToJson(response.data));
+      document.getElementById(
+        'status'
+      ).innerHTML = `Action successful! ${response.message}`;
+      google.script.host.close();
+    };
 
-  const onFailure = (error) => alert(`Action failed! ${error}`);
+    const onFailure = (error) => alert(`Action failed! ${error}`);
 
-  const setPreview = (result) => {
-    const data = result.data;
-    setTableData(csvToJson(data));
-  };
+    const setPreview = (result) => {
+      console.log(result);
+      const data = result.data;
+      setTableData(csvToJson(data));
+    };
 
-  const submitDataToServer = (result, importStrategy) => {
-    google.script.run
-      .withSuccessHandler(onSuccess)
-      .withFailureHandler(onFailure)
-      .processCSV(result, importStrategy);
-  };
+    const submitDataToServer = (result, importStrategy) => {
+      google.script.run
+        .withSuccessHandler(onSuccess)
+        .withFailureHandler(onFailure)
+        .processCSV(result, importStrategy);
+    };
 
-  const getFile = () => {
-    const fileElement = document.getElementById("csvFiles");
-    if (fileElement.files.length < 1) return;
-    return fileElement.files[0];
-  };
+    const getFile = () => {
+      const fileElement = document.getElementById('csvFiles');
+      if (fileElement.files.length < 1) return;
+      return fileElement.files[0];
+    };
 
-  const onParseError = (error) => {
-    console.error(error);
-    alert(`Parsing error: ${error}`);
-  };
+    const onParseError = (error) => {
+      console.error(error);
+      alert(`Parsing error: ${error}`);
+    };
 
-  const isAllowedFile = (mimeType) => {
-    if (!acceptedMimeTypes.includes(mimeType)) {
-      alert(`Please upload a CSV file, ${mimeType} is not accepted!`);
-      return false;
+    const isAllowedFile = (mimeType) => {
+      if (!acceptedMimeTypes.includes(mimeType)) {
+        alert(`Please upload a CSV file, "${mimeType}" is not accepted!`);
+        return false;
+      }
+      return true;
+    };
+
+    function handleOnFileSelect() {
+      const file = getFile();
+      if (!file || !isAllowedFile(file.type)) return;
+      Papa.parse(file, {
+        complete: setPreview,
+        error: onParseError,
+      });
     }
-    return true;
-  }
 
-  function handleOnFileSelect() {
-    const file = getFile();
-    if (!file || !isAllowedFile(file.type)) return;
-    Papa.parse(file, {
-      complete: setPreview,
-      error: onParseError,
-    });
-  }
-
-  function handleFormSubmit() {
-    const file = getFile();
-    if (!file || !isAllowedFile(file.type)) return;
-    const importStrategy = document.getElementById("import-strategy")?.value;
-    Papa.parse(file, {
-      complete: (result) => submitDataToServer(result.data, importStrategy),
-      error: onParseError,
-    });
-  }
-</script>
-
+    function handleFormSubmit() {
+      const file = getFile();
+      if (!file || !isAllowedFile(file.type)) return;
+      const importStrategy = document.getElementById('import-strategy')?.value;
+      Papa.parse(file, {
+        complete: (result) => submitDataToServer(result.data, importStrategy),
+        error: onParseError,
+      });
+    }
+  </script>
 </html>

@@ -4,7 +4,7 @@
   const renderStrategyOptions = (strategies) => {
     const elemSelect = document.getElementById('import-strategy');
     for (const strategy in strategies) {
-      elemSelect.add(new Option(strategy, strategies[strategy]))
+      elemSelect.add(new Option(strategy, strategies[strategy]));
     }
   };
 
@@ -13,7 +13,7 @@
     return csvData.map((row) => {
       let jsonRow = {};
       row.forEach((value, index) => {
-          jsonRow[headers[index]] = value;
+        jsonRow[headers[index]] = value;
       });
       return jsonRow;
     });
@@ -31,15 +31,15 @@
       .withFailureHandler(onFailure)
       .getStrategyOptions();
 
-    table = new Tabulator("#import-table", {
+    table = new Tabulator('#import-table', {
       autoColumns: true,
       // layout: "fitColumns",
       autoColumnsDefinitions: (definitions) => {
-        definitions.forEach(definition => definition['headerSort'] = false);
+        definitions.forEach((definition) => (definition['headerSort'] = false));
         return definitions;
-      }
+      },
     });
   };
 
-  window.addEventListener("load", onLoad);
+  window.addEventListener('load', onLoad);
 </script>

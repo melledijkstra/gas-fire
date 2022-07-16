@@ -7,7 +7,7 @@ enum n26Cols {
   Amount,
   AmountForeignCurrency,
   ForeignCurrencyType,
-  ExchangeRate
+  ExchangeRate,
 }
 
 enum raboCols {
@@ -44,53 +44,57 @@ enum bbvaCols {
   Currency,
   Available, // <-- balance
   CurrencyOfAvailable,
-  Comments
+  Comments,
 }
 
 enum openbankCols {
-  
+  Fecha,
+  FechaValor,
+  Concepto,
+  Importe,
+  Saldo,
 }
 
-type InputColumn = n26Cols | raboCols | bbvaCols
+type InputColumn = n26Cols | raboCols | bbvaCols | openbankCols;
 
 enum StrategyOption {
-  N26 = "n26",
-  RABO = "rabobank",
-  BBVA = "bbva",
-  OPENBANK = "openbank"
+  N26 = 'n26',
+  RABO = 'rabobank',
+  BBVA = 'bbva',
+  OPENBANK = 'openbank',
 }
 
-type Table = string[][]
+type Table = string[][];
 
 /**
  * A column function returns the values for that column
  * it can generate the column based on the data in the CSV
  */
- type ColumnRule<T> = (data: Table) => T[]
+type ColumnRule<T> = (data: Table) => T[];
 
 interface FireColumnRules {
-  ref: ColumnRule<number>,
-  iban: ColumnRule<string>,
-  date: ColumnRule<Date>,
-  amount: ColumnRule<number>,
-  contra_account?: ColumnRule<string>,
-  description?: ColumnRule<string>,
-  satisfaction?: ColumnRule<number>,
-  category: ColumnRule<string>,
-  label?: ColumnRule<string>,
-  contra_iban: ColumnRule<string>,
-  currency?: ColumnRule<string>
+  ref: ColumnRule<number>;
+  iban: ColumnRule<string>;
+  date: ColumnRule<Date>;
+  amount: ColumnRule<number>;
+  contra_account?: ColumnRule<string>;
+  description?: ColumnRule<string>;
+  satisfaction?: ColumnRule<number>;
+  category: ColumnRule<string>;
+  label?: ColumnRule<string>;
+  contra_iban: ColumnRule<string>;
+  currency?: ColumnRule<string>;
 }
 
 type Strategy = {
   [key in StrategyOption]: {
-    beforeImport?: Array<(data: Table) => Table>,
-    columnImportRules: FireColumnRules,
-    afterImport?: Array<(data: Table) => void>,
-    autoFillColumns?: number[]
-  }
-}
+    beforeImport?: Array<(data: Table) => Table>;
+    columnImportRules: FireColumnRules;
+    afterImport?: Array<(data: Table) => void>;
+    autoFillColumns?: number[];
+  };
+};
 
 type ServerResponse = {
-  message: string
-}
+  message: string;
+};
