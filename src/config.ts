@@ -16,7 +16,7 @@ class Config {
           iban: (data) => new Array(data.length).fill(BankAccount.N26),
           date: buildColumn(n26Cols.Date, (val) => new Date(val)),
           amount: buildColumn(n26Cols.Amount, parseFloat),
-          category: null,
+          category: buildColumn(n26Cols.Payee, Transformers.transformCategory),
           contra_account: buildColumn(n26Cols.Payee, String),
           label: buildColumn(n26Cols.TransactionType, String),
           description: buildColumn(n26Cols.PaymentReference, String),
@@ -35,7 +35,7 @@ class Config {
           ref: buildColumn(raboCols.Volgnr, parseInt),
           iban: buildColumn(raboCols.Iban, String),
           date: buildColumn(raboCols.Datum, (val) => new Date(val)),
-          amount: buildColumn(raboCols.Bedrag, Utils.transformMoneyColumn),
+          amount: buildColumn(raboCols.Bedrag, Transformers.transformMoney),
           category: null,
           contra_account: buildColumn(raboCols.NaamTegenpartij, String),
           contra_iban: buildColumn(raboCols.Tegenrekening, String),
@@ -55,7 +55,7 @@ class Config {
           ref: null,
           iban: (data) => new Array(data.length).fill(BankAccount.BBVA),
           date: buildColumn(bbvaCols.Date, (val) => Utils.transformDate(val)),
-          amount: buildColumn(bbvaCols.Amount, Utils.transformMoneyColumn),
+          amount: buildColumn(bbvaCols.Amount, Transformers.transformMoney),
           category: null,
           contra_iban: null,
           currency: buildColumn(bbvaCols.Currency, String),
@@ -84,7 +84,10 @@ class Config {
             }
             return new Date(+yearNum, +month - 1, +day);
           }),
-          amount: buildColumn(openbankCols.Importe, Utils.transformMoneyColumn),
+          amount: buildColumn(
+            openbankCols.Importe,
+            Transformers.transformMoney
+          ),
           category: null,
           contra_account: null,
           label: null,
