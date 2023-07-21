@@ -7,6 +7,6 @@ class Transformers {
     return new Date(+year, +month - 1, +day);
   };
 
-  static transformCategory = (value: string): string | undefined =>
-    detectCategoryByTextAnalysis(value);
+  static transformCategory = (value: string): string | null =>
+    detectCategoryByTextAnalysis(value) ?? null;
 }

@@ -1,9 +1,15 @@
+/// <reference path="accounts.ts" />
+
 const defaultAfterImport = [
   (table: Table) => Utils.autoFillColumns(table, AUTO_FILL_COLUMNS),
 ];
 
+type RootConfig = {
+  [key in StrategyOption]: Strategy;
+};
+
 class Config {
-  static getConfig(): Strategy {
+  static getConfig(): RootConfig {
     return {
       n26: {
         beforeImport: [
@@ -54,7 +60,9 @@ class Config {
         columnImportRules: {
           ref: null,
           iban: (data) => new Array(data.length).fill(BankAccount.BBVA),
-          date: buildColumn(bbvaCols.Date, (val) => Utils.transformDate(val)),
+          date: buildColumn(bbvaCols.Date, (val) =>
+            Transformers.transformDate(val)
+          ),
           amount: buildColumn(bbvaCols.Amount, Transformers.transformMoney),
           category: null,
           contra_iban: null,
