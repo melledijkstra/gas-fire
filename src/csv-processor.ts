@@ -11,7 +11,9 @@ const sheets = FireSpreadsheet.getSheets();
 const Props = PropertiesService.getUserProperties();
 const sourceSheet = getSheetById(sourceSheetId);
 
-function getSheetById(id: number): GoogleAppsScript.Spreadsheet.Sheet {
+function getSheetById(
+  id: number
+): GoogleAppsScript.Spreadsheet.Sheet | undefined {
   return sheets.find((sheet) => sheet.getSheetId() === id);
 }
 
@@ -80,8 +82,8 @@ function processCSV(
   importStrategy: StrategyOption
 ): ServerResponse {
   const strategies = Config.getConfig();
-  sourceSheet.activate();
-  sourceSheet.showSheet();
+  sourceSheet?.activate();
+  sourceSheet?.showSheet();
   if (!(importStrategy in strategies)) {
     throw new Error(`Import strategy ${importStrategy} is not defined!`);
   }
