@@ -1,6 +1,9 @@
 {
   "compilerOptions": {
     "lib": ["ES2019"],
-    "experimentalDecorators": true
-  }
+    "experimentalDecorators": true,
+    "rootDir": "src",
+    "strict": true
+  },
+  "include": ["src/**/*.ts"]
 }

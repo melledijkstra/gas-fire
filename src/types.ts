@@ -70,7 +70,7 @@ type Table = string[][];
  * A column function returns the values for that column
  * it can generate the column based on the data in the CSV
  */
-type ColumnRule<T> = (data: Table) => T[];
+type ColumnRule<T> = ((data: Table) => T[]) | null;
 
 interface FireColumnRules {
   ref: ColumnRule<number>;
@@ -80,19 +80,17 @@ interface FireColumnRules {
   contra_account?: ColumnRule<string>;
   description?: ColumnRule<string>;
   satisfaction?: ColumnRule<number>;
-  category: ColumnRule<string>;
+  category: ColumnRule<string | null>;
   label?: ColumnRule<string>;
   contra_iban: ColumnRule<string>;
   currency?: ColumnRule<string>;
 }
 
 type Strategy = {
-  [key in StrategyOption]: {
-    beforeImport?: Array<(data: Table) => Table>;
-    columnImportRules: FireColumnRules;
-    afterImport?: Array<(data: Table) => void>;
-    autoFillColumns?: number[];
-  };
+  beforeImport?: Array<(data: Table) => Table>;
+  columnImportRules: FireColumnRules;
+  afterImport?: Array<(data: Table) => void>;
+  autoFillColumns?: number[];
 };
 
 type ServerResponse = {

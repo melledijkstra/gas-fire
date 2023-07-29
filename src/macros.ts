@@ -6,7 +6,7 @@ const macroDeleteDuplicateTransaction = () => {
   const sheet = spreadsheet.getActiveSheet();
 
   const cellOfRowToDelete = sheet.getCurrentCell();
-  if (cellOfRowToDelete.getColumn() !== BALANCE_COLUMN) {
+  if (cellOfRowToDelete?.getColumn() !== BALANCE_COLUMN) {
     SpreadsheetApp.getUi().alert(
       'Please select the balance column of the row to be deleted and try again'
     );

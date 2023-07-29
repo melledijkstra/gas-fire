@@ -38,7 +38,12 @@
 
         <div class="col s6">
           <label>Select Bank</label>
-          <select required id="import-strategy" class="browser-default">
+          <select
+            required
+            id="import-strategy"
+            onchange="handleOnStrategySelect()"
+            class="browser-default"
+          >
             <option value="" disabled selected>Choose Bank</option>
           </select>
         </div>
@@ -47,6 +52,12 @@
       <div class="row">
         <div class="right-align">
           <button class="btn green darken-3" type="submit">IMPORT</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="left-align">
+          <p id="statusText">-</p>
         </div>
       </div>
     </form>
@@ -113,6 +124,10 @@
       return fileElement.files[0];
     };
 
+    const getStrategy = () => {
+      return document.getElementById('import-strategy')?.value;
+    };
+
     const onParseError = (error) => {
       console.error(error);
       alert(`Parsing error: ${error}`);
@@ -124,6 +139,10 @@
         return false;
       }
       return true;
+    };
+
+    const setStatusText = (text) => {
+      document.getElementById('statusText').innerText = text;
     };
 
     function handleOnFileSelect() {

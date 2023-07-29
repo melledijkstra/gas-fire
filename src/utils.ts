@@ -25,7 +25,7 @@ class Utils {
     const colCount = data[0].length;
     Logger.log(`importing data (rows: ${rowCount}, cols: ${colCount})`);
     sourceSheet
-      .insertRowsBefore(2, rowCount)
+      ?.insertRowsBefore(2, rowCount)
       .getRange(2, 1, rowCount, colCount)
       .setValues(data as Table);
   }
@@ -33,12 +33,14 @@ class Utils {
   static autoFillColumns(data: Table, columns: number[]) {
     for (const column of columns) {
       const rowCount = data.length;
-      const sourceRange = sourceSheet.getRange(2 + rowCount, column);
-      const destinationRange = sourceSheet.getRange(2, column, rowCount + 1); // + 1 because sourceRange needs to be included
-      sourceRange.autoFill(
-        destinationRange,
-        SpreadsheetApp.AutoFillSeries.DEFAULT_SERIES
-      );
+      const sourceRange = sourceSheet?.getRange(2 + rowCount, column);
+      const destinationRange = sourceSheet?.getRange(2, column, rowCount + 1); // + 1 because sourceRange needs to be included
+      if (destinationRange) {
+        sourceRange?.autoFill(
+          destinationRange,
+          SpreadsheetApp.AutoFillSeries.DEFAULT_SERIES
+        );
+      }
     }
   }
 
@@ -89,14 +91,4 @@ class Utils {
       return data;
     };
   }
-
-  static transformMoneyColumn = (
-    value: string,
-    decimalSeparator: string = ','
-  ) => parseFloat(value.replace(/\./g, '').replace(decimalSeparator, '.'));
-
-  static transformDate = (value: string, separator: string = '/'): Date => {
-    const [day, month, year] = value.split(separator);
-    return new Date(+year, +month - 1, +day);
-  };
 }
