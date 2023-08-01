@@ -1,0 +1,44 @@
+<div class="input-field">
+  <textarea disabled id="settings_bank_accounts" class="materialize-textarea">
+    Loading...
+  </textarea>
+  <label for="settings_bank_accounts">Bank Accounts</label>
+</div>
+<p>
+  These bank accounts are retrieved from status sheet. Please change your bank
+  account details there.
+</p>
+
+<script>
+  const elemId = 'settings_bank_accounts';
+
+  const setBankAccounts = (bankAccounts) => {
+    console.log('success', bankAccounts);
+    let elemStr = '';
+    Object.entries(bankAccounts).forEach(([label, iban], index) => {
+      const newLine = index === 0 ? '' : '\n';
+      elemStr = elemStr + `${newLine}${label} = ${bankAccounts[label]}`;
+    });
+    const elem = document.getElementById(elemId);
+    elem.value = elemStr;
+    M.textareaAutoResize(elem);
+  };
+
+  const handleFailure = () => {
+    console.log('failed');
+    const elem = document.getElementById(elemId);
+    elem.value = '';
+  };
+
+  const loadBankAccounts = () => {
+    console.log('loading bank accounts');
+    google.script.run
+      .withSuccessHandler(setBankAccounts)
+      .withFailureHandler(handleFailure)
+      .getBankAccounts();
+  };
+
+  window.addEventListener('load', () => {
+    loadBankAccounts();
+  });
+</script>
