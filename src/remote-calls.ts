@@ -1,4 +1,7 @@
+/// <reference path="category_detection.ts" />
+
 const PROP_BANK_ACCOUNTS = 'BANK_ACCOUNTS';
+const PROP_AUTOMATIC_CATEGORIES_CONFIG = 'AUTOMATIC_CATEGORIZATION_CONFIG';
 
 const cleanString = (str: string) => str?.replace(/\n/g, ' ').trim();
 
@@ -47,7 +50,7 @@ function getStrategyOptions(): typeof StrategyOption {
 
 function getAutomaticCategorizationConfig(): Record<string, Array<RegExp>> {
   const config = PropertiesService.getDocumentProperties().getProperty(
-    'AUTOMATIC_CATEGORIZATION_CONFIG'
+    PROP_AUTOMATIC_CATEGORIES_CONFIG
   );
 
   try {
@@ -57,14 +60,14 @@ function getAutomaticCategorizationConfig(): Record<string, Array<RegExp>> {
   return {};
 }
 
-function storeAutomaticCategorizationConfig(config) {
+function storeAutomaticCategorizationConfig(config: CategoryDetectionConfig) {
   Logger.log({
     type: typeof config,
     config,
   });
 
   PropertiesService.getDocumentProperties().setProperty(
-    'AUTOMATIC_CATEGORIZATION_CONFIG',
+    PROP_AUTOMATIC_CATEGORIES_CONFIG,
     JSON.stringify(config)
   );
 }

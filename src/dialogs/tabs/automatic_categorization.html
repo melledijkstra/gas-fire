@@ -1,8 +1,13 @@
-<p>Paste here your configuration for the automatic categorization</p>
+<p>
+  Paste here your configuration for the automatic categorization. The
+  configuration is a JSON object where the key is a category and the value an
+  array of regular expressions. These regular expressions will be used like `new
+  RegExp("yourregex")`
+</p>
 <div>
-  <label for="settings_automatic_categorization"
-    >Automatic Categorization Config</label
-  >
+  <label for="settings_automatic_categorization">
+    Automatic Categorization Config
+  </label>
   <textarea
     disabled
     onchange="validateConfig()"
@@ -38,14 +43,11 @@
     const button = document.getElementById('save-btn');
     try {
       if (JSON.parse(inputElem.value)) {
-        console.log('valid');
         statusElem.innerText = '✅';
         button.disabled = false;
         return;
       }
     } catch (ignore) {}
-
-    console.log('invalid!');
 
     statusElem.innerText = '❌';
     button.disabled = true;
