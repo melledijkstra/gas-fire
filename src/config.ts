@@ -1,4 +1,16 @@
-/// <reference path="accounts.ts" />
+import { BankAccount } from './accounts';
+import { buildColumn } from './table-utils';
+import { Transformers } from './transformers';
+import type { Strategy, StrategyOption, Table } from './types';
+import { bbvaCols, n26Cols, raboCols, openbankCols } from './types';
+import { Utils } from './utils';
+
+export const AUTO_FILL_COLUMNS = [
+  5, // balance column
+  9, // category icon
+  13, // hours column
+  14, // disabled column
+];
 
 const defaultAfterImport = [
   (table: Table) => Utils.autoFillColumns(table, AUTO_FILL_COLUMNS),
@@ -8,9 +20,7 @@ type RootConfig = {
   [key in StrategyOption]: Strategy;
 };
 
-function generateRefColumn(data: Table) {}
-
-class Config {
+export class Config {
   static getConfig(): RootConfig {
     return {
       n26: {

@@ -1,3 +1,4 @@
-src/accounts.ts
-
 node_modules/
+build/
+
+src/accounts.ts

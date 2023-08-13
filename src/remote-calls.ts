@@ -1,8 +1,26 @@
+import { Config } from './config';
+import { buildNewTableData } from './table-utils';
+import { ServerResponse, Strategy, StrategyOption, Table } from './types';
+import { Utils } from './utils';
+
+const SOURCE_SHEET_ID = 1093484485;
+
+const FireSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+const sheets = FireSpreadsheet.getSheets();
+
+function getSheetById(
+  id: number
+): GoogleAppsScript.Spreadsheet.Sheet | undefined {
+  return sheets.find((sheet) => sheet.getSheetId() === id);
+}
+
+const sourceSheet = getSheetById(SOURCE_SHEET_ID);
+
 /**
  * This function gets called by client side script
  * @see file-input.html
  */
-function processCSV(
+export function processCSV(
   input: Table,
   importStrategy: StrategyOption
 ): ServerResponse {
@@ -43,11 +61,11 @@ function processCSV(
  * This function returns the strategy options available to the client side
  * @returns {StrategyOption}
  */
-function getStrategyOptions(): typeof StrategyOption {
+export function getStrategyOptions(): typeof StrategyOption {
   return StrategyOption;
 }
 
-function generatePreview(
+export function generatePreview(
   data: Table,
   strategy: Strategy
 ): { result: Table; newBalance: number } {

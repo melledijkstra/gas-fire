@@ -1,7 +1,11 @@
+# ignore all files...
+**/**
+
+# except for the extensions
+!appsscript.json
+!build/*
+!src/*.html
+
+.git/**
 node_modules/**
 
-README.md
-package.json
-package-lock.json
-
-jsconfig.json

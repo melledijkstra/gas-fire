@@ -1,4 +1,4 @@
-enum n26Cols {
+export enum n26Cols {
   Date,
   Payee,
   AccountNumber,
@@ -10,7 +10,7 @@ enum n26Cols {
   ExchangeRate,
 }
 
-enum raboCols {
+export enum raboCols {
   Iban,
   Munt,
   BIC,
@@ -35,7 +35,7 @@ enum raboCols {
   Omschrijving3,
 }
 
-enum bbvaCols {
+export enum bbvaCols {
   Date,
   EffectiveDate,
   SubjectLine,
@@ -47,7 +47,7 @@ enum bbvaCols {
   Comments,
 }
 
-enum openbankCols {
+export enum openbankCols {
   Fecha,
   FechaValor,
   Concepto,
@@ -55,24 +55,24 @@ enum openbankCols {
   Saldo,
 }
 
-type InputColumn = n26Cols | raboCols | bbvaCols | openbankCols;
+export type InputColumn = n26Cols | raboCols | bbvaCols | openbankCols;
 
-enum StrategyOption {
+export enum StrategyOption {
   N26 = 'n26',
   RABO = 'rabobank',
   BBVA = 'bbva',
   OPENBANK = 'openbank',
 }
 
-type Table = string[][];
+export type Table = string[][];
 
 /**
  * A column function returns the values for that column
  * it can generate the column based on the data in the CSV
  */
-type ColumnRule<T> = ((data: Table) => T[]) | null;
+export type ColumnRule<T> = ((data: Table) => T[]) | null;
 
-interface FireColumnRules {
+export interface FireColumnRules {
   ref: ColumnRule<string | number>;
   iban: ColumnRule<string>;
   date: ColumnRule<Date>;
@@ -86,13 +86,13 @@ interface FireColumnRules {
   currency?: ColumnRule<string>;
 }
 
-type Strategy = {
+export type Strategy = {
   beforeImport?: Array<(data: Table) => Table>;
   columnImportRules: FireColumnRules;
   afterImport?: Array<(data: Table) => void>;
   autoFillColumns?: number[];
 };
 
-type ServerResponse = {
+export type ServerResponse = {
   message: string;
 };

@@ -1,6 +1,6 @@
-const BALANCE_COLUMN = 5;
+export const BALANCE_COLUMN = 5;
 
-const macroDeleteDuplicateTransaction = () => {
+export const macroDeleteDuplicateTransaction = () => {
   // get current spreadsheet
   const spreadsheet = SpreadsheetApp.getActive();
   const sheet = spreadsheet.getActiveSheet();

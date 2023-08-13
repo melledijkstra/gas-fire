@@ -1,4 +1,6 @@
-class Utils {
+import { Table, InputColumn } from './types';
+
+export class Utils {
   /**
    * @see https://github.com/ramda/ramda/blob/v0.27.0/source/transpose.js
    */
