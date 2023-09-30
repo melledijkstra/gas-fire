@@ -73,15 +73,15 @@ type Table = string[][];
 type ColumnRule<T> = ((data: Table) => T[]) | null;
 
 interface FireColumnRules {
-  ref: ColumnRule<number>;
+  ref: ColumnRule<string | number>;
   iban: ColumnRule<string>;
   date: ColumnRule<Date>;
   amount: ColumnRule<number>;
   contra_account?: ColumnRule<string>;
   description?: ColumnRule<string>;
-  satisfaction?: ColumnRule<number>;
   category: ColumnRule<string | null>;
   label?: ColumnRule<string>;
+  import_date: ColumnRule<Date>;
   contra_iban: ColumnRule<string>;
   currency?: ColumnRule<string>;
 }

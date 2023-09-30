@@ -2,7 +2,7 @@ const sourceSheetId = 1093484485;
 const AUTO_FILL_COLUMNS = [
   5, // balance column
   9, // category icon
-  12, // hours column
+  13, // hours column
   14, // disabled column
 ];
 
@@ -25,13 +25,14 @@ const FireColumns = [
   'balance',
   'contra_account',
   'description',
-  'satisfaction',
+  'comments',
   'icon',
   'category',
   'label',
+  'import_date',
   'hours',
-  'contra_iban',
   'disabled',
+  'contra_iban',
   'currency',
 ];
 
