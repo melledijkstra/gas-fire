@@ -8,6 +8,8 @@ type RootConfig = {
   [key in StrategyOption]: Strategy;
 };
 
+function generateRefColumn(data: Table) {}
+
 class Config {
   static getConfig(): RootConfig {
     return {
@@ -25,6 +27,7 @@ class Config {
           category: buildColumn(n26Cols.Payee, Transformers.transformCategory),
           contra_account: buildColumn(n26Cols.Payee, String),
           label: buildColumn(n26Cols.TransactionType, String),
+          import_date: (data) => new Array(data.length).fill(new Date()),
           description: buildColumn(n26Cols.PaymentReference, String),
           contra_iban: buildColumn(n26Cols.AccountNumber, String),
           currency: buildColumn(n26Cols.ForeignCurrencyType, String),
@@ -44,6 +47,7 @@ class Config {
           amount: buildColumn(raboCols.Bedrag, Transformers.transformMoney),
           category: null,
           contra_account: buildColumn(raboCols.NaamTegenpartij, String),
+          import_date: (data) => new Array(data.length).fill(new Date()),
           contra_iban: buildColumn(raboCols.Tegenrekening, String),
           currency: buildColumn(raboCols.Munt, String),
           description: buildColumn(raboCols.Omschrijving1, String),
@@ -65,6 +69,7 @@ class Config {
           ),
           amount: buildColumn(bbvaCols.Amount, Transformers.transformMoney),
           category: null,
+          import_date: (data) => new Array(data.length).fill(new Date()),
           contra_iban: null,
           currency: buildColumn(bbvaCols.Currency, String),
           description: buildColumn(bbvaCols.Comments, String),
@@ -100,6 +105,7 @@ class Config {
           contra_account: null,
           label: null,
           description: buildColumn(openbankCols.Concepto, String),
+          import_date: (data) => new Array(data.length).fill(new Date()),
           contra_iban: null,
           currency: null,
         },
