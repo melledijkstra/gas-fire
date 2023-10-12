@@ -17,8 +17,8 @@ function fileUploadDialog(): void {
 function openAboutDialog(): void {
   const html = HtmlService.createTemplateFromFile('about.html')
     .evaluate()
-    .setWidth(900)
-    .setHeight(600);
+    .setWidth(300)
+    .setHeight(200);
   SpreadsheetApp.getUi().showModalDialog(html, 'About');
 }
 
