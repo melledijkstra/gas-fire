@@ -1,7 +1,9 @@
-const ui = SpreadsheetApp.getUi();
-
 function onOpen(): void {
-  ui.createMenu('Import').addItem('Upload CSV', 'fileUploadDialog').addToUi();
+  SpreadsheetApp.getUi()
+    .createMenu('Import')
+    .addItem('Upload CSV', 'fileUploadDialog')
+    .addItem('About', 'openAboutDialog')
+    .addToUi();
 }
 
 function fileUploadDialog(): void {
@@ -10,6 +12,14 @@ function fileUploadDialog(): void {
     .setWidth(900)
     .setHeight(600);
   SpreadsheetApp.getUi().showModalDialog(html, 'File upload dialog');
+}
+
+function openAboutDialog(): void {
+  const html = HtmlService.createTemplateFromFile('about.html')
+    .evaluate()
+    .setWidth(900)
+    .setHeight(600);
+  SpreadsheetApp.getUi().showModalDialog(html, 'About');
 }
 
 function include(filename: string): string {

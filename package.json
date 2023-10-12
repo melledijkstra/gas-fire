@@ -1,11 +1,11 @@
 {
   "name": "gas-fire",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Melle Dijkstra",
   "description": "Google App Script utilities to automate the FIRE google sheet",
   "license": "MIT",
   "scripts": {
-    "publish": "clasp push -y"
+    "publish": "clasp push -f"
   },
   "devDependencies": {
     "@google/clasp": "^2.4.1",
