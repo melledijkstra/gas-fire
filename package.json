@@ -4,7 +4,7 @@
   "author": "Melle Dijkstra",
   "description": "Google App Script utilities to automate the FIRE google sheet",
   "license": "MIT",
-  "main": "build/index.js",
+  "main": "dist/index.js",
   "scripts": {
     "publish": "clasp push -f",
     "dev": "echo 'Not yet implemented'",

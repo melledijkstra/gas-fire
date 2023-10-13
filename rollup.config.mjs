@@ -22,7 +22,7 @@ const extensions = [".ts", ".js"];
 const rollupConfig = defineConfig({
   input: "./src/index.ts",
   output: {
-    dir: "build",
+    file: "dist/bundle.js",
     format: "esm",
   },
   plugins: [

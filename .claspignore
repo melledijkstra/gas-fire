@@ -3,8 +3,8 @@
 
 # except for the extensions
 !appsscript.json
-!build/*
-!src/*.html
+!dist/*
+!src/**/*.html
 
 .git/**
 node_modules/**
