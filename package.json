@@ -5,7 +5,8 @@
   "description": "Google App Script utilities to automate the FIRE google sheet",
   "license": "MIT",
   "scripts": {
-    "publish": "clasp push -f"
+    "publish": "clasp push -f",
+    "dev": "clasp push --watch -f"
   },
   "devDependencies": {
     "@google/clasp": "^2.4.1",
