@@ -1,3 +1,7 @@
-src/accounts.ts
-
 node_modules/
+
+# The bundles file, ignoring as it can be generated again from the source
+dist/
+dist/bundle.js
+
+src/accounts.ts

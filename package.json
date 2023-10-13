@@ -4,14 +4,24 @@
   "author": "Melle Dijkstra",
   "description": "Google App Script utilities to automate the FIRE google sheet",
   "license": "MIT",
+  "main": "dist/index.js",
   "scripts": {
     "publish": "clasp push -f",
-    "dev": "clasp push --watch -f"
+    "dev": "echo 'Not yet implemented'",
+    "build": "rollup --config",
+    "deploy": "npm run build && npm run publish"
   },
   "devDependencies": {
+    "typescript": "^3.8.2",
     "@google/clasp": "^2.4.1",
     "@types/google-apps-script": "^1.0.51",
-    "typescript": "^3.8.2"
+    "@babel/core": "^7.22.10",
+    "@babel/plugin-transform-runtime": "^7.22.10",
+    "@babel/preset-env": "^7.22.10",
+    "@babel/preset-typescript": "^7.22.5",
+    "rollup": "^3.28.0",
+    "@rollup/plugin-babel": "^6.0.3",
+    "@rollup/plugin-node-resolve": "^15.1.0"
   },
   "repository": {
     "type": "git",

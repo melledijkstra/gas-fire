@@ -50,7 +50,7 @@ const categoriesTermsMap: Record<string, Array<RegExp>> = {
 /**
  * Function that detects automatically a category based on some simple text analysis (text matching)
  */
-const detectCategoryByTextAnalysis = (
+export const detectCategoryByTextAnalysis = (
   keyphrase: string
 ): string | undefined => {
   // lowercase the keyphrase for easier matching

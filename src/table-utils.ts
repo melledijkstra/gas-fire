@@ -1,23 +1,7 @@
-const sourceSheetId = 1093484485;
-const AUTO_FILL_COLUMNS = [
-  5, // balance column
-  9, // category icon
-  13, // hours column
-  14, // disabled column
-];
+import { ColumnRule, FireColumnRules, InputColumn, Table } from './types';
+import { Utils } from './utils';
 
-const FireSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-const sheets = FireSpreadsheet.getSheets();
-const Props = PropertiesService.getUserProperties();
-const sourceSheet = getSheetById(sourceSheetId);
-
-function getSheetById(
-  id: number
-): GoogleAppsScript.Spreadsheet.Sheet | undefined {
-  return sheets.find((sheet) => sheet.getSheetId() === id);
-}
-
-const FireColumns = [
+export const FireColumns = [
   'ref',
   'iban',
   'date',
@@ -25,18 +9,17 @@ const FireColumns = [
   'balance',
   'contra_account',
   'description',
-  'comments',
+  'satisfaction',
   'icon',
   'category',
   'label',
-  'import_date',
   'hours',
-  'disabled',
   'contra_iban',
+  'disabled',
   'currency',
 ];
 
-function buildColumn<T>(
+export function buildColumn<T>(
   column: InputColumn,
   transformer: (value: string) => T
 ): (data: Table) => T[] {
@@ -51,7 +34,10 @@ function buildColumn<T>(
   };
 }
 
-function buildNewTableData(input: Table, columnImportRules: FireColumnRules) {
+export function buildNewTableData(
+  input: Table,
+  columnImportRules: FireColumnRules
+) {
   let output: Table = [];
   const rowCount = input.length;
   for (const columnName of FireColumns) {
@@ -59,7 +45,7 @@ function buildNewTableData(input: Table, columnImportRules: FireColumnRules) {
       output.push(new Array(rowCount));
       continue;
     }
-    const colRule = columnImportRules[columnName] as ColumnRule<any>;
+    const colRule = columnImportRules[columnName] as ColumnRule<unknown>;
     let column: any[];
     try {
       column = colRule(input);
