@@ -19,8 +19,12 @@ const preventTreeShakingPlugin = () => {
 
 const extensions = [".ts", ".js"];
 
-const rollupConfig = defineConfig({
-  input: "./src/index.ts",
+const frontendConfig = defineConfig({
+  input: './frontend/'
+});
+
+const serverConfig = defineConfig({
+  input: "./server/index.ts",
   output: {
     file: "dist/bundle.js",
     format: "esm",
@@ -36,5 +40,7 @@ const rollupConfig = defineConfig({
     }),
   ],
 });
+
+const rollupConfig = defineConfig([frontendConfig, serverConfig]);
 
 export default rollupConfig;
