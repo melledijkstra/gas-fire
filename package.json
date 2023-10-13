@@ -11,6 +11,10 @@
     "build": "rollup --config",
     "deploy": "npm run build && npm run publish"
   },
+  "engines": {
+    "node": "^18",
+    "npm": "^9.6.7"
+  },
   "devDependencies": {
     "typescript": "^3.8.2",
     "@google/clasp": "^2.4.1",
