@@ -49,8 +49,10 @@
       </div>
 
       <div class="row">
-        <div class="right-align">
-          <button class="btn green darken-3" type="submit">IMPORT</button>
+        <div class="col s12">
+          <div class="right-align">
+            <button class="btn green darken-3" type="submit">IMPORT</button>
+          </div>
         </div>
       </div>
 
@@ -81,86 +83,5 @@
   ></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
   <?!= include('dialogs/import.script.html'); ?>
-  <script>
-    const acceptedMimeTypes = ['text/csv', 'application/vnd.ms-excel'];
-
-    const preventFormSubmit = () => {
-      document.querySelectorAll('form').forEach((form) => {
-        form.addEventListener('submit', (e) => e.preventDefault());
-      });
-    };
-    window.addEventListener('load', preventFormSubmit);
-    document.addEventListener('DOMContentLoaded', () => {
-      M.FormSelect.init(document.querySelectorAll('select'));
-    });
-
-    const onSuccess = (response) => {
-      if ('data' in response) setTableData(csvToJson(response.data));
-      document.getElementById(
-        'status'
-      ).innerHTML = `Action successful! ${response.message}`;
-      google.script.host.close();
-    };
-
-    const onFailure = (error) => alert(`Action failed! ${error}`);
-
-    const setPreview = (result) => {
-      console.log(result);
-      const data = result.data;
-      setTableData(csvToJson(data));
-    };
-
-    const submitDataToServer = (result, importStrategy) => {
-      google.script.run
-        .withSuccessHandler(onSuccess)
-        .withFailureHandler(onFailure)
-        .processCSV(result, importStrategy);
-    };
-
-    const getFile = () => {
-      const fileElement = document.getElementById('csvFiles');
-      if (fileElement.files.length < 1) return;
-      return fileElement.files[0];
-    };
-
-    const getStrategy = () => {
-      return document.getElementById('import-strategy')?.value;
-    };
-
-    const onParseError = (error) => {
-      console.error(error);
-      alert(`Parsing error: ${error}`);
-    };
-
-    const isAllowedFile = (mimeType) => {
-      if (!acceptedMimeTypes.includes(mimeType)) {
-        alert(`Please upload a CSV file, "${mimeType}" is not accepted!`);
-        return false;
-      }
-      return true;
-    };
-
-    const setStatusText = (text) => {
-      document.getElementById('statusText').innerText = text;
-    };
-
-    function handleOnFileSelect() {
-      const file = getFile();
-      if (!file || !isAllowedFile(file.type)) return;
-      Papa.parse(file, {
-        complete: setPreview,
-        error: onParseError,
-      });
-    }
-
-    function handleFormSubmit() {
-      const file = getFile();
-      if (!file || !isAllowedFile(file.type)) return;
-      const importStrategy = document.getElementById('import-strategy')?.value;
-      Papa.parse(file, {
-        complete: (result) => submitDataToServer(result.data, importStrategy),
-        error: onParseError,
-      });
-    }
-  </script>
+  <?!= include('dialogs/import-preview.script.html'); ?>
 </html>
