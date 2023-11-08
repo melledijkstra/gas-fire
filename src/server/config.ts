@@ -1,8 +1,8 @@
 import { BankAccount } from './accounts';
 import { buildColumn } from './table-utils';
 import { Transformers } from './transformers';
-import type { Strategy, StrategyOption, Table } from './types';
-import { bbvaCols, n26Cols, raboCols, openbankCols } from './types';
+import type { Strategy, StrategyOption, Table } from '../types';
+import { bbvaCols, n26Cols, raboCols, openbankCols } from '../types';
 import { Utils } from './utils';
 
 export const AUTO_FILL_COLUMNS = [

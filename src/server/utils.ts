@@ -1,4 +1,4 @@
-import { Table, InputColumn } from './types';
+import { Table, InputColumn } from '../types';
 
 export class Utils {
   /**

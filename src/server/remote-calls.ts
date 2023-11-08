@@ -1,6 +1,6 @@
 import { Config } from './config';
 import { buildNewTableData } from './table-utils';
-import { ServerResponse, Strategy, StrategyOption, Table } from './types';
+import { ServerResponse, Strategy, StrategyOption, Table } from '../types';
 import { Utils } from './utils';
 
 const SOURCE_SHEET_ID = 1093484485;

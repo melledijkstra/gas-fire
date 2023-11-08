@@ -2,11 +2,13 @@
 // Only code that is imported here will be included in the build (if it is not imported otherwise)
 // There are some function that are being ran by remote procedure calls (like the functions in this file)
 // Make sure those files are included below independently
-import {
-  processCSV,
-  generatePreview,
-  getStrategyOptions,
-} from './remote-calls';
+// import {
+//   processCSV,
+//   generatePreview,
+//   getStrategyOptions,
+// } from '../src/remote-calls';
+
+import { StrategyOption } from '../types';
 
 function onOpen(): void {
   const ui = SpreadsheetApp.getUi();
@@ -17,7 +19,7 @@ function onOpen(): void {
 }
 
 function fileUploadDialog(): void {
-  const html = HtmlService.createTemplateFromFile('src/dialogs/import.html')
+  const html = HtmlService.createTemplateFromFile('import.html')
     .evaluate()
     .setWidth(900)
     .setHeight(600);
@@ -25,7 +27,7 @@ function fileUploadDialog(): void {
 }
 
 function openAboutDialog(): void {
-  const html = HtmlService.createTemplateFromFile('src/dialogs/about.html')
+  const html = HtmlService.createTemplateFromFile('about.html')
     .evaluate()
     .setWidth(300)
     .setHeight(200);
@@ -36,4 +38,13 @@ function include(filename: string): string {
   return HtmlService.createHtmlOutputFromFile(filename).getContent();
 }
 
-const RPCs = [processCSV, generatePreview, getStrategyOptions];
+/**
+ * Remote Procedure Call
+ * This function returns the strategy options available to the client side
+ * @returns {StrategyOption}
+ */
+function getStrategyOptions(): typeof StrategyOption {
+  return StrategyOption;
+}
+
+// const RPCs = [processCSV, generatePreview, getStrategyOptions];

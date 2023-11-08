@@ -1,4 +1,4 @@
-import { ColumnRule, FireColumnRules, InputColumn, Table } from './types';
+import { ColumnRule, FireColumnRules, InputColumn, Table } from '../types';
 import { Utils } from './utils';
 
 export const FireColumns = [

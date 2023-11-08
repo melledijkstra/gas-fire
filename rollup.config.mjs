@@ -1,6 +1,7 @@
 import { defineConfig } from "rollup";
 import { babel } from "@rollup/plugin-babel";
 import { nodeResolve } from "@rollup/plugin-node-resolve";
+import { copy } from "@web/rollup-plugin-copy";
 
 const inputFile = './src/index.ts';
 
@@ -19,10 +20,10 @@ const preventTreeShakingPlugin = () => {
 
 const extensions = [".ts", ".js"];
 
-const rollupConfig = defineConfig({
-  input: "./src/index.ts",
+const frontendBundle = defineConfig({
+  input: "./src/client/index.js",
   output: {
-    file: "dist/bundle.js",
+    file: "dist/index.js",
     format: "esm",
   },
   plugins: [
@@ -34,7 +35,27 @@ const rollupConfig = defineConfig({
       extensions,
       babelHelpers: "runtime"
     }),
+    copy({ rootDir: './src/client/dialogs', patterns: ['**/*.html'] })
   ],
 });
 
-export default rollupConfig;
+const serverBundle = defineConfig({
+  input: "./src/server/index.ts",
+  output: {
+    file: "dist/server.js",
+    format: "esm",
+  },
+  plugins: [
+    preventTreeShakingPlugin(),
+    nodeResolve({
+      extensions,
+    }),
+    babel({ 
+      extensions,
+      babelHelpers: "runtime"
+    }),
+    copy({ rootDir: './public', patterns: ['*'] })
+  ],
+});
+
+export default [frontendBundle, serverBundle];
