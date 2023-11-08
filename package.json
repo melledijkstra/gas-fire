@@ -17,6 +17,7 @@
     "@babel/plugin-transform-runtime": "^7.23.2",
     "@babel/preset-env": "^7.23.2",
     "@babel/preset-typescript": "^7.23.2",
+    "@babel/traverse": ">=7.23.2",
     "@google/clasp": "^2.4.1",
     "@rollup/plugin-babel": "^6.0.4",
     "@rollup/plugin-node-resolve": "^15.2.3",
