@@ -1,20 +1,7 @@
 import { Config } from './config';
 import { buildNewTableData } from './table-utils';
 import { ServerResponse, Strategy, StrategyOption, Table } from './types';
-import { Utils } from './utils';
-
-const SOURCE_SHEET_ID = 1093484485;
-
-const FireSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-const sheets = FireSpreadsheet.getSheets();
-
-function getSheetById(
-  id: number
-): GoogleAppsScript.Spreadsheet.Sheet | undefined {
-  return sheets.find((sheet) => sheet.getSheetId() === id);
-}
-
-const sourceSheet = getSheetById(SOURCE_SHEET_ID);
+import { Utils, sourceSheet } from './utils';
 
 /**
  * This function gets called by client side script
