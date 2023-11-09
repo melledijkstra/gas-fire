@@ -2,7 +2,7 @@ import { BankAccount } from './accounts';
 import { buildColumn } from './table-utils';
 import { Transformers } from './transformers';
 import type { Strategy, StrategyOption, Table } from './types';
-import { bbvaCols, n26Cols, raboCols, openbankCols } from './types';
+import { n26Cols, raboCols, openbankCols } from './types';
 import { Utils } from './utils';
 
 export const AUTO_FILL_COLUMNS = [
@@ -62,28 +62,6 @@ export class Config {
           currency: buildColumn(raboCols.Munt, String),
           description: buildColumn(raboCols.Omschrijving1, String),
           label: buildColumn(raboCols.Omschrijving2, String),
-        },
-        afterImport: defaultAfterImport,
-      },
-      bbva: {
-        beforeImport: [
-          Utils.deleteLastRow,
-          Utils.deleteFirstRow,
-          Utils.sortByDate(bbvaCols.Date),
-        ],
-        columnImportRules: {
-          ref: null,
-          iban: (data) => new Array(data.length).fill(BankAccount.BBVA),
-          date: buildColumn(bbvaCols.Date, (val) =>
-            Transformers.transformDate(val)
-          ),
-          amount: buildColumn(bbvaCols.Amount, Transformers.transformMoney),
-          category: null,
-          import_date: (data) => new Array(data.length).fill(new Date()),
-          contra_iban: null,
-          currency: buildColumn(bbvaCols.Currency, String),
-          description: buildColumn(bbvaCols.Comments, String),
-          label: buildColumn(bbvaCols.SubjectLine, String),
         },
         afterImport: defaultAfterImport,
       },

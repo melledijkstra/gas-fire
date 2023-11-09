@@ -35,18 +35,6 @@ export enum raboCols {
   Omschrijving3,
 }
 
-export enum bbvaCols {
-  Date,
-  EffectiveDate,
-  SubjectLine,
-  Movement,
-  Amount,
-  Currency,
-  Available, // <-- balance
-  CurrencyOfAvailable,
-  Comments,
-}
-
 export enum openbankCols {
   Fecha,
   FechaValor,
@@ -55,12 +43,11 @@ export enum openbankCols {
   Saldo,
 }
 
-export type InputColumn = n26Cols | raboCols | bbvaCols | openbankCols;
+export type InputColumn = n26Cols | raboCols | openbankCols;
 
 export enum StrategyOption {
   N26 = 'n26',
   RABO = 'rabobank',
-  BBVA = 'bbva',
   OPENBANK = 'openbank',
 }
 
