@@ -1,5 +1,18 @@
 import { Table, InputColumn } from './types';
 
+export const SOURCE_SHEET_ID = 1093484485;
+
+const FireSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+const sheets = FireSpreadsheet.getSheets();
+
+export function getSheetById(
+  id: number
+): GoogleAppsScript.Spreadsheet.Sheet | undefined {
+  return sheets.find((sheet) => sheet.getSheetId() === id);
+}
+
+export const sourceSheet = getSheetById(SOURCE_SHEET_ID);
+
 export class Utils {
   /**
    * @see https://github.com/ramda/ramda/blob/v0.27.0/source/transpose.js

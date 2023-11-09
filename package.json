@@ -12,16 +12,16 @@
     "deploy": "npm run build && npm run publish"
   },
   "devDependencies": {
-    "typescript": "^3.8.2",
-    "@google/clasp": "^2.4.1",
-    "@types/google-apps-script": "^1.0.51",
     "@babel/core": "^7.22.10",
     "@babel/plugin-transform-runtime": "^7.22.10",
     "@babel/preset-env": "^7.22.10",
     "@babel/preset-typescript": "^7.22.5",
-    "rollup": "^3.28.0",
+    "@google/clasp": "^2.4.1",
     "@rollup/plugin-babel": "^6.0.3",
-    "@rollup/plugin-node-resolve": "^15.1.0"
+    "@rollup/plugin-node-resolve": "^15.1.0",
+    "@types/google-apps-script": "^1.0.51",
+    "rollup": "^3.28.0",
+    "typescript": "^3.8.2"
   },
   "repository": {
     "type": "git",
