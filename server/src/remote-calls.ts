@@ -7,7 +7,7 @@ import { Utils, sourceSheet } from './utils';
  * This function gets called by client side script
  * @see file-input.html
  */
-export function processCSV(
+function processCSV(
   input: Table,
   importStrategy: StrategyOption
 ): ServerResponse {
@@ -48,11 +48,11 @@ export function processCSV(
  * This function returns the strategy options available to the client side
  * @returns {StrategyOption}
  */
-export function getStrategyOptions(): typeof StrategyOption {
+function getStrategyOptions(): typeof StrategyOption {
   return StrategyOption;
 }
 
-export function generatePreview(
+function generatePreview(
   data: Table,
   strategy: Strategy
 ): { result: Table; newBalance: number } {

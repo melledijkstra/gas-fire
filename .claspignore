@@ -4,7 +4,7 @@
 # except for the extensions
 !appsscript.json
 !dist/*
-!src/**/*.html
+!client/**/*.html
 
 .git/**
 node_modules/**

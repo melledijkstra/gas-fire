@@ -4,4 +4,4 @@ node_modules/
 dist/
 dist/bundle.js
 
-src/accounts.ts
+server/src/accounts.ts

@@ -4,11 +4,10 @@
   "author": "Melle Dijkstra",
   "description": "Google App Script utilities to automate the FIRE google sheet",
   "license": "MIT",
-  "main": "dist/index.js",
   "scripts": {
     "publish": "clasp push -f",
     "dev": "echo 'Not yet implemented'",
-    "build": "rollup --config",
+    "build": "rm -rf dist/ && rollup --config",
     "deploy": "npm run build && npm run publish"
   },
   "devDependencies": {
@@ -35,5 +34,8 @@
   ],
   "bugs": {
     "url": "https://github.com/melledijkstra/gas-fire/issues"
+  },
+  "dependencies": {
+    "@rollup/plugin-json": "^6.0.1"
   }
 }
