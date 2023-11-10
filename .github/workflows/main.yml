@@ -19,6 +19,6 @@ jobs:
     - name: Install dependencies
       run: npm install
     - name: Setup config.json file
-      run: cp server/config.template.json config.json
+      run: cp server/config.template.json server/config.json
     - name: Run build
       run: npm run build
