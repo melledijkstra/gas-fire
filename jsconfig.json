@@ -1,6 +1,9 @@
 {
   "compilerOptions": {
+    "target": "ES2015",
     "checkJs": true,
-    "lib": ["es6"]
-  }
+    "lib": ["es6"],
+    "moduleResolution": "node"
+  },
+  "exclude": ["**/*.mjs"]
 }

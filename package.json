@@ -4,10 +4,18 @@
   "author": "Melle Dijkstra",
   "description": "Google App Script utilities to automate the FIRE google sheet",
   "license": "MIT",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "engines": {
+    "node": "18"
+  },
   "scripts": {
     "publish": "clasp push -f",
     "dev": "echo 'Not yet implemented'",
-    "build": "rm -rf dist/ && rollup --config",
+    "build": "rollup --config && npm run build:inline",
+    "build:inline": "node inline-assets.js dist/ --delete",
     "deploy": "npm run build && npm run publish"
   },
   "devDependencies": {
@@ -17,8 +25,10 @@
     "@babel/preset-typescript": "^7.22.5",
     "@google/clasp": "^2.4.1",
     "@rollup/plugin-babel": "^6.0.3",
+    "@rollup/plugin-json": "^6.0.1",
     "@rollup/plugin-node-resolve": "^15.1.0",
     "@types/google-apps-script": "^1.0.51",
+    "jsdom": "^22.1.0",
     "rollup": "^3.28.0",
     "typescript": "^3.8.2"
   },
@@ -36,6 +46,6 @@
     "url": "https://github.com/melledijkstra/gas-fire/issues"
   },
   "dependencies": {
-    "@rollup/plugin-json": "^6.0.1"
+    "rollup-plugin-copy": "^3.5.0"
   }
 }

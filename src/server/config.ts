@@ -1,4 +1,4 @@
-import config from '../config.json';
+import config from './config.json';
 import { buildColumn } from './table-utils';
 import { Transformers } from './transformers';
 import type { Strategy, StrategyOption, Table } from './types';

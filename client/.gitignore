@@ -1,3 +1,0 @@
-# ignore generated client javascript files
-# these JS files will be inlined by the rollup build process
-.dist/

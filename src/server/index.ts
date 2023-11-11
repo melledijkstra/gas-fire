@@ -7,9 +7,7 @@ function onOpen(): void {
 }
 
 function fileUploadDialog(): void {
-  const html = HtmlService.createTemplateFromFile(
-    'client/src/dialogs/import.html'
-  )
+  const html = HtmlService.createTemplateFromFile('dist/import.html')
     .evaluate()
     .setWidth(900)
     .setHeight(600);
@@ -17,9 +15,7 @@ function fileUploadDialog(): void {
 }
 
 function openAboutDialog(): void {
-  const html = HtmlService.createTemplateFromFile(
-    'client/src/dialogs/about.html'
-  )
+  const html = HtmlService.createTemplateFromFile('dist/about.html')
     .evaluate()
     .setWidth(300)
     .setHeight(200);
