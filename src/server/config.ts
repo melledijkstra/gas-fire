@@ -1,4 +1,4 @@
-import { BankAccount } from './accounts';
+import config from './config.json';
 import { buildColumn } from './table-utils';
 import { Transformers } from './transformers';
 import type { Strategy, StrategyOption, Table } from './types';
@@ -31,7 +31,7 @@ export class Config {
         ],
         columnImportRules: {
           ref: null,
-          iban: (data) => new Array(data.length).fill(BankAccount.N26),
+          iban: (data) => new Array(data.length).fill(config?.accounts?.N26),
           date: buildColumn(n26Cols.Date, (val) => new Date(val)),
           amount: buildColumn(n26Cols.Amount, parseFloat),
           category: buildColumn(n26Cols.Payee, Transformers.transformCategory),
@@ -74,7 +74,8 @@ export class Config {
         ],
         columnImportRules: {
           ref: null,
-          iban: (data) => new Array(data.length).fill(BankAccount.OPENBANK),
+          iban: (data) =>
+            new Array(data.length).fill(config?.accounts?.OPENBANK),
           date: buildColumn(openbankCols.Fecha, (val) => {
             let [day, month, year] = val.split('/');
             let yearNum = +year;

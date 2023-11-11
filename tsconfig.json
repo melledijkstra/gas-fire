@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2019",
     "lib": ["ESNext"],
-    "rootDir": "src",
+    "rootDir": "./",
     "allowJs": false,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
@@ -16,5 +16,5 @@
     "experimentalDecorators": true,
     "strict": true
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**.ts"]
 }

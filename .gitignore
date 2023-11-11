@@ -4,4 +4,5 @@ node_modules/
 dist/
 dist/bundle.js
 
-src/accounts.ts
+# ignore commiting configuration file
+src/server/config.json
