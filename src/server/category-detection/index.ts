@@ -1,8 +1,10 @@
+import { PROP_AUTOMATIC_CATEGORIES_CONFIG } from '../globals';
+
 type CategoryDetectionConfigOld = Record<string, Array<RegExp>>;
 
-type CategoryDetectionConfig = Record<string, Array<string>>;
+export type CategoryDetectionConfig = Record<string, Array<string>>;
 
-const categoriesTermsMap: CategoryDetectionConfigOld = {
+export const categoriesTermsMap: CategoryDetectionConfigOld = {
   'Food & Groceries': [
     /supermercado/,
     /supermercados/,
