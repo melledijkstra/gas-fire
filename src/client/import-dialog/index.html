@@ -2,11 +2,12 @@
 <html>
   <head>
     <base target="_top" />
+    <!-- Tabulator is used to generate tables -->
     <link
       href="https://unpkg.com/tabulator-tables@4.9.3/dist/css/tabulator.min.css"
       rel="stylesheet"
     />
-    <!-- Compiled and minified CSS -->
+    <!-- Materialize styles -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
@@ -14,72 +15,20 @@
   </head>
 
   <body>
-    <form onsubmit="handleFormSubmit()">
-      <div class="row">
-        <div class="col s6">
-          <div class="file-field input-field">
-            <div class="btn green darken-3">
-              <span>Select File</span>
-              <input
-                required
-                id="csvFiles"
-                type="file"
-                onchange="handleOnFileSelect()"
-                accept="text/csv"
-                name="csvFiles"
-              />
-            </div>
-            <div class="file-path-wrapper">
-              <input class="file-path validate" type="text" />
-            </div>
-          </div>
-        </div>
-
-        <div class="col s6">
-          <label>Select Bank</label>
-          <select
-            required
-            id="import-strategy"
-            onchange="handleOnStrategySelect()"
-            class="browser-default"
-          >
-            <option value="" disabled selected>Choose Bank</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="col s12">
-          <div class="right-align">
-            <button class="btn green darken-3" type="submit">IMPORT</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="left-align">
-          <p id="statusText">-</p>
-        </div>
-      </div>
-    </form>
-
-    <div class="row">
-      <h5>Preview data</h5>
-      <div id="import-table"></div>
-    </div>
-
-    <div class="row">
-      <p id="status"></p>
-    </div>
+    <section id="index">
+      <!-- bundled js and css will get inlined here during build -->
+    </section>
+    <!-- Papa parse is used to parse CSV on the client side in Javascript [window.Papa] -->
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"
+      integrity="sha512-rKFvwjvE4liWPlFnvH4ZhRDfNZ9FOpdkD/BU5gAIA3VS3vOQrQ5BjKgbO3kxebKhHdHcNUHLqxQYSoxee9UwgA=="
+      crossorigin="anonymous"
+    ></script>
+    <!-- Tabulator is used to generate tables on the client side [window.Tabulator] -->
+    <script
+      type="text/javascript"
+      src="https://unpkg.com/tabulator-tables@4.9.3/dist/js/tabulator.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
   </body>
-  <script
-    src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"
-    integrity="sha512-rKFvwjvE4liWPlFnvH4ZhRDfNZ9FOpdkD/BU5gAIA3VS3vOQrQ5BjKgbO3kxebKhHdHcNUHLqxQYSoxee9UwgA=="
-    crossorigin="anonymous"
-  ></script>
-  <script
-    type="text/javascript"
-    src="https://unpkg.com/tabulator-tables@4.9.3/dist/js/tabulator.min.js"
-  ></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 </html>

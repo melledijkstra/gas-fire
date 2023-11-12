@@ -49,7 +49,7 @@ const clientEntrypoints = [
   },
   {
     name: 'CLIENT - Import Dialog',
-    entry: './src/client/import-dialog/index.js',
+    entry: './src/client/import-dialog/index.tsx',
     filename: 'import-dialog', // we'll add the .html suffix to these
     template: './src/client/import-dialog/index.html',
   },

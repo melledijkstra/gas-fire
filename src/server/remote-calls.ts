@@ -48,7 +48,7 @@ export function getStrategyOptions(): typeof StrategyOption {
 
 export function generatePreview(
   data: Table,
-  strategy: Strategy
+  strategy: StrategyOption
 ): { result: Table; newBalance: number } {
   return { result: data, newBalance: 1240.56 };
 }
