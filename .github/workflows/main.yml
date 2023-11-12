@@ -18,7 +18,5 @@ jobs:
           node-version: '18'
       - name: Install dependencies
         run: npm install
-      - name: Setup config.json file
-        run: cp src/server/config.template.json src/server/config.json
       - name: Run build
         run: npm run build
