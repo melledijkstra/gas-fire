@@ -1,6 +1,6 @@
 {
   "name": "gas-fire",
-  "version": "1.0.1",
+  "version": "1.1.1",
   "author": "Melle Dijkstra",
   "description": "Google App Script utilities to automate the FIRE google sheet",
   "license": "MIT",
@@ -14,23 +14,49 @@
   "scripts": {
     "publish": "clasp push -f",
     "dev": "echo 'Not yet implemented'",
-    "build": "rollup --config && npm run build:inline",
-    "build:inline": "node inline-assets.js dist/ --delete",
-    "deploy": "npm run build && npm run publish"
+    "build:dev": "cross-env NODE_ENV=development webpack",
+    "build": "cross-env NODE_ENV=production webpack",
+    "deploy:dev": "rm -rf dist && npm run build:dev && npm run push",
+    "deploy": "rm -rf dist && npm run build && npm run push",
+    "push": "clasp push -f",
+    "serve": "cross-env NODE_ENV=development webpack serve",
+    "start": "npm run deploy:dev && npm run serve"
+  },
+  "dependencies": {
+    "@babel/preset-react": "^7.23.3",
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "@mui/material": "^5.14.17",
+    "gas-types-detailed": "^1.1.2",
+    "gas-webpack-plugin": "^2.5.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.22.10",
-    "@babel/plugin-transform-runtime": "^7.22.10",
-    "@babel/preset-env": "^7.22.10",
-    "@babel/preset-typescript": "^7.22.5",
+    "@babel/core": "^7.23.3",
+    "@babel/plugin-transform-class-properties": "^7.23.3",
+    "@babel/plugin-transform-object-assign": "^7.23.3",
+    "@babel/plugin-transform-object-rest-spread": "^7.23.3",
+    "@babel/plugin-transform-optional-chaining": "^7.23.3",
+    "@babel/preset-env": "^7.23.3",
+    "@effortlessmotion/dynamic-cdn-webpack-plugin": "^5.0.1",
+    "@effortlessmotion/html-webpack-inline-source-plugin": "^1.0.3",
     "@google/clasp": "^2.4.1",
-    "@rollup/plugin-babel": "^6.0.3",
-    "@rollup/plugin-json": "^6.0.1",
-    "@rollup/plugin-node-resolve": "^15.1.0",
     "@types/google-apps-script": "^1.0.51",
-    "jsdom": "^22.1.0",
-    "rollup": "^3.28.0",
-    "typescript": "^3.8.2"
+    "@types/react": "^18.0.14",
+    "babel-loader": "^9.1.3",
+    "babel-plugin-transform-es3-member-expression-literals": "^6.22.0",
+    "babel-plugin-transform-es3-property-literals": "^6.22.0",
+    "copy-webpack-plugin": "^11.0.0",
+    "cross-env": "^7.0.3",
+    "css-loader": "^6.8.1",
+    "gas-client": "^1.1.1",
+    "html-webpack-plugin": "^5.5.3",
+    "module-to-cdn": "^3.1.5",
+    "style-loader": "^3.3.3",
+    "ts-loader": "^9.5.0",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
   },
   "repository": {
     "type": "git",
@@ -40,12 +66,12 @@
     "google-apps-script",
     "typescript",
     "financial",
-    "automation"
+    "automation",
+    "script",
+    "sheet",
+    "google"
   ],
   "bugs": {
     "url": "https://github.com/melledijkstra/gas-fire/issues"
-  },
-  "dependencies": {
-    "rollup-plugin-copy": "^3.5.0"
   }
 }

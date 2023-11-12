@@ -3,11 +3,7 @@ import { buildNewTableData } from './table-utils';
 import { ServerResponse, Strategy, StrategyOption, Table } from './types';
 import { Utils, sourceSheet } from './utils';
 
-/**
- * This function gets called by client side script
- * @see file-input.html
- */
-function processCSV(
+export function processCSV(
   input: Table,
   importStrategy: StrategyOption
 ): ServerResponse {
@@ -44,15 +40,13 @@ function processCSV(
 }
 
 /**
- * Remote Procedure Call
  * This function returns the strategy options available to the client side
- * @returns {StrategyOption}
  */
-function getStrategyOptions(): typeof StrategyOption {
+export function getStrategyOptions(): typeof StrategyOption {
   return StrategyOption;
 }
 
-function generatePreview(
+export function generatePreview(
   data: Table,
   strategy: Strategy
 ): { result: Table; newBalance: number } {

@@ -1,5 +1,3 @@
-import { foo } from './utils';
-
 const acceptedMimeTypes = ['text/csv', 'application/vnd.ms-excel'];
 
 const preventFormSubmit = () => {
@@ -104,7 +102,6 @@ const triggerPreview = () => {
 };
 
 const onLoad = () => {
-  foo();
   google.script.run
     .withSuccessHandler(renderStrategyOptions)
     .withFailureHandler(onFailure)
@@ -118,6 +115,43 @@ const onLoad = () => {
       return definitions;
     },
   });
+};
+
+const generatePreview = (data, strategy) => {
+  google.script.run
+    .withSuccessHandler(onGeneratePreviewSuccess)
+    .withFailureHandler(onFailure)
+    .generatePreview(data, strategy);
+};
+
+const onGeneratePreviewSuccess = ({ result, newBalance }) => {
+  console.log('received from server', { result, newBalance });
+  setStatusText(`Your new balance: ${newBalance}`);
+
+  setPreview(result);
+};
+
+const csvToJson = (csvData) => {
+  const headers = csvData.shift();
+  return csvData.map((row) => {
+    let jsonRow = {};
+    row.forEach((value, index) => {
+      jsonRow[headers[index]] = value;
+    });
+    return jsonRow;
+  });
+};
+
+const setTableData = (data) => {
+  try {
+    tabulator.setData(data);
+  } catch (error) {
+    alert(`Could not set table data (error: ${error})`);
+  }
+};
+
+const setPreview = (data) => {
+  setTableData(csvToJson(data));
 };
 
 window.addEventListener('load', onLoad);

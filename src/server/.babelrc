@@ -1,0 +1,18 @@
+{
+  "presets": [
+    [
+      "@babel/env",
+      {
+        "modules": false
+      }
+    ]
+  ],
+  "plugins": [
+    "transform-es3-property-literals",
+    "transform-es3-member-expression-literals",
+    "@babel/plugin-transform-class-properties",
+    "@babel/plugin-transform-object-rest-spread",
+    "@babel/plugin-transform-object-assign",
+    "@babel/plugin-transform-optional-chaining"
+  ]
+}
