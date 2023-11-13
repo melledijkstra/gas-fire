@@ -29,6 +29,7 @@
     "@mui/material": "^5.14.17",
     "gas-types-detailed": "^1.1.2",
     "gas-webpack-plugin": "^2.5.0",
+    "materialize-css": "^1.0.0-rc.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
@@ -39,6 +40,7 @@
     "@effortlessmotion/html-webpack-inline-source-plugin": "^1.0.3",
     "@google/clasp": "^2.4.2",
     "@types/google-apps-script": "^1.0.77",
+    "@types/materialize-css": "^1.0.14",
     "@types/react": "^18.0.14",
     "@types/react-dom": "^18.2.15",
     "babel-loader": "^9.1.3",

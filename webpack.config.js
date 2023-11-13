@@ -191,6 +191,13 @@ const DynamicCdnWebpackPluginConfig = {
           version: packageVersion,
           url: `https://unpkg.com/@emotion/styled@${packageVersion}/dist/emotion-styled.umd.min.js`,
         };
+      case 'materialize-css':
+        return {
+          name: packageName,
+          var: 'M',
+          version: packageVersion,
+          url: `https://cdnjs.cloudflare.com/ajax/libs/materialize/${packageVersion}/js/materialize.min.js`,
+        };
       // externalize gas-client to keep bundle size even smaller
       case 'gas-client':
         return {

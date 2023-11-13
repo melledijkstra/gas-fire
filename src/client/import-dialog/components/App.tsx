@@ -2,21 +2,23 @@ import React, { useEffect, useRef, useState } from 'react';
 import { serverFunctions } from '../../utils/serverFunctions';
 import { StrategyOption, Table } from '../../../server/types';
 import { isAllowedFile } from './utils';
+import M from 'materialize-css';
+
+// import materialize css as it is needed for the Form
+import 'materialize-css/dist/css/materialize.min.css';
 
 export const App = () => {
-  const fileRef = useRef<HTMLInputElement>();
   const [strategyOptions, setStrategyOptions] =
     useState<typeof StrategyOption>(null);
   // The strategy currently selected by the user
   const [selectedStrategy, setSelectedStrategy] =
     useState<StrategyOption>(null);
-  const tabulatorRef = useRef<unknown>();
-
   const [statusText, setStatusText] = useState<string>('-');
 
+  const tabulatorRef = useRef<unknown>();
+  const fileRef = useRef<HTMLInputElement>();
+
   useEffect(() => {
-    // UPDATE WITH CORRECT TYPES AND PACKAGES!
-    // @ts-ignore
     M.FormSelect.init(document.querySelectorAll('select'));
 
     // @ts-ignore
