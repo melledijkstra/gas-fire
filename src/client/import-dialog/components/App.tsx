@@ -3,8 +3,11 @@ import { serverFunctions } from '../../utils/serverFunctions';
 import { StrategyOption, Table } from '../../../server/types';
 import { isAllowedFile } from './utils';
 import M from 'materialize-css';
+import Tabulator from 'tabulator-tables';
+import Papa from 'papaparse';
 
-// import materialize css as it is needed for the Form
+// import css from external packages
+import 'tabulator-tables/dist/css/tabulator.min.css';
 import 'materialize-css/dist/css/materialize.min.css';
 
 export const App = () => {
@@ -15,21 +18,14 @@ export const App = () => {
     useState<StrategyOption>(null);
   const [statusText, setStatusText] = useState<string>('-');
 
-  const tabulatorRef = useRef<unknown>();
-  const fileRef = useRef<HTMLInputElement>();
+  const tabulatorRef = useRef<Tabulator>();
+  const tabulatorContainer = useRef<HTMLDivElement>(null);
 
+  const [importFile, setImportFile] = useState<File>(null);
+
+  // This useEffect is here to initialize some parts of the webpage
   useEffect(() => {
     M.FormSelect.init(document.querySelectorAll('select'));
-
-    // @ts-ignore
-    tabulatorRef.current = new Tabulator('#import-table', {
-      autoColumns: true,
-      // layout: "fitColumns",
-      autoColumnsDefinitions: (definitions) => {
-        definitions.forEach((definition) => (definition['headerSort'] = false));
-        return definitions;
-      },
-    });
 
     serverFunctions
       .getStrategyOptions()
@@ -39,10 +35,20 @@ export const App = () => {
       .catch(onFailure);
   }, []);
 
+  useEffect(() => {
+    tabulatorRef.current = new Tabulator(tabulatorContainer.current, {
+      autoColumns: true,
+      layout: 'fitColumns',
+      autoColumnsDefinitions: (definitions) => {
+        definitions.forEach((definition) => (definition['headerSort'] = false));
+        return definitions;
+      },
+    });
+  }, [tabulatorContainer.current]);
+
   const onSuccess = (response) => {
     if ('data' in response) setTableData(csvToJson(response.data));
     setStatusText(`Action successful! ${response.message}`);
-    // @ts-ignore
     google.script.host.close();
   };
 
@@ -55,49 +61,29 @@ export const App = () => {
       .catch(onFailure);
   };
 
-  const getFile = () => {
-    if (fileRef?.current?.files.length < 1) return;
-    return fileRef.current.files[0];
-  };
-
   const onParseError = (error) => {
     console.error(error);
     alert(`Parsing error: ${error}`);
   };
 
-  function handleOnFileSelect() {
-    const file = getFile();
-    if (!file || !isAllowedFile(file.type)) return;
-    triggerPreview();
-  }
-
   const handleFormSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    const file = getFile();
-    if (!file || !isAllowedFile(file.type)) return;
-    // UPDATE WITH CORRECT TYPES / PACKAGE
-    // @ts-ignore
-    Papa.parse(file, {
+    if (!importFile || !isAllowedFile(importFile.type)) return;
+    Papa.parse<string[]>(importFile, {
       complete: (result) => submitDataToServer(result.data, selectedStrategy),
       error: onParseError,
     });
   };
 
   const triggerPreview = () => {
-    const fileInput = getFile();
-
-    if (!selectedStrategy || !fileInput) {
+    if (!selectedStrategy || !importFile) {
       setStatusText('File and strategy need to be set to generate preview!');
       return;
     }
 
-    // UPDATE WITH CORRECT TYPES / PACKAGE
-    // @ts-ignore
     tabulatorRef?.current?.clearData();
     setStatusText('Data is being processed...');
-    // UPDATE WITH CORRECT TYPES / PACKAGE
-    // @ts-ignore
-    Papa.parse(fileInput, {
+    Papa.parse<string[]>(importFile, {
       complete: (result) => generatePreview(result.data, selectedStrategy),
       error: onParseError,
     });
@@ -112,7 +98,8 @@ export const App = () => {
 
   const onGeneratePreviewSuccess = ({ result, newBalance }) => {
     console.log('received from server', { result, newBalance });
-    setStatusText(`Your new balance: ${newBalance}`);
+    // setStatusText(`Your new balance: ${newBalance}`);
+    setStatusText('Import preview set');
     setPreview(result);
   };
 
@@ -129,8 +116,6 @@ export const App = () => {
 
   const setTableData = (data) => {
     try {
-      // UPDATE WITH CORRECT TYPES / PACKAGE
-      // @ts-ignore
       tabulatorRef.current.setData(data);
     } catch (error) {
       alert(`Could not set table data (error: ${error})`);
@@ -153,10 +138,12 @@ export const App = () => {
                 <span>Select File</span>
                 <input
                   required
-                  ref={fileRef}
                   id="csvFiles"
                   type="file"
-                  onChange={handleOnFileSelect}
+                  onChange={(event) => {
+                    setImportFile(event.target.files[0]);
+                    triggerPreview();
+                  }}
                   accept="text/csv"
                   name="csvFiles"
                 />
@@ -211,7 +198,7 @@ export const App = () => {
 
       <div className="row">
         <h5>Preview data</h5>
-        <div id="import-table"></div>
+        <div ref={tabulatorContainer}></div>
       </div>
     </>
   );

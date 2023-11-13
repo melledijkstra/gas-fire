@@ -198,6 +198,21 @@ const DynamicCdnWebpackPluginConfig = {
           version: packageVersion,
           url: `https://cdnjs.cloudflare.com/ajax/libs/materialize/${packageVersion}/js/materialize.min.js`,
         };
+      case 'tabulator-tables':
+        return {
+          name: packageName,
+          var: 'Tabulator',
+          version: packageVersion,
+          url: `https://unpkg.com/tabulator-tables@${packageVersion}/dist/js/tabulator.min.js`,
+        };
+      case 'papaparse': {
+        return {
+          name: packageName,
+          var: 'Papa',
+          version: packageVersion,
+          url: `https://unpkg.com/papaparse@${packageVersion}/papaparse.min.js`,
+        };
+      }
       // externalize gas-client to keep bundle size even smaller
       case 'gas-client':
         return {
