@@ -1,14 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { serverFunctions } from '../../utils/serverFunctions';
 import { StrategyOption, Table } from '../../../server/types';
-import { isAllowedFile } from './utils';
+import { isAllowedFile } from '../utils';
 import M from 'materialize-css';
 import Tabulator from 'tabulator-tables';
 import Papa from 'papaparse';
-
-// import css from external packages
-import 'tabulator-tables/dist/css/tabulator.min.css';
-import 'materialize-css/dist/css/materialize.min.css';
 
 export const App = () => {
   const [strategyOptions, setStrategyOptions] =

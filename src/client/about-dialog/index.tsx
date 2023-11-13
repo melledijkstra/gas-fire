@@ -1,10 +1,9 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { App } from './components/App';
+import { About } from './components/about';
 
 // import css from external packages
-import 'tabulator-tables/dist/css/tabulator.min.css';
 import 'materialize-css/dist/css/materialize.min.css';
 
 const root = createRoot(document.getElementById('index'));
-root.render(<App />);
+root.render(<About />);
