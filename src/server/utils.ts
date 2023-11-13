@@ -1,4 +1,4 @@
-import { Table, InputColumn, StrategyOption } from './types';
+import { Table, InputColumn } from './types';
 
 export const SOURCE_SHEET_ID = 1093484485;
 
