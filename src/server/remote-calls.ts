@@ -1,10 +1,10 @@
+import { sourceSheet } from './globals';
 import { Config } from './config';
-import { buildNewTableData } from './table-utils';
-import { ServerResponse, Strategy, StrategyOption, Table } from './types';
-import { Utils, sourceSheet } from './utils';
+import { TableUtils, processTableWithImportRules } from './table-utils';
+import { ServerResponse, StrategyOption, Table } from './types';
 
 export function processCSV(
-  input: Table,
+  inputTable: Table,
   importStrategy: StrategyOption
 ): ServerResponse {
   const strategies = Config.getConfig();
@@ -19,12 +19,12 @@ export function processCSV(
 
   if (beforeImport) {
     for (const rule of beforeImport) {
-      input = rule(input);
+      inputTable = rule(inputTable);
     }
   }
 
-  let output = buildNewTableData(input, columnImportRules);
-  Utils.importData(output);
+  let output = processTableWithImportRules(inputTable, columnImportRules);
+  TableUtils.importData(output);
 
   if (afterImport) {
     for (const rule of afterImport) {
@@ -44,11 +44,4 @@ export function processCSV(
  */
 export function getStrategyOptions(): typeof StrategyOption {
   return StrategyOption;
-}
-
-export function generatePreview(
-  data: Table,
-  strategy: StrategyOption
-): { result: Table; newBalance: number } {
-  return { result: data, newBalance: 1240.56 };
 }

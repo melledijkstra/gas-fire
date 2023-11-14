@@ -4,7 +4,7 @@
  * @param xpath simplified xpath as string
  * @customfunction
  */
-function IMPORTJSON(url: string, xpath: string) {
+export function IMPORTJSON(url: string, xpath: string) {
   try {
     // /rates/EUR
     var res = UrlFetchApp.fetch(url);
@@ -90,7 +90,7 @@ function IMPORTJSON(url: string, xpath: string) {
  * @return {string}         The hashed input value.
  * @customfunction
  */
-function MD5(input: string): string {
+export function MD5(input: string): string {
   var txtHash = '';
   var rawHash = Utilities.computeDigest(
     Utilities.DigestAlgorithm.MD5,

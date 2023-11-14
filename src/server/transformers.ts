@@ -1,4 +1,4 @@
-import { detectCategoryByTextAnalysis } from './category_detection';
+import { detectCategoryByTextAnalysis } from './category-detection';
 
 export class Transformers {
   static transformMoney(value: string, decimalSeparator: string = ','): number {
