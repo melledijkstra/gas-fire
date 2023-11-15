@@ -2,10 +2,11 @@
   "presets": [
     "@babel/preset-typescript",
     [
-      "@babel/env",
+      "@babel/preset-env",
       {
         "modules": false
       }
-    ]
+    ],
+    "@babel/preset-typescript"
   ]
 }
