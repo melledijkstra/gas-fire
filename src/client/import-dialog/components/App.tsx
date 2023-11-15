@@ -130,7 +130,7 @@ export const App = () => {
 
   return (
     <>
-      <form onSubmit={handleFormSubmit}>
+      <form style={{ border: '1px solid blue' }} onSubmit={handleFormSubmit}>
         <div className="row">
           <div className="col s6">
             <div className="file-field input-field">
@@ -164,8 +164,9 @@ export const App = () => {
                 triggerPreview();
               }}
               className="browser-default"
+              defaultValue={''}
             >
-              <option value="" disabled selected>
+              <option value="" disabled>
                 Choose Bank
               </option>
               {strategyOptions

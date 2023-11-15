@@ -13,14 +13,12 @@
   },
   "scripts": {
     "publish": "clasp push -f",
-    "dev": "echo 'Not yet implemented'",
+    "dev": "npm run deploy:dev && npm run serve",
     "build:dev": "cross-env NODE_ENV=development webpack",
     "build": "cross-env NODE_ENV=production webpack",
-    "deploy:dev": "rm -rf dist && npm run build:dev && npm run push",
-    "deploy": "rm -rf dist && npm run build && npm run push",
-    "push": "clasp push -f",
+    "deploy:dev": "rm -rf dist && npm run build:dev && npm run publish",
+    "deploy": "rm -rf dist && npm run build && npm run publish",
     "serve": "cross-env NODE_ENV=development webpack serve",
-    "start": "npm run deploy:dev && npm run serve",
     "test": "vitest",
     "test:coverage": "vitest --coverage"
   },
@@ -61,7 +59,8 @@
     "style-loader": "^3.3.3",
     "vitest": "^0.34.6",
     "webpack": "^5.89.0",
-    "webpack-cli": "^5.1.4"
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.1"
   },
   "repository": {
     "type": "git",

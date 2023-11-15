@@ -269,7 +269,7 @@ const serverConfig = {
     rules: [
       // typescript config
       {
-        test: /\.tsx?$/,
+        test: /\.ts?$/,
         exclude: /node_modules/,
         use: [
           {
@@ -330,5 +330,5 @@ module.exports = [
   ...clientConfigs,
   // 5. Create a development dialog wrapper bundle for each client entrypoint during development.
   //    Don't actually serve it though when running webpack serve.
-  // ...(isProd || isWebpackServe ? [] : devClientConfigs),
+  ...(isProd || isWebpackServe ? [] : devClientConfigs),
 ].filter(Boolean);
