@@ -4,6 +4,7 @@
   "author": "Melle Dijkstra",
   "description": "Google App Script utilities to automate the FIRE google sheet",
   "license": "MIT",
+  "type": "module",
   "workspaces": [
     "client",
     "server"
