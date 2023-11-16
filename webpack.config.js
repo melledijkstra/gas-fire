@@ -257,7 +257,7 @@ const serverConfig = {
   mode: isProd ? 'production' : 'none',
   entry: serverEntry,
   output: {
-    filename: 'code.js',
+    filename: 'server.js',
     path: destination,
     libraryTarget: 'this',
     publicPath,
