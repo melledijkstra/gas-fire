@@ -1,8 +1,10 @@
 {
   "compilerOptions": {
+    "strict": true,
+    "esModuleInterop": true,
     "lib": ["ES2016", "DOM", "DOM.Iterable"],
     "types": ["gas-types-detailed"],
-    "jsx": "react",
-    "esModuleInterop": true
+    "jsx": "react-jsx"
   }
+  // "include": ["src/**/*"]
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import M from 'materialize-css';
 import { AutomaticCategorizationForm } from './AutomaticCategorizationForm';
 import { ImportRulesForm } from './ImportRulesForm';
