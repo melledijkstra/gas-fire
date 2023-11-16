@@ -10,22 +10,10 @@ const HtmlWebpackInlineSourcePlugin = require('@effortlessmotion/html-webpack-in
 const DynamicCdnWebpackPlugin = require('@effortlessmotion/dynamic-cdn-webpack-plugin');
 const moduleToCdn = require('module-to-cdn');
 
-/*********************************
- *    set up environment variables
- ********************************/
-const envVars = {};
-const PORT = envVars.PORT || 3000;
-envVars.NODE_ENV = process.env.NODE_ENV;
-envVars.PORT = PORT;
-
 const isProd = process.env.NODE_ENV === 'production';
-const isWebpackServe = process.env.WEBPACK_SERVE === 'true';
 
 const publicPath = process.env.ASSET_PATH || '/';
 
-/*********************************
- *    define entrypoints
- ********************************/
 // our destination directory
 const destination = path.resolve(__dirname, 'dist');
 
@@ -35,7 +23,11 @@ const serverEntry = './src/server/index.ts';
 // define appsscript.json file path
 const copyAppscriptEntry = './appsscript.json';
 
-// define client entry points and output names
+const envVars = {};
+
+/*********************************
+ *    define entrypoints
+ ********************************/
 const clientEntrypoints = [
   {
     name: 'CLIENT - About Dialog',
@@ -269,7 +261,7 @@ const serverConfig = {
     rules: [
       // typescript config
       {
-        test: /\.tsx?$/,
+        test: /\.ts?$/,
         exclude: /node_modules/,
         use: [
           {
@@ -288,28 +280,6 @@ const serverConfig = {
   },
   optimization: {
     minimize: true,
-    // minimizer: [
-    //   new TerserPlugin({
-    //     terserOptions: {
-    //       // ecma 5 is needed to support Rhino "DEPRECATED_ES5" runtime
-    //       // can use ecma 6 if V8 runtime is used
-    //       ecma: 5,
-    //       warnings: false,
-    //       parse: {},
-    //       compress: {
-    //         properties: false,
-    //       },
-    //       mangle: false,
-    //       module: false,
-    //       output: {
-    //         beautify: true,
-    //         // support custom function autocompletion
-    //         // https://developers.google.com/apps-script/guides/sheets/functions
-    //         comments: /@customfunction/,
-    //       },
-    //     },
-    //   }),
-    // ],
   },
   plugins: [
     new GasPlugin({
@@ -321,14 +291,9 @@ const serverConfig = {
 
 module.exports = [
   // 1. Copy appsscript.json to destination,
-  // 2. Set up webpack dev server during development
-  // Note: devServer settings are only read in the first element when module.exports is an array
-  { ...copyFilesConfig, ...(isProd ? {} : { devServer }) },
-  // 3. Create the server bundle. Don't serve server bundle when running webpack serve.
-  !isWebpackServe && serverConfig,
-  // 4. Create one client bundle for each client entrypoint.
+  { ...copyFilesConfig },
+  // 2. Create the server bundle. Don't serve server bundle when running webpack serve.
+  serverConfig,
+  // 3. Create one client bundle for each client entrypoint.
   ...clientConfigs,
-  // 5. Create a development dialog wrapper bundle for each client entrypoint during development.
-  //    Don't actually serve it though when running webpack serve.
-  // ...(isProd || isWebpackServe ? [] : devClientConfigs),
 ].filter(Boolean);

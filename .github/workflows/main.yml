@@ -20,5 +20,8 @@ jobs:
         run: npm ci
       - name: Run build
         run: npm run build
+      - name: Install testing dependency
+        # fix for CI, there should be a better way to fix this
+        run: npm install "@rollup/rollup-linux-x64-gnu"
       - name: Run unit tests
         run: npm run test

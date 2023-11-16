@@ -91,7 +91,7 @@ export const App = () => {
 
   const generatePreview = (data: Table, strategy: StrategyOption) => {
     serverFunctions
-      .generatePreview(data, strategy)
+      .generatePreview(data)
       .then(onGeneratePreviewSuccess)
       .catch(onFailure);
   };
@@ -164,8 +164,9 @@ export const App = () => {
                 triggerPreview();
               }}
               className="browser-default"
+              defaultValue={''}
             >
-              <option value="" disabled selected>
+              <option value="" disabled>
                 Choose Bank
               </option>
               {strategyOptions

@@ -12,3 +12,13 @@ src/server/config.json
 
 # unit test coverage
 coverage/
+
+# certs
+*.pem
+certs/
+
+# env secrets
+.env
+
+# storybook
+storybook-static/
