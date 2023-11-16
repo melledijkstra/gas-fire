@@ -6,3 +6,9 @@ dist/bundle.js
 
 # ignore commiting configuration file
 src/server/config.json
+
+# mac
+.DS_Store
+
+# unit test coverage
+coverage/

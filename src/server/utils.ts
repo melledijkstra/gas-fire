@@ -1,10 +1,4 @@
-import { FireSpreadsheet, sheets } from './globals';
-
-export function getSheetById(
-  id: number
-): GoogleAppsScript.Spreadsheet.Sheet | undefined {
-  return sheets.find((sheet) => sheet.getSheetId() === id);
-}
+import { FireSpreadsheet } from './globals';
 
 export class Utils {
   static getBankAccounts(): Record<string, string> {
