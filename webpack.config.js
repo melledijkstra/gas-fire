@@ -2,7 +2,6 @@
  *    import webpack plugins
  ********************************/
 const path = require('path');
-const fs = require('fs');
 const webpack = require('webpack');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const GasPlugin = require('gas-webpack-plugin');
@@ -36,9 +35,6 @@ const serverEntry = './src/server/index.ts';
 // define appsscript.json file path
 const copyAppscriptEntry = './appsscript.json';
 
-// define live development dialog paths
-const devDialogEntry = './dev/index.js';
-
 // define client entry points and output names
 const clientEntrypoints = [
   {
@@ -54,12 +50,6 @@ const clientEntrypoints = [
     template: './src/client/import-dialog/index.html',
   },
 ];
-
-// define certificate locations
-// see "npm run setup:https" script in package.json
-const keyPath = path.resolve(__dirname, './certs/key.pem');
-const certPath = path.resolve(__dirname, './certs/cert.pem');
-const pfxPath = path.resolve(__dirname, './certs/cert.pfx'); // if needed for Windows
 
 /*********************************
  *    Declare settings
@@ -120,9 +110,6 @@ const clientConfig = () => ({
         use: [
           {
             loader: 'babel-loader',
-          },
-          {
-            loader: 'ts-loader',
           },
         ],
       },
@@ -238,9 +225,8 @@ const DynamicCdnWebpackPluginConfig = {
 
 // webpack settings used by each client entrypoint defined at top
 const clientConfigs = clientEntrypoints.map((clientEntrypoint) => {
-  const isDevClientWrapper = false;
   return {
-    ...clientConfig({ isDevClientWrapper }),
+    ...clientConfig(),
     name: clientEntrypoint.name,
     entry: clientEntrypoint.entry,
     plugins: [
@@ -262,57 +248,6 @@ const clientConfigs = clientEntrypoints.map((clientEntrypoint) => {
   };
 });
 
-// webpack settings for devServer https://webpack.js.org/configuration/dev-server/
-const devServer = {
-  hot: true,
-  port: PORT,
-  server: 'https',
-};
-
-if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
-  // use key and cert settings only if they are found
-  devServer.server = {
-    type: 'https',
-    options: { key: fs.readFileSync(keyPath), cert: fs.readFileSync(certPath) },
-  };
-}
-
-// If mkcert -install cannot be used on Windows machines (in pipeline, for example), the
-// script at test/generate-cert.ps1 can be used to create a .pfx cert
-if (fs.existsSync(pfxPath)) {
-  // use pfx file if it's found
-  devServer.server = {
-    type: 'https',
-    options: { pfx: fs.readFileSync(pfxPath), passphrase: 'abc123' },
-  };
-}
-
-// webpack settings for the development client wrapper
-// const devClientConfigs = clientEntrypoints.map((clientEntrypoint) => {
-//   envVars.FILENAME = clientEntrypoint.filename;
-//   const isDevClientWrapper = true;
-//   return {
-//     ...clientConfig({ isDevClientWrapper }),
-//     name: `DEVELOPMENT: ${clientEntrypoint.name}`,
-//     entry: devDialogEntry,
-//     plugins: [
-//       new webpack.DefinePlugin({
-//         'process.env': JSON.stringify(envVars),
-//       }),
-//       new HtmlWebpackPlugin({
-//         template: './dev/index.html',
-//         // this should match the html files we load in src/server/ui.js
-//         filename: `${clientEntrypoint.filename}.html`,
-//         inlineSource: '^/.*(js|css)$', // embed all js and css inline, exclude packages from dynamic cdn insertion
-//         scriptLoading: 'blocking',
-//         inject: 'body',
-//       }),
-//       new HtmlWebpackInlineSourcePlugin(),
-//       new DynamicCdnWebpackPlugin({}),
-//     ],
-//   };
-// });
-
 // webpack settings used by the server-side code
 const serverConfig = {
   ...sharedClientAndServerConfig,
@@ -322,7 +257,7 @@ const serverConfig = {
   mode: isProd ? 'production' : 'none',
   entry: serverEntry,
   output: {
-    filename: 'code.js',
+    filename: 'server.js',
     path: destination,
     libraryTarget: 'this',
     publicPath,
@@ -339,9 +274,6 @@ const serverConfig = {
         use: [
           {
             loader: 'babel-loader',
-          },
-          {
-            loader: 'ts-loader',
           },
         ],
       },
