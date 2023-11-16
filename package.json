@@ -13,12 +13,9 @@
   },
   "scripts": {
     "publish": "clasp push -f",
-    "dev": "npm run deploy:dev && npm run serve",
-    "build:dev": "cross-env NODE_ENV=development webpack",
+    "dev": "npm run storybook",
     "build": "cross-env NODE_ENV=production webpack",
-    "deploy:dev": "rm -rf dist && npm run build:dev && npm run publish",
     "deploy": "rm -rf dist && npm run build && npm run publish",
-    "serve": "cross-env NODE_ENV=development webpack serve",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
     "storybook": "storybook dev -p 6006",

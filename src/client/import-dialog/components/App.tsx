@@ -5,7 +5,6 @@ import { isAllowedFile } from './utils';
 import M from 'materialize-css';
 import Tabulator from 'tabulator-tables';
 import Papa from 'papaparse';
-import { Button } from '@mui/material';
 
 // import css from external packages
 import 'tabulator-tables/dist/css/tabulator.min.css';
@@ -131,7 +130,7 @@ export const App = () => {
 
   return (
     <>
-      <form style={{ border: '1px solid blue' }} onSubmit={handleFormSubmit}>
+      <form onSubmit={handleFormSubmit}>
         <div className="row">
           <div className="col s6">
             <div className="file-field input-field">
@@ -184,7 +183,6 @@ export const App = () => {
         <div className="row">
           <div className="col s12">
             <div className="right-align">
-              <Button variant={'contained'}>MUI Button!</Button>
               <button className="btn green darken-3" type="submit">
                 IMPORT
               </button>

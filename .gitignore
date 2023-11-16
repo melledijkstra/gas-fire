@@ -19,3 +19,6 @@ certs/
 
 # env secrets
 .env
+
+# storybook
+storybook-static/
