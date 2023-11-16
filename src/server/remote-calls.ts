@@ -39,6 +39,13 @@ export function processCSV(
   };
 }
 
+export function generatePreview(data: Table): {
+  result: Table;
+  newBalance: number;
+} {
+  return { result: data, newBalance: 0 };
+}
+
 /**
  * This function returns the strategy options available to the client side
  */

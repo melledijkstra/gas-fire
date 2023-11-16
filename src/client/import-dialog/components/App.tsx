@@ -91,7 +91,7 @@ export const App = () => {
 
   const generatePreview = (data: Table, strategy: StrategyOption) => {
     serverFunctions
-      .generatePreview(data, strategy)
+      .generatePreview(data)
       .then(onGeneratePreviewSuccess)
       .catch(onFailure);
   };
