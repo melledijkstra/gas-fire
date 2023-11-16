@@ -1,5 +1,7 @@
 # GAS - FIRE
 
+[![Build Check](https://github.com/melledijkstra/gas-fire/actions/workflows/main.yml/badge.svg)](https://github.com/melledijkstra/gas-fire/actions/workflows/main.yml)
+
 The title stands for Google Apps Script - Financial Independence Retire Early.
 This project helps with google sheets tasks and is used to keep my finances automated.
 
