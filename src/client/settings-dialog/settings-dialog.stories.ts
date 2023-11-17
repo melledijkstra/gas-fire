@@ -2,9 +2,6 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { App } from './components/App';
 import { DIALOG_SIZES } from '../../common/constants';
 
-// import css from external packages
-import 'materialize-css/dist/css/materialize.min.css';
-
 const meta: Meta<typeof App> = {
   title: 'SettingsDialog',
   component: App,

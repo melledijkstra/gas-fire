@@ -4,7 +4,6 @@ import { DIALOG_SIZES } from '../../common/constants';
 
 // import css from external packages
 import 'tabulator-tables/dist/css/tabulator.min.css';
-import 'materialize-css/dist/css/materialize.min.css';
 
 const meta: Meta<typeof About> = {
   title: 'AboutDialog',

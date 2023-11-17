@@ -52,6 +52,7 @@ export enum StrategyOption {
 }
 
 export type Table = string[][];
+export type JsonTable = Record<string, string>[];
 
 /**
  * A column function returns the values for that column
