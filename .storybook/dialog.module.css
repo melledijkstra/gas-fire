@@ -13,6 +13,8 @@
 }
 
 .dialog__heading {
+  box-sizing: content-box;
+  position: relative;
   display: flex;
   justify-content: space-between;
   font-size: 22px;
@@ -28,11 +30,13 @@
 }
 
 .dialog__heading__close {
+  position: absolute;
   display: block;
+  padding: 7px;
   height: 18px;
+  width: 18px;
   right: 0px;
   top: -3px;
-  width: 18px;
   font-family: Roboto, RobotoDraft, Helvetica, Arial, sans-serif;
   font-size: 22px;
   font-weight: 400;
@@ -41,6 +45,8 @@
   color: rgb(0, 0, 0);
   cursor: pointer;
   border-radius: 50%;
+
+  opacity: 0.54;
 }
 
 .dialog__heading__close:after {
@@ -52,4 +58,5 @@
 
 .dialog__heading__close:hover {
   background-color: #f1f3f4;
+  opacity: 1;
 }

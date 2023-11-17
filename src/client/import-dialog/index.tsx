@@ -1,4 +1,3 @@
-import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './components/App';
 
@@ -6,5 +5,8 @@ import { App } from './components/App';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import 'materialize-css/dist/css/materialize.min.css';
 
-const root = createRoot(document.getElementById('index'));
-root.render(<App />);
+const container = document.getElementById('index');
+if (container) {
+  const root = createRoot(container);
+  root.render(<App />);
+}

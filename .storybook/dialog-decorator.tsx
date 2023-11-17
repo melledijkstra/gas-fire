@@ -1,6 +1,5 @@
 import { ReactRenderer } from '@storybook/react';
 import { DecoratorFunction } from '@storybook/types';
-import React from 'react';
 
 import styles from './dialog.module.css';
 
