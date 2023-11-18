@@ -5,9 +5,8 @@ import { StrategyOption } from '../../server/types';
 import { isAllowedFile, acceptedMimeTypes, csvToJson } from './utils';
 import Papa from 'papaparse';
 import { Application } from '../Application';
-import { ImportPreview } from './components/ImportPreview';
+import { PreviewTable } from './components/PreviewTable';
 import {
-  Box,
   Button,
   FormControl,
   Grid,
@@ -28,8 +27,8 @@ export const Dialog = () => {
 
   const [importFile, setImportFile] = useState<File>();
 
-  // this useEffect is here to initialize some parts of the webpage
   useEffect(() => {
+    // retrieve import strategy options when mounted
     serverFunctions
       .getStrategyOptions()
       .then((serverStrategyOptions) => {
@@ -184,7 +183,7 @@ export const Dialog = () => {
             </Button>
           </Grid>
           <Typography variant="body1">{statusText}</Typography>
-          <ImportPreview tableData={tableData} />
+          <PreviewTable tableData={tableData} />
         </Stack>
       </form>
     </Application>

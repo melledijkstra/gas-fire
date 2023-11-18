@@ -177,13 +177,6 @@ const DynamicCdnWebpackPluginConfig = {
           version: packageVersion,
           url: `https://unpkg.com/@emotion/styled@${packageVersion}/dist/emotion-styled.umd.min.js`,
         };
-      case 'tabulator-tables':
-        return {
-          name: packageName,
-          var: 'Tabulator',
-          version: packageVersion,
-          url: `https://unpkg.com/tabulator-tables@${packageVersion}/dist/js/tabulator.min.js`,
-        };
       case 'papaparse': {
         return {
           name: packageName,
