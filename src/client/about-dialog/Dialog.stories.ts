@@ -3,7 +3,7 @@ import { Dialog } from './Dialog';
 import { DIALOG_SIZES } from '../../common/constants';
 
 const meta: Meta<typeof Dialog> = {
-  title: 'AboutDialog',
+  title: 'AboutDialog/Dialog',
   component: Dialog,
   args: {
     dialogSize: DIALOG_SIZES.about,

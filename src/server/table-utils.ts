@@ -1,5 +1,8 @@
+import type { Table } from '../common/types';
 import { fireColumns, sourceSheet } from './globals';
-import { ColumnRule, FireColumnRules, InputColumn, Table } from './types';
+import { ColumnRule, FireColumnRules, InputColumn } from './types';
+
+const EMPTY = '';
 
 export function buildColumn<T>(
   column: InputColumn,
@@ -17,7 +20,6 @@ export function buildColumn<T>(
 }
 
 /**
- * What the heck does this function do?
  * @param input
  * @param columnImportRules
  * @returns
@@ -84,6 +86,10 @@ export class TableUtils {
     return result;
   }
 
+  static retrieveColumn(data: Table, columnIndex: number): string[] {
+    return data?.map((row) => row?.[columnIndex] ?? EMPTY) ?? [];
+  }
+
   static deleteFirstRow(data: Table): Table {
     data.shift();
     return data;
@@ -113,8 +119,8 @@ export class TableUtils {
     const sortedIndices = colIndices.sort().reverse();
     // tranpose the table so we are working with columns first instead of rows
     let transposedTable = this.transpose(table);
-    Logger.log('transposed');
-    Logger.log(transposedTable);
+    console.log('transposed');
+    console.log(transposedTable);
     // delIndex is the column index to delete in the table
     for (const delIndex of sortedIndices) {
       if (typeof transposedTable[delIndex] !== 'undefined') {

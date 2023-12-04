@@ -163,6 +163,13 @@ const DynamicCdnWebpackPluginConfig = {
             isProd ? 'production.min.js' : 'development.js'
           }`,
         };
+      case '@mui/x-data-grid':
+        return {
+          name: packageName,
+          var: 'MUIDataGrid',
+          version: packageVersion,
+          url: `https://unpkg.com/@mui/x-data-grid@${packageVersion}/node/index.js`,
+        };
       case '@emotion/react':
         return {
           name: packageName,

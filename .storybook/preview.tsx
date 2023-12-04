@@ -1,5 +1,6 @@
 import { Preview } from '@storybook/react';
 import { DialogDecorator } from './dialog-decorator';
+import { ServerMockDecorator } from './__mocks__/server-mock';
 
 const preview: Preview = {
   parameters: {
@@ -21,7 +22,7 @@ const preview: Preview = {
       },
     },
   },
-  decorators: [DialogDecorator],
+  decorators: [ServerMockDecorator, DialogDecorator],
 };
 
 export default preview;

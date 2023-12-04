@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { serverFunctions } from '../utils/serverFunctions';
-import type { JsonTable, ServerResponse, Table } from '../../server/types';
-import { StrategyOption } from '../../server/types';
-import { isAllowedFile, acceptedMimeTypes, csvToJson } from './utils';
+import { StrategyOption, ServerResponse, Table } from '../../common/types';
+import { isAllowedFile, acceptedMimeTypes } from './utils';
 import Papa from 'papaparse';
 import { Application } from '../Application';
 import { PreviewTable } from './components/PreviewTable';
@@ -18,12 +17,12 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 
 export const Dialog = () => {
   const [strategyOptions, setStrategyOptions] =
-    useState<typeof StrategyOption>();
+    useState<typeof StrategyOption>(StrategyOption);
   // The strategy currently selected by the user
   const [selectedStrategy, setSelectedStrategy] = useState<StrategyOption>();
   const [statusText, setStatusText] = useState<string>('-');
 
-  const [tableData, setTableData] = useState<JsonTable>([]);
+  const [tableData, setTableData] = useState<Table>([]);
 
   const [importFile, setImportFile] = useState<File>();
 
@@ -36,6 +35,22 @@ export const Dialog = () => {
       })
       .catch((reason) => onFailure(reason));
   }, []);
+
+  useEffect(() => {
+    if (!selectedStrategy || !importFile) {
+      setStatusText('File and strategy need to be set to generate preview!');
+      return;
+    }
+
+    // clear table data
+    setTableData([]);
+
+    setStatusText('Data is being processed...');
+    Papa.parse<string[]>(importFile, {
+      complete: (result) => generatePreview(result.data, selectedStrategy),
+      error: onParseError,
+    });
+  }, [selectedStrategy, importFile]);
 
   const onSuccess = (response: ServerResponse) => {
     setStatusText(`Action successful! ${response.message}`);
@@ -74,25 +89,9 @@ export const Dialog = () => {
     });
   };
 
-  const triggerPreview = () => {
-    if (!selectedStrategy || !importFile) {
-      setStatusText('File and strategy need to be set to generate preview!');
-      return;
-    }
-
-    // clear table data
-    setTableData([]);
-
-    setStatusText('Data is being processed...');
-    Papa.parse<string[]>(importFile, {
-      complete: (result) => generatePreview(result.data, selectedStrategy),
-      error: onParseError,
-    });
-  };
-
   const generatePreview = (data: Table, strategy: StrategyOption) => {
     serverFunctions
-      .generatePreview(data)
+      .generatePreview(data, strategy)
       .then(onGeneratePreviewSuccess)
       .catch(onFailure);
   };
@@ -102,14 +101,18 @@ export const Dialog = () => {
     newBalance,
   }: {
     result: Table;
-    newBalance: number;
+    newBalance?: number;
   }) => {
-    setStatusText('Import preview set');
+    setStatusText(
+      `Import preview set${
+        newBalance ? `\nNew balance: ${newBalance.toFixed(2)}` : ''
+      }`
+    );
     setPreview(result);
   };
 
   const setPreview = (data: Table) => {
-    setTableData(csvToJson(data));
+    setTableData(data);
   };
 
   const canSubmit = importFile && selectedStrategy;
@@ -134,7 +137,6 @@ export const Dialog = () => {
                   hidden
                   onChange={(event) => {
                     setImportFile(event.target.files?.[0]);
-                    triggerPreview();
                   }}
                 />
               </Button>
@@ -149,7 +151,6 @@ export const Dialog = () => {
                   }}
                   onChange={(event) => {
                     setSelectedStrategy(event.target.value as StrategyOption);
-                    triggerPreview();
                   }}
                   defaultValue=""
                 >
