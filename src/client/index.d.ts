@@ -1,7 +1,3 @@
-declare module 'tabulator-tables' {
-  export = Tabulator;
-}
-
 declare namespace google.script.host {
   const origin: string;
   function close(): void;

@@ -14,12 +14,20 @@ const config: StorybookConfig = {
   addons: [
     getAbsolutePath('@storybook/addon-links'),
     getAbsolutePath('@storybook/addon-essentials'),
-    getAbsolutePath('@storybook/addon-onboarding'),
     getAbsolutePath('@storybook/addon-interactions'),
   ],
   framework: '@storybook/react-webpack5',
   docs: {
     autodocs: 'tag',
+  },
+  webpackFinal: async (config) => {
+    if (config?.resolve?.alias) {
+      // @ts-ignore
+      config.resolve.alias['../utils/serverFunctions'] = require.resolve(
+        './__mocks__/server-mock.ts'
+      );
+    }
+    return config;
   },
 };
 export default config;

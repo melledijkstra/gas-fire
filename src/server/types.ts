@@ -45,14 +45,6 @@ export enum openbankCols {
 
 export type InputColumn = n26Cols | raboCols | openbankCols;
 
-export enum StrategyOption {
-  N26 = 'n26',
-  RABO = 'rabobank',
-  OPENBANK = 'openbank',
-}
-
-export type Table = string[][];
-
 /**
  * A column function returns the values for that column
  * it can generate the column based on the data in the CSV
@@ -74,12 +66,10 @@ export interface FireColumnRules {
 }
 
 export type Strategy = {
+  decimalSeparator: string;
+  thousandSeparator?: string;
   beforeImport?: Array<(data: Table) => Table>;
   columnImportRules: FireColumnRules;
   afterImport?: Array<(data: Table) => void>;
   autoFillColumns?: number[];
-};
-
-export type ServerResponse = {
-  message: string;
 };

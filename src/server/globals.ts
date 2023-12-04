@@ -16,6 +16,10 @@ export const fireColumns = [
   'currency',
 ];
 
+export const PROP_BANK_ACCOUNTS = 'BANK_ACCOUNTS';
+export const PROP_AUTOMATIC_CATEGORIES_CONFIG =
+  'AUTOMATIC_CATEGORIZATION_CONFIG';
+
 export const SOURCE_SHEET_ID = 1093484485;
 export const FireSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
 export const sheets = FireSpreadsheet.getSheets();

@@ -1,4 +1,4 @@
-import { vi } from 'vitest';
+import { Mock, vi } from 'vitest';
 
 // In order to test our server code we need the Google Apps Script globals to be available
 // These are not available by default when we run vitest in node environment
@@ -8,7 +8,7 @@ import { vi } from 'vitest';
 class Range {
   static getLastRow = vi.fn(() => this);
   static offset = vi.fn(() => this);
-  static getValues = vi.fn(() => []);
+  static getValues: Mock<unknown[][]> = vi.fn(() => []);
 }
 
 class Sheet {

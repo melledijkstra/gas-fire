@@ -1,8 +1,21 @@
 {
   "compilerOptions": {
-    "lib": ["ES2016", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "moduleResolution": "Node",
+    "esModuleInterop": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "strictNullChecks": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "types": ["gas-types-detailed"],
-    "jsx": "react",
-    "esModuleInterop": true
-  }
+    "jsx": "react-jsx"
+  },
+  "include": [
+    // include normal sources
+    "src/**/*",
+    // the typescript of storybook configuration should also be included
+    ".storybook/**/*",
+    // declaration file to fix type hinting (e.g. (s)css modules)
+    "declarations.d.ts"
+  ]
 }

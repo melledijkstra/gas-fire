@@ -1,4 +1,10 @@
-const categoriesTermsMap: Record<string, Array<RegExp>> = {
+import { PROP_AUTOMATIC_CATEGORIES_CONFIG } from '../globals';
+
+type CategoryDetectionConfigOld = Record<string, Array<RegExp>>;
+
+export type CategoryDetectionConfig = Record<string, Array<string>>;
+
+export const categoriesTermsMap: CategoryDetectionConfigOld = {
   'Food & Groceries': [
     /supermercado/,
     /supermercados/,
@@ -47,16 +53,37 @@ const categoriesTermsMap: Record<string, Array<RegExp>> = {
   Miscellaneous: [],
 };
 
+const getCategoryMatchesMap = (): CategoryDetectionConfig => {
+  try {
+    const storeObject = PropertiesService.getDocumentProperties().getProperty(
+      PROP_AUTOMATIC_CATEGORIES_CONFIG
+    );
+
+    if (!storeObject) {
+      return {};
+    }
+
+    return JSON.parse(storeObject);
+  } catch (ignore) {
+    console.log(ignore);
+  }
+
+  return {};
+};
+
 /**
  * Function that detects automatically a category based on some simple text analysis (text matching)
  */
 export const detectCategoryByTextAnalysis = (
   keyphrase: string
 ): string | undefined => {
+  const categoriesTermsMap = getCategoryMatchesMap();
   // lowercase the keyphrase for easier matching
   const lowercaseKeyphrase = keyphrase.toLowerCase();
 
   return Object.keys(categoriesTermsMap).find((category) =>
-    categoriesTermsMap[category].some((term) => term.test(lowercaseKeyphrase))
+    categoriesTermsMap[category].some((term) =>
+      new RegExp(term).test(lowercaseKeyphrase)
+    )
   );
 };

@@ -1,8 +1,9 @@
 import { TableUtils, buildColumn } from './table-utils';
 import { Transformers } from './transformers';
-import type { Strategy, StrategyOption, Table } from './types';
+import type { StrategyOption, Table } from '../common/types';
+import type { Strategy } from './types';
 import { n26Cols, raboCols, openbankCols } from './types';
-import { Utils } from './utils';
+import { AccountUtils } from './account-utils';
 
 export const AUTO_FILL_COLUMNS = [
   5, // balance column
@@ -20,6 +21,7 @@ type RootConfig = {
 };
 
 const n26Config: Strategy = {
+  decimalSeparator: '.',
   beforeImport: [
     TableUtils.deleteLastRow,
     TableUtils.deleteFirstRow,
@@ -27,7 +29,8 @@ const n26Config: Strategy = {
   ],
   columnImportRules: {
     ref: null,
-    iban: (data) => new Array(data.length).fill(Utils.getBankIban('N26')),
+    iban: (data) =>
+      new Array(data.length).fill(AccountUtils.getBankIban('N26')),
     date: buildColumn(n26Cols.Date, (val) => new Date(val)),
     amount: buildColumn(n26Cols.Amount, parseFloat),
     category: buildColumn(n26Cols.Payee, Transformers.transformCategory),
@@ -42,6 +45,7 @@ const n26Config: Strategy = {
 };
 
 const rabobankConfig: Strategy = {
+  decimalSeparator: '.',
   beforeImport: [
     TableUtils.deleteLastRow,
     TableUtils.deleteFirstRow,
@@ -64,6 +68,7 @@ const rabobankConfig: Strategy = {
 };
 
 const openbankConfig: Strategy = {
+  decimalSeparator: '.',
   beforeImport: [
     TableUtils.deleteFirstRow,
     TableUtils.deleteLastRow,
@@ -72,7 +77,8 @@ const openbankConfig: Strategy = {
   ],
   columnImportRules: {
     ref: null,
-    iban: (data) => new Array(data.length).fill(Utils.getBankIban('OPENBANK')),
+    iban: (data) =>
+      new Array(data.length).fill(AccountUtils.getBankIban('OPENBANK')),
     date: buildColumn(openbankCols.Fecha, (val) => {
       let [day, month, year] = val.split('/');
       let yearNum = +year;

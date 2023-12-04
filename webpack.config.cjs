@@ -28,10 +28,11 @@ const envVars = {};
 /*********************************
  *    define entrypoints
  ********************************/
+// IF UPDATE HERE, ALSO UPDATE 'server/ui.ts' !
 const clientEntrypoints = [
   {
     name: 'CLIENT - About Dialog',
-    entry: './src/client/about-dialog/index.js',
+    entry: './src/client/about-dialog/index.tsx',
     filename: 'about-dialog', // we'll add the .html suffix to these
     template: './src/client/about-dialog/index.html',
   },
@@ -40,6 +41,12 @@ const clientEntrypoints = [
     entry: './src/client/import-dialog/index.tsx',
     filename: 'import-dialog', // we'll add the .html suffix to these
     template: './src/client/import-dialog/index.html',
+  },
+  {
+    name: 'CLIENT - Settings Dialog',
+    entry: './src/client/settings-dialog/index.tsx',
+    filename: 'settings-dialog', // we'll add the .html suffix to these
+    template: './src/client/settings-dialog/index.html',
   },
 ];
 
@@ -156,6 +163,13 @@ const DynamicCdnWebpackPluginConfig = {
             isProd ? 'production.min.js' : 'development.js'
           }`,
         };
+      case '@mui/x-data-grid':
+        return {
+          name: packageName,
+          var: 'MUIDataGrid',
+          version: packageVersion,
+          url: `https://unpkg.com/@mui/x-data-grid@${packageVersion}/node/index.js`,
+        };
       case '@emotion/react':
         return {
           name: packageName,
@@ -169,20 +183,6 @@ const DynamicCdnWebpackPluginConfig = {
           var: 'emotionStyled',
           version: packageVersion,
           url: `https://unpkg.com/@emotion/styled@${packageVersion}/dist/emotion-styled.umd.min.js`,
-        };
-      case 'materialize-css':
-        return {
-          name: packageName,
-          var: 'M',
-          version: packageVersion,
-          url: `https://cdnjs.cloudflare.com/ajax/libs/materialize/${packageVersion}/js/materialize.min.js`,
-        };
-      case 'tabulator-tables':
-        return {
-          name: packageName,
-          var: 'Tabulator',
-          version: packageVersion,
-          url: `https://unpkg.com/tabulator-tables@${packageVersion}/dist/js/tabulator.min.js`,
         };
       case 'papaparse': {
         return {
