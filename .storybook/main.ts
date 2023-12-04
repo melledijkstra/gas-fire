@@ -20,5 +20,14 @@ const config: StorybookConfig = {
   docs: {
     autodocs: 'tag',
   },
+  webpackFinal: async (config) => {
+    if (config?.resolve?.alias) {
+      // @ts-ignore
+      config.resolve.alias['../utils/serverFunctions'] = require.resolve(
+        './__mocks__/server-mock.ts'
+      );
+    }
+    return config;
+  },
 };
 export default config;

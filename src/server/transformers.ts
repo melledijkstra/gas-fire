@@ -1,8 +1,19 @@
 import { detectCategoryByTextAnalysis } from './category-detection';
 
 export class Transformers {
-  static transformMoney(value: string, decimalSeparator: string = ','): number {
-    return parseFloat(value.replace(/\./g, '').replace(decimalSeparator, '.'));
+  static transformMoney(
+    value: string,
+    decimalSeparator: string = '.',
+    thousandSeparator: string = ','
+  ): number {
+    const thousandReplace = value.replace(
+      new RegExp(`\\${thousandSeparator}`, 'g'),
+      ''
+    );
+    const decimalReplace = thousandReplace.replace(decimalSeparator, '.');
+    const parsed = parseFloat(decimalReplace);
+
+    return parsed;
   }
 
   static transformDate(value: string, separator: string = '/'): Date {

@@ -163,6 +163,13 @@ const DynamicCdnWebpackPluginConfig = {
             isProd ? 'production.min.js' : 'development.js'
           }`,
         };
+      case '@mui/x-data-grid':
+        return {
+          name: packageName,
+          var: 'MUIDataGrid',
+          version: packageVersion,
+          url: `https://unpkg.com/@mui/x-data-grid@${packageVersion}/node/index.js`,
+        };
       case '@emotion/react':
         return {
           name: packageName,
@@ -176,13 +183,6 @@ const DynamicCdnWebpackPluginConfig = {
           var: 'emotionStyled',
           version: packageVersion,
           url: `https://unpkg.com/@emotion/styled@${packageVersion}/dist/emotion-styled.umd.min.js`,
-        };
-      case 'tabulator-tables':
-        return {
-          name: packageName,
-          var: 'Tabulator',
-          version: packageVersion,
-          url: `https://unpkg.com/tabulator-tables@${packageVersion}/dist/js/tabulator.min.js`,
         };
       case 'papaparse': {
         return {
