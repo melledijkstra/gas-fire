@@ -1,6 +1,6 @@
 import type { Table } from '../common/types';
 import { fireColumns, sourceSheet } from './globals';
-import { ColumnRule, FireColumnRules, InputColumn } from './types';
+import { FireColumnRules, InputColumn } from './types';
 
 const EMPTY = '';
 
@@ -31,11 +31,13 @@ export function processTableWithImportRules(
   let output: Table = [];
   const rowCount = input.length;
   for (const columnName of fireColumns) {
-    if (!(columnName in columnImportRules) || !columnImportRules[columnName]) {
+    const colRule = columnImportRules[columnName as keyof FireColumnRules];
+
+    if (!colRule) {
       output.push(new Array(rowCount));
       continue;
     }
-    const colRule = columnImportRules[columnName] as ColumnRule<unknown>;
+
     let column: any[];
     try {
       column = colRule(input);

@@ -6,13 +6,14 @@ export const fireColumns = [
   'balance',
   'contra_account',
   'description',
-  'satisfaction',
+  'comments',
   'icon',
   'category',
   'label',
+  'import_date',
   'hours',
-  'contra_iban',
   'disabled',
+  'contra_iban',
   'currency',
 ];
 
