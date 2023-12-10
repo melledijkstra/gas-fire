@@ -47,8 +47,11 @@ export function processCSV(
   importStrategy: StrategyOption
 ): ServerResponse {
   const strategies = Config.getConfig();
+
+  // make the user visually switch to the primary sheet where data will be imported
   sourceSheet?.activate();
   sourceSheet?.showSheet();
+
   if (!(importStrategy in strategies)) {
     throw new Error(`Import strategy ${importStrategy} is not defined!`);
   }
