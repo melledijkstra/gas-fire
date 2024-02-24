@@ -1,5 +1,13 @@
 {
   "name": "@vulcan/extension",
   "version": "1.0.0",
-  "description": "Extension for automating financial processes"
+  "description": "Extension for automating financial processes",
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "chrome-types": "^0.1.269",
+    "typescript": "^5.3.3"
+  }
 }

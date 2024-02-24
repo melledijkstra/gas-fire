@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Bank Transaction Importer",
+  "version": "1.0.0",
+  "permissions": ["tabs", "activeTab"],
+  "action": {
+    "default_popup": "popup/popup.html"
+  },
+  "background": {
+    "service_worker": "dist/background.js"
+  },
+  "host_permissions": ["https://app.n26.com/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://app.n26.com/*", "https://developer.chrome.com/*"],
+      "js": ["dist/content.js"]
+    }
+  ]
+}
