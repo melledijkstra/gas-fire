@@ -1,76 +1,17 @@
 {
-  "name": "gas-fire",
-  "version": "2.0.0",
+  "name": "vulcan",
+  "version": "1.0.0",
+  "description": "A monorepo setup with packages to ease personal finance management",
   "author": "Melle Dijkstra",
-  "description": "Google App Script utilities to automate the FIRE google sheet",
-  "license": "MIT",
-  "type": "module",
   "workspaces": [
-    "client",
-    "server"
+    "packages/*"
   ],
-  "engines": {
-    "node": "18"
-  },
   "scripts": {
-    "publish": "clasp push -f",
-    "dev": "npm run storybook",
-    "build": "cross-env NODE_ENV=production webpack",
-    "deploy": "rm -rf dist && npm run build && npm run publish",
-    "test": "vitest",
-    "test:coverage": "vitest --coverage",
-    "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
   },
-  "dependencies": {
-    "@emotion/react": "^11.11.1",
-    "@emotion/styled": "^11.11.0",
-    "@mui/icons-material": "^5.14.18",
-    "@mui/material": "^5.14.18",
-    "@mui/x-data-grid": "^6.18.1",
-    "papaparse": "^5.4.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
-  },
-  "devDependencies": {
-    "@babel/core": "^7.23.3",
-    "@babel/preset-env": "^7.23.3",
-    "@babel/preset-react": "^7.23.3",
-    "@babel/preset-typescript": "^7.23.3",
-    "@effortlessmotion/dynamic-cdn-webpack-plugin": "^5.0.1",
-    "@effortlessmotion/html-webpack-inline-source-plugin": "^1.0.3",
-    "@google/clasp": "^2.4.2",
-    "@storybook/addon-essentials": "^7.5.3",
-    "@storybook/addon-interactions": "^7.5.3",
-    "@storybook/addon-links": "^7.5.3",
-    "@storybook/blocks": "^7.5.3",
-    "@storybook/react": "^7.5.3",
-    "@storybook/react-webpack5": "^7.5.3",
-    "@storybook/testing-library": "^0.2.2",
-    "@types/google-apps-script": "^1.0.77",
-    "@types/papaparse": "^5.3.11",
-    "@types/react": "^18.2.37",
-    "@types/react-dom": "^18.2.15",
-    "@vitest/coverage-v8": "^0.34.6",
-    "babel-loader": "^9.1.3",
-    "copy-webpack-plugin": "^11.0.0",
-    "cross-env": "^7.0.3",
-    "css-loader": "^6.8.1",
-    "gas-client": "^1.1.1",
-    "gas-types-detailed": "^1.1.2",
-    "gas-webpack-plugin": "^2.5.0",
-    "html-webpack-plugin": "^5.5.3",
-    "module-to-cdn": "^3.1.5",
-    "storybook": "^7.5.3",
-    "style-loader": "^3.3.3",
-    "vitest": "^0.34.6",
-    "webpack": "^5.89.0",
-    "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "^4.15.1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/melledijkstra/gas-fire.git"
+  "bugs": {
+    "url": "https://github.com/melledijkstra/gas-fire/issues"
   },
   "keywords": [
     "google-apps-script",
@@ -81,7 +22,8 @@
     "sheet",
     "google"
   ],
-  "bugs": {
-    "url": "https://github.com/melledijkstra/gas-fire/issues"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/melledijkstra/gas-fire.git"
   }
 }
