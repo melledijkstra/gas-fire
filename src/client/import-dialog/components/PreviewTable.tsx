@@ -9,7 +9,7 @@ import {
 import { useMemo } from 'react';
 
 type ImportPreviewProps = {
-  tableData?: Table;
+  tableData: Table;
 };
 
 const prepareTableColumn = (
@@ -50,13 +50,13 @@ const prepareTableData = (
 };
 
 export const PreviewTable = ({ tableData }: ImportPreviewProps) => {
-  if (!tableData || tableData.length < 1) return null;
-
   const { rows, columns } = useMemo(() => prepareTableData(tableData), []);
 
   const table = useMaterialReactTable({
     columns,
     data: rows,
+    enableRowSelection: true,
+    enableSelectAll: true,
     enableTopToolbar: false,
     enableBottomToolbar: false,
     enableColumnActions: false,
