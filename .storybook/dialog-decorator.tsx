@@ -20,7 +20,7 @@ export const DialogDecorator: DecoratorFunction<
         <span className={styles.dialog__heading__title}>
           {args.dialogTitle ?? storyTitle}
         </span>
-        <span className={styles.dialog__heading__close} role="button"></span>
+        <span className={styles.dialog__heading__close}></span>
       </div>
       <div style={{ width, height }}>
         <Story />

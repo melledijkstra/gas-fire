@@ -184,7 +184,9 @@ export const Dialog = () => {
             </Button>
           </Grid>
           <Typography variant="body1">{statusText}</Typography>
-          <PreviewTable tableData={tableData} />
+          {tableData && tableData.length > 0 && (
+            <PreviewTable tableData={tableData} />
+          )}
         </Stack>
       </form>
     </Application>

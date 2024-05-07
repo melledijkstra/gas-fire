@@ -1,23 +1,31 @@
 import { Table } from '../../../common/types';
 import { Stack, Typography } from '@mui/material';
-import { DataGrid, GridColDef, GridRowsProp } from '@mui/x-data-grid';
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+  type MRT_ColumnDef,
+  MRT_RowData,
+} from 'material-react-table';
+import { useMemo } from 'react';
 
 type ImportPreviewProps = {
-  tableData?: Table;
+  tableData: Table;
 };
 
-const toDataGridColumn = (field: string, columnName?: string): GridColDef => ({
-  field: field,
-  headerName: columnName ?? field,
-  disableColumnMenu: true,
-  disableReorder: true,
-  sortable: false,
-  flex: 1,
+const prepareTableColumn = (
+  field: string,
+  columnName?: string
+): MRT_ColumnDef<Record<string, unknown>> => ({
+  accessorKey: field,
+  header: columnName ?? field,
 });
 
 const prepareTableData = (
   inputTable: Table
-): { columns: GridColDef[]; rows: GridRowsProp } => {
+): {
+  columns: MRT_ColumnDef<Record<string, unknown>>[];
+  rows: MRT_RowData[];
+} => {
   const table = structuredClone(inputTable);
   const headingRow = table?.shift();
 
@@ -25,41 +33,51 @@ const prepareTableData = (
     throw Error('The data does not contain a heading row');
   }
 
-  const dataGridColumns: GridColDef[] = headingRow.map((heading, index) =>
-    toDataGridColumn(`col${index}`, heading)
+  const columns = headingRow.map((heading, index) =>
+    prepareTableColumn(`col${index}`, heading)
   );
 
-  const dataGridRows = table.map((row, index) => {
+  const rows = table.map((row, index) => {
     const dataGridRow: Record<string, unknown> = { id: index };
     // fill the fields in the data grid table
-    row.forEach((cellValue, index) => {
-      dataGridRow[`col${index}`] = cellValue;
+    row.forEach((cellValue, colIndex) => {
+      dataGridRow[`col${colIndex}`] = cellValue;
     });
     return dataGridRow;
   });
 
-  return {
-    columns: dataGridColumns,
-    rows: dataGridRows,
-  };
+  return { columns, rows };
 };
 
 export const PreviewTable = ({ tableData }: ImportPreviewProps) => {
-  if (!tableData || tableData.length < 1) return null;
+  const { rows, columns } = useMemo(() => prepareTableData(tableData), []);
 
-  const preparedTableData = prepareTableData(tableData);
+  const table = useMaterialReactTable({
+    columns,
+    data: rows,
+    enableRowSelection: true,
+    enableSelectAll: true,
+    enableTopToolbar: false,
+    enableBottomToolbar: false,
+    enableColumnActions: false,
+    enableColumnFilters: false,
+    enablePagination: false,
+    enableSorting: false,
+    enableTableFooter: false,
+    enableColumnResizing: true,
+    defaultColumn: {
+      minSize: 50,
+      size: 100,
+    },
+    initialState: {
+      density: 'compact',
+    },
+  });
 
   return (
     <Stack spacing={2}>
       <Typography component="h3">Preview data</Typography>
-      {tableData && (
-        <DataGrid
-          rowHeight={35}
-          columnHeaderHeight={35}
-          {...preparedTableData}
-          hideFooter
-        ></DataGrid>
-      )}
+      {tableData && <MaterialReactTable table={table}></MaterialReactTable>}
     </Stack>
   );
 };
