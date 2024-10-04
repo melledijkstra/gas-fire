@@ -1,12 +1,14 @@
 export enum n26Cols {
-  Date,
+  BookingDate,
+  ValueDate,
   Payee,
   AccountNumber,
   TransactionType,
   PaymentReference,
+  AccountName,
   Amount,
-  AmountForeignCurrency,
-  ForeignCurrencyType,
+  OriginalAmount,
+  OriginalCurrency,
   ExchangeRate,
 }
 

@@ -25,13 +25,13 @@ const n26Config: Strategy = {
   beforeImport: [
     TableUtils.deleteLastRow,
     TableUtils.deleteFirstRow,
-    TableUtils.sortByDate(n26Cols.Date),
+    TableUtils.sortByDate(n26Cols.BookingDate),
   ],
   columnImportRules: {
     ref: null,
     iban: (data) =>
       new Array(data.length).fill(AccountUtils.getBankIban('N26')),
-    date: buildColumn(n26Cols.Date, (val) => new Date(val)),
+    date: buildColumn(n26Cols.BookingDate, (val) => new Date(val)),
     amount: buildColumn(n26Cols.Amount, parseFloat),
     category: buildColumn(n26Cols.Payee, Transformers.transformCategory),
     contra_account: buildColumn(n26Cols.Payee, String),
@@ -39,7 +39,7 @@ const n26Config: Strategy = {
     import_date: (data) => new Array(data.length).fill(new Date()),
     description: buildColumn(n26Cols.PaymentReference, String),
     contra_iban: buildColumn(n26Cols.AccountNumber, String),
-    currency: buildColumn(n26Cols.ForeignCurrencyType, String),
+    currency: buildColumn(n26Cols.OriginalCurrency, String),
   },
   afterImport: defaultAfterImport,
 };
