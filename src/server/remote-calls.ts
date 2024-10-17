@@ -110,9 +110,11 @@ export function generatePreview(
       amounts = TableUtils.retrieveColumn(table, n26Cols.Amount);
       break;
     case StrategyOption.OPENBANK:
+      decimalSeparator = config.openbank.decimalSeparator;
       amounts = TableUtils.retrieveColumn(table, openbankCols.Importe);
       break;
     case StrategyOption.RABO:
+      decimalSeparator = config.rabobank.decimalSeparator;
       amounts = TableUtils.retrieveColumn(table, raboCols.Bedrag);
       break;
   }

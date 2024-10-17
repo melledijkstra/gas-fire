@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { generatePreview } from './remote-calls';
 import { StrategyOption, Table } from '../common/types';
 import { RangeMock } from '../../test-setup';
+import { fakeN26ImportWithBalance } from '../fixtures/n26';
 
 describe('Remote Calls', () => {
   describe('generatePreview', () => {
@@ -26,15 +27,12 @@ describe('Remote Calls', () => {
         ['', '', ''],
       ]);
 
-      const table: Table = [
-        ['', '', '', '', '', '20'],
-        ['', '', '', '', '', '-25.6', '', ''],
-        ['', '', '', '', '', '+58.30'],
-        [],
-      ];
-      const { result, newBalance } = generatePreview(table, StrategyOption.N26);
+      const { result, newBalance } = generatePreview(
+        fakeN26ImportWithBalance,
+        StrategyOption.N26
+      );
 
-      expect(result).toStrictEqual(table);
+      expect(result).toStrictEqual(fakeN26ImportWithBalance);
       expect(newBalance).toBe(358.55);
     });
   });
