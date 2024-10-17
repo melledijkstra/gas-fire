@@ -1,3 +1,5 @@
+import { Table } from '../common/types';
+
 export enum n26Cols {
   BookingDate,
   ValueDate,
