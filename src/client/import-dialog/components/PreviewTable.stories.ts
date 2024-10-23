@@ -3,7 +3,7 @@ import { PreviewTable } from './PreviewTable';
 import { n26ImportMock } from '../../../mocks/import-csv';
 
 const meta: Meta<typeof PreviewTable> = {
-  title: 'ImportDialog',
+  title: 'Dialogs/Import',
   component: PreviewTable,
   args: {
     tableData: n26ImportMock,
