@@ -1,4 +1,4 @@
-import { DIALOG_SIZES, DialogType } from '../common/constants';
+import { DIALOG_SIZES } from '../common/constants';
 
 export function onOpen(): void {
   const ui = SpreadsheetApp.getUi();
