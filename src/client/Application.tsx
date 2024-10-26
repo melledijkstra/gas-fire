@@ -1,4 +1,5 @@
-import { ScopedCssBaseline, ThemeProvider, createTheme } from '@mui/material';
+import { ScopedCssBaseline } from '@mui/material';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { blue, green } from '@mui/material/colors';
 import { ReactNode } from 'react';
 
