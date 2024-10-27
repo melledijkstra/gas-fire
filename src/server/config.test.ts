@@ -6,7 +6,7 @@ function createRowWithAmount(amount: string) {
   return arr;
 }
 
-describe.only('Configuration Tests', () => {
+describe('Configuration Tests', () => {
   describe('rabobank amount issue', () => {
     const config = Config.getConfig().rabobank;
 
