@@ -1,6 +1,5 @@
-import { describe, it, expect } from 'vitest';
 import { csvToJson } from './utils';
-import { Table } from '../../server/types';
+import { Table } from '../../common/types';
 
 describe('Utility Functions', () => {
   it('csvToJson', () => {

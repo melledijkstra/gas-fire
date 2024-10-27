@@ -6,49 +6,53 @@ export type CategoryDetectionConfig = Record<string, Array<string>>;
 
 export const categoriesTermsMap: CategoryDetectionConfigOld = {
   'Food & Groceries': [
-    /supermercado/,
-    /supermercados/,
-    /supermarkt/,
-    /supermarket/,
-    /eroski/,
-    /mercadona/,
-    /albert heijn/,
-    /lidl/,
-    /aldi/,
-    /la despensa/,
-    /spar/,
-    /carrefour/,
-    /alcampo/,
-    /glovo/,
+    /supermercado|supermercados/,
+    /supermarkt|supermarket/,
+    /albert heijn|jumbo|spar/,
+    /lidl|aldi/,
+    /glovo|ubereats|uber eats/,
+    /mercadona|superdino|lupa|alcampo|carrefour|la despensa|eroski/,
   ],
   Salary: [/adidas espana s.a./],
   'Bars, Restaurants & Clubs': [
+    /restaurant|restaurante/,
+    /cafe|cafeteria|cafetaría/,
     /faborit/,
-    /bar colores sabores/,
     /santa gloria/,
     /planta calle/,
     /\bbar\b/,
-    /restaurant/,
-    /restaurante/,
     /rio de la plata/,
     /teranga/,
     /telepizza/,
     /tagliatella/,
+    /mcdonalds|\bkfc\b|starbucks|burger king|domino's|taco bell|papa john|tim horton/,
   ],
   Income: [],
-  'Household & Utilities': [],
+  'Household & Utilities': [
+    /iberdrola/,
+    /hergar rio sl/,
+    /canal de isabel/,
+    /ikea/,
+    /\bdigi\b/,
+  ],
   Debt: [],
-  Subscriptions: [],
+  Subscriptions: [/spotify/, /openai/],
   Education: [],
-  'Leisure & Entertainment': [/spotify/, /climbing/],
-  'Personal Care': [],
-  'Healthcare & Drug Stores': [],
+  'Leisure & Entertainment': [/climbing/],
+  'Personal Care': [
+    /\bbarber|kapper|kapsalon|peluqueria|peluquería|peluqueros/,
+    /basicfit|basic-fit/,
+    /\bzara|pull&bear|pull and bear|\bmango\b|decathlon|superdry|el corte ingles|\bc&a\b|\bbershka\b|zalando/,
+    /\badidasnl\b|\badidases\b/,
+    /fisionarte/,
+  ],
+  'Healthcare & Drug Stores': [/pharmacy|apotheek|apotheken|farmacia/],
   'Insurances & Finances': [],
   'Family, Friends & Donations': [],
-  'Media & Electronics': [],
-  'Transport & Car': [],
+  'Media & Electronics': [/media markt/, /google/],
+  'Transport & Car': [/aparcamientos|parking/],
   'Travel & Holidays': [],
-  'Savings & Investments': [],
+  'Savings & Investments': [/\bdegiro\b/],
   'Business expenses': [],
   Miscellaneous: [],
 };
@@ -77,7 +81,7 @@ const getCategoryMatchesMap = (): CategoryDetectionConfig => {
 export const detectCategoryByTextAnalysis = (
   keyphrase: string
 ): string | undefined => {
-  const categoriesTermsMap = getCategoryMatchesMap();
+  // const categoriesTermsMap = getCategoryMatchesMap();
   // lowercase the keyphrase for easier matching
   const lowercaseKeyphrase = keyphrase.toLowerCase();
 

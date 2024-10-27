@@ -27,7 +27,7 @@ export function buildColumn<T>(
 export function processTableWithImportRules(
   input: Table,
   columnImportRules: FireColumnRules
-) {
+): Table {
   let output: Table = [];
   const rowCount = input.length;
   for (const columnName of fireColumns) {

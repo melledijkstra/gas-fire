@@ -46,7 +46,7 @@ const n26Config: Strategy = {
 };
 
 const rabobankConfig: Strategy = {
-  decimalSeparator: '.',
+  decimalSeparator: ',',
   beforeImport: [
     TableUtils.deleteLastRow,
     TableUtils.deleteFirstRow,
@@ -103,11 +103,19 @@ const openbankConfig: Strategy = {
 };
 
 export class Config {
+  static cache: RootConfig | null = null;
+
   static getConfig(): RootConfig {
-    return {
+    if (this.cache) {
+      return this.cache;
+    }
+
+    const rootConfig = {
       n26: n26Config,
       rabobank: rabobankConfig,
       openbank: openbankConfig,
     };
+    this.cache = rootConfig;
+    return rootConfig;
   }
 }

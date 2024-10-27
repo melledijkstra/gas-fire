@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { PreviewTable } from './PreviewTable';
-import { n26ImportMock } from '../../../mocks/import-csv';
+import { n26ImportMock } from '../../../fixtures/n26';
 
 const meta: Meta<typeof PreviewTable> = {
   title: 'Dialogs/Import',
