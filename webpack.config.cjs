@@ -134,8 +134,8 @@ const DynamicCdnWebpackPluginConfig = {
   // set "verbose" to true to print console logs on CDN usage while webpack builds
   verbose: false,
   resolver: (packageName, packageVersion, options) => {
-    const packageSuffix = isProd ? '.min.js' : '.js';
     const moduleDetails = moduleToCdn(packageName, packageVersion, options);
+    const packageSuffix = isProd ? '.min.js' : '.js';
 
     // don't externalize react during development due to issue with react-refresh
     // https://github.com/pmmmwh/react-refresh-webpack-plugin/issues/334
@@ -153,15 +153,6 @@ const DynamicCdnWebpackPluginConfig = {
           var: 'ReactTransitionGroup',
           version: packageVersion,
           url: `https://unpkg.com/react-transition-group@${packageVersion}/dist/react-transition-group${packageSuffix}`,
-        };
-      case '@mui/material':
-        return {
-          name: packageName,
-          var: 'MaterialUI',
-          version: packageVersion,
-          url: `https://unpkg.com/@mui/material@${packageVersion}/umd/material-ui.${
-            isProd ? 'production.min.js' : 'development.js'
-          }`,
         };
       case '@emotion/react':
         return {
@@ -218,17 +209,19 @@ const clientConfigs = clientEntrypoints.map((clientEntrypoint) => {
       new webpack.DefinePlugin({
         'process.env': JSON.stringify(envVars),
       }),
+      // when analyzing bundle we don't want to inline the code
+      // otherwise bundle analyzer can't inspect the different modules
       new HtmlWebpackPlugin({
         template: clientEntrypoint.template,
-        filename: `${clientEntrypoint.filename}${isProd ? '' : '-impl'}.html`,
+        filename: `${clientEntrypoint.filename}.html`,
         inlineSource: '^/.*(js|css)$', // embed all js and css inline, exclude packages from dynamic cdn insertion
         scriptLoading: 'blocking',
         inject: 'body',
       }),
-      // add the generated js code to the html file inline
-      new HtmlWebpackInlineSourcePlugin(),
       // this plugin allows us to add dynamically load packages from a CDN
       new DynamicCdnWebpackPlugin(DynamicCdnWebpackPluginConfig),
+      // add the generated js code to the html file inline
+      new HtmlWebpackInlineSourcePlugin(),
     ].filter(Boolean),
   };
 });
@@ -272,7 +265,7 @@ const serverConfig = {
     ],
   },
   optimization: {
-    minimize: true,
+    minimize: isProd ? true : false,
   },
   plugins: [
     new GasPlugin({
@@ -290,3 +283,4 @@ module.exports = [
   // 3. Create one client bundle for each client entrypoint.
   ...clientConfigs,
 ].filter(Boolean);
+module.exports.parallelism = 2;

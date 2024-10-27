@@ -13,7 +13,7 @@ import {
   NativeSelect,
   Stack,
 } from '@mui/material';
-import UploadFileIcon from '@mui/icons-material/UploadFile';
+import { UploadFile } from '@mui/icons-material';
 
 export const Dialog = () => {
   const [strategyOptions, setStrategyOptions] =
@@ -126,7 +126,7 @@ export const Dialog = () => {
               <Button
                 component="label"
                 variant="outlined"
-                startIcon={<UploadFileIcon />}
+                startIcon={<UploadFile />}
                 sx={{ marginRight: '1rem' }}
               >
                 {importFile ? importFile.name : 'Upload CSV'}
