@@ -8,11 +8,11 @@ import { Mock, vi } from 'vitest';
 class Range {
   static getLastRow = vi.fn(() => this);
   static offset = vi.fn(() => this);
-  static getValues: Mock<unknown[][]> = vi.fn(() => []);
+  static getValues: Mock = vi.fn(() => []);
 }
 
 class Sheet {
-  static getSheetId = vi.fn<any, number>();
+  static getSheetId = vi.fn();
 }
 
 class Spreadsheet {
