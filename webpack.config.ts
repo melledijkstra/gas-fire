@@ -1,14 +1,14 @@
 /*********************************
  *    import webpack plugins
  ********************************/
-const path = require('path');
-const webpack = require('webpack');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
-const GasPlugin = require('gas-webpack-plugin');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const HtmlWebpackInlineSourcePlugin = require('@effortlessmotion/html-webpack-inline-source-plugin');
-const DynamicCdnWebpackPlugin = require('@effortlessmotion/dynamic-cdn-webpack-plugin');
-const moduleToCdn = require('module-to-cdn');
+import path from 'path';
+import { DefinePlugin, Configuration } from 'webpack';
+import CopyWebpackPlugin from 'copy-webpack-plugin';
+import GasPlugin from 'gas-webpack-plugin';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import HtmlWebpackInlineSourcePlugin from '@effortlessmotion/html-webpack-inline-source-plugin';
+import DynamicCdnWebpackPlugin from '@effortlessmotion/dynamic-cdn-webpack-plugin';
+import moduleToCdn from 'module-to-cdn';
 
 const isProd = process.env.NODE_ENV === 'production';
 
@@ -28,8 +28,16 @@ const envVars = {};
 /*********************************
  *    define entrypoints
  ********************************/
+
+type EntryPoint = {
+  name: string;
+  entry: string;
+  filename: string;
+  template: string;
+};
+
 // IF UPDATE HERE, ALSO UPDATE 'server/ui.ts' !
-const clientEntrypoints = [
+const clientEntrypoints: Array<EntryPoint> = [
   {
     name: 'CLIENT - About Dialog',
     entry: './src/client/about-dialog/index.tsx',
@@ -55,7 +63,7 @@ const clientEntrypoints = [
  ********************************/
 
 // webpack settings for copying files to the destination folder
-const copyFilesConfig = {
+const copyFilesConfig: Configuration = {
   name: 'COPY FILES - appsscript.json',
   mode: 'production', // unnecessary for this config, but removes console warning
   entry: copyAppscriptEntry,
@@ -76,12 +84,12 @@ const copyFilesConfig = {
 };
 
 // webpack settings used by both client and server
-const sharedClientAndServerConfig = {
+const sharedClientAndServerConfig: Partial<Configuration> = {
   context: __dirname,
 };
 
 // webpack settings used by all client entrypoints
-const clientConfig = () => ({
+const clientConfig: Partial<Configuration> = {
   ...sharedClientAndServerConfig,
   mode: isProd ? 'production' : 'development',
   output: {
@@ -125,7 +133,14 @@ const clientConfig = () => ({
       },
     ],
   },
-});
+};
+
+type DynamicCDNEntry = {
+  name: string;
+  var: string;
+  version: string;
+  url: string;
+};
 
 // DynamicCdnWebpackPlugin settings
 // these settings help us load 'react', 'react-dom' and the packages defined below from a CDN
@@ -133,7 +148,7 @@ const clientConfig = () => ({
 const DynamicCdnWebpackPluginConfig = {
   // set "verbose" to true to print console logs on CDN usage while webpack builds
   verbose: false,
-  resolver: (packageName, packageVersion, options) => {
+  resolver: (packageName, packageVersion, options): DynamicCDNEntry | null => {
     const moduleDetails = moduleToCdn(packageName, packageVersion, options);
     const packageSuffix = isProd ? '.min.js' : '.js';
 
@@ -200,34 +215,36 @@ const DynamicCdnWebpackPluginConfig = {
 };
 
 // webpack settings used by each client entrypoint defined at top
-const clientConfigs = clientEntrypoints.map((clientEntrypoint) => {
-  return {
-    ...clientConfig(),
-    name: clientEntrypoint.name,
-    entry: clientEntrypoint.entry,
-    plugins: [
-      new webpack.DefinePlugin({
-        'process.env': JSON.stringify(envVars),
-      }),
-      // when analyzing bundle we don't want to inline the code
-      // otherwise bundle analyzer can't inspect the different modules
-      new HtmlWebpackPlugin({
-        template: clientEntrypoint.template,
-        filename: `${clientEntrypoint.filename}.html`,
-        inlineSource: '^/.*(js|css)$', // embed all js and css inline, exclude packages from dynamic cdn insertion
-        scriptLoading: 'blocking',
-        inject: 'body',
-      }),
-      // this plugin allows us to add dynamically load packages from a CDN
-      new DynamicCdnWebpackPlugin(DynamicCdnWebpackPluginConfig),
-      // add the generated js code to the html file inline
-      new HtmlWebpackInlineSourcePlugin(),
-    ].filter(Boolean),
-  };
-});
+const clientConfigs = clientEntrypoints.map<Configuration>(
+  (clientEntrypoint) => {
+    return {
+      ...clientConfig,
+      name: clientEntrypoint.name,
+      entry: clientEntrypoint.entry,
+      plugins: [
+        new DefinePlugin({
+          'process.env': JSON.stringify(envVars),
+        }),
+        // when analyzing bundle we don't want to inline the code
+        // otherwise bundle analyzer can't inspect the different modules
+        new HtmlWebpackPlugin({
+          template: clientEntrypoint.template,
+          filename: `${clientEntrypoint.filename}.html`,
+          inlineSource: '^/.*(js|css)$', // embed all js and css inline, exclude packages from dynamic cdn insertion
+          scriptLoading: 'blocking',
+          inject: 'body',
+        }),
+        // this plugin allows us to add dynamically load packages from a CDN
+        new DynamicCdnWebpackPlugin(DynamicCdnWebpackPluginConfig),
+        // add the generated js code to the html file inline
+        new HtmlWebpackInlineSourcePlugin(),
+      ].filter(Boolean),
+    };
+  }
+);
 
 // webpack settings used by the server-side code
-const serverConfig = {
+const serverConfig: Configuration = {
   ...sharedClientAndServerConfig,
   name: 'SERVER',
   // server config can't use 'development' mode
@@ -275,12 +292,13 @@ const serverConfig = {
   ],
 };
 
-module.exports = [
+const config: Array<Configuration> = [
   // 1. Copy appsscript.json to destination,
-  { ...copyFilesConfig },
+  copyFilesConfig,
   // 2. Create the server bundle. Don't serve server bundle when running webpack serve.
   serverConfig,
   // 3. Create one client bundle for each client entrypoint.
   ...clientConfigs,
 ].filter(Boolean);
-module.exports.parallelism = 2;
+
+export default config;
