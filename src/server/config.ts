@@ -32,7 +32,7 @@ const n26Config: Strategy = {
     ref: null,
     iban: (data) =>
       new Array(data.length).fill(AccountUtils.getBankIban('N26')),
-    date: buildColumn(n26Cols.BookingDate, (val) => new Date(val)),
+    date: buildColumn(n26Cols.BookingDate, Transformers.transformDate),
     amount: buildColumn(n26Cols.Amount, parseFloat),
     category: buildColumn(n26Cols.Payee, Transformers.transformCategory),
     contra_account: buildColumn(n26Cols.Payee, String),
@@ -55,7 +55,7 @@ const rabobankConfig: Strategy = {
   columnImportRules: {
     ref: buildColumn(raboCols.Volgnr, parseInt),
     iban: buildColumn(raboCols.Iban, String),
-    date: buildColumn(raboCols.Datum, (val) => new Date(val)),
+    date: buildColumn(raboCols.Datum, Transformers.transformDate),
     amount: buildColumn(raboCols.Bedrag, Transformers.transformMoney),
     category: null,
     contra_account: buildColumn(raboCols.NaamTegenpartij, String),
@@ -88,7 +88,7 @@ const openbankConfig: Strategy = {
         // to fix we add 2000
         yearNum = +year + 2000;
       }
-      return new Date(+yearNum, +month - 1, +day);
+      return new Date(new Date(+yearNum, +month - 1, +day).toDateString());
     }),
     amount: buildColumn(openbankCols.Importe, Transformers.transformMoney),
     category: null,
