@@ -1,8 +1,11 @@
-import { describe, expect, test } from 'vitest';
-import { generatePreview } from './remote-calls';
+import { generatePreview, processCSV } from './remote-calls';
 import { StrategyOption, Table } from '../common/types';
 import { RangeMock } from '../../test-setup';
-import { fakeN26ImportWithBalance } from '../fixtures/n26';
+import { fakeN26ImportWithBalance, n26ImportMock } from '../fixtures/n26';
+import { TableUtils } from './table-utils';
+import { raboImportMock } from '../fixtures/rabobank';
+
+const importDataSpy = vi.spyOn(TableUtils, 'importData');
 
 describe('Remote Calls', () => {
   describe('generatePreview', () => {
@@ -34,6 +37,26 @@ describe('Remote Calls', () => {
 
       expect(result).toStrictEqual(fakeN26ImportWithBalance);
       expect(newBalance).toBe(358.55);
+    });
+  });
+
+  describe('processCSV', () => {
+    beforeEach(() => {
+      importDataSpy.mockReset();
+    });
+
+    test('is able to handle n26 import', () => {
+      const result = processCSV(n26ImportMock, StrategyOption.N26);
+
+      expect(importDataSpy).toHaveBeenCalled();
+      expect(result.message).toBe('imported 3 rows!');
+    });
+
+    test('is able to handle rabobank import', () => {
+      const result = processCSV(raboImportMock, StrategyOption.RABO);
+
+      expect(importDataSpy).toHaveBeenCalled();
+      expect(result.message).toBe('imported 1 rows!');
     });
   });
 });

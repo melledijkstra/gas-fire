@@ -1,6 +1,6 @@
 {
   "name": "gas-fire",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "author": "Melle Dijkstra",
   "description": "Google App Script utilities to automate the FIRE google sheet",
   "license": "MIT",
@@ -52,6 +52,7 @@
     "@storybook/react": "^8.3.6",
     "@storybook/react-webpack5": "^8.3.6",
     "@storybook/test": "^8.3.6",
+    "@storybook/types": "^8.3.6",
     "@types/google-apps-script": "^1.0.84",
     "@types/papaparse": "^5.3.15",
     "@types/react": "^18.3.12",
