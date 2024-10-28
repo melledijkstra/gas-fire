@@ -37,9 +37,8 @@ export class Transformers {
     return number;
   }
 
-  static transformDate(value: string, separator: string = '/'): Date {
-    const [day, month, year] = value.split(separator);
-    return new Date(+year, +month - 1, +day);
+  static transformDate(value: string): Date {
+    return new Date(new Date(value).toDateString());
   }
 
   static transformCategory(value: string): string | null {
