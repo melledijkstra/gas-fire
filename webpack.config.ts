@@ -98,9 +98,25 @@ const clientConfig: Partial<Configuration> = {
     // and should be put in .claspignore so it is not pushed
     filename: 'main.js',
     publicPath,
+    module: true,
+    libraryTarget: 'module',
+  },
+  experiments: {
+    outputModule: true,
+  },
+  optimization: {
+    minimize: isProd ? true : false,
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
+    alias: {
+      '@mui/material': '@mui/material/modern',
+      '@mui/styled-engine': '@mui/styled-engine/modern',
+      '@mui/system': '@mui/system/modern',
+      '@mui/base': '@mui/base/modern',
+      '@mui/utils': '@mui/utils/modern',
+      '@mui/lab': '@mui/lab/modern',
+    },
   },
   module: {
     rules: [
@@ -231,15 +247,15 @@ const clientConfigs = clientEntrypoints.map<Configuration>(
           template: clientEntrypoint.template,
           filename: `${clientEntrypoint.filename}.html`,
           inlineSource: '^/.*(js|css)$', // embed all js and css inline, exclude packages from dynamic cdn insertion
-          scriptLoading: 'blocking',
+          scriptLoading: 'module',
           inject: 'body',
         }),
         // this plugin allows us to add dynamically load packages from a CDN
         new DynamicCdnWebpackPlugin(DynamicCdnWebpackPluginConfig),
         // add the generated js code to the html file inline
         new HtmlWebpackInlineSourcePlugin(),
-      ].filter(Boolean),
-    };
+      ],
+    } as Configuration;
   }
 );
 

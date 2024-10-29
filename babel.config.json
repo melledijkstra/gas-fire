@@ -1,4 +1,8 @@
 {
   "sourceType": "unambiguous",
-  "presets": ["@babel/preset-env", "@babel/preset-typescript"]
+  "presets": [
+    "@babel/preset-env",
+    // let babel handle typescript compilation for both projects
+    "@babel/preset-typescript"
+  ]
 }

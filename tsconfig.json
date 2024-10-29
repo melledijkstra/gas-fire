@@ -1,12 +1,14 @@
 {
   "compilerOptions": {
     "strict": true,
-    "moduleResolution": "Node",
+    "moduleResolution": "Bundler",
+    "allowSyntheticDefaultImports": true,
+    "module": "ES6",
     "esModuleInterop": true,
     "noImplicitAny": true,
     "noImplicitThis": true,
     "strictNullChecks": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "types": ["gas-types-detailed", "vitest/globals"],
     "jsx": "react-jsx"
   },

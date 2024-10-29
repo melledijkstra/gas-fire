@@ -1,0 +1,16 @@
+{
+  "sourceType": "module",
+  "presets": [
+    [
+      "@babel/preset-env",
+      {
+        // prevent babel from transforming ES modules
+        "modules": false,
+        "targets": {
+          "esmodules": true
+        }
+      }
+    ],
+    ["@babel/preset-react", { "runtime": "classic" }]
+  ]
+}
