@@ -6,7 +6,7 @@ import { DefinePlugin, Configuration } from 'webpack';
 import CopyWebpackPlugin from 'copy-webpack-plugin';
 import GasPlugin from 'gas-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
-import HtmlWebpackInlineSourcePlugin from '@effortlessmotion/html-webpack-inline-source-plugin';
+import HtmlInlineScriptPlugin from 'html-inline-script-webpack-plugin';
 import DynamicCdnWebpackPlugin from '@effortlessmotion/dynamic-cdn-webpack-plugin';
 import moduleToCdn from 'module-to-cdn';
 
@@ -39,19 +39,19 @@ type EntryPoint = {
 // IF UPDATE HERE, ALSO UPDATE 'server/ui.ts' !
 const clientEntrypoints: Array<EntryPoint> = [
   {
-    name: 'CLIENT - About Dialog',
+    name: 'CLIENT:about',
     entry: './src/client/about-dialog/index.tsx',
     filename: 'about-dialog', // we'll add the .html suffix to these
     template: './src/client/about-dialog/index.html',
   },
   {
-    name: 'CLIENT - Import Dialog',
+    name: 'CLIENT:import',
     entry: './src/client/import-dialog/index.tsx',
     filename: 'import-dialog', // we'll add the .html suffix to these
     template: './src/client/import-dialog/index.html',
   },
   {
-    name: 'CLIENT - Settings Dialog',
+    name: 'CLIENT:settings',
     entry: './src/client/settings-dialog/index.tsx',
     filename: 'settings-dialog', // we'll add the .html suffix to these
     template: './src/client/settings-dialog/index.html',
@@ -109,14 +109,6 @@ const clientConfig: Partial<Configuration> = {
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
-    alias: {
-      '@mui/material': '@mui/material/modern',
-      '@mui/styled-engine': '@mui/styled-engine/modern',
-      '@mui/system': '@mui/system/modern',
-      '@mui/base': '@mui/base/modern',
-      '@mui/utils': '@mui/utils/modern',
-      '@mui/lab': '@mui/lab/modern',
-    },
   },
   module: {
     rules: [
@@ -160,12 +152,26 @@ type DynamicCDNEntry = {
 
 // DynamicCdnWebpackPlugin settings
 // these settings help us load 'react', 'react-dom' and the packages defined below from a CDN
-// see https://github.com/enuchi/React-Google-Apps-Script#adding-new-libraries-and-packages
 const DynamicCdnWebpackPluginConfig = {
   // set "verbose" to true to print console logs on CDN usage while webpack builds
-  verbose: false,
-  resolver: (packageName, packageVersion, options): DynamicCDNEntry | null => {
-    const moduleDetails = moduleToCdn(packageName, packageVersion, options);
+  verbose: process.env.ANALYZE ? false : true,
+  only: [
+    'react',
+    'react-dom',
+    'prop-types',
+    'material-react-table',
+    '@mui/material',
+    '@mui/icons-material',
+    '@emotion/react',
+    '@emotion/styled',
+    'gas-client',
+  ],
+  resolver: (
+    packageName: string,
+    version: string,
+    options: { env: string }
+  ): DynamicCDNEntry | null => {
+    const moduleDetails = moduleToCdn(packageName, version, options);
     const packageSuffix = isProd ? '.min.js' : '.js';
 
     // don't externalize react during development due to issue with react-refresh
@@ -178,50 +184,48 @@ const DynamicCdnWebpackPluginConfig = {
     // "name" should match the package being imported
     // "var" is important to get right -- this should be the exposed global. Look up "webpack externals" for info.
     switch (packageName) {
-      case 'react-transition-group':
+      case '@mui/material':
         return {
           name: packageName,
-          var: 'ReactTransitionGroup',
-          version: packageVersion,
-          url: `https://unpkg.com/react-transition-group@${packageVersion}/dist/react-transition-group${packageSuffix}`,
+          var: 'MuiMaterial',
+          version: version,
+          url: `https://unpkg.com/browse/@mui/material@${version}/modern/index.js`,
+        };
+      case '@mui/icons-material':
+        return {
+          name: packageName,
+          var: 'MuiIconsMaterial',
+          version: version,
+          url: `https://unpkg.com/@mui/icons-material@${version}/esm/index.js`,
+        };
+      case 'material-react-table':
+        return {
+          name: packageName,
+          var: 'MaterialReactTable',
+          version: version,
+          url: `https://unpkg.com/material-react-table@${version}/dist/index.esm.js`,
         };
       case '@emotion/react':
         return {
           name: packageName,
           var: 'emotionReact',
-          version: packageVersion,
-          url: `https://unpkg.com/@emotion/react@${packageVersion}/dist/emotion-react.umd.min.js`,
+          version: version,
+          url: `https://unpkg.com/@emotion/react@${version}/dist/emotion-react.umd${packageSuffix}`,
         };
       case '@emotion/styled':
         return {
           name: packageName,
           var: 'emotionStyled',
-          version: packageVersion,
-          url: `https://unpkg.com/@emotion/styled@${packageVersion}/dist/emotion-styled.umd.min.js`,
+          version: version,
+          url: `https://unpkg.com/@emotion/styled@${version}/dist/emotion-styled.umd${packageSuffix}`,
         };
-      case 'papaparse': {
-        return {
-          name: packageName,
-          var: 'Papa',
-          version: packageVersion,
-          url: `https://unpkg.com/papaparse@${packageVersion}/papaparse.min.js`,
-        };
-      }
       // externalize gas-client to keep bundle size even smaller
       case 'gas-client':
         return {
           name: packageName,
           var: 'GASClient',
-          version: packageVersion,
-          url: `https://unpkg.com/gas-client@${packageVersion}/dist/index.js`,
-        };
-      // must include peer dependencies for any custom imports
-      case '@types/react':
-        return {
-          name: packageName,
-          var: '@types/react',
-          version: packageVersion,
-          url: `https://unpkg.com/@types/react@${packageVersion}/index.d.ts`,
+          version: version,
+          url: `https://unpkg.com/gas-client@${version}/dist/index.js`,
         };
       // return defaults/null depending if Dynamic CDN plugin finds package
       default:
@@ -253,7 +257,7 @@ const clientConfigs = clientEntrypoints.map<Configuration>(
         // this plugin allows us to add dynamically load packages from a CDN
         new DynamicCdnWebpackPlugin(DynamicCdnWebpackPluginConfig),
         // add the generated js code to the html file inline
-        new HtmlWebpackInlineSourcePlugin(),
+        new HtmlInlineScriptPlugin(),
       ],
     } as Configuration;
   }
