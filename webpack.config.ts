@@ -152,7 +152,7 @@ type DynamicCDNEntry = {
 
 // DynamicCdnWebpackPlugin settings
 // these settings help us load 'react', 'react-dom' and the packages defined below from a CDN
-const DynamicCdnWebpackPluginConfig = {
+const DynamicCDNWebpackPluginConfig = {
   // set "verbose" to true to print console logs on CDN usage while webpack builds
   verbose: process.env.VERBOSE ? true : false,
   only: [
@@ -239,7 +239,7 @@ const clientConfigs = clientEntrypoints.map<Configuration>(
           inject: 'body',
         }),
         // this plugin allows us to add dynamically load packages from a CDN
-        new DynamicCDNPlugin(DynamicCdnWebpackPluginConfig),
+        new DynamicCDNPlugin(DynamicCDNWebpackPluginConfig),
         // add the generated js code to the html file inline
         new HtmlInlineScriptPlugin(),
       ],
