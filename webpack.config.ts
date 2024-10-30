@@ -154,14 +154,12 @@ type DynamicCDNEntry = {
 // these settings help us load 'react', 'react-dom' and the packages defined below from a CDN
 const DynamicCdnWebpackPluginConfig = {
   // set "verbose" to true to print console logs on CDN usage while webpack builds
-  verbose: process.env.ANALYZE ? false : true,
+  verbose: process.env.VERBOSE ? true : false,
   only: [
     'react',
     'react-dom',
     'prop-types',
     'material-react-table',
-    '@mui/material',
-    '@mui/icons-material',
     '@emotion/react',
     '@emotion/styled',
     'gas-client',
@@ -184,20 +182,6 @@ const DynamicCdnWebpackPluginConfig = {
     // "name" should match the package being imported
     // "var" is important to get right -- this should be the exposed global. Look up "webpack externals" for info.
     switch (packageName) {
-      case '@mui/material':
-        return {
-          name: packageName,
-          var: 'MuiMaterial',
-          version: version,
-          url: `https://unpkg.com/browse/@mui/material@${version}/modern/index.js`,
-        };
-      case '@mui/icons-material':
-        return {
-          name: packageName,
-          var: 'MuiIconsMaterial',
-          version: version,
-          url: `https://unpkg.com/@mui/icons-material@${version}/esm/index.js`,
-        };
       case 'material-react-table':
         return {
           name: packageName,
