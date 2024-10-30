@@ -3,13 +3,13 @@ import { DIALOG_SIZES } from '../common/constants';
 export function onOpen(): void {
   const ui = SpreadsheetApp.getUi();
   ui.createMenu('Import')
-    .addItem('Upload CSV', 'fileUploadDialog')
-    .addItem('Settings', 'openSettingsDialog')
-    .addItem('About', 'openAboutDialog')
+    .addItem('Upload CSV', openFileUploadDialog.name)
+    .addItem('Settings', openSettingsDialog.name)
+    .addItem('About', openAboutDialog.name)
     .addToUi();
 }
 
-export function fileUploadDialog(): void {
+export function openFileUploadDialog(): void {
   const [width, height] = DIALOG_SIZES.import;
   // Make sure that the file name here is correct with the output when generating the bundle!
   const html = HtmlService.createTemplateFromFile('import-dialog')

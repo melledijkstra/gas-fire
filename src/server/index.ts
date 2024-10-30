@@ -1,7 +1,7 @@
 // Functions to setup the initial UI
 export {
   onOpen,
-  fileUploadDialog,
+  openFileUploadDialog,
   openSettingsDialog,
   openAboutDialog,
 } from './ui';

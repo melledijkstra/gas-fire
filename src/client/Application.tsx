@@ -1,7 +1,9 @@
 import { ScopedCssBaseline } from '@mui/material';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { blue, green } from '@mui/material/colors';
+import { ThemeProvider, createTheme } from '@mui/material';
+import { colors } from '@mui/material';
 import { ReactNode } from 'react';
+
+const { green, blue } = colors;
 
 export const Application = ({ children }: { children: ReactNode }) => {
   const theme = createTheme({
