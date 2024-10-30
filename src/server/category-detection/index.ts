@@ -57,6 +57,7 @@ export const categoriesTermsMap: CategoryDetectionConfigOld = {
   Miscellaneous: [],
 };
 
+// @ts-ignore
 const getCategoryMatchesMap = (): CategoryDetectionConfig => {
   try {
     const storeObject = PropertiesService.getDocumentProperties().getProperty(
