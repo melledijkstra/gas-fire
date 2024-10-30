@@ -1,17 +1,24 @@
 {
   "compilerOptions": {
+    // because we use Babel compiler we don't let TS emit any files
+    // we just want to use it as a type checker
+    "noEmit": true,
     "strict": true,
-    "moduleResolution": "Bundler",
+    "moduleResolution": "Node",
     "allowSyntheticDefaultImports": true,
     "module": "ES6",
     "esModuleInterop": true,
     "noImplicitAny": true,
     "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "strictNullChecks": true,
+    "skipLibCheck": true,
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "types": ["gas-types-detailed", "vitest/globals"],
     "jsx": "react-jsx"
   },
+  "exclude": ["node_modules/*"],
   "include": [
     // include normal sources
     "src/**/*",

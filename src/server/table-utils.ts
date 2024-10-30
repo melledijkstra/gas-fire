@@ -72,7 +72,7 @@ export class TableUtils {
    */
   static transpose<T>(outerlist: T[][]): T[][] {
     let i = 0;
-    let result = [];
+    let result: T[][] = [];
     while (i < outerlist.length) {
       let innerlist = outerlist[i];
       let j = 0;

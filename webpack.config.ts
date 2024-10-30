@@ -3,12 +3,12 @@
  ********************************/
 import path from 'path';
 import { DefinePlugin, Configuration } from 'webpack';
-import CopyWebpackPlugin from 'copy-webpack-plugin';
+import CopyPlugin from 'copy-webpack-plugin';
 import GasPlugin from 'gas-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import HtmlInlineScriptPlugin from 'html-inline-script-webpack-plugin';
-import DynamicCdnWebpackPlugin from '@effortlessmotion/dynamic-cdn-webpack-plugin';
-import moduleToCdn from 'module-to-cdn';
+import DynamicCDNPlugin from '@effortlessmotion/dynamic-cdn-webpack-plugin';
+import moduleToCDN from 'module-to-cdn';
 
 const isProd = process.env.NODE_ENV === 'production';
 
@@ -72,7 +72,7 @@ const copyFilesConfig: Configuration = {
     publicPath,
   },
   plugins: [
-    new CopyWebpackPlugin({
+    new CopyPlugin({
       patterns: [
         {
           from: copyAppscriptEntry,
@@ -169,7 +169,7 @@ const DynamicCdnWebpackPluginConfig = {
     version: string,
     options: { env: string }
   ): DynamicCDNEntry | null => {
-    const moduleDetails = moduleToCdn(packageName, version, options);
+    const moduleDetails = moduleToCDN(packageName, version, options);
     const packageSuffix = isProd ? '.min.js' : '.js';
 
     // don't externalize react during development due to issue with react-refresh
@@ -239,7 +239,7 @@ const clientConfigs = clientEntrypoints.map<Configuration>(
           inject: 'body',
         }),
         // this plugin allows us to add dynamically load packages from a CDN
-        new DynamicCdnWebpackPlugin(DynamicCdnWebpackPluginConfig),
+        new DynamicCDNPlugin(DynamicCdnWebpackPluginConfig),
         // add the generated js code to the html file inline
         new HtmlInlineScriptPlugin(),
       ],
