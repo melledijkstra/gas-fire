@@ -1,6 +1,5 @@
 import { Alert, Button, Divider, Grid, Stack, Typography } from '@mui/material';
 import { FormEvent, Fragment, useEffect, useState } from 'react';
-import { serverFunctions } from '../../utils/serverFunctions';
 import { FireColumnRules } from '../../../server/types';
 import { FormRule } from './FormRule';
 
@@ -28,12 +27,12 @@ export const AutomaticCategorizationForm = () => {
     console.log(formData);
   };
 
-  const saveAutomaticCategorizationConfig = () => {
-    // parse form data into configuration data
-    const formData = new FormData();
+  // const saveAutomaticCategorizationConfig = () => {
+  //   // parse form data into configuration data
+  //   const formData = new FormData();
 
-    // send configuration data to server
-  };
+  //   // send configuration data to server
+  // };
 
   useEffect(() => {
     // serverFunctions

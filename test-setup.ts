@@ -17,7 +17,7 @@ class Sheet {
 
 class Spreadsheet {
   static getSheets = vi.fn(() => [Sheet]);
-  static getRangeByName = vi.fn((name: string) => Range);
+  static getRangeByName = vi.fn(() => Range);
 }
 
 class SpreadSheetApp {

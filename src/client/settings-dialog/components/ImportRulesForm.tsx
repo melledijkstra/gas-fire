@@ -1,5 +1,4 @@
-import { Alert, Button } from '@mui/material';
-import React from 'react';
+import { Alert } from '@mui/material';
 
 export const ImportRulesForm = () => {
   return (

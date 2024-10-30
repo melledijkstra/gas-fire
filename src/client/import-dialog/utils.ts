@@ -1,4 +1,4 @@
-import { Table } from '../../server/types';
+import { Table } from '../../common/types';
 
 export const acceptedMimeTypes = ['text/csv', 'application/vnd.ms-excel'];
 

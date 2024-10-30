@@ -101,29 +101,21 @@ export function generatePreview(
   result: Table;
   newBalance?: number;
 } {
-  // perform before import rules and return the data for preview
-
-  const config = Config.getConfig();
-
   let amounts = [];
-  let decimalSeparator = '.';
   switch (strategy) {
     case StrategyOption.N26:
-      decimalSeparator = config.n26.decimalSeparator;
       amounts = TableUtils.retrieveColumn(table, n26Cols.Amount);
       break;
     case StrategyOption.OPENBANK:
-      decimalSeparator = config.openbank.decimalSeparator;
       amounts = TableUtils.retrieveColumn(table, openbankCols.Importe);
       break;
     case StrategyOption.RABO:
-      decimalSeparator = config.rabobank.decimalSeparator;
       amounts = TableUtils.retrieveColumn(table, raboCols.Bedrag);
       break;
   }
 
   const amountNumbers = amounts
-    .map((value) => Transformers.transformMoney(value, '.'))
+    .map((value) => Transformers.transformMoney(value))
     .filter(isNumeric);
 
   const newBalance = calculateNewBalance(strategy, amountNumbers);
