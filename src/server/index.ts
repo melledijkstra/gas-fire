@@ -12,7 +12,8 @@ export {
   processCSV,
   generatePreview,
   getBankAccounts,
+  executeAutomaticCategorization,
 } from './remote-calls';
 
 // Custom functions that can be used within the Spreadsheet UI
-export { IMPORTJSON, MD5 } from './exposed_functions';
+export { MD5 } from './exposed_functions';

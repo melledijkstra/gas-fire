@@ -1,5 +1,6 @@
 import type { Table } from '../common/types';
-import { fireColumns, sourceSheet } from './globals';
+import { sourceSheet } from './globals';
+import { FIRE_COLUMNS } from '../common/constants';
 import { FireColumnRules, InputColumn } from './types';
 
 const EMPTY = '';
@@ -30,7 +31,7 @@ export function processTableWithImportRules(
 ): Table {
   let output: Table = [];
   const rowCount = input.length;
-  for (const columnName of fireColumns) {
+  for (const columnName of FIRE_COLUMNS) {
     const colRule = columnImportRules[columnName as keyof FireColumnRules];
 
     if (!colRule) {
@@ -121,8 +122,6 @@ export class TableUtils {
     const sortedIndices = colIndices.sort().reverse();
     // tranpose the table so we are working with columns first instead of rows
     let transposedTable = this.transpose(table);
-    console.log('transposed');
-    console.log(transposedTable);
     // delIndex is the column index to delete in the table
     for (const delIndex of sortedIndices) {
       if (typeof transposedTable[delIndex] !== 'undefined') {

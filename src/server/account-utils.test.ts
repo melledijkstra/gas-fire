@@ -1,7 +1,8 @@
 import { AccountUtils } from './account-utils';
-import { SOURCE_SHEET_ID, getSheetById } from './globals';
+import { getSheetById } from './globals';
 import { RangeMock, SheetMock } from '../../test-setup';
 import { StrategyOption } from '../common/types';
+import { SOURCE_SHEET_ID } from '../common/constants';
 
 describe('Utility tests', () => {
   test('Transformers.transformMoney', () => {
