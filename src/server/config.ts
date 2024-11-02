@@ -5,6 +5,10 @@ import type { Strategy } from './types';
 import { n26Cols, raboCols, openbankCols } from './types';
 import { AccountUtils } from './account-utils';
 
+// PENDING: Make this configurable by the user, what if they rename the sheets?
+export const SOURCE_SHEET_NAME = 'source';
+export const CATEGORIES_SHEET_NAME = 'categories';
+
 export const AUTO_FILL_COLUMNS = [
   1, // ref column
   5, // balance column

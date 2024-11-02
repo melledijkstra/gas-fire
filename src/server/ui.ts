@@ -1,9 +1,11 @@
 import { DIALOG_SIZES } from '../common/constants';
+import { executeAutomaticCategorization } from './remote-calls';
 
 export function onOpen(): void {
   const ui = SpreadsheetApp.getUi();
-  ui.createMenu('Import')
-    .addItem('Upload CSV', openFileUploadDialog.name)
+  ui.createMenu('FIRE')
+    .addItem('Upload Transactions (CSV)', openFileUploadDialog.name)
+    .addItem('Auto Categorize', executeAutomaticCategorization.name)
     .addItem('Settings', openSettingsDialog.name)
     .addItem('About', openAboutDialog.name)
     .addToUi();

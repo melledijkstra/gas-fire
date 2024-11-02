@@ -1,7 +1,7 @@
 import { Alert, Button, Divider, Grid, Stack, Typography } from '@mui/material';
 import { FormEvent, Fragment, useEffect, useState } from 'react';
-import { FireColumnRules } from '../../../server/types';
 import { FormRule } from './FormRule';
+import { FireColumn } from '../../../common/constants';
 
 export enum Condition {
   contains = 'contains',
@@ -10,7 +10,7 @@ export enum Condition {
 }
 
 export interface Rule {
-  column: keyof FireColumnRules;
+  column: FireColumn;
   keyword: string;
   conditionType: 'contains' | 'startsWith' | 'regex';
   category: string;

@@ -5,6 +5,7 @@ import path from 'path';
 import { DefinePlugin, Configuration } from 'webpack';
 import CopyPlugin from 'copy-webpack-plugin';
 import GasPlugin from 'gas-webpack-plugin';
+import TerserPlugin from 'terser-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import HtmlInlineScriptPlugin from 'html-inline-script-webpack-plugin';
 import DynamicCDNPlugin from '@effortlessmotion/dynamic-cdn-webpack-plugin';
@@ -153,6 +154,7 @@ type DynamicCDNEntry = {
 // DynamicCdnWebpackPlugin settings
 // these settings help us load 'react', 'react-dom' and the packages defined below from a CDN
 const DynamicCDNWebpackPluginConfig = {
+  disable: false,
   // set "verbose" to true to print console logs on CDN usage while webpack builds
   verbose: process.env.VERBOSE ? true : false,
   only: [
@@ -287,6 +289,13 @@ const serverConfig: Configuration = {
   },
   optimization: {
     minimize: isProd ? true : false,
+    minimizer: [
+      new TerserPlugin({
+        terserOptions: {
+          keep_fnames: true,
+        },
+      }),
+    ],
   },
   plugins: [
     new GasPlugin({

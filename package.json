@@ -17,7 +17,7 @@
     "dev": "npm run storybook",
     "analyze:server": "ANALYZE=true webpack --config-name SERVER --profile --json > dist/stats.json && webpack-bundle-analyzer dist/stats.json",
     "analyze:client": "ANALYZE=true webpack --config-name 'CLIENT:import' --profile --json > dist/stats.json && webpack-bundle-analyzer dist/stats.json",
-    "build": "NODE_ENV=production tsc && webpack --progress",
+    "build": "(export NODE_ENV=production; tsc && webpack --progress)",
     "typecheck": "tsc",
     "deploy": "rm -rf dist && npm run build && npm run publish",
     "test": "vitest",
