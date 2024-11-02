@@ -17,7 +17,7 @@ import { UploadFile } from '@mui/icons-material';
 
 export const Dialog = () => {
   const [strategyOptions, setStrategyOptions] =
-    useState<typeof StrategyOption>(StrategyOption);
+    useState<typeof StrategyOption>();
   // The strategy currently selected by the user
   const [selectedStrategy, setSelectedStrategy] = useState<StrategyOption>();
   const [statusText, setStatusText] = useState<string>('-');
@@ -73,8 +73,6 @@ export const Dialog = () => {
 
   const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    console.log({ formData });
     if (!importFile || !isAllowedFile(importFile.type) || !selectedStrategy) {
       setStatusText(
         `No import file or import strategy selected, or you selected a file type that is not supported (only: ${acceptedMimeTypes.join(

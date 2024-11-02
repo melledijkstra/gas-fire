@@ -5,7 +5,11 @@ import { n26Cols, openbankCols, raboCols } from './types';
 import { ServerResponse, StrategyOption, Table } from '../common/types';
 import { AccountUtils, isNumeric } from './account-utils';
 import { Transformers } from './transformers';
-import { getCategoryNames, getColumnIndexByName } from './helpers';
+import {
+  getCategoryNames,
+  getColumnIndexByName,
+  removeFilterCriteria,
+} from './helpers';
 import { detectCategoryByTextAnalysis } from './category-detection';
 
 const cleanString = (str: string) => str?.replace(/\n/g, ' ').trim();
@@ -56,6 +60,15 @@ export function processCSV(
 
   if (!(importStrategy in strategies)) {
     throw new Error(`Import strategy ${importStrategy} is not defined!`);
+  }
+
+  const filter = sourceSheet?.getFilter();
+  if (filter) {
+    if (!removeFilterCriteria(filter, true)) {
+      throw new Error(
+        'Filters need to be removed before importing, cancelling import'
+      );
+    }
   }
 
   const { beforeImport, columnImportRules, afterImport } =
