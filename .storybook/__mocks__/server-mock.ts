@@ -1,6 +1,8 @@
 import { ReactRenderer } from '@storybook/react';
 import { DecoratorFunction } from '@storybook/types';
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 enum StrategyOption {
   AuroraFinancialGroup = 'aurora',
   CeruleanTrustBank = 'cerulean',
@@ -11,10 +13,15 @@ let strategyOptions: Record<string, string>;
 
 class ServerFunctionsMock {
   static getStrategyOptions = async (): Promise<Record<string, string>> => {
+    await sleep(1000);
     if (strategyOptions) {
       return strategyOptions;
     }
     return StrategyOption;
+  };
+  static processCSV = async (): Promise<Record<string, string>> => {
+    await sleep(2000);
+    return { message: 'CSV Processed!' };
   };
 }
 
