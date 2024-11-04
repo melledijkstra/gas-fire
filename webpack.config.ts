@@ -24,7 +24,9 @@ const serverEntry = './src/server/index.ts';
 // define appsscript.json file path
 const copyAppscriptEntry = './appsscript.json';
 
-const envVars = {};
+const envVars = {
+  APP_ENV: process.env.APP_ENV ?? process.env.NODE_ENV ?? 'development',
+};
 
 /*********************************
  *    define entrypoints
@@ -154,7 +156,7 @@ type DynamicCDNEntry = {
 // DynamicCdnWebpackPlugin settings
 // these settings help us load 'react', 'react-dom' and the packages defined below from a CDN
 const DynamicCDNWebpackPluginConfig = {
-  disable: false,
+  disable: !isProd ? true : false,
   // set "verbose" to true to print console logs on CDN usage while webpack builds
   verbose: process.env.VERBOSE ? true : false,
   only: [
@@ -298,6 +300,9 @@ const serverConfig: Configuration = {
     ],
   },
   plugins: [
+    new DefinePlugin({
+      'process.env': JSON.stringify(envVars),
+    }),
     new GasPlugin({
       // removes need for assigning public server functions to "global"
       autoGlobalExportsFiles: [serverEntry],
