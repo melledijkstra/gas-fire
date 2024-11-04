@@ -1,4 +1,5 @@
 import { PROP_AUTOMATIC_CATEGORIES_CONFIG } from '../../common/constants';
+import { Logger } from '../logger';
 import { categoriesTermsMap } from './category-term-map';
 import { CategoryDetectionConfig } from './types';
 
@@ -15,7 +16,7 @@ const getCategoryMatchesMap = (): CategoryDetectionConfig => {
 
     return JSON.parse(storeObject);
   } catch (ignore) {
-    console.log(ignore);
+    Logger.log('Error while fetching category detection config', ignore);
   }
 
   return {};

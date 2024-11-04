@@ -2,6 +2,7 @@ import type { Table } from '../common/types';
 import { sourceSheet } from './globals';
 import { FIRE_COLUMNS } from '../common/constants';
 import { FireColumnRules, InputColumn } from './types';
+import { Logger } from './logger';
 
 const EMPTY = '';
 
@@ -61,7 +62,7 @@ export class TableUtils {
   static importData(data: Table) {
     const rowCount = data.length;
     const colCount = data[0].length;
-    console.log(`importing data (rows: ${rowCount}, cols: ${colCount})`);
+    Logger.log(`importing data (rows: ${rowCount}, cols: ${colCount})`);
     sourceSheet
       ?.insertRowsBefore(2, rowCount)
       .getRange(2, 1, rowCount, colCount)

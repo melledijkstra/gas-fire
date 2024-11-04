@@ -4,6 +4,7 @@
   "author": "Melle Dijkstra",
   "description": "Google App Script utilities to automate the FIRE google sheet",
   "license": "MIT",
+  "type": "module",
   "private": true,
   "workspaces": [
     "client",
@@ -18,6 +19,7 @@
     "analyze:server": "ANALYZE=true webpack --config-name SERVER --profile --json > dist/stats.json && webpack-bundle-analyzer dist/stats.json",
     "analyze:client": "ANALYZE=true webpack --config-name 'CLIENT:import' --profile --json > dist/stats.json && webpack-bundle-analyzer dist/stats.json",
     "build": "(export NODE_ENV=production; tsc && webpack --progress)",
+    "build:dev": "NODE_ENV=development webpack --progress",
     "typecheck": "tsc",
     "deploy": "rm -rf dist && npm run build && npm run publish",
     "test": "vitest",
