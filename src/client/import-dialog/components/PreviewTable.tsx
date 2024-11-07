@@ -1,24 +1,12 @@
 import { Table } from '../../../common/types';
 import { Stack, Typography } from '@mui/material';
-import {
-  MaterialReactTable,
-  useMaterialReactTable,
-  type MRT_ColumnDef,
-  MRT_RowData,
-} from 'material-react-table';
-import { useMemo } from 'react';
+import { Tabulator } from 'tabulator-tables';
+import { useEffect, useRef } from 'react';
+import 'tabulator-tables/dist/css/tabulator.min.css';
 
 type ImportPreviewProps = {
   tableData: Table;
 };
-
-const prepareTableColumn = (
-  field: string,
-  columnName?: string
-): MRT_ColumnDef<Record<string, unknown>> => ({
-  accessorKey: field,
-  header: columnName ?? field,
-});
 
 const prepareTableData = (
   inputTable: Table
@@ -49,35 +37,63 @@ const prepareTableData = (
   return { columns, rows };
 };
 
-export const PreviewTable = ({ tableData }: ImportPreviewProps) => {
-  const { rows, columns } = useMemo(() => prepareTableData(tableData), []);
+const DataTable = ({ table }: { table: Table }) => {
+  const elemRef = useRef<HTMLDivElement>(null);
 
-  const table = useMaterialReactTable({
-    columns,
-    data: rows,
-    enableRowSelection: true,
-    enableSelectAll: true,
-    enableTopToolbar: false,
-    enableBottomToolbar: false,
-    enableColumnActions: false,
-    enableColumnFilters: false,
-    enablePagination: false,
-    enableSorting: false,
-    enableTableFooter: false,
-    enableColumnResizing: true,
-    defaultColumn: {
-      minSize: 50,
-      size: 100,
-    },
-    initialState: {
-      density: 'compact',
-    },
-  });
+  let tabulator = null;
+
+  useEffect(() => {
+    // instantiate Tabulator when element is mounted
+    if (elemRef.current) {
+      tabulator = new Tabulator(elemRef.current, {
+        data: [['data1', 'data2']],
+        reactiveData: true, //enable data reactivity
+        columns: [
+          {
+            title: 'col1',
+          },
+          {
+            title: 'col2',
+          },
+        ],
+      });
+    }
+  }, []);
+
+  return <div id="tabulator" ref={elemRef} />;
+};
+
+export const PreviewTable = ({ tableData }: ImportPreviewProps) => {
+  // const { rows, columns } = useMemo(() => prepareTableData(tableData), []);
+
+  // const table = useMaterialReactTable({
+  //   columns,
+  //   data: rows,
+  //   enableRowSelection: true,
+  //   enableSelectAll: true,
+  //   enableTopToolbar: false,
+  //   enableBottomToolbar: false,
+  //   enableColumnActions: false,
+  //   enableColumnFilters: false,
+  //   enablePagination: false,
+  //   enableSorting: false,
+  //   enableTableFooter: false,
+  //   enableColumnResizing: true,
+  //   defaultColumn: {
+  //     minSize: 50,
+  //     size: 100,
+  //   },
+  //   initialState: {
+  //     density: 'compact',
+  //   },
+  // });
+
+  const table = [[]];
 
   return (
     <Stack spacing={2}>
       <Typography component="h3">Preview data</Typography>
-      {tableData && <MaterialReactTable table={table}></MaterialReactTable>}
+      {tableData && <DataTable table={table}></DataTable>}
     </Stack>
   );
 };

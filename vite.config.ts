@@ -86,6 +86,7 @@ const clientBuildConfig = ({ filename, template }: DialogEntry) =>
           '@mui/material',
           '@emotion/react',
           '@emotion/styled',
+          'tabulator-tables',
           'gas-client',
           '@types/react',
         ],
@@ -95,6 +96,7 @@ const clientBuildConfig = ({ filename, template }: DialogEntry) =>
           globals: {
             react: 'React',
             'react-dom': 'ReactDOM',
+            'tabulator-tables': 'Tabulator',
             '@mui/material': 'MaterialUI',
             '@emotion/react': 'emotionReact',
             '@emotion/styled': 'emotionStyled',
