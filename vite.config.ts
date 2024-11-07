@@ -2,13 +2,13 @@
 /// <reference types="vitest/config" />
 import {
   BuildOptions,
+  Plugin,
   ServerOptions,
   UserConfig,
   build,
   defineConfig,
 } from 'vite';
 import { resolve } from 'path';
-import type { PluginContext } from 'rollup';
 import { existsSync, readFileSync } from 'fs';
 import react from '@vitejs/plugin-react-swc';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
@@ -144,21 +144,26 @@ const buildIFrame = (entrypoint: DialogEntry) => ({
  * building multiple single-page apps in one project, so we have to do this manually with a
  * post-build closeBundle hook (https://rollupjs.org/guide/en/#closebundle).
  */
-async function generateFrontentProductionBundles(this: PluginContext) {
-  this.info('Building client production bundles...');
-  // eslint-disable-next-line no-restricted-syntax
-  for (const clientEntrypoint of clientEntrypoints) {
-    this.info(`Building client bundle for ${clientEntrypoint.name}`);
-    // eslint-disable-next-line no-await-in-loop
-    const buildOutput = await build(clientBuildConfig(clientEntrypoint));
-    // eslint-disable-next-line no-await-in-loop
-    await writeFile(
-      resolve(__dirname, outDir, `${clientEntrypoint.filename}.html`),
-      // @ts-expect-error - output is an array of RollupOutput
-      buildOutput?.output[0].source
-    );
-  }
-  this.info('Finished building client bundles!');
+function buildFrontendBundlesPlugin(): Plugin {
+  return {
+    name: 'build-client-production-bundles',
+    async closeBundle() {
+      this.info('Building client production bundles...');
+      // eslint-disable-next-line no-restricted-syntax
+      for (const clientEntrypoint of clientEntrypoints) {
+        this.info(`Building client bundle for ${clientEntrypoint.name}`);
+        // eslint-disable-next-line no-await-in-loop
+        const buildOutput = await build(clientBuildConfig(clientEntrypoint));
+        // eslint-disable-next-line no-await-in-loop
+        await writeFile(
+          resolve(__dirname, outDir, `${clientEntrypoint.filename}.html`),
+          // @ts-expect-error - output is an array of RollupOutput
+          buildOutput?.output[0].source
+        );
+      }
+      this.info('Finished building client bundles!');
+    },
+  };
 }
 
 const buildConfig = defineConfig(({ mode }) => {
@@ -173,10 +178,7 @@ const buildConfig = defineConfig(({ mode }) => {
       viteStaticCopy({
         targets,
       }),
-      mode === 'production' && {
-        name: 'build-client-production-bundles',
-        closeBundle: generateFrontentProductionBundles,
-      },
+      mode === 'production' && buildFrontendBundlesPlugin(),
     ],
     build: serverBuildConfig,
     esbuild: {
