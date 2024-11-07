@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    // because we use Babel compiler we don't let TS emit any files
+    // because we use vite compiler we don't let TS emit any files
     // we just want to use it as a type checker
     "noEmit": true,
     "strict": true,
@@ -23,8 +23,6 @@
     // include normal sources
     "src/**/*",
     // the typescript of storybook configuration should also be included
-    ".storybook/**/*",
-    // declaration file to fix type hinting (e.g. (s)css modules)
-    "declarations.d.ts"
+    ".storybook/**/*"
   ]
 }

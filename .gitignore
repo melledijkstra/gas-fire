@@ -22,6 +22,3 @@ certs/
 
 # storybook
 storybook-static/
-
-# webpack bundle analyzer
-./report.html

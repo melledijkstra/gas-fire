@@ -2,10 +2,26 @@
 <html>
   <head>
     <base target="_top" />
+    <!-- Add any external scripts and stylesheets here -->
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/@mui/material@5.15.16/umd/material-ui.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/gas-client@1.1.1/dist/index.js"
+    ></script>
   </head>
   <body>
-    <section id="index">
-      <!-- bundled js and css will get inlined here during build -->
-    </section>
+    <section id="index" />
+    <script src="./index.tsx" type="module"></script>
   </body>
 </html>

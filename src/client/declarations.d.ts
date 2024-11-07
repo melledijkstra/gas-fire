@@ -1,3 +1,8 @@
+declare module '*.module.css' {
+  const styles: Record<string, string>;
+  export default styles;
+}
+
 declare namespace google.script.host {
   const origin: string;
   function close(): void;

@@ -4,4 +4,3 @@ node_modules/**
 # this is a generated file that will be inlined within the generated HTML
 # no need to deploy it
 main.js
-*.txt
