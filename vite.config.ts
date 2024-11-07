@@ -1,5 +1,5 @@
 /* eslint-disable import/no-extraneous-dependencies */
-import { resolve } from 'path';
+/// <reference types="vitest/config" />
 import {
   BuildOptions,
   ServerOptions,
@@ -7,6 +7,8 @@ import {
   build,
   defineConfig,
 } from 'vite';
+import { resolve } from 'path';
+import type { PluginContext } from 'rollup';
 import { existsSync, readFileSync } from 'fs';
 import react from '@vitejs/plugin-react-swc';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
@@ -16,11 +18,17 @@ import { writeFile } from 'fs/promises';
 const PORT = 3000;
 const clientRoot = './src/client';
 const outDir = './dist';
-const serverEntry = 'src/server/index.ts';
+const serverEntry = './src/server/index.ts';
 const copyAppscriptEntry = './appsscript.json';
 const devServerWrapper = './dev/dev-server-wrapper.html';
 
-const clientEntrypoints = [
+type DialogEntry = {
+  name: string;
+  filename: string;
+  template: string;
+};
+
+const clientEntrypoints: Array<DialogEntry> = [
   {
     name: 'CLIENT:about',
     filename: 'about-dialog',
@@ -59,16 +67,10 @@ const clientServeConfig: UserConfig = {
   root: clientRoot,
 };
 
-const clientBuildConfig = ({
-  clientEntrypointRoot,
-  template,
-}: {
-  clientEntrypointRoot: string;
-  template: string;
-}) =>
+const clientBuildConfig = ({ filename, template }: DialogEntry) =>
   defineConfig({
     plugins: [react(), viteSingleFile({ useRecommendedBuildConfig: true })],
-    root: resolve(__dirname, clientRoot, clientEntrypointRoot),
+    root: resolve(__dirname, clientRoot, filename),
     build: {
       sourcemap: false,
       write: false, // don't write to disk
@@ -76,6 +78,7 @@ const clientBuildConfig = ({
       emptyOutDir: true,
       minify: true,
       rollupOptions: {
+        input: resolve(__dirname, clientRoot, template),
         external: [
           'react',
           'react-dom',
@@ -98,7 +101,6 @@ const clientBuildConfig = ({
             'gas-client': 'GASClient',
           },
         },
-        input: resolve(__dirname, clientRoot, template),
       },
     },
   });
@@ -106,7 +108,6 @@ const clientBuildConfig = ({
 const serverBuildConfig: BuildOptions = {
   emptyOutDir: true,
   minify: false, // needed to work with footer
-
   lib: {
     entry: resolve(__dirname, serverEntry),
     fileName: 'server',
@@ -125,59 +126,58 @@ const serverBuildConfig: BuildOptions = {
   },
 };
 
-const buildConfig = defineConfig(({ mode }) => {
-  const targets = [{ src: copyAppscriptEntry, dest: './' }];
-  if (mode === 'development') {
-    targets.push(
-      ...clientEntrypoints.map((entrypoint) => ({
-        src: devServerWrapper,
-        dest: './',
-        rename: `${entrypoint.filename}.html`,
-        transform: (contents: string) =>
-          contents
-            .toString()
-            .replace(/__PORT__/g, String(PORT))
-            .replace(/__FILE_NAME__/g, entrypoint.template),
-      }))
+const buildIFrame = (entrypoint: DialogEntry) => ({
+  src: devServerWrapper,
+  dest: './',
+  rename: `${entrypoint.filename}.html`,
+  transform: (contents: string) =>
+    contents
+      .toString()
+      .replace(/__PORT__/g, String(PORT))
+      .replace(/__FILE_NAME__/g, entrypoint.template),
+});
+
+/**
+ * This builds the client react app bundles for production, and writes them to disk.
+ * Because multiple client entrypoints (dialogs) are built, we need to loop through
+ * each entrypoint and build the client bundle for each. Vite doesn't have great tooling for
+ * building multiple single-page apps in one project, so we have to do this manually with a
+ * post-build closeBundle hook (https://rollupjs.org/guide/en/#closebundle).
+ */
+async function generateFrontentProductionBundles(this: PluginContext) {
+  this.info('Building client production bundles...');
+  // eslint-disable-next-line no-restricted-syntax
+  for (const clientEntrypoint of clientEntrypoints) {
+    this.info(`Building client bundle for ${clientEntrypoint.name}`);
+    // eslint-disable-next-line no-await-in-loop
+    const buildOutput = await build(clientBuildConfig(clientEntrypoint));
+    // eslint-disable-next-line no-await-in-loop
+    await writeFile(
+      resolve(__dirname, outDir, `${clientEntrypoint.filename}.html`),
+      // @ts-expect-error - output is an array of RollupOutput
+      buildOutput?.output[0].source
     );
   }
+  this.info('Finished building client bundles!');
+}
+
+const buildConfig = defineConfig(({ mode }) => {
+  const targets = [{ src: copyAppscriptEntry, dest: './' }];
+
+  if (mode === 'development') {
+    targets.push(...clientEntrypoints.map(buildIFrame));
+  }
+
   return defineConfig({
     plugins: [
       viteStaticCopy({
         targets,
       }),
-      /**
-       * This builds the client react app bundles for production, and writes them to disk.
-       * Because multiple client entrypoints (dialogs) are built, we need to loop through
-       * each entrypoint and build the client bundle for each. Vite doesn't have great tooling for
-       * building multiple single-page apps in one project, so we have to do this manually with a
-       * post-build closeBundle hook (https://rollupjs.org/guide/en/#closebundle).
-       */
       mode === 'production' && {
         name: 'build-client-production-bundles',
-        closeBundle: async () => {
-          console.log('Building client production bundles...');
-          // eslint-disable-next-line no-restricted-syntax
-          for (const clientEntrypoint of clientEntrypoints) {
-            console.log('Building client bundle for', clientEntrypoint.name);
-            // eslint-disable-next-line no-await-in-loop
-            const buildOutput = await build(
-              clientBuildConfig({
-                clientEntrypointRoot: clientEntrypoint.filename,
-                template: clientEntrypoint.template,
-              })
-            );
-            // eslint-disable-next-line no-await-in-loop
-            await writeFile(
-              resolve(__dirname, outDir, `${clientEntrypoint.filename}.html`),
-              // @ts-expect-error - output is an array of RollupOutput
-              buildOutput.output[0].source
-            );
-          }
-          console.log('Finished building client bundles!');
-        },
+        closeBundle: generateFrontentProductionBundles,
       },
-    ].filter(Boolean),
+    ],
     build: serverBuildConfig,
     esbuild: {
       keepNames: true,
