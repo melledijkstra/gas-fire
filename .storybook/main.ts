@@ -1,4 +1,4 @@
-import { StorybookConfig } from '@storybook/react-webpack5';
+import { StorybookConfig } from '@storybook/react-vite';
 import { join, dirname } from 'path';
 
 /**
@@ -15,25 +15,12 @@ const config: StorybookConfig = {
     getAbsolutePath('@storybook/addon-links'),
     getAbsolutePath('@storybook/addon-essentials'),
     getAbsolutePath('@storybook/addon-interactions'),
-    getAbsolutePath('@storybook/addon-webpack5-compiler-swc')
   ],
   framework: {
-    name: '@storybook/react-webpack5',
-    options: { builder: { useSWC: true } }
+    name: getAbsolutePath('@storybook/react-vite'),
+    options: {},
   },
-  docs: {
-    autodocs: 'tag',
-  },
-  swc: () => ({
-    "jsc": {
-      "transform": {
-        "react": {
-          "runtime": "automatic"
-        }
-      }
-    }
-  }),
-  webpackFinal: async (config) => {
+  viteFinal: async (config) => {
     if (config?.resolve?.alias) {
       // @ts-ignore
       config.resolve.alias['../utils/serverFunctions'] = require.resolve(

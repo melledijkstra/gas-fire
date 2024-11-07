@@ -1,5 +1,5 @@
 export class Logger {
-  private static isEnabled: boolean = process.env.APP_ENV === 'development';
+  private static isEnabled: boolean = import.meta.env.DEV;
 
   static log(message?: any, ...optionalParams: any[]): void {
     if (this.isEnabled) {
@@ -16,6 +16,6 @@ export class Logger {
   }
 
   static reset(): void {
-    this.isEnabled = process.env.APP_ENV === 'development';
+    this.isEnabled = import.meta.env.DEV;
   }
 }

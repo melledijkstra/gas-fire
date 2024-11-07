@@ -9,12 +9,12 @@ describe('Logger', () => {
   });
 
   beforeEach(() => {
-    originalEnv = process.env.APP_ENV;
+    originalEnv = import.meta.env.DEV;
     Logger.disable();
   });
 
   afterEach(() => {
-    process.env.APP_ENV = originalEnv;
+    import.meta.env.DEV = originalEnv;
     consoleSpy.mockReset();
   });
 
@@ -40,15 +40,15 @@ describe('Logger', () => {
     expect(Logger['isEnabled']).toBe(false);
   });
 
-  test('should log message if APP_ENV is development', () => {
-    process.env.APP_ENV = 'development';
+  test('should log message if in development', () => {
+    import.meta.env.DEV = true;
     Logger.reset();
     Logger.log('Test message');
     expect(consoleSpy).toHaveBeenCalledWith('[FIRE]:', 'Test message');
   });
 
-  test('should not log message if APP_ENV is not development', () => {
-    process.env.APP_ENV = 'production';
+  test('should not log message if not in development', () => {
+    import.meta.env.DEV = false;
     Logger.reset();
     Logger.log('Test message');
     expect(consoleSpy).not.toHaveBeenCalled();

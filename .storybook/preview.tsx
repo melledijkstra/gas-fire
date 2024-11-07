@@ -22,6 +22,7 @@ const preview: Preview = {
     },
   },
   decorators: [ServerMockDecorator, DialogDecorator],
+  tags: ['autodocs'],
 };
 
 export default preview;
