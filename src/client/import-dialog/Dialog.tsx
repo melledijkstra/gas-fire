@@ -10,24 +10,11 @@ import {
 import { DataTable } from './components/DataTable';
 
 const RawTable = () => {
-  const { importData, addSelectedRow, removeSelectedRow } = useImportContext();
-
-  const onRowToggled = (index: number, on: boolean) => {
-    console.log('Row selected:', index);
-    if (on) {
-      addSelectedRow(index);
-    } else {
-      removeSelectedRow(index);
-    }
-  };
+  const { importData } = useImportContext();
 
   return (
     importData && (
-      <DataTable
-        table={importData}
-        options={{ selectable: true }}
-        onRowToggled={onRowToggled}
-      />
+      <DataTable table={importData} options={{ selectable: true }} />
     )
   );
 };

@@ -22,7 +22,6 @@ export const DataTable = ({
   options = defaultOptions,
 }: {
   table: Table;
-  onRowToggled?: (index: number, on: boolean) => void;
   options?: TableOptions;
 }) => {
   const { selectable } = options;
