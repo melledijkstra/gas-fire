@@ -2,7 +2,7 @@ import { sourceSheet } from './globals';
 import { Config } from './config';
 import { TableUtils, processTableWithImportRules } from './table-utils';
 import { n26Cols, openbankCols, raboCols } from './types';
-import { ServerResponse, StrategyOption, Table } from '../common/types';
+import { ServerResponse, StrategyOption, Table } from '@/common/types';
 import { AccountUtils, isNumeric } from './account-utils';
 import { Transformers } from './transformers';
 import {

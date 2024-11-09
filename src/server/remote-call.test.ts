@@ -1,9 +1,9 @@
 import { generatePreview, processCSV } from './remote-calls';
-import { StrategyOption, Table } from '../common/types';
+import { StrategyOption, Table } from '@/common/types';
 import { RangeMock } from '../../test-setup';
-import { fakeN26ImportWithBalance, n26ImportMock } from '../fixtures/n26';
+import { fakeN26ImportWithBalance, n26ImportMock } from '@/fixtures/n26';
 import { TableUtils } from './table-utils';
-import { raboImportMock } from '../fixtures/rabobank';
+import { raboImportMock } from '@/fixtures/rabobank';
 
 const importDataSpy = vi.spyOn(TableUtils, 'importData');
 

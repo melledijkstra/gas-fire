@@ -13,3 +13,7 @@ declare namespace google.script.host {
 declare namespace google.script.host.editor {
   function focus(): void;
 }
+
+// app version which is injected by vite define when bundling
+// it is used to show in the about dialog when deploying
+declare const __APP_VERSION__: string;

@@ -1,7 +1,7 @@
 import { Logger } from './logger';
 
 describe('Logger', () => {
-  let originalEnv: string | undefined;
+  let originalEnv: boolean;
 
   const consoleSpy = vi.spyOn(console, 'log');
   consoleSpy.mockImplementation(() => {

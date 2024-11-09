@@ -1,4 +1,4 @@
-import { Table } from '../common/types';
+import { Table } from '@/common/types';
 
 export enum n26Cols {
   BookingDate,

@@ -4,9 +4,9 @@
     // we just want to use it as a type checker
     "noEmit": true,
     "strict": true,
-    "moduleResolution": "Node",
+    "moduleResolution": "Bundler",
     "allowSyntheticDefaultImports": true,
-    "module": "ES6",
+    "module": "ESNext",
     "esModuleInterop": true,
     "noImplicitAny": true,
     "noImplicitThis": true,
@@ -15,8 +15,11 @@
     "strictNullChecks": true,
     "skipLibCheck": true,
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
-    "types": ["gas-types-detailed", "vitest/globals"],
-    "jsx": "react-jsx"
+    "types": ["gas-types-detailed", "vitest/globals", "vite/client"],
+    "jsx": "react-jsx",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "exclude": ["node_modules/*"],
   "include": [
