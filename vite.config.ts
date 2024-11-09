@@ -46,6 +46,14 @@ const clientEntrypoints: Array<DialogEntry> = [
   },
 ];
 
+const sharedConfig = defineConfig({
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, './src'),
+    },
+  },
+});
+
 const keyPath = resolve(__dirname, './certs/key.pem');
 const certPath = resolve(__dirname, './certs/cert.pem');
 
@@ -60,14 +68,6 @@ if (existsSync(keyPath) && existsSync(certPath)) {
     cert: readFileSync(resolve(__dirname, './certs/cert.pem')),
   };
 }
-
-const sharedConfig = defineConfig({
-  resolve: {
-    alias: {
-      '@': resolve(__dirname, './src'),
-    },
-  },
-});
 
 const clientServeConfig: UserConfig = {
   ...sharedConfig,
@@ -198,6 +198,7 @@ const buildConfig = defineConfig(({ mode }) => {
 });
 
 const testConfig: UserConfig = {
+  ...sharedConfig,
   test: {
     globals: true,
     setupFiles: ['./test-setup.ts'],
