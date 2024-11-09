@@ -1,7 +1,7 @@
 import { Alert, Button, Divider, Grid, Stack, Typography } from '@mui/material';
 import { FormEvent, Fragment, useEffect, useState } from 'react';
 import { FormRule } from './FormRule';
-import { FireColumn } from '../../../common/constants';
+import { FireColumn } from '@/common/constants';
 
 export enum Condition {
   contains = 'contains',

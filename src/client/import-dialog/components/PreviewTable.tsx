@@ -1,83 +1,66 @@
-import { Table } from '../../../common/types';
-import { Stack, Typography } from '@mui/material';
-import {
-  MaterialReactTable,
-  useMaterialReactTable,
-  type MRT_ColumnDef,
-  MRT_RowData,
-} from 'material-react-table';
-import { useMemo } from 'react';
+import type { Table } from '@/common/types';
+import { useState } from 'react';
+import { useImportContext } from '../context/import-context';
+import { serverFunctions } from '@/client/utils/serverFunctions';
+import { DataTable } from './DataTable';
+import { Button } from '@mui/material';
+import { excludeRowsFromData } from '../utils';
 
-type ImportPreviewProps = {
-  tableData: Table;
+const getBrowserLocale = () => {
+  if (navigator.languages != undefined) return navigator.languages[0];
+  return navigator.language;
 };
 
-const prepareTableColumn = (
-  field: string,
-  columnName?: string
-): MRT_ColumnDef<Record<string, unknown>> => ({
-  accessorKey: field,
-  header: columnName ?? field,
-});
+export const PreviewTable = () => {
+  const { setStatusText, importData, strategy, selectedRows } =
+    useImportContext();
+  const [previewData, setPreviewData] = useState<Table>();
 
-const prepareTableData = (
-  inputTable: Table
-): {
-  columns: MRT_ColumnDef<Record<string, unknown>>[];
-  rows: MRT_RowData[];
-} => {
-  const table = structuredClone(inputTable);
-  const headingRow = table?.shift();
+  const canGeneratePreview = importData && strategy;
 
-  if (!headingRow) {
-    throw Error('The data does not contain a heading row');
-  }
-
-  const columns = headingRow.map((heading, index) =>
-    prepareTableColumn(`col${index}`, heading)
-  );
-
-  const rows = table.map((row, index) => {
-    const dataGridRow: Record<string, unknown> = { id: index };
-    // fill the fields in the data grid table
-    row.forEach((cellValue, colIndex) => {
-      dataGridRow[`col${colIndex}`] = cellValue;
+  const onGeneratePreviewSuccess = ({
+    result,
+    newBalance,
+  }: {
+    result: Table;
+    newBalance?: number;
+  }) => {
+    const locale = getBrowserLocale();
+    const newBalanceFormatted = newBalance?.toLocaleString(locale, {
+      style: 'currency',
+      currency: 'EUR',
     });
-    return dataGridRow;
-  });
+    setStatusText(
+      `Import preview set${
+        newBalanceFormatted ? ` - new balance: ${newBalanceFormatted}` : ''
+      }`
+    );
+    setPreviewData(result);
+  };
 
-  return { columns, rows };
-};
-
-export const PreviewTable = ({ tableData }: ImportPreviewProps) => {
-  const { rows, columns } = useMemo(() => prepareTableData(tableData), []);
-
-  const table = useMaterialReactTable({
-    columns,
-    data: rows,
-    enableRowSelection: true,
-    enableSelectAll: true,
-    enableTopToolbar: false,
-    enableBottomToolbar: false,
-    enableColumnActions: false,
-    enableColumnFilters: false,
-    enablePagination: false,
-    enableSorting: false,
-    enableTableFooter: false,
-    enableColumnResizing: true,
-    defaultColumn: {
-      minSize: 50,
-      size: 100,
-    },
-    initialState: {
-      density: 'compact',
-    },
-  });
+  const generatePreview = () => {
+    if (canGeneratePreview) {
+      const dataToProcess = excludeRowsFromData(importData, selectedRows);
+      setStatusText('Data is being processed...');
+      serverFunctions
+        .generatePreview(dataToProcess, strategy)
+        .then(onGeneratePreviewSuccess)
+        .catch((error) => setStatusText(`Failed to create preview: ${error}`));
+    }
+  };
 
   return (
-    <Stack spacing={2}>
-      <Typography component="h3">Preview data</Typography>
-      {tableData && <MaterialReactTable table={table}></MaterialReactTable>}
-    </Stack>
+    <>
+      {previewData && <DataTable table={previewData} />}
+      <Button
+        sx={{ marginTop: previewData ? 2 : 0 }}
+        disabled={!canGeneratePreview}
+        variant="contained"
+        color="primary"
+        onClick={generatePreview}
+      >
+        Generate Preview
+      </Button>
+    </>
   );
 };

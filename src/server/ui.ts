@@ -1,4 +1,4 @@
-import { DIALOG_SIZES } from '../common/constants';
+import { DIALOG_SIZES } from '@/common/constants';
 import { executeAutomaticCategorization } from './remote-calls';
 
 export function onOpen(): void {
