@@ -1,4 +1,4 @@
-import { SOURCE_SHEET_ID } from '../common/constants';
+import { SOURCE_SHEET_ID } from '@/common/constants';
 
 export const FireSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
 export const sheets = FireSpreadsheet.getSheets();

@@ -33,9 +33,9 @@ export const TableCell = styled(MuiTableCell)(
     } as Record<string, CSSProperties>)
 );
 
-export const TableRow = styled(MuiTableRow)(({ theme }) => ({
+export const TableRow = styled(MuiTableRow)({
   // hide last border
   '&:last-child td, &:last-child th': {
     border: 0,
   },
-}));
+});

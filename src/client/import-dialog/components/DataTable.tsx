@@ -19,7 +19,6 @@ const defaultOptions: TableOptions = {
 
 export const DataTable = ({
   table,
-  onRowToggled,
   options = defaultOptions,
 }: {
   table: Table;

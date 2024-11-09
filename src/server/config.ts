@@ -1,6 +1,6 @@
 import { TableUtils, buildColumn } from './table-utils';
 import { Transformers } from './transformers';
-import type { StrategyOption, Table } from '../common/types';
+import type { StrategyOption, Table } from '@/common/types';
 import type { Strategy } from './types';
 import { n26Cols, raboCols, openbankCols } from './types';
 import { AccountUtils } from './account-utils';

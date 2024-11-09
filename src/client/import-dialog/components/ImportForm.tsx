@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ServerResponse, StrategyOption, Table } from '../../../common/types';
+import { ServerResponse, StrategyOption, Table } from '@/common/types';
 import {
   Button,
   FormControl,

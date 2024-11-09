@@ -1,5 +1,5 @@
 import { createContext, ReactNode, useContext, useState } from 'react';
-import { StrategyOption, Table } from '../../../common/types';
+import { StrategyOption, Table } from '@/common/types';
 
 type ImportContextProps = {
   statusText?: string;

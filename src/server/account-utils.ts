@@ -1,5 +1,5 @@
 import { FireSpreadsheet } from './globals';
-import { StrategyOption } from '../common/types';
+import { StrategyOption } from '@/common/types';
 
 const ACCOUNTS_NAMED_RANGE = 'accounts';
 

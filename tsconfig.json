@@ -15,7 +15,7 @@
     "strictNullChecks": true,
     "skipLibCheck": true,
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
-    "types": ["vitest/globals", "vite/client"],
+    "types": ["gas-types-detailed", "vitest/globals", "vite/client"],
     "jsx": "react-jsx",
     "paths": {
       "@/*": ["./src/*"]
