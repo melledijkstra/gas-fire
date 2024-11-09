@@ -61,7 +61,16 @@ if (existsSync(keyPath) && existsSync(certPath)) {
   };
 }
 
+const sharedConfig = defineConfig({
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, './src'),
+    },
+  },
+});
+
 const clientServeConfig: UserConfig = {
+  ...sharedConfig,
   plugins: [react()],
   server: devServerOptions,
   root: clientRoot,
@@ -69,6 +78,7 @@ const clientServeConfig: UserConfig = {
 
 const clientBuildConfig = ({ filename, template }: DialogEntry) =>
   defineConfig({
+    ...sharedConfig,
     plugins: [react(), viteSingleFile({ useRecommendedBuildConfig: true })],
     root: resolve(__dirname, clientRoot, filename),
     build: {
@@ -86,7 +96,6 @@ const clientBuildConfig = ({ filename, template }: DialogEntry) =>
           '@mui/material',
           '@emotion/react',
           '@emotion/styled',
-          'tabulator-tables',
           'gas-client',
           '@types/react',
         ],
@@ -96,7 +105,6 @@ const clientBuildConfig = ({ filename, template }: DialogEntry) =>
           globals: {
             react: 'React',
             'react-dom': 'ReactDOM',
-            'tabulator-tables': 'Tabulator',
             '@mui/material': 'MaterialUI',
             '@emotion/react': 'emotionReact',
             '@emotion/styled': 'emotionStyled',
@@ -174,8 +182,8 @@ const buildConfig = defineConfig(({ mode }) => {
   if (mode === 'development') {
     targets.push(...clientEntrypoints.map(buildIFrame));
   }
-
-  return defineConfig({
+  return {
+    ...sharedConfig,
     plugins: [
       viteStaticCopy({
         targets,
@@ -186,7 +194,7 @@ const buildConfig = defineConfig(({ mode }) => {
     esbuild: {
       keepNames: true,
     },
-  });
+  };
 });
 
 const testConfig: UserConfig = {

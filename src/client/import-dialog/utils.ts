@@ -4,15 +4,15 @@ export const acceptedMimeTypes = ['text/csv', 'application/vnd.ms-excel'];
 
 export const isAllowedFile = (mimeType: string) => {
   if (!acceptedMimeTypes.includes(mimeType)) {
-    alert(`Please upload a CSV file, "${mimeType}" is not accepted!`);
     return false;
   }
   return true;
 };
 
-export const csvToJson = (csvData: Table): Record<string, string>[] => {
-  const headers = csvData.shift();
-  return csvData.map((row) => {
+export const csvToJson = (_csvData: Table): Record<string, string>[] => {
+  const clonedTable = structuredClone(_csvData);
+  const headers = clonedTable.shift();
+  return clonedTable.map((row) => {
     let jsonRow: Record<string, string> = {};
     row.forEach((value, index) => {
       if (headers?.[index]) {
@@ -21,4 +21,12 @@ export const csvToJson = (csvData: Table): Record<string, string>[] => {
     });
     return jsonRow;
   });
+};
+
+export const excludeRowsFromData = (
+  data: Table,
+  rowsToExclude: Set<number>
+): Table => {
+  console.log('Excluding rows:', rowsToExclude);
+  return data.filter((_, index) => !rowsToExclude.has(index));
 };
