@@ -14,6 +14,7 @@ import react from '@vitejs/plugin-react-swc';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { viteSingleFile } from 'vite-plugin-singlefile';
 import { writeFile } from 'fs/promises';
+import packageInfo from './package.json';
 
 const PORT = 3000;
 const clientRoot = './src/client';
@@ -47,6 +48,9 @@ const clientEntrypoints: Array<DialogEntry> = [
 ];
 
 const sharedConfig = defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(packageInfo.version),
+  },
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),

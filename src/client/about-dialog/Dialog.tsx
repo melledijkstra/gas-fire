@@ -8,6 +8,7 @@ export const Dialog = () => {
       <a target="_blank" href="https://github.com/melledijkstra/gas-fire">
         @melledijkstra/gas-fire
       </a>
+      <p>{`Version: ${__APP_VERSION__}`}</p>
     </Application>
   );
 };
