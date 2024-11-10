@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.1.1
+
+#### Developer
+
+- Added script and command `npm run switch-env [env]` to switch between testing and production Google App Script project IDs. This is helpful during development to have an Google Sheets document which can be modified by the project without hurting the original document.
+- Added server function to retrieve project version
+
 ## 3.1.0
 
 #### Users

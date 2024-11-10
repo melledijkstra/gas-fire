@@ -75,3 +75,7 @@ export function MD5(input: string): string {
 
   return txtHash;
 }
+
+export function GET_PROJECT_VERSION() {
+  return __APP_VERSION__;
+}
