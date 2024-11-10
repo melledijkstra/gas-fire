@@ -19,8 +19,8 @@
     "typecheck": "tsc",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
-    "analyze:server": "echo 'not implemented yet'; # ANALYZE=true webpack --config-name SERVER --profile --json > dist/stats.json && webpack-bundle-analyzer dist/stats.json",
-    "analyze:client": "echo 'not implemented yet'; # ANALYZE=true webpack --config-name 'CLIENT:import' --profile --json > dist/stats.json && webpack-bundle-analyzer dist/stats.json",
+    "analyze:server": "echo 'not implemented yet'",
+    "analyze:client": "echo 'not implemented yet'",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "switch-env": "node ./scripts/switch-env.js"
