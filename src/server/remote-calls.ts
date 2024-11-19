@@ -11,6 +11,7 @@ import {
   removeFilterCriteria,
 } from './helpers';
 import { detectCategoryByTextAnalysis } from './category-detection';
+import { NAMED_RANGES } from '../common/constants';
 
 const cleanString = (str: string) => str?.replace(/\n/g, ' ').trim();
 
@@ -25,11 +26,11 @@ export function getBankAccounts(): Record<string, string> {
   // retrieve account names and ibans
   // the ranges should only have one column so we use .flat()
   const accountNames = sheet
-    .getRangeByName('accountNames')
+    .getRangeByName(NAMED_RANGES.accountNames)
     ?.getValues()
     .flat() as Array<string>;
   const ibans = sheet
-    .getRangeByName('accounts')
+    .getRangeByName(NAMED_RANGES.accounts)
     ?.getValues()
     .flat() as Array<string>;
 
@@ -214,4 +215,27 @@ export const executeAutomaticCategorization = () => {
   }
 
   ui.alert(`Succesfully categorized ${rowsCategorized} rows!`);
+};
+
+export const mailNetWorth = () => {
+  const spreadsheet = SpreadsheetApp.getActive();
+  const locale = spreadsheet.getSpreadsheetLocale().replace('_', '-');
+  const userEmail = spreadsheet.getOwner().getEmail();
+  const netWorth = Number(
+    spreadsheet.getRangeByName(NAMED_RANGES.netWorth).getValue()
+  );
+  const currentMonth = new Date().toLocaleString(locale, { month: 'long' });
+
+  const formattedNetWorth = netWorth.toLocaleString(locale, {
+    style: 'currency',
+    currency: 'EUR',
+  });
+
+  if (userEmail && netWorth) {
+    MailApp.sendEmail({
+      to: userEmail,
+      subject: `Your Net Worth (Monthly Update: ${currentMonth})`,
+      htmlBody: `Your net worth is currently: <strong>${formattedNetWorth}</strong>`,
+    });
+  }
 };

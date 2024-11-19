@@ -4,6 +4,12 @@ export enum DialogType {
   about,
 }
 
+export enum NAMED_RANGES {
+  netWorth = 'netWorth',
+  accounts = 'accounts',
+  accountNames = 'accountNames',
+}
+
 export const DIALOG_SIZES: Record<keyof typeof DialogType, [number, number]> = {
   import: [900, 600],
   settings: [900, 600],
