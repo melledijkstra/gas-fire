@@ -1,7 +1,6 @@
 import { FireSpreadsheet } from './globals';
 import { StrategyOption } from '../common/types';
-
-const ACCOUNTS_NAMED_RANGE = 'accounts';
+import { NAMED_RANGES } from '../common/constants';
 
 /**
  * Converts a list to an object
@@ -34,7 +33,7 @@ export const isNumeric = (value: unknown): boolean => {
 export class AccountUtils {
   static getBankAccounts(): Record<string, string> {
     // this range contains the ibans only
-    const ibans = FireSpreadsheet.getRangeByName(ACCOUNTS_NAMED_RANGE);
+    const ibans = FireSpreadsheet.getRangeByName(NAMED_RANGES.accounts);
     // we also need to include the labels
     const accounts = ibans
       ?.offset(0, -1, ibans.getLastRow(), 2)
@@ -57,7 +56,7 @@ export class AccountUtils {
 
   static getBalance(strategy: StrategyOption): number {
     // this range contains the ibans only
-    const ibans = FireSpreadsheet.getRangeByName(ACCOUNTS_NAMED_RANGE);
+    const ibans = FireSpreadsheet.getRangeByName(NAMED_RANGES.accounts);
     // we also need to include the labels and balances
     const accounts = ibans
       ?.offset(0, -1, ibans.getLastRow(), 3)

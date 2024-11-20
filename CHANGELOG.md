@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.1.0
+
+- Added function that mails net worth to spreadsheet owner, can be setup as trigger
+
 ## 3.0.0
 
 - **Breaking Change**: Migration from Webpack to Vite
