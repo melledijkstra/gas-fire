@@ -1,5 +1,5 @@
-import { PROP_AUTOMATIC_CATEGORIES_CONFIG } from '../../common/constants';
-import { Logger } from '../logger';
+import { PROP_AUTOMATIC_CATEGORIES_CONFIG } from '@/common/constants';
+import { Logger } from '@/common/logger';
 import { categoriesTermsMap } from './category-term-map';
 import { CategoryDetectionConfig } from './types';
 

@@ -14,6 +14,7 @@ import react from '@vitejs/plugin-react-swc';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { viteSingleFile } from 'vite-plugin-singlefile';
 import { writeFile } from 'fs/promises';
+import packageInfo from './package.json';
 
 const PORT = 3000;
 const clientRoot = './src/client';
@@ -46,6 +47,17 @@ const clientEntrypoints: Array<DialogEntry> = [
   },
 ];
 
+const sharedConfig = defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(packageInfo.version),
+  },
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, './src'),
+    },
+  },
+});
+
 const keyPath = resolve(__dirname, './certs/key.pem');
 const certPath = resolve(__dirname, './certs/cert.pem');
 
@@ -62,6 +74,7 @@ if (existsSync(keyPath) && existsSync(certPath)) {
 }
 
 const clientServeConfig: UserConfig = {
+  ...sharedConfig,
   plugins: [react()],
   server: devServerOptions,
   root: clientRoot,
@@ -69,6 +82,7 @@ const clientServeConfig: UserConfig = {
 
 const clientBuildConfig = ({ filename, template }: DialogEntry) =>
   defineConfig({
+    ...sharedConfig,
     plugins: [react(), viteSingleFile({ useRecommendedBuildConfig: true })],
     root: resolve(__dirname, clientRoot, filename),
     build: {
@@ -172,8 +186,8 @@ const buildConfig = defineConfig(({ mode }) => {
   if (mode === 'development') {
     targets.push(...clientEntrypoints.map(buildIFrame));
   }
-
-  return defineConfig({
+  return {
+    ...sharedConfig,
     plugins: [
       viteStaticCopy({
         targets,
@@ -184,10 +198,11 @@ const buildConfig = defineConfig(({ mode }) => {
     esbuild: {
       keepNames: true,
     },
-  });
+  };
 });
 
 const testConfig: UserConfig = {
+  ...sharedConfig,
   test: {
     globals: true,
     setupFiles: ['./test-setup.ts'],

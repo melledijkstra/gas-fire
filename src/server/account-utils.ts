@@ -1,6 +1,6 @@
 import { FireSpreadsheet } from './globals';
-import { StrategyOption } from '../common/types';
-import { NAMED_RANGES } from '../common/constants';
+import { StrategyOption } from '@/common/types';
+import { NAMED_RANGES } from '@/common/constants';
 
 /**
  * Converts a list to an object

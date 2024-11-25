@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { Dialog } from './Dialog';
-import { DIALOG_SIZES } from '../../common/constants';
+import { DIALOG_SIZES } from '@/common/constants';
 
 const meta: Meta<typeof Dialog> = {
   title: 'Dialogs/Settings',
