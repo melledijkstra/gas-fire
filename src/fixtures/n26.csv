@@ -1,0 +1,10 @@
+
+"Booking Date","Value Date","Partner Name","Partner Iban",Type,"Payment Reference","Account Name","Amount (EUR)","Original Amount","Original Currency","Exchange Rate"
+2024-10-26,2024-10-25,"Car Rental",,Presentment,,"Main Account",-400,40,EUR,1
+2024-10-26,2024-10-26,,,"Credit Transfer","Restaurant X","Main Account",22.500000000,,,
+2024-10-27,2024-10-27,"Supermarket X",,Presentment,,"Main Account",-15.62,15.62,EUR,1
+2024-10-27,2024-10-27,"Restaurant Y",,Presentment,,"Main Account",-45,45,EUR,1
+2024-10-29,2024-10-29,"SomeCompany",XX12345678901,"Credit Transfer",No.12000/,"Main Account",4100.27,,,
+2024-10-30,2024-10-29,"Amazon",,Presentment,,"Main Account",-18.62,18.62,EUR,1
+2024-10-30,2024-10-30,"Amazon",,"Presentment Refund",,"Main Account",18.4,18.4,EUR,1
+2024-10-30,2024-10-30,"Phone Company",XX12345678901234567890,"Direct Debit","Phone Invoice","Main Account",-31.00,,,

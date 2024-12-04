@@ -1,6 +1,6 @@
 import type { Table } from '@/common/types';
 
-export enum n26Cols {
+export enum N26Cols {
   BookingDate,
   ValueDate,
   Payee,
@@ -47,7 +47,7 @@ export enum openbankCols {
   Saldo,
 }
 
-export type InputColumn = n26Cols | raboCols | openbankCols;
+export type InputColumn = N26Cols | raboCols | openbankCols;
 
 /**
  * A column function returns the values for that column
@@ -70,8 +70,6 @@ export interface FireColumnRules {
 }
 
 export type Strategy = {
-  decimalSeparator: string;
-  thousandSeparator?: string;
   beforeImport?: Array<(data: Table) => Table>;
   columnImportRules: FireColumnRules;
   afterImport?: Array<(data: Table) => void>;
