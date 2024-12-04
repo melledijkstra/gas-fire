@@ -3,21 +3,21 @@ import type { DecoratorFunction } from '@storybook/types';
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-enum StrategyOption {
-  aurora_financial_group = 'Aurora Financial Group',
-  cerulean_trust_bank = 'Cerulean Trust Bank',
-  emerald_capital_partners = 'Emerald Capital Partners',
-}
+const bankOptions = {
+  'Aurora Financial Group': 'aurora',
+  'Cerulean Trust Bank': 'cerulean',
+  'Emerald Capital Partners': 'emerald',
+} as const;
 
-let strategyOptions: Record<string, string>;
+let bankAccountOptions: Record<string, string>;
 
 class ServerFunctionsMock {
-  static getStrategyOptions = async (): Promise<Record<string, string>> => {
+  static getAccountOptions = async (): Promise<Record<string, string>> => {
     await sleep(1000);
-    if (strategyOptions) {
-      return strategyOptions;
+    if (bankAccountOptions) {
+      return bankAccountOptions;
     }
-    return StrategyOption;
+    return bankOptions;
   };
   static processCSV = async (): Promise<Record<string, string>> => {
     await sleep(2000);
@@ -28,15 +28,15 @@ class ServerFunctionsMock {
 export const serverFunctions = ServerFunctionsMock;
 
 type ServerMockArguments = {
-  strategyOptions?: Record<string, string>;
+  bankOptions?: Record<string, string>;
 };
 
 export const ServerMockDecorator: DecoratorFunction<
   SvelteRenderer,
   ServerMockArguments
 > = (Story, { args }) => {
-  if (args && args.strategyOptions) {
-    strategyOptions = args.strategyOptions;
+  if (args && args.bankOptions) {
+    bankAccountOptions = args.bankOptions;
   }
   return Story();
 };
