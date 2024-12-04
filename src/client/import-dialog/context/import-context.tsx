@@ -1,13 +1,13 @@
 import { createContext, ReactNode, useContext, useState } from 'react';
-import { StrategyOption, Table } from '@/common/types';
+import { Table } from '@/common/types';
 
 type ImportContextProps = {
   statusText?: string;
   setStatusText: (value: string) => void;
   importData?: Table;
   setImportData: (table?: Table) => void;
-  strategy?: StrategyOption;
-  setStrategy: (strategy: StrategyOption) => void;
+  selectedBank?: string;
+  setSelectedBank: (selectedBank: string) => void;
   selectedRows: Set<number>;
   addSelectedRow: (index: number) => void;
   removeSelectedRow: (index: number) => void;
@@ -28,7 +28,7 @@ export const ImportContextProvider = ({
   setStatusText,
 }: ProviderProps) => {
   const [importData, _setImportData] = useState<Table | undefined>();
-  const [strategy, setStrategy] = useState<StrategyOption>();
+  const [selectedBank, setSelectedBank] = useState<string>();
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
 
   const setImportData = (table?: Table) => {
@@ -59,8 +59,8 @@ export const ImportContextProvider = ({
         setImportData,
         statusText,
         setStatusText,
-        strategy,
-        setStrategy,
+        selectedBank,
+        setSelectedBank,
         selectedRows,
         addSelectedRow,
         removeSelectedRow,

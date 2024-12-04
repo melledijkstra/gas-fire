@@ -8,7 +8,7 @@ export {
 
 // Remote procedure calls made by the client UI or triggers executed on the server
 export {
-  getStrategyOptions,
+  getAccountOptions,
   processCSV,
   generatePreview,
   getBankAccounts,

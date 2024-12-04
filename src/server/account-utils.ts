@@ -1,5 +1,4 @@
 import { FireSpreadsheet } from './globals';
-import { StrategyOption } from '@/common/types';
 import { NAMED_RANGES } from '@/common/constants';
 
 /**
@@ -54,7 +53,7 @@ export class AccountUtils {
     return bankAccounts?.[bank] ?? '';
   }
 
-  static getBalance(strategy: StrategyOption): number {
+  static getBalance(bankAccount: string): number {
     // this range contains the ibans only
     const ibans = FireSpreadsheet.getRangeByName(NAMED_RANGES.accounts);
     // we also need to include the labels and balances
@@ -69,12 +68,12 @@ export class AccountUtils {
     }
 
     const account = accounts.find((info) => {
-      return info[0].toUpperCase() === strategy.toUpperCase();
+      return info[0].toUpperCase() === bankAccount.toUpperCase();
     });
 
     if (!account || !account?.[2] || !isNumeric(account[2])) {
       // no account found, no balance found, or balance is not a number
-      throw new Error(`Could not retrieve balance of ${strategy}`);
+      throw new Error(`Could not retrieve balance of ${bankAccount}`);
     }
 
     return parseFloat(account?.[2]); // balance is at the second index, retrieve it
