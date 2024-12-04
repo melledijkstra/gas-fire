@@ -2,7 +2,7 @@ import { TableUtils, buildColumn } from './table-utils';
 import { Transformers } from './transformers';
 import type { Table } from '@/common/types';
 import type { Strategy } from './types';
-import { n26Cols, raboCols, openbankCols } from './types';
+import { N26Cols, raboCols, openbankCols } from './types';
 import { AccountUtils } from './account-utils';
 
 // PENDING: Make this configurable by the user, what if they rename the sheets?
@@ -25,32 +25,30 @@ type RootConfig = {
   [key: string]: Strategy;
 };
 
-const n26Config: Strategy = {
-  decimalSeparator: '.',
+const N26Config: Strategy = {
   beforeImport: [
     TableUtils.deleteLastRow,
     TableUtils.deleteFirstRow,
-    TableUtils.sortByDate(n26Cols.BookingDate),
+    TableUtils.sortByDate(N26Cols.BookingDate),
   ],
   columnImportRules: {
     ref: null,
     iban: (data) =>
       new Array(data.length).fill(AccountUtils.getBankIban('N26')),
-    date: buildColumn(n26Cols.BookingDate, Transformers.transformDate),
-    amount: buildColumn(n26Cols.Amount, parseFloat),
-    category: buildColumn(n26Cols.Payee, Transformers.transformCategory),
-    contra_account: buildColumn(n26Cols.Payee, String),
-    label: buildColumn(n26Cols.TransactionType, String),
+    date: buildColumn(N26Cols.BookingDate, Transformers.transformDate),
+    amount: buildColumn(N26Cols.Amount, parseFloat),
+    category: buildColumn(N26Cols.Payee, Transformers.transformCategory),
+    contra_account: buildColumn(N26Cols.Payee, String),
+    label: buildColumn(N26Cols.TransactionType, String),
     import_date: (data) => new Array(data.length).fill(new Date()),
-    description: buildColumn(n26Cols.PaymentReference, String),
-    contra_iban: buildColumn(n26Cols.AccountNumber, String),
-    currency: buildColumn(n26Cols.OriginalCurrency, String),
+    description: buildColumn(N26Cols.PaymentReference, String),
+    contra_iban: buildColumn(N26Cols.AccountNumber, String),
+    currency: buildColumn(N26Cols.OriginalCurrency, String),
   },
   afterImport: defaultAfterImport,
 };
 
 const rabobankConfig: Strategy = {
-  decimalSeparator: ',',
   beforeImport: [
     TableUtils.deleteLastRow,
     TableUtils.deleteFirstRow,
@@ -73,7 +71,6 @@ const rabobankConfig: Strategy = {
 };
 
 const openbankConfig: Strategy = {
-  decimalSeparator: '.',
   beforeImport: [
     TableUtils.deleteFirstRow,
     TableUtils.deleteLastRow,
@@ -115,7 +112,7 @@ export class Config {
     }
 
     const rootConfig = {
-      n26: n26Config,
+      N26: N26Config,
       rabobank: rabobankConfig,
       openbank: openbankConfig,
     };

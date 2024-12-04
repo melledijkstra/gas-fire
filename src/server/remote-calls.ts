@@ -1,7 +1,7 @@
 import { FireSpreadsheet, sourceSheet } from './globals';
 import { Config, SOURCE_SHEET_NAME } from './config';
 import { TableUtils, processTableWithImportRules } from './table-utils';
-import { n26Cols, openbankCols, raboCols } from './types';
+import { N26Cols, openbankCols, raboCols } from './types';
 import type { StrategyOptions, ServerResponse, Table } from '@/common/types';
 import { AccountUtils, isNumeric } from './account-utils';
 import { Transformers } from './transformers';
@@ -19,8 +19,16 @@ const cleanString = (str: string) => str?.replaceAll('\n', ' ').trim();
 /**
  * This retrieves the bank accounts set by the user.
  * It uses 2 named ranges to combine them together as a usable object
+ *
+ * example:
+ * ```
+ * {
+ *   "Bank of America": "US1234567890",
+ *   "Revolut": "GB1234567890"
+ * }
+ * ```
+ *
  * @returns An object where the key is the label of the bank and the value the IBAN
- * @rpc_from dialogs/tabs/bank_accounts.html
  */
 export function getBankAccounts(): Record<string, string> {
   const sheet = SpreadsheetApp.getActiveSpreadsheet();
@@ -52,7 +60,7 @@ export function getBankAccounts(): Record<string, string> {
 
 export function processCSV(
   inputTable: Table,
-  importStrategy: string
+  bankAccount: string
 ): ServerResponse {
   const strategies = Config.getConfig();
 
@@ -60,8 +68,8 @@ export function processCSV(
   sourceSheet?.activate();
   sourceSheet?.showSheet();
 
-  if (!(importStrategy in strategies)) {
-    throw new Error(`Import strategy ${importStrategy} is not defined!`);
+  if (!(bankAccount in strategies)) {
+    throw new Error(`Bank with identifier "${bankAccount}" is not defined!`);
   }
 
   const filter = sourceSheet?.getFilter();
@@ -74,7 +82,7 @@ export function processCSV(
   }
 
   const { beforeImport, columnImportRules, afterImport } =
-    strategies[importStrategy];
+    strategies[bankAccount];
 
   if (beforeImport) {
     for (const rule of beforeImport) {
@@ -98,11 +106,8 @@ export function processCSV(
   };
 }
 
-export function calculateNewBalance(
-  strategy: string,
-  values: number[]
-) {
-  let balance = AccountUtils.getBalance(strategy);
+export function calculateNewBalance(bankAccount: string, values: number[]) {
+  let balance = AccountUtils.getBalance(bankAccount);
 
   for (const amount of values) {
     balance += amount;
@@ -113,20 +118,20 @@ export function calculateNewBalance(
 
 export function generatePreview(
   table: Table,
-  strategy: string
+  bankAccount: string
 ): {
   result: Table;
   newBalance?: number;
 } {
-  let amounts: string[] = [];
-  switch (strategy) {
-    case 'n26':
-      amounts = TableUtils.retrieveColumn(table, n26Cols.Amount);
+  let amounts: Array<string> = [];
+  switch (bankAccount) {
+    case 'N26':
+      amounts = TableUtils.retrieveColumn(table, N26Cols.Amount);
       break;
-    case 'openbank':
+    case 'Openbank':
       amounts = TableUtils.retrieveColumn(table, openbankCols.Importe);
       break;
-    case 'rabobank':
+    case 'Rabobank':
       amounts = TableUtils.retrieveColumn(table, raboCols.Bedrag);
       break;
   }
@@ -135,15 +140,15 @@ export function generatePreview(
     .map((value) => Transformers.transformMoney(value))
     .filter(isNumeric);
 
-  const newBalance = calculateNewBalance(strategy, amountNumbers);
+  const newBalance = calculateNewBalance(bankAccount, amountNumbers);
 
   return { result: table, newBalance };
 }
 
 /**
- * This function returns the strategy options available to the client side
+ * This function returns the available bank account options to the client side
  */
-export function getStrategyOptions(): StrategyOptions {
+export function getBankAccountOptions(): StrategyOptions {
   const accountNames = FireSpreadsheet.getRangeByName(NAMED_RANGES.accountNames);
 
   if (!accountNames) {
@@ -165,6 +170,20 @@ export function getStrategyOptions(): StrategyOptions {
   }, {});
 
   return result;
+}
+
+export function getBankAccountOptionsCached(): Record<string, string> {
+  const cache = CacheService.getDocumentCache();
+  const accountsCached = cache.get('accounts');
+
+  if (accountsCached) {
+    return JSON.parse(accountsCached);
+  }
+
+  const accounts = getBankAccountOptions();
+  cache.put('accounts', JSON.stringify(accounts), 600);
+
+  return accounts;
 }
 
 /**
