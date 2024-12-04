@@ -1,0 +1,6 @@
+Date,Description,Amount,Running Balance
+2023-09-01,Deposit,+1000.00,1000.00
+2023-09-03,ATM Withdrawal,-200.00,800.00
+2023-09-05,Online Purchase,-50.00,750.00
+2023-09-10,Payroll Deposit,+1500.00,2250.00
+2023-09-12,Utility Bill Payment,-100.00,2150.00
