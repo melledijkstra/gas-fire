@@ -4,10 +4,13 @@ import type {
   Table,
 } from '@/common/types';
 import { fn } from 'storybook/test'
+import type * as publicServerFunctions from '@/server/index';
 
 ////////////////////////////////////////////////////////////////
 // This mock is used by storybook, to mimic server functions
 ////////////////////////////////////////////////////////////////
+
+type ServerFunctionsInterface = typeof publicServerFunctions;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -17,7 +20,7 @@ const StrategyOptions = {
   emerald_capital_partners: 'Emerald Capital Partners',
 }
 
-class ServerFunctions {
+class ServerFunctions implements ServerFunctionsInterface {
   getBankAccounts(): Record<string, string> {
     console.log('getBankAccounts mock called');
     return {
@@ -99,6 +102,16 @@ class ServerFunctions {
 
   executeFindDuplicates(): void {
     console.log('executeFindDuplicates mock called');
+  };
+
+  getBankAccountOptions(): StrategyOptions {
+    console.log('getBankAccountOptions mock called');
+    return StrategyOptions;
+  };
+  
+  getBankAccountOptionsCached() {
+    console.log('getBankAccountOptionsCached mock called');
+    return {};
   };
 }
 

@@ -7,7 +7,7 @@ import {
   FilterMock,
 } from '../../test-setup';
 import type { Table } from '@/common/types';
-import { fakeN26ImportWithBalance, n26ImportMock } from '@/fixtures/n26';
+import { fakeN26ImportWithBalance, N26ImportMock } from '@/fixtures/n26';
 import { TableUtils } from './table-utils';
 import { raboImportMock } from '@/fixtures/rabobank';
 import { Logger } from '@/common/logger';
@@ -18,7 +18,6 @@ import {
   processCSV,
   getBankAccounts,
   executeAutomaticCategorization,
-  getStrategyOptions,
   executeFindDuplicates,
   mailNetWorth,
 } from './remote-calls';
@@ -55,13 +54,13 @@ describe('Remote Calls', () => {
   describe('generatePreview', () => {
     test('is able to handle table without any useful data and should return the current balance', () => {
       RangeMock.getValues.mockReturnValueOnce([
-        ['n26', 'DB123456789', '302.80'],
+        ['N26', 'DB123456789', '302.80'],
         ['Openbank', 'BANK123456789', '400'],
         ['', '', ''],
       ]);
 
       const table: Table = [['', '', '', '', '', ''], []];
-      const { result, newBalance } = generatePreview(table, 'n26');
+      const { result, newBalance } = generatePreview(table, 'N26');
 
       expect(result).toStrictEqual(table);
       expect(newBalance).toBe(302.8);
@@ -69,14 +68,14 @@ describe('Remote Calls', () => {
 
     test('is able to calculate new balance when there is useful data in the amounts column', () => {
       RangeMock.getValues.mockReturnValueOnce([
-        ['n26', 'DB123456789', '305.85'],
+        ['N26', 'DB123456789', '305.85'],
         ['Openbank', 'BANK123456789', '400'],
         ['', '', ''],
       ]);
 
       const { result, newBalance } = generatePreview(
         fakeN26ImportWithBalance,
-        'n26'
+        'N26'
       );
 
       expect(result).toStrictEqual(fakeN26ImportWithBalance);
@@ -85,9 +84,13 @@ describe('Remote Calls', () => {
   });
 
   describe('processCSV', () => {
-    test('is able to handle n26 import', () => {
+    beforeEach(() => {
+      importDataSpy.mockReset();
+    });
+
+    test('is able to handle N26 import', () => {
       FilterMock.remove.mockReturnValue(true);
-      const result = processCSV(n26ImportMock, 'n26');
+      const result = processCSV(N26ImportMock, 'N26');
 
       expect(importDataSpy).toHaveBeenCalled();
       expect(result.message).toBe('imported 3 rows!');
@@ -117,22 +120,6 @@ describe('Remote Calls', () => {
       expect(result).toEqual({
         n26: 'DB123456789',
         Openbank: 'BANK123456789',
-      });
-    });
-  });
-
-  describe('getStrategyOptions', () => {
-    test('should return a list of strategy options', () => {
-      RangeMock.getValues.mockReturnValue([
-        ['n26'],
-        ['Openbank'],
-        ['Trading 212'],
-      ]);
-      const result = getStrategyOptions();
-      expect(result).toEqual({
-        n26: 'n26',
-        openbank: 'Openbank',
-        trading_212: 'Trading 212',
       });
     });
   });
