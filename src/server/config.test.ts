@@ -8,7 +8,7 @@ function createRowWithAmount(amount: string) {
 
 describe('Configuration Tests', () => {
   describe('rabobank amount issue', () => {
-    const config = Config.getConfig().rabobank;
+    const config = Config.getOldConfig().rabobank;
 
     test('is able to handle amount correctly', () => {
       const amountRule = config.columnImportRules.amount;
