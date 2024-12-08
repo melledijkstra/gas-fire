@@ -17,20 +17,20 @@ import {
 import Papa from 'papaparse';
 import { useImportContext } from '../context/import-context';
 
+const onFailure = (error: ServerResponse) => alert(`Action failed! ${error}`);
+
 export const ImportForm = () => {
-  const [bankOptions, setBankOptions] = useState<Record<string, string>>({});
   const [importFile, setImportFile] = useState<File>();
 
   const {
+    accountOptions,
     setStatusText,
-    selectedBank,
-    setSelectedBank,
+    selectedAccount,
+    setSelectedAccount,
     setImportData,
     importData,
     selectedRows,
   } = useImportContext();
-
-  const onFailure = (error: ServerResponse) => alert(`Action failed! ${error}`);
 
   const submitDataToServer = (data: Table, bankAccount: string) => {
     serverFunctions
@@ -50,7 +50,7 @@ export const ImportForm = () => {
       !importData ||
       !importFile ||
       !isAllowedFile(importFile.type) ||
-      !selectedBank
+      !selectedAccount
     ) {
       setStatusText(
         `No import file or bank account selected, or you selected a file type that is not supported (only: ${acceptedMimeTypes.join(
@@ -62,18 +62,8 @@ export const ImportForm = () => {
 
     const rowsToImport = excludeRowsFromData(importData, selectedRows);
 
-    submitDataToServer(rowsToImport, selectedBank);
+    submitDataToServer(rowsToImport, selectedAccount);
   };
-
-  useEffect(() => {
-    // retrieve possible bank options when mounted
-    serverFunctions
-      .getAccountOptions()
-      .then((accounts) => {
-        setBankOptions(accounts);
-      })
-      .catch((reason) => onFailure(reason));
-  }, []);
 
   useEffect(() => {
     if (importFile) {
@@ -86,7 +76,7 @@ export const ImportForm = () => {
     }
   }, [importFile]);
 
-  const canSubmit = importFile && selectedBank;
+  const canSubmit = importFile && selectedAccount;
 
   return (
     <form onSubmit={handleFormSubmit}>
@@ -120,16 +110,16 @@ export const ImportForm = () => {
                   id: 'import-bank-account',
                 }}
                 onChange={(event) => {
-                  setSelectedBank(event.target.value);
+                  setSelectedAccount(event.target.value);
                 }}
                 defaultValue=""
               >
                 <option value="" disabled>
                   Choose Bank
                 </option>
-                {bankOptions
-                  ? Object.keys(bankOptions).map((key) => (
-                      <option key={key} value={bankOptions[key]}>
+                {accountOptions
+                  ? Object.keys(accountOptions).map((key) => (
+                      <option key={key} value={key}>
                         {key}
                       </option>
                     ))

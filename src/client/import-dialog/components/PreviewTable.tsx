@@ -12,11 +12,11 @@ const getBrowserLocale = () => {
 };
 
 export const PreviewTable = () => {
-  const { setStatusText, importData, selectedBank, selectedRows } =
+  const { setStatusText, importData, selectedAccount, selectedRows } =
     useImportContext();
   const [previewData, setPreviewData] = useState<Table>();
 
-  const canGeneratePreview = importData && selectedBank;
+  const canGeneratePreview = importData && selectedAccount;
 
   const onGeneratePreviewSuccess = ({
     result,
@@ -42,8 +42,9 @@ export const PreviewTable = () => {
     if (canGeneratePreview) {
       const dataToProcess = excludeRowsFromData(importData, selectedRows);
       setStatusText('Data is being processed...');
+      console.log(dataToProcess, selectedAccount);
       serverFunctions
-        .generatePreview(dataToProcess, selectedBank)
+        .generatePreview(dataToProcess, selectedAccount)
         .then(onGeneratePreviewSuccess)
         .catch((error) => setStatusText(`Failed to create preview: ${error}`));
     }

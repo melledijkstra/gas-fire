@@ -11,7 +11,8 @@ import {
   removeFilterCriteria,
 } from './helpers';
 import { detectCategoryByTextAnalysis } from './category-detection';
-import { NAMED_RANGES } from '../common/constants';
+import { FIRE_COLUMNS, NAMED_RANGES } from '../common/constants';
+import { Logger } from '@/common/logger';
 
 const cleanString = (str: string) => str?.replace(/\n/g, ' ').trim();
 
@@ -57,20 +58,37 @@ export function getBankAccounts(): Record<string, string> {
   return bankAccounts;
 }
 
+/**
+ * This very function might be the core of this spreadsheet and project.
+ * It handles incoming CSV (already parsed by the frontend) and processes it in order to be imported
+ * into the spreadsheet.
+ *
+ * It uses configuration from the user to determine how the CSV should be processed.
+ *
+ * @param {Table} inputTable - The table object which contains the CSV data
+ * @param {string} bankAccount - The bank account identifier which is used to lookup configuration
+ * @returns {ServerResponse} A response object which contains a message to be displayed to the user
+ */
 export function processCSV(
   inputTable: Table,
   bankAccount: string
 ): ServerResponse {
-  const strategies = Config.getConfig();
-
   // make the user visually switch to the primary sheet where data will be imported
   sourceSheet?.activate();
   sourceSheet?.showSheet();
 
-  if (!(bankAccount in strategies)) {
-    throw new Error(`Bank with identifier "${bankAccount}" is not defined!`);
+  // 1. retrieve import strategy for selected account
+  const accountStrategy = Config.retrieveAccountStrategy(bankAccount);
+
+  if (!accountStrategy) {
+    throw new Error(
+      `Bank with identifier "${bankAccount}" does not have valid configuration!`
+    );
   }
 
+  const { beforeImport, columnImportRules, afterImport } = accountStrategy;
+
+  // 2. remove any filters that might be set
   const filter = sourceSheet?.getFilter();
   if (filter) {
     if (!removeFilterCriteria(filter, true)) {
@@ -80,18 +98,19 @@ export function processCSV(
     }
   }
 
-  const { beforeImport, columnImportRules, afterImport } =
-    strategies[bankAccount];
-
+  // 3. apply any rules that need to be applied before the actual import
   if (beforeImport) {
     for (const rule of beforeImport) {
       inputTable = rule(inputTable);
     }
   }
 
+  // 4. process the table with the import rules and actually import the data
   let output = processTableWithImportRules(inputTable, columnImportRules);
   TableUtils.importData(output);
 
+  // 5. apply any rules that need to be applied after the actual import
+  // e.g. auto filling columns with formulas
   if (afterImport) {
     for (const rule of afterImport) {
       rule(output);
@@ -99,6 +118,8 @@ export function processCSV(
   }
 
   const msg = `imported ${output.length} rows!`;
+
+  Logger.log(msg);
 
   return {
     message: msg,
@@ -123,16 +144,21 @@ export function generatePreview(
   newBalance?: number;
 } {
   let amounts: Array<string> = [];
-  switch (bankAccount) {
-    case 'N26':
-      amounts = TableUtils.retrieveColumn(table, N26Cols.Amount);
-      break;
-    case 'Openbank':
-      amounts = TableUtils.retrieveColumn(table, openbankCols.Importe);
-      break;
-    case 'Rabobank':
-      amounts = TableUtils.retrieveColumn(table, raboCols.Bedrag);
-      break;
+
+  // PENDING: retrieve the amounts from CSV using the back account configuration
+  const config = Config.getAccountConfiguration(bankAccount);
+
+  if (!config) {
+    throw new Error(`Configuration for account ${bankAccount} not found`);
+  }
+
+  const balanceColumnName = config?.getImportColumnNameByFireColumn('amount');
+  const balanceColumnIndex = table[0].findIndex(
+    (value) => value === balanceColumnName
+  );
+
+  if (balanceColumnIndex) {
+    amounts = table.map((row) => row[balanceColumnIndex]);
   }
 
   const amountNumbers = amounts

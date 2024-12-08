@@ -6,8 +6,9 @@ type ImportContextProps = {
   setStatusText: (value: string) => void;
   importData?: Table;
   setImportData: (table?: Table) => void;
-  selectedBank?: string;
-  setSelectedBank: (selectedBank: string) => void;
+  accountOptions: Record<string, string>;
+  selectedAccount?: string;
+  setSelectedAccount: (selectedBank: string) => void;
   selectedRows: Set<number>;
   addSelectedRow: (index: number) => void;
   removeSelectedRow: (index: number) => void;
@@ -17,6 +18,7 @@ type ImportContextProps = {
 const ImportContext = createContext<ImportContextProps | undefined>(undefined);
 
 type ProviderProps = {
+  accountOptions: Record<string, string>;
   statusText?: string;
   setStatusText: (value: string) => void;
   children: ReactNode;
@@ -24,11 +26,12 @@ type ProviderProps = {
 
 export const ImportContextProvider = ({
   children,
+  accountOptions,
   statusText,
   setStatusText,
 }: ProviderProps) => {
   const [importData, _setImportData] = useState<Table | undefined>();
-  const [selectedBank, setSelectedBank] = useState<string>();
+  const [selectedAccount, setSelectedAccount] = useState<string>();
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
 
   const setImportData = (table?: Table) => {
@@ -57,10 +60,11 @@ export const ImportContextProvider = ({
       value={{
         importData,
         setImportData,
+        accountOptions,
         statusText,
         setStatusText,
-        selectedBank,
-        setSelectedBank,
+        selectedAccount,
+        setSelectedAccount,
         selectedRows,
         addSelectedRow,
         removeSelectedRow,
