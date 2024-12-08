@@ -1,5 +1,6 @@
 import { FireSpreadsheet } from './globals';
 import { NAMED_RANGES } from '@/common/constants';
+import { getAccountOptions } from './remote-calls';
 
 /**
  * Converts a list to an object
@@ -30,6 +31,7 @@ export const isNumeric = (value: unknown): boolean => {
 };
 
 export class AccountUtils {
+  // PENDING: cache bank account retrieval
   static getBankAccounts(): Record<string, string> {
     // this range contains the ibans only
     const ibans = FireSpreadsheet.getRangeByName(NAMED_RANGES.accounts);
@@ -50,7 +52,7 @@ export class AccountUtils {
 
   static getBankIban(bank: string): string {
     const bankAccounts = AccountUtils.getBankAccounts();
-    return bankAccounts?.[bank] ?? '';
+    return bankAccounts?.[bank.toUpperCase()] ?? '';
   }
 
   static getBalance(bankAccount: string): number {
@@ -77,5 +79,9 @@ export class AccountUtils {
     }
 
     return parseFloat(account?.[2]); // balance is at the second index, retrieve it
+  }
+
+  static getAccountIdentifiers(): string[] {
+    return Object.keys(getAccountOptions());
   }
 }

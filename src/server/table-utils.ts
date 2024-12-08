@@ -1,20 +1,26 @@
 import type { Table } from '@/common/types';
 import { sourceSheet } from './globals';
+import type { FireColumnRules } from './types';
 import { FIRE_COLUMNS } from '@/common/constants';
-import type { FireColumnRules, InputColumn } from './types';
+import type { FireColumn } from '@/common/constants';
 import { Logger } from '@/common/logger';
+import { Config } from './config';
 
 const EMPTY = '';
 
 export function buildColumn<T>(
-  column: InputColumn,
-  transformer: (value: string) => T
+  column: FireColumn,
+  config: Config,
+  transformer?: (value: string) => T
 ): (data: Table) => T[] {
   return (data: Table): T[] => {
+    const columnIndex = config.getColumnIndex(column, data);
     const rowCount = data.length;
     const columnTable = TableUtils.transpose(data); // try to transpose somewhere else
-    if (columnTable[column] !== undefined) {
-      return columnTable[column].map((val) => transformer(val));
+    if (columnIndex && columnTable[columnIndex] !== undefined) {
+      return columnTable[columnIndex].map((val) =>
+        transformer ? transformer(val) : (val as T)
+      );
     } else {
       return new Array(rowCount);
     }

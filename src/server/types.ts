@@ -47,8 +47,6 @@ export enum openbankCols {
   Saldo,
 }
 
-export type InputColumn = N26Cols | raboCols | openbankCols;
-
 /**
  * A column function returns the values for that column
  * it can generate the column based on the data in the CSV
