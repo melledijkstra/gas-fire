@@ -1,8 +1,7 @@
 import { sourceSheet } from './globals';
 import { Config } from './config';
 import { TableUtils, processTableWithImportRules } from './table-utils';
-import { N26Cols, openbankCols, raboCols } from './types';
-import { ServerResponse, Table } from '@/common/types';
+import { ConfigData, ServerResponse, Table } from '@/common/types';
 import { AccountUtils, isNumeric } from './account-utils';
 import { Transformers } from './transformers';
 import {
@@ -11,7 +10,7 @@ import {
   removeFilterCriteria,
 } from './helpers';
 import { detectCategoryByTextAnalysis } from './category-detection';
-import { FIRE_COLUMNS, NAMED_RANGES } from '../common/constants';
+import { DEFAULT_CACHE_SECOND, NAMED_RANGES } from '../common/constants';
 import { Logger } from '@/common/logger';
 
 const cleanString = (str: string) => str?.replace(/\n/g, ' ').trim();
@@ -152,7 +151,7 @@ export function generatePreview(
     throw new Error(`Configuration for account ${bankAccount} not found`);
   }
 
-  const balanceColumnName = config?.getImportColumnNameByFireColumn('amount');
+  const balanceColumnName = config.getImportColumnNameByFireColumn('amount');
   const balanceColumnIndex = table[0].findIndex(
     (value) => value === balanceColumnName
   );
@@ -182,7 +181,7 @@ export function getAccountOptions(): Record<string, string> {
   }
 
   const accounts = getBankAccounts();
-  cache.put('accounts', JSON.stringify(accounts), 600);
+  cache.put('accounts', JSON.stringify(accounts), DEFAULT_CACHE_SECOND);
 
   return accounts;
 }
@@ -279,4 +278,9 @@ export const mailNetWorth = () => {
       htmlBody: `Your net worth is currently: <strong>${formattedNetWorth}</strong>`,
     });
   }
+};
+
+export const getConfiguration = (): Record<string, ConfigData> => {
+  const configs = Config.getConfigurations();
+  return Config.serializeAll(configs);
 };
