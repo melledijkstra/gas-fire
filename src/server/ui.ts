@@ -4,9 +4,9 @@ import { executeAutomaticCategorization } from './remote-calls';
 export function onOpen(): void {
   const ui = SpreadsheetApp.getUi();
   ui.createMenu('FIRE')
-    .addItem('Upload Transactions (CSV)', openFileUploadDialog.name)
+    .addItem('Upload Transactions', openFileUploadDialog.name)
     .addItem('Auto Categorize', executeAutomaticCategorization.name)
-    .addItem('Settings', openSettingsDialog.name)
+    .addItem('Config Validator', openConfigValidatorDialog.name)
     .addItem('About', openAboutDialog.name)
     .addToUi();
 }
@@ -30,11 +30,13 @@ export function openAboutDialog(): void {
   SpreadsheetApp.getUi().showModalDialog(html, 'About');
 }
 
-export function openSettingsDialog(): void {
-  const [width, height] = DIALOG_SIZES.settings;
-  const html = HtmlService.createTemplateFromFile('settings-dialog.html')
+export function openConfigValidatorDialog(): void {
+  const [width, height] = DIALOG_SIZES.configValidator;
+  const html = HtmlService.createTemplateFromFile(
+    'config-validator-dialog.html'
+  )
     .evaluate()
     .setWidth(width)
     .setHeight(height);
-  SpreadsheetApp.getUi().showModalDialog(html, 'Settings Dialog');
+  SpreadsheetApp.getUi().showModalDialog(html, 'Config Validator Dialog');
 }

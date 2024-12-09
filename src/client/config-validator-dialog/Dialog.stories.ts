@@ -6,8 +6,8 @@ const meta: Meta<typeof Dialog> = {
   title: 'Dialogs/Settings',
   component: Dialog,
   args: {
-    dialogSize: DIALOG_SIZES.settings,
-    dialogTitle: 'Settings Dialog',
+    dialogSize: DIALOG_SIZES.configValidator,
+    dialogTitle: 'Config Validator Dialog',
   },
 };
 

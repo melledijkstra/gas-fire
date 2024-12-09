@@ -1,10 +1,12 @@
 import { TableUtils, buildColumn } from './table-utils';
 import { Transformers } from './transformers';
-import type { Table } from '@/common/types';
+import type { ColumnMap, ConfigData, Table } from '@/common/types';
 import type { Strategy } from './types';
 import { N26Cols, raboCols, openbankCols } from './types';
 import { AccountUtils } from './account-utils';
-import { FIRE_COLUMNS, FireColumn } from '@/common/constants';
+import { FIRE_COLUMNS } from '@/common/constants';
+import type { FireColumn } from '@/common/types';
+import { Logger } from '@/common/logger';
 
 // PENDING: Make this configurable by the user, what if they rename the sheets?
 export const SOURCE_SHEET_NAME = 'source';
@@ -54,28 +56,18 @@ const openbankConfig: Strategy = {
 const parseBoolean = (value: string | boolean) =>
   String(value).toLowerCase() === 'true' || value === true;
 
-type ColumnMap = {
-  [key in FireColumn]?: string;
-};
-
 export class Config {
   /** @deprecated */
-  static oldConfigCache: RootConfig | null = null;
+  static oldConfigCache: Record<string, Strategy> | null = null;
 
-  constructor(
-    private accountId: string,
-    private columnMap: ColumnMap = {},
-    public autoFillColumnIndices: number[] = [],
-    public autoFillEnabled: boolean = false,
-    public autoCategorizationEnabled: boolean = false
-  ) {}
+  constructor(private accountId: string, private configData: ConfigData) {}
 
   getAccountId(): string {
     return this.accountId;
   }
 
   /** @deprecated */
-  static getOldConfig(): RootConfig {
+  static getOldConfig() {
     if (this.oldConfigCache) {
       return this.oldConfigCache;
     }
@@ -98,17 +90,18 @@ export class Config {
    */
   static retrieveAccountStrategy(accountId: string): Strategy | undefined {
     const accountConfig = this.getAccountConfiguration(accountId);
+    const configData = accountConfig?.configData;
 
-    if (!accountConfig) {
+    if (!configData) {
       return;
     }
 
     let afterImport: Array<(data: Table) => void> = [];
 
-    if (accountConfig?.autoFillEnabled) {
+    if (configData?.autoFillEnabled) {
       // add auto fill processing if enabled
       afterImport.push((table: Table) =>
-        TableUtils.autoFillColumns(table, accountConfig.autoFillColumnIndices)
+        TableUtils.autoFillColumns(table, configData.autoFillColumnIndices)
       );
     }
 
@@ -133,7 +126,7 @@ export class Config {
   }
 
   getColumnIndex(fireColumn: FireColumn, inputData: Table): number | undefined {
-    const importColumn = this.columnMap?.[fireColumn];
+    const importColumn = this.configData.columnMap?.[fireColumn];
     if (importColumn) {
       const headerRow = inputData[0];
       return headerRow.indexOf(importColumn);
@@ -189,7 +182,7 @@ export class Config {
     const columnMapping = this._loadColumnMapping(configSheet);
 
     // explanation:
-    // first row contains configuration labels which we don't need
+    // first column contains configuration labels which we don't need
     const rawConfigs = configSheet.getSheetValues(1, 2, 4, -1);
     const configs: Record<string, Config> = {};
 
@@ -208,13 +201,12 @@ export class Config {
       const autoFillEnabled = parseBoolean(rawConfigs[1][i]);
       const autoCategorizationEnabled = parseBoolean(rawConfigs[2][i]);
 
-      configs[account] = new Config(
-        account,
-        columnMapping[account],
+      configs[account] = new Config(account, {
+        columnMap: columnMapping[account],
         autoFillColumnIndices,
         autoFillEnabled,
-        autoCategorizationEnabled
-      );
+        autoCategorizationEnabled,
+      });
     }
 
     return configs;
@@ -224,13 +216,17 @@ export class Config {
     const cache = CacheService.getDocumentCache();
     const cachedConfig = cache.get('config');
 
+    Logger.log('config from cache?', !!cachedConfig);
+
     if (cachedConfig) {
-      return JSON.parse(cachedConfig) as Record<string, Config>;
+      return this.deserializeAll(
+        JSON.parse(cachedConfig) as Record<string, ConfigData>
+      );
     }
 
     const configs = this._loadConfigurations();
 
-    cache.put('config', JSON.stringify(configs), 30);
+    cache.put('config', JSON.stringify(this.serializeAll(configs)), 30);
 
     return configs;
   }
@@ -243,14 +239,46 @@ export class Config {
     }
   }
 
+  serialize(): ConfigData {
+    return this.configData;
+  }
+
+  static deserialize(accountId: string, configData: ConfigData): Config {
+    return new Config(accountId, configData);
+  }
+
+  static deserializeAll(
+    configs: Record<string, ConfigData>
+  ): Record<string, Config> {
+    const deserializedConfigs: Record<string, Config> = {};
+
+    for (const [key, configData] of Object.entries(configs)) {
+      deserializedConfigs[key] = this.deserialize(key, configData);
+    }
+
+    return deserializedConfigs;
+  }
+
+  static serializeAll(
+    configs: Record<string, Config>
+  ): Record<string, ConfigData> {
+    const serializedConfigs: Record<string, ConfigData> = {};
+
+    for (const [key, config] of Object.entries(configs)) {
+      serializedConfigs[key] = config.serialize();
+    }
+
+    return serializedConfigs;
+  }
+
   /**
    * Retrieves the column name of this account's specific configuration for the given FIRE column.
    * @param columnName the FIRE column lookup name to match with the import column name
    * @returns {string} the reference column name or undefined if not found
    */
   getImportColumnNameByFireColumn(columnName: FireColumn): string | undefined {
-    if (this.columnMap?.[columnName]) {
-      return this.columnMap[columnName];
+    if (this.configData.columnMap?.[columnName]) {
+      return this.configData.columnMap[columnName];
     }
   }
 }

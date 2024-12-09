@@ -41,9 +41,9 @@ const clientEntrypoints: Array<DialogEntry> = [
     template: 'import-dialog/index.html',
   },
   {
-    name: 'CLIENT:settings',
-    filename: 'settings-dialog',
-    template: 'settings-dialog/index.html',
+    name: 'CLIENT:config-validator',
+    filename: 'config-validator-dialog',
+    template: 'config-validator-dialog/index.html',
   },
 ];
 

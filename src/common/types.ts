@@ -1,3 +1,5 @@
+import { FIRE_COLUMNS } from './constants';
+
 export type Strategies = {
   [key: string]: string;
 };
@@ -32,4 +34,17 @@ export type JsonTable = Record<string, string>[];
 
 export type ServerResponse = {
   message: string;
+};
+
+export type FireColumn = (typeof FIRE_COLUMNS)[number];
+
+export type ColumnMap = {
+  [key in FireColumn]?: string;
+};
+
+export type ConfigData = {
+  columnMap: ColumnMap;
+  autoFillColumnIndices: number[];
+  autoFillEnabled: boolean;
+  autoCategorizationEnabled: boolean;
 };

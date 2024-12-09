@@ -1,6 +1,6 @@
 export enum DialogType {
   import,
-  settings,
+  configValidator,
   about,
 }
 
@@ -12,7 +12,7 @@ export enum NAMED_RANGES {
 
 export const DIALOG_SIZES: Record<keyof typeof DialogType, [number, number]> = {
   import: [900, 600],
-  settings: [900, 600],
+  configValidator: [900, 600],
   about: [300, 200],
 };
 
@@ -35,7 +35,7 @@ export const FIRE_COLUMNS = [
   'currency',
 ] as const;
 
-export type FireColumn = (typeof FIRE_COLUMNS)[number];
+export const DEFAULT_CACHE_SECOND = 20;
 
 export const SOURCE_SHEET_ID = 1093484485;
 
