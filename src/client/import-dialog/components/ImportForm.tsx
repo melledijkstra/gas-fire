@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ServerResponse, StrategyOption, Table } from '@/common/types';
+import { ServerResponse, Table } from '@/common/types';
 import {
   Button,
   FormControl,
@@ -17,25 +17,24 @@ import {
 import Papa from 'papaparse';
 import { useImportContext } from '../context/import-context';
 
+const onFailure = (error: ServerResponse) => alert(`Action failed! ${error}`);
+
 export const ImportForm = () => {
-  const [strategyOptions, setStrategyOptions] =
-    useState<typeof StrategyOption>();
   const [importFile, setImportFile] = useState<File>();
 
   const {
+    accountOptions,
     setStatusText,
-    strategy,
-    setStrategy,
+    selectedAccount,
+    setSelectedAccount,
     setImportData,
     importData,
     selectedRows,
   } = useImportContext();
 
-  const onFailure = (error: ServerResponse) => alert(`Action failed! ${error}`);
-
-  const submitDataToServer = (data: Table, importStrategy: StrategyOption) => {
+  const submitDataToServer = (data: Table, bankAccount: string) => {
     serverFunctions
-      .processCSV(data, importStrategy)
+      .processCSV(data, bankAccount)
       .then(() => google.script.host.close())
       .catch(onFailure);
   };
@@ -51,10 +50,10 @@ export const ImportForm = () => {
       !importData ||
       !importFile ||
       !isAllowedFile(importFile.type) ||
-      !strategy
+      !selectedAccount
     ) {
       setStatusText(
-        `No import file or import strategy selected, or you selected a file type that is not supported (only: ${acceptedMimeTypes.join(
+        `No import file or bank account selected, or you selected a file type that is not supported (only: ${acceptedMimeTypes.join(
           ', '
         )})`
       );
@@ -63,18 +62,8 @@ export const ImportForm = () => {
 
     const rowsToImport = excludeRowsFromData(importData, selectedRows);
 
-    submitDataToServer(rowsToImport, strategy);
+    submitDataToServer(rowsToImport, selectedAccount);
   };
-
-  useEffect(() => {
-    // retrieve import strategy options when mounted
-    serverFunctions
-      .getStrategyOptions()
-      .then((serverStrategyOptions) => {
-        setStrategyOptions(serverStrategyOptions);
-      })
-      .catch((reason) => onFailure(reason));
-  }, []);
 
   useEffect(() => {
     if (importFile) {
@@ -87,7 +76,7 @@ export const ImportForm = () => {
     }
   }, [importFile]);
 
-  const canSubmit = importFile && strategy;
+  const canSubmit = importFile && selectedAccount;
 
   return (
     <form onSubmit={handleFormSubmit}>
@@ -116,30 +105,25 @@ export const ImportForm = () => {
             <FormControl fullWidth>
               <NativeSelect
                 required
-                id="import-strategy"
+                id="import-bank-account"
                 inputProps={{
-                  id: 'strategy-import-native',
+                  id: 'import-bank-account',
                 }}
                 onChange={(event) => {
-                  setStrategy(event.target.value as StrategyOption);
+                  setSelectedAccount(event.target.value);
                 }}
                 defaultValue=""
               >
                 <option value="" disabled>
                   Choose Bank
                 </option>
-                {strategyOptions
-                  ? Object.keys(strategyOptions).map((key) => (
-                      <option
-                        key={key}
-                        value={
-                          StrategyOption[key as keyof typeof StrategyOption]
-                        }
-                      >
+                {accountOptions
+                  ? Object.keys(accountOptions).map((key) => (
+                      <option key={key} value={key}>
                         {key}
                       </option>
                     ))
-                  : []}
+                  : null}
               </NativeSelect>
             </FormControl>
           </Grid>

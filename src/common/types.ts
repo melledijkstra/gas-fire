@@ -1,8 +1,6 @@
-export enum StrategyOption {
-  N26 = 'n26',
-  RABO = 'rabobank',
-  OPENBANK = 'openbank',
-}
+export type Strategies = {
+  [key: string]: string;
+};
 
 /**
  * Table definition

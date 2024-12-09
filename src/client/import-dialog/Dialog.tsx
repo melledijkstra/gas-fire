@@ -1,13 +1,17 @@
-import { useState } from 'react';
-import { Application } from '../Application';
-import { PreviewTable } from './components/PreviewTable';
+import { useEffect, useState } from 'react';
 import { Typography, Box, Tabs, Tab } from '@mui/material';
+import { ServerResponse } from '@/common/types';
+import { Application } from '../Application';
+import { serverFunctions } from '../utils/serverFunctions';
+import { PreviewTable } from './components/PreviewTable';
 import { ImportForm } from './components/ImportForm';
 import {
   ImportContextProvider,
   useImportContext,
 } from './context/import-context';
 import { DataTable } from './components/DataTable';
+
+const onFailure = (error: ServerResponse) => alert(`Action failed! ${error}`);
 
 const RawTable = () => {
   const { importData } = useImportContext();
@@ -20,12 +24,26 @@ const RawTable = () => {
 };
 
 export const Dialog = () => {
+  const [accountOptions, setAccountOptions] = useState<Record<string, string>>(
+    {}
+  );
   const [activeTab, setActiveTab] = useState(0);
   const [statusText, setStatusText] = useState<string>('-');
+
+  useEffect(() => {
+    // retrieve possible account options when mounted
+    serverFunctions
+      .getAccountOptions()
+      .then((accounts) => {
+        setAccountOptions(accounts);
+      })
+      .catch((reason) => onFailure(reason));
+  }, []);
 
   return (
     <Application>
       <ImportContextProvider
+        accountOptions={accountOptions}
         statusText={statusText}
         setStatusText={setStatusText}
       >

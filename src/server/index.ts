@@ -1,3 +1,5 @@
+import { Config } from './config';
+
 // Functions to setup the initial UI
 export {
   onOpen,
@@ -8,7 +10,7 @@ export {
 
 // Remote procedure calls made by the client UI or triggers executed on the server
 export {
-  getStrategyOptions,
+  getAccountOptions,
   processCSV,
   generatePreview,
   getBankAccounts,
@@ -18,3 +20,7 @@ export {
 
 // Custom functions that can be used within the Spreadsheet UI
 export { MD5, GET_PROJECT_VERSION } from './exposed_functions';
+
+export function test() {
+  Config._loadConfigurations();
+}
