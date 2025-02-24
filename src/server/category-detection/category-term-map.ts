@@ -46,7 +46,7 @@ export const categoriesTermsMap: CategoryDetectionConfigOld = {
   'Insurances & Finances': [],
   'Family, Friends & Donations': [],
   'Media & Electronics': [/media markt/, /google/],
-  'Transport & Car': [/aparcamientos|parking/],
+  'Transport & Car': [/aparcamientos|parking/, /mpass/, /metro de madrid/],
   'Travel & Holidays': [],
   'Savings & Investments': [/\bdegiro\b/],
   'Business expenses': [],
