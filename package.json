@@ -1,6 +1,6 @@
 {
   "name": "gas-fire",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "author": "Melle Dijkstra",
   "description": "Google App Script utilities to automate the FIRE google sheet",
   "license": "MIT",
@@ -34,10 +34,6 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.25.9",
-    "@babel/preset-env": "^7.25.9",
-    "@babel/preset-react": "^7.25.9",
-    "@babel/preset-typescript": "^7.25.9",
     "@google/clasp": "^2.4.2",
     "@storybook/addon-essentials": "^8.4.2",
     "@storybook/addon-interactions": "^8.4.2",
@@ -54,7 +50,6 @@
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react-swc": "^3.7.1",
     "@vitest/coverage-v8": "^2.1.9",
-    "babel-loader": "^9.2.1",
     "css-loader": "^7.1.2",
     "dotenv": "^16.4.5",
     "gas-client": "^1.1.1",

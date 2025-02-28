@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.2.1
+
+- Removed babel
+
 ## 3.2.0
 
 - Added function that mails net worth to spreadsheet owner, can be setup as trigger
