@@ -16,6 +16,11 @@ export const DIALOG_SIZES: Record<keyof typeof DialogType, [number, number]> = {
   about: [300, 200],
 };
 
+/**
+ * The columns that represent the FIRE sheet
+ * Make sure to keep this in sync with the columns in the FIRE sheet
+ * The order of the columns is important because the indexes are used in calculations!
+ */
 export const FIRE_COLUMNS = [
   'ref',
   'iban',

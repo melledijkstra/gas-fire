@@ -13,6 +13,7 @@ export {
   generatePreview,
   getBankAccounts,
   executeAutomaticCategorization,
+  executeFindDuplicates,
   mailNetWorth,
 } from './remote-calls';
 
