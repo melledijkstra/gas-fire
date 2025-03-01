@@ -27,7 +27,8 @@ describe('findDuplicates', () => {
         const timespan = days(2); // 2 days
         const duplicates = findDuplicates(table, compareCols, timespan);
         expect(duplicates).toEqual([
-            ['1', 'Alice', '-1.25', '2023-01-01']
+            ['1', 'Alice', '-1.25', '2023-01-01'],
+            ['2', 'Alice', '23', '2023-01-01']
         ]);
     });
 
@@ -67,15 +68,20 @@ describe('findDuplicates', () => {
             ['ref', 'contra_account', 'date'],
             ['1', 'Alice', '2023-01-01'],
             ['2', 'Alice', '2023-01-01'],
-            ['3', 'Bob', '2023-01-01'],
-            ['4', 'Bob', '2023-01-01']
+            ['3', 'John', '2023-01-01'],
+            ['4', 'Bob', '2023-01-01'],
+            ['5', 'Bob', '2023-01-02'],
+            ['6', 'John', '2023-01-05'],
+            ['7', 'Bob', '2023-01-07'],
         ];
         const columns: FireColumn[] = ['contra_account'];
         const timespan = days(1);
         const duplicates = findDuplicates(table, columns, timespan);
         expect(duplicates).toEqual([
             ['1', 'Alice', '2023-01-01'],
-            ['3', 'Bob', '2023-01-01']
+            ["2", "Alice", "2023-01-01"],
+            ['4', 'Bob', '2023-01-01'],
+            ["5", "Bob", "2023-01-02"]
         ]);
     });
 });
