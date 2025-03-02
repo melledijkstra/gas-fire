@@ -11,6 +11,8 @@ import {
 import { resolve } from 'path';
 import { existsSync, readFileSync } from 'fs';
 import react from '@vitejs/plugin-react-swc';
+import { svelte } from '@sveltejs/vite-plugin-svelte';
+import tailwind from '@tailwindcss/vite';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { viteSingleFile } from 'vite-plugin-singlefile';
 import { writeFile } from 'fs/promises';
@@ -45,6 +47,11 @@ const clientEntrypoints: Array<DialogEntry> = [
     filename: 'settings-dialog',
     template: 'settings-dialog/index.html',
   },
+  {
+    name: 'CLIENT:svelte',
+    filename: 'svelte-dialog',
+    template: 'svelte-dialog/index.html',
+  }
 ];
 
 const sharedConfig = defineConfig({
@@ -75,7 +82,7 @@ if (existsSync(keyPath) && existsSync(certPath)) {
 
 const clientServeConfig: UserConfig = {
   ...sharedConfig,
-  plugins: [react()],
+  plugins: [react(), svelte(), tailwind()],
   server: devServerOptions,
   root: clientRoot,
 };
@@ -83,7 +90,7 @@ const clientServeConfig: UserConfig = {
 const clientBuildConfig = ({ filename, template }: DialogEntry) =>
   defineConfig({
     ...sharedConfig,
-    plugins: [react(), viteSingleFile({ useRecommendedBuildConfig: true })],
+    plugins: [react(), svelte(), tailwind(), viteSingleFile({ useRecommendedBuildConfig: true })],
     root: resolve(__dirname, clientRoot, filename),
     build: {
       sourcemap: false,
