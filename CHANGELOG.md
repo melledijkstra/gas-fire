@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.2.2
+
+- Moved storybook stories to their own folder
+
 ## 3.2.1
 
 - Removed babel
