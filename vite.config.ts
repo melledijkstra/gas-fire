@@ -94,24 +94,12 @@ const clientBuildConfig = ({ filename, template }: DialogEntry) =>
       rollupOptions: {
         input: resolve(__dirname, clientRoot, template),
         external: [
-          'react',
-          'react-dom',
-          'react-bootstrap',
-          '@mui/material',
-          '@emotion/react',
-          '@emotion/styled',
           'gas-client',
-          '@types/react',
         ],
         output: {
           format: 'iife', // needed to use globals from UMD builds
           dir: outDir,
           globals: {
-            react: 'React',
-            'react-dom': 'ReactDOM',
-            '@mui/material': 'MaterialUI',
-            '@emotion/react': 'emotionReact',
-            '@emotion/styled': 'emotionStyled',
             'gas-client': 'GASClient',
           },
         },
