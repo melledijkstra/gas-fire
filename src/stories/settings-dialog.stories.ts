@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { Dialog } from './Dialog';
+import { Dialog } from '@/client/settings-dialog/Dialog';
 import { DIALOG_SIZES } from '@/common/constants';
 
 const meta: Meta<typeof Dialog> = {
