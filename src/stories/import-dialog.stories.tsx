@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import { ImportContextProvider } from '@/client/import-dialog/context/import-context';
 import { Dialog } from '@/client/import-dialog/Dialog';
 import { DIALOG_SIZES } from '@/common/constants';
 
@@ -15,4 +16,12 @@ export default meta;
 
 type Story = StoryObj<typeof Dialog>;
 
-export const Default: Story = {};
+export const Default: Story = {
+  render: (args) => {
+    return (
+      <ImportContextProvider setStatusText={() => {}}>
+        <Dialog />
+      </ImportContextProvider>
+    )
+  }
+};

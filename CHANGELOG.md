@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.2.3
+
+- Upgrade to React v19
+  - Upgrade @mui/material to v6.4.7 to be compatible with react@19
+  - Removed UMD CDN imports which are not supported anymore. ES versions not needed because React 19 + Vite is fast enough and bundle is small enough.
+- Upgrade vite & vitest
+- Upgrade all minor & patches
+- Upgraded storybook + fix import stories
+
 ## 3.2.2
 
 - Moved storybook stories to their own folder

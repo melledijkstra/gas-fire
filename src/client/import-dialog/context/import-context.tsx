@@ -75,7 +75,7 @@ export const ImportContextProvider = ({
 export const useImportContext = (): ImportContextProps => {
   const context = useContext(ImportContext);
   if (!context) {
-    throw new Error('useImportContext must be used within an ImportProvider');
+    throw new Error('useImportContext must be used within an ImportContextProvider');
   }
   return context;
 };
