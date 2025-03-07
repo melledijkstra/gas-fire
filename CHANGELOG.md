@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.3.0
+
+- Added duplicate finder which can find duplicate rows from the source sheet given a timeframe
+- Added more information to the README to make setting up the project easier
+
 ## 3.2.3
 
 - Upgrade to React v19
