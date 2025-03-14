@@ -1,5 +1,5 @@
-import { ReactRenderer } from '@storybook/react';
-import { DecoratorFunction } from '@storybook/types';
+import type { SvelteRenderer } from '@storybook/svelte';
+import type { DecoratorFunction } from '@storybook/types';
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -32,7 +32,7 @@ type ServerMockArguments = {
 };
 
 export const ServerMockDecorator: DecoratorFunction<
-  ReactRenderer,
+  SvelteRenderer,
   ServerMockArguments
 > = (Story, { args }) => {
   if (args && args.strategyOptions) {

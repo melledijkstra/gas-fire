@@ -1,4 +1,4 @@
-import { Preview } from '@storybook/react';
+import type { Preview } from '@storybook/svelte';
 import { DialogDecorator } from './dialog-decorator';
 import { ServerMockDecorator } from './__mocks__/server-mock';
 

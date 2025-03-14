@@ -1,4 +1,4 @@
-import { ReactRenderer } from '@storybook/react';
+import { SvelteRenderer } from '@storybook/svelte';
 import { DecoratorFunction } from '@storybook/types';
 
 import styles from './dialog.module.css';
@@ -9,7 +9,7 @@ type DialogDecoratorArgs = {
 };
 
 export const DialogDecorator: DecoratorFunction<
-  ReactRenderer,
+  SvelteRenderer,
   DialogDecoratorArgs
 > = (Story, { args, title: storyTitle }) => {
   const [width, height] = args?.dialogSize ?? [900, 600];

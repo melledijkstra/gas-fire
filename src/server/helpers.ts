@@ -1,5 +1,5 @@
 import { CATEGORIES_SHEET_NAME } from './config';
-import { FireColumn, FIRE_COLUMNS } from '@/common/constants';
+import { type FireColumn, FIRE_COLUMNS } from '@/common/constants';
 
 export const getColumnIndexByName = (column: FireColumn): number =>
   FIRE_COLUMNS.findIndex((col) => col.toLowerCase() === column);

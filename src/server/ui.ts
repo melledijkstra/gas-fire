@@ -7,9 +7,7 @@ export function onOpen(): void {
     .addItem('Upload Transactions (CSV)', openFileUploadDialog.name)
     .addItem('Auto Categorize', executeAutomaticCategorization.name)
     .addItem('Find duplicates', executeFindDuplicates.name)
-    .addItem('Settings', openSettingsDialog.name)
     .addItem('About', openAboutDialog.name)
-    .addItem('Svelte Test', openSvelteDialog.name)
     .addToUi();
 }
 

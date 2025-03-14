@@ -10,7 +10,6 @@ import {
 } from 'vite';
 import { resolve } from 'path';
 import { existsSync, readFileSync } from 'fs';
-import react from '@vitejs/plugin-react-swc';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import tailwind from '@tailwindcss/vite';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
@@ -42,16 +41,11 @@ const clientEntrypoints: Array<DialogEntry> = [
     filename: 'import-dialog',
     template: 'import-dialog/index.html',
   },
-  {
-    name: 'CLIENT:settings',
-    filename: 'settings-dialog',
-    template: 'settings-dialog/index.html',
-  },
-  {
-    name: 'CLIENT:svelte',
-    filename: 'svelte-dialog',
-    template: 'svelte-dialog/index.html',
-  }
+  // {
+  //   name: 'CLIENT:settings',
+  //   filename: 'settings-dialog',
+  //   template: 'settings-dialog/index.html',
+  // }
 ];
 
 const sharedConfig = defineConfig({
@@ -82,7 +76,7 @@ if (existsSync(keyPath) && existsSync(certPath)) {
 
 const clientServeConfig: UserConfig = {
   ...sharedConfig,
-  plugins: [react(), svelte(), tailwind()],
+  plugins: [svelte(), tailwind()],
   server: devServerOptions,
   root: clientRoot,
 };
@@ -90,7 +84,7 @@ const clientServeConfig: UserConfig = {
 const clientBuildConfig = ({ filename, template }: DialogEntry) =>
   defineConfig({
     ...sharedConfig,
-    plugins: [react(), svelte(), tailwind(), viteSingleFile({ useRecommendedBuildConfig: true })],
+    plugins: [svelte(), tailwind(), viteSingleFile({ useRecommendedBuildConfig: true })],
     root: resolve(__dirname, clientRoot, filename),
     build: {
       sourcemap: false,
@@ -100,15 +94,9 @@ const clientBuildConfig = ({ filename, template }: DialogEntry) =>
       minify: true,
       rollupOptions: {
         input: resolve(__dirname, clientRoot, template),
-        external: [
-          'gas-client',
-        ],
         output: {
           format: 'iife', // needed to use globals from UMD builds
           dir: outDir,
-          globals: {
-            'gas-client': 'GASClient',
-          },
         },
       },
     },
@@ -147,7 +135,7 @@ const buildIFrame = (entrypoint: DialogEntry) => ({
 });
 
 /**
- * This builds the client react app bundles for production, and writes them to disk.
+ * This builds the client app bundles for production, and writes them to disk.
  * Because multiple client entrypoints (dialogs) are built, we need to loop through
  * each entrypoint and build the client bundle for each. Vite doesn't have great tooling for
  * building multiple single-page apps in one project, so we have to do this manually with a
