@@ -1,4 +1,5 @@
 <script lang="ts">
+  import '@/client/app.css';
   let { children } = $props()
 
   // const theme = createTheme({
