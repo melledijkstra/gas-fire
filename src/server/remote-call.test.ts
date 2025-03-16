@@ -1,5 +1,5 @@
 import { generatePreview, processCSV } from './remote-calls';
-import { StrategyOptions, Table } from '@/common/types';
+import type { Table } from '@/common/types';
 import { RangeMock } from '../../test-setup';
 import { fakeN26ImportWithBalance, n26ImportMock } from '@/fixtures/n26';
 import { TableUtils } from './table-utils';
@@ -17,7 +17,7 @@ describe('Remote Calls', () => {
       ]);
 
       const table: Table = [['', '', '', '', '', ''], []];
-      const { result, newBalance } = generatePreview(table, StrategyOption.N26);
+      const { result, newBalance } = generatePreview(table, 'n26');
 
       expect(result).toStrictEqual(table);
       expect(newBalance).toBe(302.8);
@@ -32,7 +32,7 @@ describe('Remote Calls', () => {
 
       const { result, newBalance } = generatePreview(
         fakeN26ImportWithBalance,
-        StrategyOption.N26
+        'n26'
       );
 
       expect(result).toStrictEqual(fakeN26ImportWithBalance);
@@ -46,14 +46,14 @@ describe('Remote Calls', () => {
     });
 
     test('is able to handle n26 import', () => {
-      const result = processCSV(n26ImportMock, StrategyOption.N26);
+      const result = processCSV(n26ImportMock, 'n26');
 
       expect(importDataSpy).toHaveBeenCalled();
       expect(result.message).toBe('imported 3 rows!');
     });
 
     test('is able to handle rabobank import', () => {
-      const result = processCSV(raboImportMock, StrategyOption.RABO);
+      const result = processCSV(raboImportMock, 'rabobank');
 
       expect(importDataSpy).toHaveBeenCalled();
       expect(result.message).toBe('imported 1 rows!');

@@ -1,7 +1,6 @@
 import { AccountUtils } from './account-utils';
 import { getSheetById } from './globals';
 import { RangeMock, SheetMock } from '../../test-setup';
-import { StrategyOptions } from '@/common/types';
 import { SOURCE_SHEET_ID } from '@/common/constants';
 
 describe('Utility tests', () => {
@@ -31,6 +30,6 @@ describe('Utility tests', () => {
       ['', '', ''],
     ]);
 
-    expect(AccountUtils.getBalance(StrategyOption.N26)).toBe(302.8);
+    expect(AccountUtils.getBalance('n26')).toBe(302.8);
   });
 });
