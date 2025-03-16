@@ -4,9 +4,9 @@ import type { DecoratorFunction } from '@storybook/types';
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 enum StrategyOption {
-  AuroraFinancialGroup = 'aurora',
-  CeruleanTrustBank = 'cerulean',
-  EmeraldCapitalPartners = 'emerald',
+  aurora_financial_group = 'Aurora Financial Group',
+  cerulean_trust_bank = 'Cerulean Trust Bank',
+  emerald_capital_partners = 'Emerald Capital Partners',
 }
 
 let strategyOptions: Record<string, string>;

@@ -1,11 +1,9 @@
 import type { Preview } from '@storybook/svelte';
-import { DialogDecorator } from './dialog-decorator';
 import { ServerMockDecorator } from './__mocks__/server-mock';
 
 const preview: Preview = {
   parameters: {
     backgrounds: {
-      default: 'dialog',
       values: [
         {
           name: 'dialog',
@@ -21,7 +19,7 @@ const preview: Preview = {
       },
     },
   },
-  decorators: [ServerMockDecorator, DialogDecorator],
+  decorators: [ServerMockDecorator],
   tags: ['autodocs'],
 };
 

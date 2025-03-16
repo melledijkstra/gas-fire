@@ -1,4 +1,4 @@
-import { csvToJson } from './utils';
+import { csvToJson } from './importing';
 import type { Table } from '@/common/types';
 
 describe('Utility Functions', () => {

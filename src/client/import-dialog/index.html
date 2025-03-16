@@ -2,14 +2,16 @@
 <html lang="en">
   <head>
     <base target="_top" />
-    <!-- Add any external scripts and stylesheets here -->
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/icon?family=Material+Icons"
-    />
   </head>
   <body>
     <section id="index" />
-    <script src="./index.ts" type="module"></script>
+    <script type="module">
+      import { mount } from 'svelte';
+      import ImportDialog from './Dialog.svelte';
+
+      mount(ImportDialog, {
+        target: document.getElementById('index')
+      })
+    </script>
   </body>
 </html>

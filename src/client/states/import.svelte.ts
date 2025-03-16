@@ -1,10 +1,9 @@
-import { StrategyOption, type Table } from '@/common/types';
+import type { Table } from '@/common/types';
 import { SvelteSet } from 'svelte/reactivity';
 
 type ImportState = {
-  statusText?: string;
   importData?: Table;
-  strategy?: StrategyOption;
+  strategy?: string;
   selectedRows: SvelteSet<number>;
 };
 

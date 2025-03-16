@@ -5,6 +5,13 @@
   </head>
   <body>
     <section id="index" />
-    <script src="./index.ts" type="module"></script>
+    <script type="module">
+      import { mount } from 'svelte';
+      import Dialog from './Dialog.svelte';
+
+      mount(Dialog, {
+        target: document.getElementById('index')
+      })
+    </script>
   </body>
 </html>

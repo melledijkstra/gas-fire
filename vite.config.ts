@@ -39,12 +39,7 @@ const clientEntrypoints: Array<DialogEntry> = [
     name: 'CLIENT:import',
     filename: 'import-dialog',
     template: 'import-dialog/index.html',
-  },
-  // {
-  //   name: 'CLIENT:settings',
-  //   filename: 'settings-dialog',
-  //   template: 'settings-dialog/index.html',
-  // }
+  }
 ];
 
 const sharedConfig = defineConfig({

@@ -1,5 +1,4 @@
 import { FireSpreadsheet } from './globals';
-import { StrategyOption } from '@/common/types';
 import { NAMED_RANGES } from '@/common/constants';
 
 /**
@@ -54,7 +53,7 @@ export class AccountUtils {
     return bankAccounts?.[bank] ?? '';
   }
 
-  static getBalance(strategy: StrategyOption): number {
+  static getBalance(strategy: string): number {
     // this range contains the ibans only
     const ibans = FireSpreadsheet.getRangeByName(NAMED_RANGES.accounts);
     // we also need to include the labels and balances

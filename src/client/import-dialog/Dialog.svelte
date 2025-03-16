@@ -1,50 +1,33 @@
 <script lang="ts">
+  import type { Table } from '@/common/types';
+  import { Tabs, TabItem } from 'flowbite-svelte';
   import Application from '../Application.svelte';
-  // import { PreviewTable } from './components/PreviewTable';
-  // import { Typography, Box, Tabs, Tab } from '@mui/material';
   import ImportForm from '../components/ImportForm.svelte';
-  // import { DataTable } from './components/DataTable';
   import { appState } from '../states/app.svelte';
-  import Test from '../components/Test.svelte';
-
-  let activeTab = $state(0);
+  import { importState } from '../states/import.svelte';
+  import DataTable from '../components/DataTable.svelte';
+  import PreviewTable from '../components/PreviewTable.svelte';
 </script>
 
-<!-- {#snippet rawTable(importData)}
+{#snippet rawTable(importData: Table)}
   <DataTable table={importData} options={{ selectable: true }} />
-{/snippet} -->
+{/snippet}
 
 <Application>
   <ImportForm />
-  <Test />
-  <!-- <Typography variant="body1" mb={2}> -->
-  <p class="text-blue-600 text-5xl">
+
+  <p class="text-base my-2">
     {appState.statusText}
   </p>
 
-  <p>{activeTab}</p>
-  <!-- </Typography> -->
-  <!-- <Tabs
-    value={activeTab}
-    onChange={(_event, newActiveTab) => setActiveTab(newActiveTab)}
-  >
-    <Tab label="Raw Data" />
-    <Tab label="Import Preview" />
+  <Tabs tabStyle="underline" contentClass="p-0">
+    <TabItem open id="raw-input-table" title="Raw Data">
+      {#if importState.importData}
+        {@render rawTable(importState.importData)}
+      {/if}
+    </TabItem>
+    <TabItem title="Import Preview">
+      <PreviewTable />
+    </TabItem>
   </Tabs>
-  <Box
-    mt={2}
-    style={{ display: activeTab === 0 ? 'block' : 'none' }}
-    className="tab col s3"
-    id={`raw-input-table`}
-  >
-    <RawTable />
-  </Box>
-  <Box
-    mt={2}
-    style={{ display: activeTab === 1 ? 'block' : 'none' }}
-    className="tab col s3"
-    id={`import-preview-table`}
-  >
-    <PreviewTable />
-  </Box> -->
 </Application>

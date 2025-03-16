@@ -1,5 +1,5 @@
 import { generatePreview, processCSV } from './remote-calls';
-import { StrategyOption, Table } from '@/common/types';
+import { StrategyOptions, Table } from '@/common/types';
 import { RangeMock } from '../../test-setup';
 import { fakeN26ImportWithBalance, n26ImportMock } from '@/fixtures/n26';
 import { TableUtils } from './table-utils';

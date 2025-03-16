@@ -1,5 +1,16 @@
 # Changelog
 
+## 4.0.0-beta
+
+- Refactored all UI code to use flowbite + setup Google Sheets green theme for flowbite
+- Added flowbite-svelte as UI library build on top of tailwindcss
+- Storybook fixed
+
+## 4.0.0-alpha
+
+- Ported all code from React to Svelte
+- WIP: Storybook broken, not yet working
+
 ## 3.3.0
 
 - Added duplicate finder which can find duplicate rows from the source sheet given a timeframe

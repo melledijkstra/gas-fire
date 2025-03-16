@@ -1,4 +1,7 @@
+export type AppState = {
+    statusText: string
+}
 
-export const appState = $state({
+export const appState: AppState = $state({
     statusText: '-'
 })

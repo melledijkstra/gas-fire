@@ -1,4 +1,4 @@
-import { Table } from '@/common/types';
+import type { Table } from '@/common/types';
 
 export const fakeN26ImportWithBalance: Table = [
   ['', '', '', '', '', '', '', '20', ''],

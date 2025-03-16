@@ -33,8 +33,6 @@
   position: absolute;
   display: block;
   padding: 7px;
-  height: 18px;
-  width: 18px;
   right: 0px;
   top: -3px;
   font-family: Roboto, RobotoDraft, Helvetica, Arial, sans-serif;
@@ -47,6 +45,11 @@
   border-radius: 50%;
 
   opacity: 0.54;
+}
+
+.dialog__content {
+  overflow-y: auto;
+  overflow-x: auto;
 }
 
 .dialog__heading__close:after {
