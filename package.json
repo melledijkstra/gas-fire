@@ -62,6 +62,11 @@
     "vite-plugin-static-copy": "^2.3.0",
     "vitest": "^3.0.8"
   },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "^4.35.0",
+    "@tailwindcss/oxide-linux-x64-gnu": "^4.0.1",
+    "lightningcss-linux-x64-gnu": "^1.29.1"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/melledijkstra/gas-fire.git"
