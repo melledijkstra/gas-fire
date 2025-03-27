@@ -2,24 +2,26 @@
 # .git/hooks/pre-push
 # https://www.reddit.com/r/git/comments/3o1tut/precommit_hook_to_make_sure_you_updated_the/
 set -o nounset
+set -o errexit
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 echo "Git repo is at $REPO_ROOT"
 
-SITE_CHANGES=$(git status -s $REPO_ROOT | wc -l)
+BRANCH=$(git branch | cut -d' ' -f2)
+REMOTE=$(git branch -r | xargs)
+SITE_CHANGES=$(git diff "$BRANCH".."$REMOTE" | wc -l)
+
 echo "Detected $SITE_CHANGES changes"
 
 if [ "$SITE_CHANGES" -gt "0" ]; then
   echo "Checking to make sure package version was updated..."
 
-  VERSION_CHANGED=$(git diff --cached -G '"version":' -- $REPO_ROOT/package.json | wc -l)
-
-  echo $VERSION_CHANGED
+  VERSION_CHANGED=$(git diff "$BRANCH".."$REMOTE" -G '"version":' -- $REPO_ROOT/package.json | wc -l)
 
   if [ "$VERSION_CHANGED" -gt "0" ]; then
     echo "Version was updated!  Continuing..."
   else
-    echo "Version was not updated :( Aborting commit."
+    echo "Version was not updated :( Aborting push."
     exit 1
   fi
 fi
