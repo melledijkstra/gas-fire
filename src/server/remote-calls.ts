@@ -2,8 +2,7 @@ import { FireSpreadsheet, sourceSheet } from './globals';
 import { Config } from './config';
 import { TableUtils, processTableWithImportRules } from './table-utils';
 import { n26Cols, openbankCols, raboCols } from './types';
-import type { StrategyOptions } from '@/common/types';
-import type { ServerResponse, Table } from '@/common/types';
+import type { StrategyOptions, ServerResponse, Table } from '@/common/types';
 import { AccountUtils, isNumeric } from './account-utils';
 import { Transformers } from './transformers';
 import {
