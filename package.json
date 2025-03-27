@@ -23,7 +23,7 @@
     "analyze:client": "echo 'not implemented yet'",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "switch-env": "node ./scripts/switch-env.js",
+    "switch-env": "tsx ./scripts/switch-env.ts",
     "faker": "tsx ./scripts/faker.ts"
   },
   "dependencies": {
