@@ -1,7 +1,6 @@
 import type { Accounts, FireTransaction } from '../src/common/types';
 import { faker } from '@faker-js/faker';
 import fs from 'fs';
-import { delimiter } from 'path';
 
 const fakeBankAccounts: Accounts = {
   'Bank of America': 'US1234567890',

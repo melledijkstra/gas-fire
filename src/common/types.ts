@@ -64,11 +64,11 @@ export type FireTransaction = {
   amount: number;
   balance: number | '';
   contra_account: string;
-  description: string | '';
-  comments: string | '';
-  icon: string | '';
-  category: string | '';
-  label: string | '';
+  description: string;
+  comments: string;
+  icon: string;
+  category: string;
+  label: string;
   import_date: string;
   hours: number | '';
   disabled: boolean | '';
