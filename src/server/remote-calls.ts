@@ -355,3 +355,15 @@ export const executeFindDuplicates = () => {
     `Found ${duplicateRows.length / 2} duplicates! Rows have been copied to the "duplicate-rows" sheet`
   );
 }
+
+export const debugImportSettings = () => {
+  const accountConfigs = Config.getConfigurations()
+
+  const ui = SpreadsheetApp.getUi()
+
+  const configKeys = Object.keys(accountConfigs)
+
+  ui.alert(`Found ${configKeys.length} account configurations!\n\n${configKeys.join('\n')}\n\nSee logs for more details`)
+
+  console.log(accountConfigs);
+}
