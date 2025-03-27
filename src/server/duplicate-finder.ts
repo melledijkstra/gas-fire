@@ -1,5 +1,5 @@
-import { Table } from "@/common/types";
-import { FireColumn } from "@/common/constants";
+import type { Table } from "@/common/types";
+import type { FireColumn } from "@/common/constants";
 
 function findIndexByHeaderName(headers: FireColumn[], headerName: FireColumn): number {
     return headers.findIndex(cell => cell.toLowerCase() === headerName.toLowerCase());

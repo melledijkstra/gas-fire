@@ -1,8 +1,8 @@
-import { sourceSheet } from './globals';
+import { FireSpreadsheet, sourceSheet } from './globals';
 import { Config } from './config';
 import { TableUtils, processTableWithImportRules } from './table-utils';
 import { n26Cols, openbankCols, raboCols } from './types';
-import { ServerResponse, StrategyOption, Table } from '@/common/types';
+import type { StrategyOptions, ServerResponse, Table } from '@/common/types';
 import { AccountUtils, isNumeric } from './account-utils';
 import { Transformers } from './transformers';
 import {
@@ -52,7 +52,7 @@ export function getBankAccounts(): Record<string, string> {
 
 export function processCSV(
   inputTable: Table,
-  importStrategy: StrategyOption
+  importStrategy: string
 ): ServerResponse {
   const strategies = Config.getConfig();
 
@@ -99,7 +99,7 @@ export function processCSV(
 }
 
 export function calculateNewBalance(
-  strategy: StrategyOption,
+  strategy: string,
   values: number[]
 ) {
   let balance = AccountUtils.getBalance(strategy);
@@ -113,20 +113,20 @@ export function calculateNewBalance(
 
 export function generatePreview(
   table: Table,
-  strategy: StrategyOption
+  strategy: string
 ): {
   result: Table;
   newBalance?: number;
 } {
-  let amounts = [];
+  let amounts: string[] = [];
   switch (strategy) {
-    case StrategyOption.N26:
+    case 'n26':
       amounts = TableUtils.retrieveColumn(table, n26Cols.Amount);
       break;
-    case StrategyOption.OPENBANK:
+    case 'openbank':
       amounts = TableUtils.retrieveColumn(table, openbankCols.Importe);
       break;
-    case StrategyOption.RABO:
+    case 'rabobank':
       amounts = TableUtils.retrieveColumn(table, raboCols.Bedrag);
       break;
   }
@@ -143,8 +143,23 @@ export function generatePreview(
 /**
  * This function returns the strategy options available to the client side
  */
-export function getStrategyOptions(): typeof StrategyOption {
-  return StrategyOption;
+export function getStrategyOptions(): StrategyOptions {
+  const accountNames = FireSpreadsheet.getRangeByName(NAMED_RANGES.accountNames);
+  const accounts = accountNames
+    .getValues()
+    // make sure not to include empty rows
+    .filter((row) => row.some((cell) => cell !== '' && cell !== null))
+    // flatten out the array so it is 1 dimensional with account names
+    .flat();
+
+  // we convert the account names to slugs and return them as an object
+  const result = accounts.reduce<Record<string, string>>((obj: Record<string, string>, account: string) => {
+    const slug = account.toLowerCase().replaceAll(' ', '_');
+    obj[slug] = account;
+    return obj;
+  }, {});
+
+  return result;
 }
 
 /**

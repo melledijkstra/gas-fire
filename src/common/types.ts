@@ -1,8 +1,16 @@
-export enum StrategyOption {
-  N26 = 'n26',
-  RABO = 'rabobank',
-  OPENBANK = 'openbank',
-}
+/**
+ * The import strategies, basically a list of different bank accounts the user has defined
+ * e.g.
+ * ```
+ * {
+ *    bank_of_america: 'Bank of America',
+ *    commerzbank: 'Commerzbank',
+ *    ing: 'ING',
+ *    revolut: 'Revolut'
+ * }
+ * ```
+ */
+export type StrategyOptions = Record<string, string>;
 
 /**
  * Table definition

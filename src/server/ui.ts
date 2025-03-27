@@ -7,7 +7,6 @@ export function onOpen(): void {
     .addItem('Upload Transactions (CSV)', openFileUploadDialog.name)
     .addItem('Auto Categorize', executeAutomaticCategorization.name)
     .addItem('Find duplicates', executeFindDuplicates.name)
-    .addItem('Settings', openSettingsDialog.name)
     .addItem('About', openAboutDialog.name)
     .addToUi();
 }
@@ -34,6 +33,15 @@ export function openAboutDialog(): void {
 export function openSettingsDialog(): void {
   const [width, height] = DIALOG_SIZES.settings;
   const html = HtmlService.createTemplateFromFile('settings-dialog.html')
+    .evaluate()
+    .setWidth(width)
+    .setHeight(height);
+  SpreadsheetApp.getUi().showModalDialog(html, 'Settings Dialog');
+}
+
+export function openSvelteDialog(): void {
+  const [width, height] = [600, 600];
+  const html = HtmlService.createTemplateFromFile('svelte-dialog.html')
     .evaluate()
     .setWidth(width)
     .setHeight(height);

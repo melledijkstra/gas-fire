@@ -1,6 +1,6 @@
 import { TableUtils, buildColumn } from './table-utils';
 import { Transformers } from './transformers';
-import type { StrategyOption, Table } from '@/common/types';
+import type { Table } from '@/common/types';
 import type { Strategy } from './types';
 import { n26Cols, raboCols, openbankCols } from './types';
 import { AccountUtils } from './account-utils';
@@ -22,7 +22,7 @@ const defaultAfterImport = [
 ];
 
 type RootConfig = {
-  [key in StrategyOption]: Strategy;
+  [key: string]: Strategy;
 };
 
 const n26Config: Strategy = {

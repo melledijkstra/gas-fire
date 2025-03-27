@@ -1,7 +1,7 @@
 import type { Table } from '@/common/types';
 import { sourceSheet } from './globals';
 import { FIRE_COLUMNS } from '@/common/constants';
-import { FireColumnRules, InputColumn } from './types';
+import type { FireColumnRules, InputColumn } from './types';
 import { Logger } from '@/common/logger';
 
 const EMPTY = '';

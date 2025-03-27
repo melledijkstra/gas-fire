@@ -1,5 +1,5 @@
-import { csvToJson } from './utils';
-import { Table } from '@/common/types';
+import { csvToJson } from './importing';
+import type { Table } from '@/common/types';
 
 describe('Utility Functions', () => {
   it('csvToJson', () => {

@@ -1,4 +1,4 @@
-import { CategoryDetectionConfigOld } from './types';
+import type { CategoryDetectionConfigOld } from './types';
 
 export const categoriesTermsMap: CategoryDetectionConfigOld = {
   'Food & Groceries': [

@@ -1,4 +1,4 @@
-import { StorybookConfig } from '@storybook/react-vite';
+import type { StorybookConfig } from '@storybook/svelte-vite';
 import { join, dirname } from 'path';
 
 /**
@@ -10,16 +10,14 @@ function getAbsolutePath(value: string) {
 }
 
 const config: StorybookConfig = {
-  stories: ['../src/stories/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
+  stories: ['../src/**/*.mdx', '../src/**/*.stories.@(js|jsx|mjs|ts|tsx|svelte)'],
   addons: [
     getAbsolutePath('@storybook/addon-links'),
     getAbsolutePath('@storybook/addon-essentials'),
     getAbsolutePath('@storybook/addon-interactions'),
+    '@storybook/addon-svelte-csf'
   ],
-  framework: {
-    name: getAbsolutePath('@storybook/react-vite'),
-    options: {},
-  },
+  framework: getAbsolutePath('@storybook/svelte-vite'),
   viteFinal: async (config) => {
     if (config?.resolve?.alias) {
       // @ts-ignore
