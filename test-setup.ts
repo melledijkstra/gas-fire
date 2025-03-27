@@ -1,4 +1,5 @@
-import { Mock, vi } from 'vitest';
+import { vi } from 'vitest';
+import type { Mock } from 'vitest';
 
 // In order to test our server code we need the Google Apps Script globals to be available
 // These are not available by default when we run vitest in node environment
@@ -13,21 +14,33 @@ class Range {
 
 class Sheet {
   static getSheetId = vi.fn();
+  static getSheetValues = vi.fn(() => []);
+  static getLastRow = vi.fn();
 }
 
 class Spreadsheet {
   static getSheets = vi.fn(() => [Sheet]);
   static getRangeByName = vi.fn(() => Range);
+  static getSheetByName = vi.fn(() => Sheet);
 }
 
 class SpreadSheetApp {
   static getActiveSpreadsheet = vi.fn(() => Spreadsheet);
 }
 
+class CacheService {
+  static getDocumentCache = vi.fn(() => ({
+    get: vi.fn(),
+    put: vi.fn()
+  }))
+}
+
 vi.stubGlobal('SpreadsheetApp', SpreadSheetApp);
 vi.stubGlobal('Spreadsheet', Spreadsheet);
+vi.stubGlobal('CacheService', CacheService);
 
 export const RangeMock = vi.mocked(Range);
 export const SheetMock = vi.mocked(Sheet);
 export const SpreadsheetMock = vi.mocked(Spreadsheet);
 export const SpreadSheetAppMock = vi.mocked(SpreadSheetApp);
+export const CacheServiceMock = vi.mocked(CacheService);
