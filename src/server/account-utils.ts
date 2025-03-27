@@ -1,6 +1,6 @@
 import { FireSpreadsheet } from './globals';
 import { NAMED_RANGES } from '@/common/constants';
-import { getAccountOptions } from './remote-calls';
+import { getBankAccountOptionsCached } from './remote-calls';
 
 /**
  * Converts a list to an object
@@ -82,6 +82,6 @@ export class AccountUtils {
   }
 
   static getAccountIdentifiers(): string[] {
-    return Object.keys(getAccountOptions());
+    return Object.keys(getBankAccountOptionsCached());
   }
 }

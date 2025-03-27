@@ -2,6 +2,7 @@ import type { Table } from '@/common/types';
 
 // prettier-ignore
 export const fakeN26ImportWithBalance: Table = [
+  ['', '', '', '', '', '', '', 'Amount', ''],
   ['', '', '', '', '', '', '', '20', ''],
   ['', '', '', '', '', '', '', '-25.6'],
   ['', '', '', '', '', '', '', '+58.30', '', '', ''],

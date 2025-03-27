@@ -37,6 +37,8 @@ export function processTableWithImportRules(
   columnImportRules: FireColumnRules
 ): Table {
   let output: Table = [];
+  // remove the headers from the input data, we don't want to import that row
+  const headers = input.shift();
   const rowCount = input.length;
   for (const columnName of FIRE_COLUMNS) {
     const colRule = columnImportRules[columnName as keyof FireColumnRules];

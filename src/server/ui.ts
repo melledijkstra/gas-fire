@@ -1,14 +1,22 @@
 import { DIALOG_SIZES } from '@/common/constants';
-import { executeAutomaticCategorization, executeFindDuplicates } from './remote-calls';
+import { debugImportSettings, executeAutomaticCategorization, executeFindDuplicates } from './remote-calls';
 
 export function onOpen(): void {
+  const isDebugEnabled: boolean = SpreadsheetApp.getActiveSpreadsheet().getRangeByName('DEBUG').getValue() ?? false;
   const ui = SpreadsheetApp.getUi();
-  ui.createMenu('FIRE')
+  const menu = ui.createMenu('FIRE')
     .addItem('Upload Transactions (CSV)', openFileUploadDialog.name)
     .addItem('Auto Categorize', executeAutomaticCategorization.name)
     .addItem('Find duplicates', executeFindDuplicates.name)
-    .addItem('About', openAboutDialog.name)
-    .addToUi();
+    .addItem('About', openAboutDialog.name);
+
+  if (isDebugEnabled) {
+    const debugMenu = ui.createMenu('Debug');
+    debugMenu.addItem('Debug Import Settings', debugImportSettings.name);
+    menu.addSubMenu(debugMenu);
+  }
+
+  menu.addToUi();
 }
 
 export function openFileUploadDialog(): void {

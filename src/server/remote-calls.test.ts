@@ -21,6 +21,7 @@ import {
   executeFindDuplicates,
   mailNetWorth,
 } from './remote-calls';
+import { Config } from './config';
 
 vi.mock('./globals', () => ({
   FireSpreadsheet: SpreadsheetMock,
@@ -37,12 +38,19 @@ vi.mock('./helpers', () => ({
   removeFilterCriteria: vi.fn(() => true),
 }));
 
+const configSpy = vi.spyOn(Config, 'getAccountConfiguration');
 const detectCategorySpy = vi.spyOn(
   categoryDetection,
   'detectCategoryByTextAnalysis'
 );
 const findDuplicatesSpy = vi.spyOn(duplicateFinder, 'findDuplicates');
 const importDataSpy = vi.spyOn(TableUtils, 'importData');
+
+const fakeN26Config = new Config('N26', {
+  amount: 'Amount'
+})
+
+const fakeRabobankConfig = new Config('rabobank')
 
 Logger.disable();
 
@@ -52,6 +60,10 @@ describe('Remote Calls', () => {
   });
 
   describe('generatePreview', () => {
+    beforeAll(() => {
+      configSpy.mockReturnValue(fakeN26Config)
+    })
+
     test('is able to handle table without any useful data and should return the current balance', () => {
       RangeMock.getValues.mockReturnValueOnce([
         ['N26', 'DB123456789', '302.80'],
@@ -84,24 +96,22 @@ describe('Remote Calls', () => {
   });
 
   describe('processCSV', () => {
-    beforeEach(() => {
-      importDataSpy.mockReset();
-    });
-
     test('is able to handle N26 import', () => {
-      FilterMock.remove.mockReturnValue(true);
+      configSpy.mockReturnValueOnce(fakeN26Config)
+
       const result = processCSV(N26ImportMock, 'N26');
 
       expect(importDataSpy).toHaveBeenCalled();
-      expect(result.message).toBe('imported 3 rows!');
+      expect(result.message).toBe('imported 4 rows!');
     });
 
     test('is able to handle rabobank import', () => {
-      FilterMock.remove.mockReturnValue(true);
+      configSpy.mockReturnValueOnce(fakeRabobankConfig)
+
       const result = processCSV(raboImportMock, 'rabobank');
 
       expect(importDataSpy).toHaveBeenCalled();
-      expect(result.message).toBe('imported 1 rows!');
+      expect(result.message).toBe('imported 2 rows!');
     });
   });
 

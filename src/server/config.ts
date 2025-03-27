@@ -2,7 +2,7 @@ import { TableUtils, buildColumn } from './table-utils';
 import { Transformers } from './transformers';
 import type { Table } from '@/common/types';
 import type { Strategy } from './types';
-import { N26Cols, raboCols, openbankCols } from './types';
+// import { N26Cols, raboCols, openbankCols } from './types';
 import { AccountUtils } from './account-utils';
 import { FIRE_COLUMNS } from '@/common/constants';
 import type { FireColumn } from '@/common/constants';
@@ -12,45 +12,45 @@ export const SOURCE_SHEET_NAME = 'source';
 export const CATEGORIES_SHEET_NAME = 'categories';
 export const CONFIG_SHEET_NAME = 'import-settings';
 
-const N26Config: Strategy = {
-  beforeImport: [
-    TableUtils.deleteLastRow,
-    TableUtils.deleteFirstRow,
-    TableUtils.sortByDate(N26Cols.BookingDate),
-  ],
-};
+// const N26Config: Strategy = {
+//   beforeImport: [
+//     TableUtils.deleteLastRow,
+//     TableUtils.deleteFirstRow,
+//     TableUtils.sortByDate(N26Cols.BookingDate),
+//   ],
+// };
 
-const rabobankConfig: Strategy = {
-  beforeImport: [
-    TableUtils.deleteLastRow,
-    TableUtils.deleteFirstRow,
-    TableUtils.sortByDate(raboCols.Datum),
-  ],
-  columnImportRules: {
-    ref: buildColumn(raboCols.Volgnr, parseInt),
-  },
-};
+// const rabobankConfig: Strategy = {
+//   beforeImport: [
+//     TableUtils.deleteLastRow,
+//     TableUtils.deleteFirstRow,
+//     TableUtils.sortByDate(raboCols.Datum),
+//   ],
+//   columnImportRules: {
+//     ref: buildColumn(raboCols.Volgnr, parseInt),
+//   },
+// };
 
-const openbankConfig: Strategy = {
-  beforeImport: [
-    TableUtils.deleteFirstRow,
-    TableUtils.deleteLastRow,
-    // open bank has some empty columns when importing
-    (table) => TableUtils.deleteColumns(table, [0, 2, 4, 6, 8]),
-  ],
-  columnImportRules: {
-    date: buildColumn(openbankCols.Fecha, (val) => {
-      let [day, month, year] = val.split('/');
-      let yearNum = +year;
-      if (year && year.length === 2) {
-        // if year is of length 2 it means it only provides the year since 2000
-        // to fix we add 2000
-        yearNum = +year + 2000;
-      }
-      return new Date(new Date(+yearNum, +month - 1, +day).toDateString());
-    }),
-  },
-};
+// const openbankConfig: Strategy = {
+//   beforeImport: [
+//     TableUtils.deleteFirstRow,
+//     TableUtils.deleteLastRow,
+//     // open bank has some empty columns when importing
+//     (table) => TableUtils.deleteColumns(table, [0, 2, 4, 6, 8]),
+//   ],
+//   columnImportRules: {
+//     date: buildColumn(openbankCols.Fecha, (val) => {
+//       let [day, month, year] = val.split('/');
+//       let yearNum = +year;
+//       if (year && year.length === 2) {
+//         // if year is of length 2 it means it only provides the year since 2000
+//         // to fix we add 2000
+//         yearNum = +year + 2000;
+//       }
+//       return new Date(new Date(+yearNum, +month - 1, +day).toDateString());
+//     }),
+//   },
+// };
 
 const parseBoolean = (value: string | boolean) =>
   String(value).toLowerCase() === 'true' || value === true;
@@ -61,7 +61,7 @@ type ColumnMap = {
 
 export class Config {
   /** @deprecated */
-  static oldConfigCache: RootConfig | null = null;
+  static oldConfigCache: {} | null = null;
 
   constructor(
     private accountId: string,
@@ -76,18 +76,19 @@ export class Config {
   }
 
   /** @deprecated */
-  static getOldConfig(): RootConfig {
-    if (this.oldConfigCache) {
-      return this.oldConfigCache;
-    }
+  static getOldConfig() {
+    // if (this.oldConfigCache) {
+    //   return this.oldConfigCache;
+    // }
 
-    const oldRootConfig = {
-      N26: N26Config,
-      rabobank: rabobankConfig,
-      openbank: openbankConfig,
-    };
-    this.oldConfigCache = oldRootConfig;
-    return oldRootConfig;
+    // const oldRootConfig = {
+    //   N26: N26Config,
+    //   rabobank: rabobankConfig,
+    //   openbank: openbankConfig,
+    // };
+    // this.oldConfigCache = oldRootConfig;
+    // return oldRootConfig;
+    return {};
   }
 
   /**

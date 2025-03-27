@@ -31,6 +31,8 @@ class Sheet {
   static readonly clear = vi.fn();
   static readonly insertSheet = vi.fn();
   static readonly insertRowsBefore = vi.fn(() => Sheet);
+  static readonly getSheetValues = vi.fn(() => []);
+  static readonly getLastRow = vi.fn();
 }
 
 class Spreadsheet {
@@ -76,10 +78,18 @@ class MailApp {
   static readonly sendEmail = vi.fn();
 }
 
+class CacheService {
+  static getDocumentCache = vi.fn(() => ({
+    get: vi.fn(),
+    put: vi.fn()
+  }))
+}
+
 vi.stubGlobal('SpreadsheetApp', SpreadSheetApp);
 vi.stubGlobal('Spreadsheet', Spreadsheet);
 vi.stubGlobal('UI', UI);
 vi.stubGlobal('MailApp', MailApp);
+vi.stubGlobal('CacheService', CacheService);
 
 export const RangeMock = vi.mocked(Range);
 export const SheetMock = vi.mocked(Sheet);
@@ -87,3 +97,4 @@ export const SpreadsheetMock = vi.mocked(Spreadsheet);
 export const UIMock = vi.mocked(UI);
 export const MailAppMock = vi.mocked(MailApp);
 export const FilterMock = vi.mocked(Filter);
+export const CacheServiceMock = vi.mocked(CacheService);

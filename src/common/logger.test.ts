@@ -15,7 +15,7 @@ describe('Logger', () => {
 
   afterEach(() => {
     import.meta.env.DEV = originalEnv;
-    consoleSpy.mockReset();
+    consoleSpy.mockClear();
   });
 
   test('should log message when enabled', () => {
