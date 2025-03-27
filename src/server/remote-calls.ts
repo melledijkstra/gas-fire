@@ -8,6 +8,7 @@ import {
   getCategoryNames,
   getColumnIndexByName,
   removeFilterCriteria,
+  slugify,
 } from './helpers';
 import { detectCategoryByTextAnalysis } from './category-detection';
 import { findDuplicates } from './duplicate-finder';
@@ -189,7 +190,7 @@ export function getBankAccountOptions(): StrategyOptions {
 
   // we convert the account names to slugs and return them as an object
   const result = accounts.reduce<Record<string, string>>((obj: Record<string, string>, account: string) => {
-    const slug = account.toLowerCase().replaceAll(' ', '_');
+    const slug = slugify(account);
     obj[slug] = account;
     return obj;
   }, {});
