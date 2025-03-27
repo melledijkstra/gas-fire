@@ -6,6 +6,7 @@ import type { Strategy } from './types';
 import { AccountUtils } from './account-utils';
 import { FIRE_COLUMNS } from '@/common/constants';
 import type { FireColumn } from '@/common/constants';
+import { slugify } from './helpers';
 
 // PENDING: Make this configurable by the user, what if they rename the sheets?
 export const SOURCE_SHEET_NAME = 'source';
@@ -202,7 +203,7 @@ export class Config {
         ?.filter(Boolean) ?? []; // remove any empty strings
 
     for (let i = 0; i < accounts.length; i++) {
-      const account = accounts[i];
+      const account = slugify(accounts[i]);
       // first row contains the auto fill column indices
       // second row contains the auto fill enabled flag
       // third row contains the auto categorization enabled flag
