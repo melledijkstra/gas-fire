@@ -23,7 +23,8 @@
     "analyze:client": "echo 'not implemented yet'",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "switch-env": "node ./scripts/switch-env.js"
+    "switch-env": "tsx ./scripts/switch-env.ts",
+    "faker": "tsx ./scripts/faker.ts"
   },
   "dependencies": {
     "papaparse": "^5.5.2",
@@ -32,6 +33,7 @@
     "tailwindcss": "^4.0.9"
   },
   "devDependencies": {
+    "@faker-js/faker": "^9.2.0",
     "@google/clasp": "^2.5.0",
     "@storybook/addon-essentials": "^8.6.6",
     "@storybook/addon-interactions": "^8.6.6",
@@ -56,6 +58,7 @@
     "gas-client": "^1.1.1",
     "gas-types-detailed": "^1.1.2",
     "storybook": "^8.6.6",
+    "tsx": "^4.19.2",
     "typescript": "^5.8.2",
     "vite": "^6.2.0",
     "vite-plugin-singlefile": "^2.1.0",

@@ -41,7 +41,7 @@ fs.readFile(claspPath, 'utf8', (err, data) => {
     process.exit(1);
   }
 
-  let claspJson;
+  let claspJson: { scriptId: string };
   try {
     claspJson = JSON.parse(data);
   } catch (err) {

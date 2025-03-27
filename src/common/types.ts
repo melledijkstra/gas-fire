@@ -43,3 +43,35 @@ export type JsonTable = Record<string, string>[];
 export type ServerResponse = {
   message: string;
 };
+
+/**
+ * Account definition
+ * ```
+ * {
+ *   'Bank of America': 'US1234567890',
+ *   'Commerzbank': 'DE89370400440532013000',
+ *   'ING': 'NL01INGB1234567890',
+ * }
+ */
+export type Accounts = {
+  [key: string]: string;
+};
+
+export type FireTransaction = {
+  ref: string;
+  iban: string;
+  date: string;
+  amount: number;
+  balance: number | '';
+  contra_account: string;
+  description: string;
+  comments: string;
+  icon: string;
+  category: string;
+  label: string;
+  import_date: string;
+  hours: number | '';
+  disabled: boolean | '';
+  contra_iban: string;
+  currency: string;
+};
