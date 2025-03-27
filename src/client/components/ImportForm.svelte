@@ -64,7 +64,7 @@
   onMount(async () => {
     // retrieve import strategy options when mounted
     serverFunctions
-      .getStrategyOptions()
+      .getBankAccountOptionsCached()
       .then((serverStrategyOptions) => {
         strategyOptions = serverStrategyOptions;
       })
