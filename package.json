@@ -45,7 +45,7 @@
     "@storybook/types": "^8.6.6",
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
     "@tailwindcss/postcss": "^4.0.14",
-    "@tailwindcss/vite": "^4.0.14",
+    "@tailwindcss/vite": "^4.1.2",
     "@types/google-apps-script": "^1.0.97",
     "@types/node": "^22.13.9",
     "@types/papaparse": "^5.3.15",
