@@ -54,7 +54,7 @@
     "dotenv": "^16.4.7",
     "flowbite": "^3.1.2",
     "flowbite-svelte": "^0.48.4",
-    "flowbite-svelte-icons": "^2.0.3",
+    "flowbite-svelte-icons": "^2.1.0",
     "gas-client": "^1.1.1",
     "gas-types-detailed": "^1.1.2",
     "storybook": "^8.6.6",
