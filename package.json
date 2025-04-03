@@ -57,7 +57,7 @@
     "flowbite-svelte-icons": "^2.0.3",
     "gas-client": "^1.1.1",
     "gas-types-detailed": "^1.1.2",
-    "storybook": "^8.6.6",
+    "storybook": "^8.6.12",
     "tsx": "^4.19.2",
     "typescript": "^5.8.2",
     "vite": "^6.2.0",
