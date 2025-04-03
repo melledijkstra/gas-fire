@@ -16,7 +16,7 @@ describe('helpers', () => {
       expect(slugify('Banco de España')).toBe('banco-de-espaa');
     })
 
-    it('should handle empty strings', () => {
+    test('should handle empty strings', () => {
       expect(slugify('')).toBe('');
     });
   });
