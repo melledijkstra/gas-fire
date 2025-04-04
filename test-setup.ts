@@ -6,10 +6,12 @@ import { vi, type Mock } from 'vitest';
 // We utilise the mocking functions from vitest to mock all the functionality
 
 class Range {
-  static readonly getLastRow = vi.fn(() => this)
-  static readonly offset = vi.fn(() => this)
-  static readonly getValues: Mock = vi.fn(() => [])
+  getLastRow = vi.fn(() => this).bind(this)
+  offset = vi.fn(() => this).bind(this)
+  getValues: Mock = vi.fn(() => [])
 }
+
+export const RangeMock = vi.mocked(new Range());
 
 class Sheet implements Partial<GoogleAppsScript.Spreadsheet.Sheet> {
   activate = vi.fn()
@@ -19,31 +21,31 @@ class Sheet implements Partial<GoogleAppsScript.Spreadsheet.Sheet> {
   getLastRow = vi.fn()
   getFilter = vi.fn()
 }
-  
+
+export const SheetMock = vi.mocked(new Sheet() as unknown as GoogleAppsScript.Spreadsheet.Sheet);
 
 class Spreadsheet {
-  static readonly getSheets = vi.fn(() => [SheetMock])
-  static readonly getRangeByName = vi.fn(() => Range)
-  static readonly getSheetByName = vi.fn(() => SheetMock)
+  getSheets = vi.fn(() => [SheetMock])
+  getRangeByName = vi.fn(() => RangeMock)
+  getSheetByName = vi.fn(() => SheetMock)
 }
+
+export const SpreadsheetMock = vi.mocked(new Spreadsheet()  as unknown as GoogleAppsScript.Spreadsheet.Spreadsheet);
 
 class SpreadSheetApp {
-  static readonly getActiveSpreadsheet = vi.fn(() => Spreadsheet)
+  getActiveSpreadsheet = vi.fn(() => SpreadsheetMock);
 }
 
+export const SpreadSheetAppMock = vi.mocked(new SpreadSheetApp());
+
 class CacheService {
-  static readonly getDocumentCache = vi.fn(() => ({
+  getDocumentCache = vi.fn(() => ({
     get: vi.fn(),
     put: vi.fn()
   }))
 }
 
-vi.stubGlobal('SpreadsheetApp', SpreadSheetApp);
-vi.stubGlobal('Spreadsheet', Spreadsheet);
-vi.stubGlobal('CacheService', CacheService);
+export const CacheServiceMock = vi.mocked(new CacheService());
 
-export const RangeMock = vi.mocked(Range);
-export const SheetMock = vi.mocked(new Sheet() as unknown as GoogleAppsScript.Spreadsheet.Sheet);
-export const SpreadsheetMock = vi.mocked(Spreadsheet);
-export const SpreadSheetAppMock = vi.mocked(SpreadSheetApp);
-export const CacheServiceMock = vi.mocked(CacheService);
+vi.stubGlobal('SpreadsheetApp', SpreadSheetAppMock);
+vi.stubGlobal('CacheService', CacheServiceMock);
