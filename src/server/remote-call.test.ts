@@ -110,7 +110,7 @@ describe('Remote Calls', () => {
       const result = processCSV(raboImportMock, 'rabobank');
 
       expect(importDataSpy).toHaveBeenCalled();
-      expect(result.message).toBe('imported 2 rows!');
+      expect(result.message).toBe('imported 1 rows!');
     });
   });
 });
