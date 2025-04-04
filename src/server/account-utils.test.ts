@@ -30,6 +30,6 @@ describe('Utility tests', () => {
       ['', '', ''],
     ]);
 
-    expect(AccountUtils.getBalance('N26')).toBe(302.8);
+    expect(AccountUtils.getBalance('n26')).toBe(302.8);
   });
 });
