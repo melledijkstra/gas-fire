@@ -84,4 +84,14 @@ export class AccountUtils {
   static getAccountIdentifiers(): string[] {
     return Object.keys(getBankAccountOptionsCached());
   }
+
+  static calculateNewBalance(bankAccount: string, values: number[]) {
+    let balance = this.getBalance(bankAccount);
+  
+    for (const amount of values) {
+      balance += amount;
+    }
+  
+    return balance;
+  }
 }
