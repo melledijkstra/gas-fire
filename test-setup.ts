@@ -14,14 +14,17 @@ class Range {
   static readonly setValue = vi.fn();
   static readonly setValues = vi.fn();
   static readonly autoFill = vi.fn();
+  static readonly getNumColumns = vi.fn();
+  static readonly getColumn = vi.fn();
 }
 
 class Filter {
   static readonly setColumnFilterCriteria = vi.fn();
   static readonly remove = vi.fn();
+  static readonly getRange = vi.fn(() => Range);
 }
 
-class Sheet {
+class Sheet implements Partial<GoogleAppsScript.Spreadsheet.Sheet> {
   static readonly getSheetId = vi.fn();
   static readonly activate = vi.fn();
   static readonly showSheet = vi.fn();
@@ -32,8 +35,8 @@ class Sheet {
   static readonly insertSheet = vi.fn();
   static readonly insertRowsBefore = vi.fn(() => Sheet);
   static readonly getSheetValues = vi.fn(() => []);
-  static readonly getLastRow = vi.fn();
 }
+  
 
 class Spreadsheet {
   static readonly getSheets = vi.fn(() => [Sheet]);

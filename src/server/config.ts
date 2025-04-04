@@ -2,16 +2,17 @@ import { TableUtils, buildColumn } from './table-utils';
 import { Transformers } from './transformers';
 import type { Table } from '@/common/types';
 import type { Strategy } from './types';
-// import { N26Cols, raboCols, openbankCols } from './types';
 import { AccountUtils } from './account-utils';
 import { FIRE_COLUMNS } from '@/common/constants';
 import type { FireColumn } from '@/common/constants';
 import { slugify } from './helpers';
 
+const CONFIG_CACHE_KEY = 'cache.config'
+
 // PENDING: Make this configurable by the user, what if they rename the sheets?
-export const SOURCE_SHEET_NAME = 'source';
-export const CATEGORIES_SHEET_NAME = 'categories';
-export const CONFIG_SHEET_NAME = 'import-settings';
+export const SOURCE_SHEET_NAME = 'source'
+export const CATEGORIES_SHEET_NAME = 'categories'
+export const CONFIG_SHEET_NAME = 'import-settings'
 
 // const N26Config: Strategy = {
 //   beforeImport: [
@@ -60,36 +61,40 @@ type ColumnMap = {
   [key in FireColumn]?: string;
 };
 
+type ConfigParams = {
+  accountId: string;
+  columnMap?: ColumnMap;
+  autoFillColumnIndices?: number[];
+  autoFillEnabled?: boolean;
+  autoCategorizationEnabled?: boolean;
+}
+
 export class Config {
   /** @deprecated */
-  static oldConfigCache: {} | null = null;
+  static oldConfigCache: {} | null = null
+  
+  private columnMap: ColumnMap
+  public autoFillEnabled: boolean
+  public autoCategorizationEnabled: boolean
+  public autoFillColumnIndices: number[]
+  private accountId: string
 
-  constructor(
-    private accountId: string,
-    private columnMap: ColumnMap = {},
-    public autoFillColumnIndices: number[] = [],
-    public autoFillEnabled: boolean = false,
-    public autoCategorizationEnabled: boolean = false
-  ) {}
+  constructor({
+    accountId,
+    columnMap,
+    autoFillColumnIndices,
+    autoFillEnabled,
+    autoCategorizationEnabled,
+  }: ConfigParams) {
+    this.accountId = accountId
+    this.columnMap = columnMap ?? {}
+    this.autoFillColumnIndices = autoFillColumnIndices ?? []
+    this.autoFillEnabled = autoFillEnabled ?? false
+    this.autoCategorizationEnabled = autoCategorizationEnabled ?? false
+  }
 
   getAccountId(): string {
     return this.accountId;
-  }
-
-  /** @deprecated */
-  static getOldConfig() {
-    // if (this.oldConfigCache) {
-    //   return this.oldConfigCache;
-    // }
-
-    // const oldRootConfig = {
-    //   N26: N26Config,
-    //   rabobank: rabobankConfig,
-    //   openbank: openbankConfig,
-    // };
-    // this.oldConfigCache = oldRootConfig;
-    // return oldRootConfig;
-    return {};
   }
 
   /**
@@ -106,7 +111,14 @@ export class Config {
       return;
     }
 
-    let afterImport: Array<(data: Table) => void> = [];
+    // the before import rules can manipulate the data before the import
+    let beforeImport: Array<(data: Table) => Table> = [
+      // remove header row
+      (table) => TableUtils.deleteFirstRow(table), 
+    ]
+    // the after import rules are not able to manipulate the data
+    // therefor the data is only given as reference for any needed calculations
+    let afterImport: Array<(data: Table) => void> = []
 
     if (accountConfig?.autoFillEnabled) {
       // add auto fill processing if enabled
@@ -116,7 +128,7 @@ export class Config {
     }
 
     return {
-      beforeImport: [],
+      beforeImport,
       // prettier-ignore
       columnImportRules: {
         ref: null,
@@ -211,13 +223,13 @@ export class Config {
       const autoFillEnabled = parseBoolean(rawConfigs[1][i]);
       const autoCategorizationEnabled = parseBoolean(rawConfigs[2][i]);
 
-      configs[account] = new Config(
-        account,
-        columnMapping[account],
+      configs[account] = new Config({
+        accountId: account,
+        columnMap: columnMapping[account],
         autoFillColumnIndices,
         autoFillEnabled,
-        autoCategorizationEnabled
-      );
+        autoCategorizationEnabled,
+      });
     }
 
     return configs;
@@ -225,15 +237,19 @@ export class Config {
 
   static getConfigurations(): Record<string, Config> {
     const cache = CacheService.getDocumentCache();
-    const cachedConfig = cache.get('config');
+    const cachedConfig = cache.get(CONFIG_CACHE_KEY);
 
     if (cachedConfig) {
-      return JSON.parse(cachedConfig) as Record<string, Config>;
+      try {
+        return JSON.parse(cachedConfig) as Record<string, Config>;
+      } catch(error) {
+        console.error('Failed to parse cached configuration:', error);
+      }
     }
 
     const configs = this._loadConfigurations();
 
-    cache.put('config', JSON.stringify(configs), 30);
+    cache.put(CONFIG_CACHE_KEY, JSON.stringify(configs), 30);
 
     return configs;
   }

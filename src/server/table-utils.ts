@@ -1,5 +1,5 @@
 import type { Table } from '@/common/types';
-import { sourceSheet } from './globals';
+import { getSourceSheet } from './globals';
 import type { FireColumnRules } from './types';
 import { FIRE_COLUMNS } from '@/common/constants';
 import type { FireColumn } from '@/common/constants';
@@ -37,8 +37,6 @@ export function processTableWithImportRules(
   columnImportRules: FireColumnRules
 ): Table {
   let output: Table = [];
-  // remove the headers from the input data, we don't want to import that row
-  const headers = input.shift();
   const rowCount = input.length;
   for (const columnName of FIRE_COLUMNS) {
     const colRule = columnImportRules[columnName as keyof FireColumnRules];
@@ -68,6 +66,7 @@ export class TableUtils {
    * @param {Table} data the data to be imported into the source sheet
    */
   static importData(data: Table) {
+    const sourceSheet = getSourceSheet()
     const rowCount = data.length;
     const colCount = data[0].length;
     Logger.log(`importing data (rows: ${rowCount}, cols: ${colCount})`);
@@ -142,6 +141,7 @@ export class TableUtils {
   }
 
   static autoFillColumns(data: Table, columns: number[]) {
+    const sourceSheet = getSourceSheet()
     for (const column of columns) {
       const rowCount = data.length;
       const sourceRange = sourceSheet?.getRange(2 + rowCount, column);

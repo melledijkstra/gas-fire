@@ -2,8 +2,11 @@ import { Config } from './config';
 
 describe('Configuration Tests', () => {
   describe('rabobank amount issue', () => {
-    const config = new Config('rabobank', {
-      amount: 'Saldo',
+    const config = new Config({
+      accountId: 'rabobank',
+      columnMap: {
+        amount: 'Saldo',
+      }
     });
 
     test('is able to retrieve balance column correctly', () => {
