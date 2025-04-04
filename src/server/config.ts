@@ -70,14 +70,14 @@ type ConfigParams = {
 }
 
 export class Config {
-  /** @deprecated */
-  static oldConfigCache: {} | null = null
+  // /** @deprecated */
+  // static oldConfigCache: {} | null = null
   
-  private columnMap: ColumnMap
+  private readonly columnMap: ColumnMap
   public autoFillEnabled: boolean
   public autoCategorizationEnabled: boolean
   public autoFillColumnIndices: number[]
-  private accountId: string
+  private readonly accountId: string
 
   constructor({
     accountId,
@@ -184,9 +184,9 @@ export class Config {
       const columnValues = row.slice(1, accountIdentifiers.length + 1);
       // iterate over the accounts and map fire column with the import column
       for (let i = 0; i < accountIdentifiers.length; i++) {
-        const account = accountIdentifiers[i];
-        const value = columnValues[i];
-        result[account][fireColumnName] = !value ? null : value;
+        const account = accountIdentifiers[i]
+        const value = columnValues[i]
+        result[account][fireColumnName] = value ?? null;
       }
     }
 
