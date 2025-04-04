@@ -25,7 +25,7 @@ describe('Utility tests', () => {
 
   test('retrieve the balance of a specific bank', () => {
     RangeMock.getValues.mockReturnValueOnce([
-      ['n26', 'DB123456789', '302.80'],
+      ['N26', 'DB123456789', '302.80'],
       ['Openbank', 'BANK123456789', '400'],
       ['', '', ''],
     ]);

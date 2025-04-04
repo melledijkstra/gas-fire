@@ -1,5 +1,7 @@
 import { FireSpreadsheet } from './globals';
 import { NAMED_RANGES } from '@/common/constants';
+import { getBankAccountOptionsCached } from './remote-calls';
+import { slugify } from './helpers';
 
 /**
  * Converts a list to an object
@@ -30,6 +32,7 @@ export const isNumeric = (value: unknown): boolean => {
 };
 
 export class AccountUtils {
+  // PENDING: cache bank account retrieval
   static getBankAccounts(): Record<string, string> {
     // this range contains the ibans only
     const ibans = FireSpreadsheet.getRangeByName(NAMED_RANGES.accounts);
@@ -50,10 +53,10 @@ export class AccountUtils {
 
   static getBankIban(bank: string): string {
     const bankAccounts = AccountUtils.getBankAccounts();
-    return bankAccounts?.[bank] ?? '';
+    return bankAccounts?.[bank.toUpperCase()] ?? '';
   }
 
-  static getBalance(strategy: string): number {
+  static getBalance(accountIdentifier: string): number {
     // this range contains the ibans only
     const ibans = FireSpreadsheet.getRangeByName(NAMED_RANGES.accounts);
     // we also need to include the labels and balances
@@ -68,14 +71,29 @@ export class AccountUtils {
     }
 
     const account = accounts.find((info) => {
-      return info[0].toUpperCase() === strategy.toUpperCase();
+      const accountId = slugify(info[0])
+      return accountId === accountIdentifier;
     });
 
     if (!account || !account?.[2] || !isNumeric(account[2])) {
       // no account found, no balance found, or balance is not a number
-      throw new Error(`Could not retrieve balance of ${strategy}`);
+      throw new Error(`Could not retrieve balance of ${accountIdentifier}`);
     }
 
     return parseFloat(account?.[2]); // balance is at the second index, retrieve it
+  }
+
+  static getAccountIdentifiers(): string[] {
+    return Object.keys(getBankAccountOptionsCached());
+  }
+
+  static calculateNewBalance(bankAccount: string, values: number[]) {
+    let balance = this.getBalance(bankAccount);
+  
+    for (const amount of values) {
+      balance += amount;
+    }
+  
+    return balance;
   }
 }

@@ -1,20 +1,26 @@
 import type { Table } from '@/common/types';
-import { sourceSheet } from './globals';
+import { getSourceSheet } from './globals';
+import type { FireColumnRules } from './types';
 import { FIRE_COLUMNS } from '@/common/constants';
-import type { FireColumnRules, InputColumn } from './types';
+import type { FireColumn } from '@/common/constants';
 import { Logger } from '@/common/logger';
+import { Config } from './config';
 
 const EMPTY = '';
 
 export function buildColumn<T>(
-  column: InputColumn,
-  transformer: (value: string) => T
+  column: FireColumn,
+  config: Config,
+  transformer?: (value: string) => T
 ): (data: Table) => T[] {
   return (data: Table): T[] => {
+    const columnIndex = config.getColumnIndex(column, data);
     const rowCount = data.length;
     const columnTable = TableUtils.transpose(data); // try to transpose somewhere else
-    if (columnTable[column] !== undefined) {
-      return columnTable[column].map((val) => transformer(val));
+    if (columnIndex && columnTable[columnIndex] !== undefined) {
+      return columnTable[columnIndex].map((val) =>
+        transformer ? transformer(val) : (val as T)
+      );
     } else {
       return new Array(rowCount);
     }
@@ -60,6 +66,7 @@ export class TableUtils {
    * @param {Table} data the data to be imported into the source sheet
    */
   static importData(data: Table) {
+    const sourceSheet = getSourceSheet()
     const rowCount = data.length;
     const colCount = data[0].length;
     Logger.log(`importing data (rows: ${rowCount}, cols: ${colCount})`);
@@ -99,6 +106,13 @@ export class TableUtils {
     return data;
   }
 
+  static removeEmptyRows(data: Table): Table {
+    const filteredData = data.filter((row) => { // filter omits false values
+      return row.some((cell) => cell !== EMPTY); // some returns true if at least one cell is not empty
+    });
+    return filteredData;
+  }
+
   static deleteLastRow(data: Table): Table {
     data.pop();
     return data;
@@ -134,6 +148,7 @@ export class TableUtils {
   }
 
   static autoFillColumns(data: Table, columns: number[]) {
+    const sourceSheet = getSourceSheet()
     for (const column of columns) {
       const rowCount = data.length;
       const sourceRange = sourceSheet?.getRange(2 + rowCount, column);
