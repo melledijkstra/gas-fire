@@ -1,5 +1,5 @@
-import { FireSpreadsheet, sourceSheet } from './globals';
-import { Config, SOURCE_SHEET_NAME } from './config';
+import { FireSpreadsheet, getSourceSheet } from './globals';
+import { Config } from './config';
 import { TableUtils, processTableWithImportRules } from './table-utils';
 import type { StrategyOptions, ServerResponse, Table } from '@/common/types';
 import { AccountUtils, isNumeric } from './account-utils';
@@ -74,6 +74,8 @@ export function processCSV(
   inputTable: Table,
   bankAccount: string
 ): ServerResponse {
+  const sourceSheet = getSourceSheet()
+
   // make the user visually switch to the primary sheet where data will be imported
   sourceSheet?.activate();
   sourceSheet?.showSheet();
@@ -84,13 +86,14 @@ export function processCSV(
   if (!accountStrategy) {
     throw new Error(
       `Bank with identifier "${bankAccount}" does not have valid configuration!`
-    );
+    )
   }
 
   const { beforeImport, columnImportRules, afterImport } = accountStrategy;
 
   // 2. remove any filters that might be set
-  const filter = sourceSheet?.getFilter();
+  const filter = sourceSheet?.getFilter()
+
   if (filter) {
     if (!removeFilterCriteria(filter, true)) {
       throw new Error(
@@ -102,13 +105,26 @@ export function processCSV(
   // 3. apply any rules that need to be applied before the actual import
   if (beforeImport) {
     for (const rule of beforeImport) {
-      inputTable = rule(inputTable);
+      inputTable = rule(inputTable)
     }
   }
 
   // 4. process the table with the import rules and actually import the data
-  let output = processTableWithImportRules(inputTable, columnImportRules);
-  TableUtils.importData(output);
+  let output = processTableWithImportRules(inputTable, columnImportRules)
+  
+  if (output.length === 0) {
+    const msg = 'No rows to import, check your import data or rules!';
+    Logger.log(msg)
+    return {
+      message: msg,
+    }
+  }
+
+  // actual importing of the data into the sheet
+  TableUtils.importData(output)
+
+  const msg = `imported ${output.length} rows!`;
+  Logger.log(msg)
 
   // 5. apply any rules that need to be applied after the actual import
   // e.g. auto filling columns with formulas
@@ -118,23 +134,9 @@ export function processCSV(
     }
   }
 
-  const msg = `imported ${output.length} rows!`;
-
-  Logger.log(msg);
-
   return {
     message: msg,
   };
-}
-
-export function calculateNewBalance(bankAccount: string, values: number[]) {
-  let balance = AccountUtils.getBalance(bankAccount);
-
-  for (const amount of values) {
-    balance += amount;
-  }
-
-  return balance;
 }
 
 export function generatePreview(
@@ -166,7 +168,7 @@ export function generatePreview(
     .map((value) => Transformers.transformMoney(value))
     .filter(isNumeric);
 
-  const newBalance = calculateNewBalance(bankAccount, amountNumbers);
+  const newBalance = AccountUtils.calculateNewBalance(bankAccount, amountNumbers);
 
   return { result: table, newBalance };
 }
@@ -217,6 +219,8 @@ export function getBankAccountOptionsCached(): Record<string, string> {
  * Can be called from the menu
  */
 export const executeAutomaticCategorization = () => {
+  const sourceSheet = getSourceSheet()
+
   // 1. first part of the code focusses UX and makes sure the user is focussed on the right sheet
   // also it filters the sheet to only show rows that have no category set
   const ui = SpreadsheetApp.getUi();
@@ -327,7 +331,12 @@ export const executeFindDuplicates = () => {
   }
 
   const spreadSheet = SpreadsheetApp.getActiveSpreadsheet();
-  const sourceSheet = spreadSheet.getSheetByName(SOURCE_SHEET_NAME);
+  const sourceSheet = getSourceSheet();
+
+  if (!sourceSheet) {
+    throw new Error('Could not retrieve the source sheet from the spreadsheet')
+  }
+
   const table = sourceSheet.getDataRange().getValues();
   const headers = table[0];
 

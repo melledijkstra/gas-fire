@@ -7,7 +7,7 @@ import {
   FilterMock,
 } from '../../test-setup';
 import type { Table } from '@/common/types';
-import { fakeN26ImportWithBalance, N26ImportMock } from '@/fixtures/n26';
+import { N26ImportMock } from '@/fixtures/n26';
 import { TableUtils } from './table-utils';
 import { raboImportMock } from '@/fixtures/rabobank';
 import { Logger } from '@/common/logger';
@@ -22,10 +22,11 @@ import {
   mailNetWorth,
 } from './remote-calls';
 import { Config } from './config';
+import { fakeTestBankImportWithBalance } from '@/fixtures/test-bank';
 
 vi.mock('./globals', () => ({
   FireSpreadsheet: SpreadsheetMock,
-  sourceSheet: SheetMock,
+  getSourceSheet: vi.fn(() => SheetMock)
 }));
 
 vi.mock('./helpers', () => ({
@@ -46,33 +47,49 @@ const detectCategorySpy = vi.spyOn(
 const findDuplicatesSpy = vi.spyOn(duplicateFinder, 'findDuplicates');
 const importDataSpy = vi.spyOn(TableUtils, 'importData');
 
-const fakeN26Config = new Config('N26', {
-  amount: 'Amount'
+const BANK_ID = 'TestBank';
+
+const fakeN26Config = new Config({
+  accountId: 'N26',
+  columnMap: {
+    amount: 'Amount',
+    date: 'Date',
+    contra_account: 'Payee',
+    contra_iban: 'Account number',
+    currency: 'Type Foreign Currency',
+    description: 'Payment reference'
+  }
 })
 
-const fakeRabobankConfig = new Config('rabobank')
-
-Logger.disable();
+const fakeRabobankConfig = new Config({
+  accountId: 'rabobank',
+});
 
 describe('Remote Calls', () => {
+  beforeAll(() => {
+    const testBankConfig = new Config({
+      accountId: BANK_ID,
+      columnMap: {
+        amount: 'TransactionAmount'
+      }
+    });
+    configSpy.mockReturnValue(testBankConfig);
+  })
+
   afterEach(() => {
     vi.clearAllMocks();
   });
 
   describe('generatePreview', () => {
-    beforeAll(() => {
-      configSpy.mockReturnValue(fakeN26Config)
-    })
-
     test('is able to handle table without any useful data and should return the current balance', () => {
       RangeMock.getValues.mockReturnValueOnce([
-        ['N26', 'DB123456789', '302.80'],
-        ['Openbank', 'BANK123456789', '400'],
+        ['AnotherBank', 'BANK123456789', '400'],
+        [BANK_ID, 'DB123456789', '302.80'],
         ['', '', ''],
       ]);
 
       const table: Table = [['', '', '', '', '', ''], []];
-      const { result, newBalance } = generatePreview(table, 'N26');
+      const { result, newBalance } = generatePreview(table, BANK_ID);
 
       expect(result).toStrictEqual(table);
       expect(newBalance).toBe(302.8);
@@ -80,22 +97,41 @@ describe('Remote Calls', () => {
 
     test('is able to calculate new balance when there is useful data in the amounts column', () => {
       RangeMock.getValues.mockReturnValueOnce([
-        ['N26', 'DB123456789', '305.85'],
-        ['Openbank', 'BANK123456789', '400'],
+        [BANK_ID, 'DB123456789', '305.85'],
+        ['AnotherBank', 'BANK123456789', '400'],
         ['', '', ''],
       ]);
 
       const { result, newBalance } = generatePreview(
-        fakeN26ImportWithBalance,
-        'N26'
+        fakeTestBankImportWithBalance,
+        BANK_ID
       );
 
-      expect(result).toStrictEqual(fakeN26ImportWithBalance);
+      expect(result).toStrictEqual(fakeTestBankImportWithBalance);
       expect(newBalance).toBe(358.55);
     });
   });
 
   describe('processCSV', () => {
+    beforeAll(() => {
+      Logger.disable()
+    })
+
+    test('handles empty import', () => {
+      const result = processCSV([], BANK_ID);
+
+      expect(importDataSpy).not.toHaveBeenCalled();
+      expect(result.message).toBe('No rows to import, check your import data or rules!');
+    })
+
+    test('removes filters if any are set', () => {
+      SheetMock.getFilter.mockReturnValue(FilterMock)
+
+      processCSV([], 'TestBank')
+
+      expect(SheetMock.getFilter).toHaveBeenCalled();
+    });
+
     test('is able to handle N26 import', () => {
       configSpy.mockReturnValueOnce(fakeN26Config)
 
@@ -135,10 +171,6 @@ describe('Remote Calls', () => {
   });
 
   describe('executeAutomaticCategorization', () => {
-    beforeEach(() => {
-      SheetMock.getFilter.mockReturnValue(FilterMock);
-    });
-
     test('should do nothing if user cancels', () => {
       UIMock.alert.mockReturnValueOnce(UIMock.Button.NO);
       executeAutomaticCategorization();
