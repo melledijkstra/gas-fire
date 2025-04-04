@@ -10,8 +10,6 @@ export function getSheetById(id: number) {
 let sourceSheet: GoogleAppsScript.Spreadsheet.Sheet | undefined
 
 export const getSourceSheet = () => {
-  if (!sourceSheet) {
-    sourceSheet = sheets.find((sheet) => sheet.getSheetId() === SOURCE_SHEET_ID)
-  }
+  sourceSheet ??= sheets.find((sheet) => sheet.getSheetId() === SOURCE_SHEET_ID)
   return sourceSheet
 }

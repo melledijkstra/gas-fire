@@ -82,7 +82,7 @@ class MailApp {
 }
 
 class CacheService {
-  static getDocumentCache = vi.fn(() => ({
+  static readonly getDocumentCache = vi.fn(() => ({
     get: vi.fn(),
     put: vi.fn()
   }))
