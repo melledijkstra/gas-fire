@@ -106,6 +106,13 @@ export class TableUtils {
     return data;
   }
 
+  static removeEmptyRows(data: Table): Table {
+    const filteredData = data.filter((row) => { // filter omits false values
+      return row.some((cell) => cell !== EMPTY); // some returns true if at least one cell is not empty
+    });
+    return filteredData;
+  }
+
   static deleteLastRow(data: Table): Table {
     data.pop();
     return data;

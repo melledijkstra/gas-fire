@@ -18,6 +18,7 @@
     "deploy": "npm run build && npm run publish",
     "publish": "clasp push -f",
     "typecheck": "tsc",
+    "lint": "echo 'not implemented yet'",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
     "analyze:server": "echo 'not implemented yet'",

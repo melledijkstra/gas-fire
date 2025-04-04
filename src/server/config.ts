@@ -14,32 +14,13 @@ export const SOURCE_SHEET_NAME = 'source'
 export const CATEGORIES_SHEET_NAME = 'categories'
 export const CONFIG_SHEET_NAME = 'import-settings'
 
-// const N26Config: Strategy = {
-//   beforeImport: [
-//     TableUtils.deleteLastRow,
-//     TableUtils.deleteFirstRow,
-//     TableUtils.sortByDate(N26Cols.BookingDate),
-//   ],
-// };
-
-// const rabobankConfig: Strategy = {
-//   beforeImport: [
-//     TableUtils.deleteLastRow,
-//     TableUtils.deleteFirstRow,
-//     TableUtils.sortByDate(raboCols.Datum),
-//   ],
+// const rabobankConfig: Strategy =
 //   columnImportRules: {
 //     ref: buildColumn(raboCols.Volgnr, parseInt),
 //   },
 // };
 
 // const openbankConfig: Strategy = {
-//   beforeImport: [
-//     TableUtils.deleteFirstRow,
-//     TableUtils.deleteLastRow,
-//     // open bank has some empty columns when importing
-//     (table) => TableUtils.deleteColumns(table, [0, 2, 4, 6, 8]),
-//   ],
 //   columnImportRules: {
 //     date: buildColumn(openbankCols.Fecha, (val) => {
 //       let [day, month, year] = val.split('/');
@@ -113,8 +94,18 @@ export class Config {
 
     // the before import rules can manipulate the data before the import
     let beforeImport: Array<(data: Table) => Table> = [
-      // remove header row
-      (table) => TableUtils.deleteFirstRow(table), 
+      // remove header row before importing
+      // PENDING: perhaps this should not be done here? as every strategy needs to do this
+      // maybe add it directly to the import function?
+      (table) => TableUtils.deleteFirstRow(table),
+      (table) => TableUtils.removeEmptyRows(table),
+      (table) => {
+        const dateColumn = accountConfig.getColumnIndex('date', table);
+        if (!dateColumn) {
+          return table;
+        }
+        return TableUtils.sortByDate(dateColumn)(table)
+      }
     ]
     // the after import rules are not able to manipulate the data
     // therefor the data is only given as reference for any needed calculations
@@ -123,7 +114,7 @@ export class Config {
     if (accountConfig?.autoFillEnabled) {
       // add auto fill processing if enabled
       afterImport.push((table: Table) =>
-        TableUtils.autoFillColumns(table, accountConfig.autoFillColumnIndices)
+        TableUtils.autoFillColumns(table, accountConfig.autoFillColumnIndices),
       );
     }
 
