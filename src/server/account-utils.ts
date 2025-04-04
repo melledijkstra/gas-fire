@@ -1,6 +1,7 @@
 import { FireSpreadsheet } from './globals';
 import { NAMED_RANGES } from '@/common/constants';
 import { getBankAccountOptionsCached } from './remote-calls';
+import { slugify } from './helpers';
 
 /**
  * Converts a list to an object
@@ -55,7 +56,7 @@ export class AccountUtils {
     return bankAccounts?.[bank.toUpperCase()] ?? '';
   }
 
-  static getBalance(bankAccount: string): number {
+  static getBalance(accountIdentifier: string): number {
     // this range contains the ibans only
     const ibans = FireSpreadsheet.getRangeByName(NAMED_RANGES.accounts);
     // we also need to include the labels and balances
@@ -70,12 +71,13 @@ export class AccountUtils {
     }
 
     const account = accounts.find((info) => {
-      return info[0].toUpperCase() === bankAccount.toUpperCase();
+      const accountId = slugify(info[0])
+      return accountId === accountIdentifier;
     });
 
     if (!account || !account?.[2] || !isNumeric(account[2])) {
       // no account found, no balance found, or balance is not a number
-      throw new Error(`Could not retrieve balance of ${bankAccount}`);
+      throw new Error(`Could not retrieve balance of ${accountIdentifier}`);
     }
 
     return parseFloat(account?.[2]); // balance is at the second index, retrieve it

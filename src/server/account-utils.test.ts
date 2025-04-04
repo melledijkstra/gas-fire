@@ -4,7 +4,7 @@ import { RangeMock, SheetMock } from '../../test-setup';
 import { SOURCE_SHEET_ID } from '@/common/constants';
 
 describe('Utility tests', () => {
-  test('Transformers.transformMoney', () => {
+  test('is able to retrieve bank account details from the spreadsheet', () => {
     RangeMock.getValues.mockReturnValueOnce([
       ['DEUTSCHE_BANK', 'DB123456789'],
       ['SOMEOTHER_BANK', 'BANK123456789'],
@@ -30,6 +30,6 @@ describe('Utility tests', () => {
       ['', '', ''],
     ]);
 
-    expect(AccountUtils.getBalance('N26')).toBe(302.8);
+    expect(AccountUtils.getBalance('n26')).toBe(302.8);
   });
 });
