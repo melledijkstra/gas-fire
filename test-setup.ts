@@ -6,12 +6,12 @@ import { vi, type Mock } from 'vitest';
 // We utilise the mocking functions from vitest to mock all the functionality
 
 class Range {
-  static getLastRow = vi.fn(() => this)
-  static offset = vi.fn(() => this)
-  static getValues: Mock = vi.fn(() => [])
+  static readonly getLastRow = vi.fn(() => this)
+  static readonly offset = vi.fn(() => this)
+  static readonly getValues: Mock = vi.fn(() => [])
 }
 
-export class Sheet implements Partial<GoogleAppsScript.Spreadsheet.Sheet> {
+class Sheet implements Partial<GoogleAppsScript.Spreadsheet.Sheet> {
   activate = vi.fn()
   showSheet = vi.fn()
   getSheetId = vi.fn()
@@ -22,17 +22,17 @@ export class Sheet implements Partial<GoogleAppsScript.Spreadsheet.Sheet> {
   
 
 class Spreadsheet {
-  static getSheets = vi.fn(() => [SheetMock])
-  static getRangeByName = vi.fn(() => Range)
-  static getSheetByName = vi.fn(() => SheetMock)
+  static readonly getSheets = vi.fn(() => [SheetMock])
+  static readonly getRangeByName = vi.fn(() => Range)
+  static readonly getSheetByName = vi.fn(() => SheetMock)
 }
 
 class SpreadSheetApp {
-  static getActiveSpreadsheet = vi.fn(() => Spreadsheet)
+  static readonly getActiveSpreadsheet = vi.fn(() => Spreadsheet)
 }
 
 class CacheService {
-  static getDocumentCache = vi.fn(() => ({
+  static readonly getDocumentCache = vi.fn(() => ({
     get: vi.fn(),
     put: vi.fn()
   }))
