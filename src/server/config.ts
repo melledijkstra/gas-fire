@@ -155,15 +155,16 @@ export class Config {
     }
   }
 
-  static _loadColumnMapping(sheet: GoogleAppsScript.Spreadsheet.Sheet) {
+  private static loadColumnMapping(sheet: GoogleAppsScript.Spreadsheet.Sheet) {
     const columnMapConfig = sheet.getSheetValues(5, 1, sheet.getLastRow(), -1);
 
     // first row contains account identifiers
     const accountIdentifiers: string[] =
-      columnMapConfig
+      (columnMapConfig
         .shift() // take the first row
         ?.slice(1) // remove the first cell containing "Column Mapping"
-        ?.filter(Boolean) ?? []; // remove any empty strings
+        ?.filter(Boolean) ?? []) // remove any empty strings
+        .map(slugify); // slugify the account identifiers
 
     const result: Record<string, ColumnMap> = {};
 
@@ -196,12 +197,12 @@ export class Config {
   /**
    * Function that loads the configuration from the CONFIG_SHEET_NAME sheet.
    */
-  static _loadConfigurations(): Record<string, Config> {
-    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-    const configSheet = spreadsheet.getSheetByName(CONFIG_SHEET_NAME);
+  private static loadConfigurations(): Record<string, Config> {
+    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet()
+    const configSheet = spreadsheet.getSheetByName(CONFIG_SHEET_NAME)
 
     // retrieves column mappings per account
-    const columnMapping = this._loadColumnMapping(configSheet);
+    const columnMapping = this.loadColumnMapping(configSheet);
 
     // explanation:
     // first row contains configuration labels which we don't need
@@ -212,7 +213,7 @@ export class Config {
     const accounts: string[] =
       rawConfigs
         .shift() // take the first row
-        ?.filter(Boolean) ?? []; // remove any empty strings
+        ?.filter(Boolean) ?? [] // remove any empty strings
 
     for (let i = 0; i < accounts.length; i++) {
       const account = slugify(accounts[i]);
@@ -247,7 +248,7 @@ export class Config {
       }
     }
 
-    const configs = this._loadConfigurations();
+    const configs = this.loadConfigurations();
 
     cache.put(CONFIG_CACHE_KEY, JSON.stringify(configs), 30);
 
