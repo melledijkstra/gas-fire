@@ -16,7 +16,7 @@ const getSourceSheetMock = vi.mocked(getSourceSheet);
 const importDataSpy = vi.spyOn(TableUtils, 'importData');
 const configSpy = vi.spyOn(Config, 'getAccountConfiguration');
 
-const BANK_ID = 'TestBank';
+const BANK_ID = 'test-bank';
 
 describe('Remote Calls', () => {
   beforeAll(() => {
@@ -80,14 +80,14 @@ describe('Remote Calls', () => {
     test('removes filters if any are set', () => {
       getSourceSheetMock.mockReturnValueOnce(SheetMock)
 
-      processCSV([], 'TestBank')
+      processCSV([], 'test-bank')
 
       expect(SheetMock.getFilter).toHaveBeenCalled();
     });
 
     test('is able to handle N26 import', () => {
       const n26Config = new Config({
-        accountId: 'N26',
+        accountId: 'n26',
         columnMap: {
           amount: 'Amount',
           date: 'Date',
@@ -100,7 +100,7 @@ describe('Remote Calls', () => {
 
       configSpy.mockReturnValue(n26Config)
 
-      const result = processCSV(N26ImportMock, 'N26')
+      const result = processCSV(N26ImportMock, 'n26')
 
       expect(importDataSpy).toHaveBeenCalled()
       expect(result.message).toBe('imported 4 rows!')
