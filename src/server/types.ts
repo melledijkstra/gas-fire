@@ -9,7 +9,7 @@ type ColumnRule<T> = ((data: Table) => T[]) | null;
 export interface FireColumnRules {
   ref: ColumnRule<string | number>;
   iban: ColumnRule<string>;
-  date: ColumnRule<Date>;
+  date: ColumnRule<Date | string>;
   amount: ColumnRule<number>;
   contra_account?: ColumnRule<string>;
   description?: ColumnRule<string>;
@@ -19,10 +19,3 @@ export interface FireColumnRules {
   contra_iban: ColumnRule<string>;
   currency?: ColumnRule<string>;
 }
-
-export type Strategy = {
-  beforeImport?: Array<(data: Table) => Table>;
-  columnImportRules: FireColumnRules;
-  afterImport?: Array<(data: Table) => void>;
-  autoFillColumns?: number[];
-};

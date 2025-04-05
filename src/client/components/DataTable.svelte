@@ -45,7 +45,7 @@
       <TableHeadCell></TableHeadCell>
     {/if}
     {#each headers as header}
-      <TableHeadCell class="py-2 px-1">{header}</TableHeadCell>
+      <TableHeadCell class="py-2 px-1 normal-case">{header}</TableHeadCell>
     {/each}
   </TableHead>
   <TableBody class="divide-y">

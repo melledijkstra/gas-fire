@@ -22,7 +22,7 @@ import { slugify } from './helpers';
 const listToObject = (list: string[][]): Record<string, string> => {
   return list.reduce<Record<string, string>>((obj, account) => {
     const [id, iban] = account;
-    obj[typeof id === 'string' ? id.toUpperCase() : id] = iban;
+    obj[typeof id === 'string' ? id : id] = iban;
     return obj;
   }, {});
 };
@@ -47,13 +47,20 @@ export class AccountUtils {
       return {}; // return empty list of bank accounts if none setup
     }
 
+    // slugify the account ids to make sure they are all in the same format
+    accounts.forEach((account) => {
+      const [id] = account;
+      const slugifiedId = slugify(id);
+      account[0] = slugifiedId;
+    });
+
     // convert the list to an object to easy work with it
     return listToObject(accounts);
   }
 
-  static getBankIban(bank: string): string {
+  static getBankIban(bankId: string): string {
     const bankAccounts = AccountUtils.getBankAccounts();
-    return bankAccounts?.[bank.toUpperCase()] ?? '';
+    return bankAccounts?.[bankId] ?? '';
   }
 
   static getBalance(accountIdentifier: string): number {
@@ -71,7 +78,7 @@ export class AccountUtils {
     }
 
     const account = accounts.find((info) => {
-      const accountId = slugify(info[0])
+      const accountId = slugify(info?.[0])
       return accountId === accountIdentifier;
     });
 

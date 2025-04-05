@@ -1,10 +1,10 @@
 import type { Table } from '@/common/types';
 
 // prettier-ignore
-export const fakeTestBankImportWithBalance: Table = [
-  ['col1', 'col2', 'col3', 'col4', 'col5', 'col6', 'col7', 'TransactionAmount', 'col9'],
-  ['', '', '', '', '', '', '', '20', ''],
-  ['', '', '', '', '', '', '', '-25.6'],
-  ['', '', '', '', '', '', '', '+58.30', '', '', ''],
+export const fakeTestBankImportData: Table = [
+  ['col1',  'col2',   'TransactionDate',   'col4', 'col5', 'col6', 'col7', 'TransactionAmount', 'col9'],
+  ['',      '',       '2015-05-20',       '',     '', '', '', '20', ''],
+  ['',      '',       '2016-01-23',       '',     '', '', '', '-25.6'],
+  ['',      '',       '2015-05-21',       '',     '', '', '', '+58.30', '', '', ''],
   [],
 ];
