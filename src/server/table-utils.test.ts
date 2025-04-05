@@ -31,8 +31,7 @@ describe('TableUtils', () => {
 
     it('should sort dates in descending order', () => {
       const dateColumnIndex = 1;
-      const sortFn = TableUtils.sortByDate(dateColumnIndex);
-      const result = sortFn([...sampleData]);
+      const result = TableUtils.sortByDate(sampleData, dateColumnIndex);
 
       expect(result[0][1]).toBe('2024-03-15 14:30:00');
       expect(result[1][1]).toBe('2024-03-15 09:00:00');
@@ -48,8 +47,7 @@ describe('TableUtils', () => {
       ];
 
       const dateColumnIndex = 1;
-      const sortFn = TableUtils.sortByDate(dateColumnIndex);
-      const result = sortFn([...data]);
+      const result = TableUtils.sortByDate(data, dateColumnIndex);
 
       expect(result[0][1]).toBe('2024-03-15 09:30:00');
       expect(result[1][1]).toBe('2024-03-15 09:00:00');

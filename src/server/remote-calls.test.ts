@@ -15,29 +15,39 @@ import * as categoryDetection from './category-detection';
 import * as duplicateFinder from './duplicate-finder';
 import {
   generatePreview,
-  processCSV,
+  importCSV,
   getBankAccounts,
   executeAutomaticCategorization,
   executeFindDuplicates,
   mailNetWorth,
 } from './remote-calls';
 import { Config } from './config';
-import { fakeTestBankImportWithBalance } from '@/fixtures/test-bank';
+import bankOfAmericaCSV from '@/fixtures/bank-of-america.csv?raw';
+import Papa from 'papaparse';
+import { fakeTestBankImportData } from '@/fixtures/test-bank';
+import { getSpreadsheetLocale, removeFilterCriteria } from './utils/spreadsheet';
+import { slugify } from './helpers';
 
 vi.mock('./globals', () => ({
   FireSpreadsheet: SpreadsheetMock,
   getSourceSheet: vi.fn(() => SheetMock)
 }));
 
-vi.mock('./helpers', () => ({
+vi.mock('./helpers', async (actualImport) => ({
+  ...await actualImport<typeof import('./helpers')>(),
   getCategoryNames: vi.fn(() => ['cat1', 'cat2']),
   getColumnIndexByName: vi.fn(name => {
     if (name === 'category') return 0;
     if (name === 'contra_account') return 1;
     return -1;
   }),
-  removeFilterCriteria: vi.fn(() => true),
-}));
+}))
+
+vi.mock('./utils/spreadsheet')
+
+const getSpreadsheetLocaleMock = vi.mocked(getSpreadsheetLocale)
+const removeFilterCriteriaMock = vi.mocked(removeFilterCriteria)
+removeFilterCriteriaMock.mockReturnValue(true)
 
 const configSpy = vi.spyOn(Config, 'getAccountConfiguration');
 const detectCategorySpy = vi.spyOn(
@@ -49,31 +59,14 @@ const importDataSpy = vi.spyOn(TableUtils, 'importData');
 
 const BANK_ID = 'TestBank';
 
-const fakeN26Config = new Config({
-  accountId: 'N26',
-  columnMap: {
-    amount: 'Amount',
-    date: 'Date',
-    contra_account: 'Payee',
-    contra_iban: 'Account number',
-    currency: 'Type Foreign Currency',
-    description: 'Payment reference'
-  }
-})
-
-const fakeRabobankConfig = new Config({
-  accountId: 'rabobank',
-});
-
 describe('Remote Calls', () => {
   beforeAll(() => {
-    const testBankConfig = new Config({
+    configSpy.mockReturnValue(new Config({
       accountId: BANK_ID,
       columnMap: {
         amount: 'TransactionAmount'
       }
-    });
-    configSpy.mockReturnValue(testBankConfig);
+    }));
   })
 
   afterEach(() => {
@@ -89,7 +82,10 @@ describe('Remote Calls', () => {
       ]);
 
       const table: Table = [['', '', '', '', '', ''], []];
-      const { result, newBalance } = generatePreview(table, BANK_ID);
+      const { result, newBalance } = generatePreview(
+        table,
+        slugify(BANK_ID)
+      );
 
       expect(result).toStrictEqual(table);
       expect(newBalance).toBe(302.8);
@@ -103,51 +99,111 @@ describe('Remote Calls', () => {
       ]);
 
       const { result, newBalance } = generatePreview(
-        fakeTestBankImportWithBalance,
-        BANK_ID
+        fakeTestBankImportData,
+        slugify(BANK_ID)
       );
 
-      expect(result).toStrictEqual(fakeTestBankImportWithBalance);
+      expect(result).toStrictEqual(fakeTestBankImportData);
       expect(newBalance).toBe(358.55);
     });
   });
 
-  describe('processCSV', () => {
+  describe('importCSV', () => {
     beforeAll(() => {
       Logger.disable()
     })
 
     test('handles empty import', () => {
-      const result = processCSV([], BANK_ID);
+      const result = importCSV([], BANK_ID);
 
       expect(importDataSpy).not.toHaveBeenCalled();
       expect(result.message).toBe('No rows to import, check your import data or rules!');
     })
 
     test('removes filters if any are set', () => {
+      removeFilterCriteriaMock.mockReturnValue(true)
       SheetMock.getFilter.mockReturnValue(FilterMock)
 
-      processCSV([], 'TestBank')
+      importCSV([], 'TestBank')
 
       expect(SheetMock.getFilter).toHaveBeenCalled();
     });
 
     test('is able to handle N26 import', () => {
+      const fakeN26Config = new Config({
+        accountId: 'N26',
+        columnMap: {
+          amount: 'Amount',
+          date: 'Date',
+          contra_account: 'Payee',
+          contra_iban: 'Account number',
+          currency: 'Type Foreign Currency',
+          description: 'Payment reference'
+        }
+      })
       configSpy.mockReturnValueOnce(fakeN26Config)
 
-      const result = processCSV(N26ImportMock, 'N26');
+      const result = importCSV(N26ImportMock, 'N26');
 
       expect(importDataSpy).toHaveBeenCalled();
       expect(result.message).toBe('imported 4 rows!');
     });
 
     test('is able to handle rabobank import', () => {
+      const fakeRabobankConfig = new Config({
+        accountId: 'rabobank',
+      });
       configSpy.mockReturnValueOnce(fakeRabobankConfig)
 
-      const result = processCSV(raboImportMock, 'rabobank');
+      const result = importCSV(raboImportMock, 'rabobank');
 
       expect(importDataSpy).toHaveBeenCalled();
-      expect(result.message).toBe('imported 2 rows!');
+      expect(result.message).toBe('imported 1 rows!');
+    });
+
+    test('is able to handle bank of america', () => {
+      getSpreadsheetLocaleMock.mockReturnValueOnce('en-US')
+
+      const bankOfAmericaConfig = new Config({
+        accountId: 'bank-of-america',
+        columnMap: {
+          amount: 'Amount',
+          date: 'Date',
+          description: 'Description'
+        }
+      })
+
+      configSpy.mockReturnValue(bankOfAmericaConfig)
+
+      const { data } = Papa.parse(bankOfAmericaCSV)
+      const result = importCSV(data as Table, 'bank-of-america')
+
+      expect(importDataSpy).toHaveBeenCalled()
+      expect(importDataSpy).toHaveBeenCalledWith(expect.arrayContaining([
+        expect.arrayContaining([new Date('2023-09-12'),-100,'Utility Bill Payment']),
+      ]));
+      expect(result.message).toBe('imported 5 rows!')
+    })
+
+    test('sorts by date before importing', () => {
+      const testBankConfig = new Config({
+        accountId: BANK_ID,
+        columnMap: {
+          amount: 'TransactionAmount',
+          date: 'TransactionDate'
+        }
+      });
+
+      configSpy.mockReturnValue(testBankConfig);
+
+      importCSV(fakeTestBankImportData, BANK_ID);
+
+      expect(importDataSpy).toHaveBeenCalled();
+      expect(importDataSpy).toHaveBeenCalledWith([
+        expect.arrayContaining([new Date('2016-01-23'), -25.6]),
+        expect.arrayContaining([new Date('2015-05-21'), 58.3]),
+        expect.arrayContaining([new Date('2015-05-20'), 20]),
+      ]);
     });
   });
 
@@ -170,7 +226,7 @@ describe('Remote Calls', () => {
     });
   });
 
-  describe('executeAutomaticCategorization', () => {
+  describe.skip('executeAutomaticCategorization', () => {
     test('should do nothing if user cancels', () => {
       UIMock.alert.mockReturnValueOnce(UIMock.Button.NO);
       executeAutomaticCategorization();

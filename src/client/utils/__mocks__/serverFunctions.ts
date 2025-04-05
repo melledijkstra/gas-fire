@@ -20,7 +20,7 @@ const StrategyOptions = {
   emerald_capital_partners: 'Emerald Capital Partners',
 }
 
-class ServerFunctions implements ServerFunctionsInterface {
+class ServerFunctions implements Partial<ServerFunctionsInterface> {
   getBankAccounts(): Record<string, string> {
     console.log('getBankAccounts mock called');
     return {
@@ -29,13 +29,17 @@ class ServerFunctions implements ServerFunctionsInterface {
     };
   };
 
-  processCSV(
+  debugImportSettings() {
+    console.log('debugImportSettings mock called');
+  }
+
+  importCSV(
     _inputTable: Table,
     _importStrategy: string
   ): ServerResponse {
-    console.log('processCSV mock called');
+    console.log('importCSV mock called');
     return {
-      message: 'Successfully processed CSV',
+      message: 'Successfully imported CSV',
     };
   };
 

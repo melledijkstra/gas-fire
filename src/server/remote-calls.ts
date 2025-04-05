@@ -1,21 +1,20 @@
 import { FireSpreadsheet, getSourceSheet } from './globals';
 import { Config } from './config';
-import { TableUtils, processTableWithImportRules } from './table-utils';
+import { TableUtils, processInputDataAndShapeFiresheetStructure } from './table-utils';
 import type { StrategyOptions, ServerResponse, Table } from '@/common/types';
 import { AccountUtils, isNumeric } from './account-utils';
 import { Transformers } from './transformers';
 import {
   getCategoryNames,
-  getColumnIndexByName,
-  removeFilterCriteria,
   slugify,
+  structuredClone
 } from './helpers';
 import { detectCategoryByTextAnalysis } from './category-detection';
 import { findDuplicates } from './duplicate-finder';
 import { NAMED_RANGES } from '../common/constants';
 import { Logger } from '@/common/logger';
-
-const cleanString = (str: string) => str?.replaceAll('\n', ' ').trim();
+import { activeSpreadsheet, removeFilterCriteria } from './utils/spreadsheet';
+import { cleanString } from './utils';
 
 /**
  * This retrieves the bank accounts set by the user.
@@ -70,28 +69,25 @@ export function getBankAccounts(): Record<string, string> {
  * @param {string} bankAccount - The bank account identifier which is used to lookup configuration
  * @returns {ServerResponse} A response object which contains a message to be displayed to the user
  */
-export function processCSV(
+export function importCSV(
   inputTable: Table,
   bankAccount: string
 ): ServerResponse {
   const sourceSheet = getSourceSheet()
 
   // make the user visually switch to the primary sheet where data will be imported
-  sourceSheet?.activate();
-  sourceSheet?.showSheet();
+  activeSpreadsheet(sourceSheet)
 
-  // 1. retrieve import strategy for selected account
-  const accountStrategy = Config.retrieveAccountStrategy(bankAccount);
+  const accountConfig = Config.getAccountConfiguration(bankAccount)
 
-  if (!accountStrategy) {
+  if (!accountConfig) {
     throw new Error(
       `Bank with identifier "${bankAccount}" does not have valid configuration!`
     )
   }
 
-  const { beforeImport, columnImportRules, afterImport } = accountStrategy;
-
-  // 2. remove any filters that might be set
+  // remove any filters that might be set
+  // importing might go wrong when filters are set
   const filter = sourceSheet?.getFilter()
 
   if (filter) {
@@ -102,17 +98,36 @@ export function processCSV(
     }
   }
 
-  // 3. apply any rules that need to be applied before the actual import
-  if (beforeImport) {
-    for (const rule of beforeImport) {
-      inputTable = rule(inputTable)
-    }
+  // retrieve import strategy for selected account
+  // const accountStrategy = accountConfig?.retrieveAccountImportStrategy();
+
+  let result = structuredClone(inputTable)
+  
+  // retrieve the header row and separate from the actual input data
+  const headerRow = result.shift() as string[] // cast because we know first header row exists
+
+  //
+  // BEFORE IMPORT RULES
+  //
+  result = TableUtils.removeEmptyRows(result)
+
+  //
+  // IMPORT RULES
+  //
+  result = processInputDataAndShapeFiresheetStructure({
+    headers: headerRow,
+    rows: result,
+    config: accountConfig,
+  })
+  // ^^ result is now in the firesheet structure
+
+  const dateColumn = TableUtils.getFireColumnIndexByName('date')
+  if (dateColumn) {
+    // if we found a date column, we sort the data by date
+    result = TableUtils.sortByDate(result, dateColumn)
   }
 
-  // 4. process the table with the import rules and actually import the data
-  let output = processTableWithImportRules(inputTable, columnImportRules)
-  
-  if (output.length === 0) {
+  if (result.length === 0) {
     const msg = 'No rows to import, check your import data or rules!';
     Logger.log(msg)
     return {
@@ -121,17 +136,20 @@ export function processCSV(
   }
 
   // actual importing of the data into the sheet
-  TableUtils.importData(output)
+  TableUtils.importData(result)
 
-  const msg = `imported ${output.length} rows!`;
+  const msg = `imported ${result.length} rows!`;
   Logger.log(msg)
 
-  // 5. apply any rules that need to be applied after the actual import
+  //
+  // AFTER IMPORT RULES
+  //
+  // the after import rules are not able to manipulate the data
+  // therefore the data is only given as reference for any needed calculations
+  // apply any rules that need to be applied after the actual import
   // e.g. auto filling columns with formulas
-  if (afterImport) {
-    for (const rule of afterImport) {
-      rule(output);
-    }
+  if (accountConfig.autoFillEnabled) {
+    TableUtils.autoFillColumns(result, accountConfig.autoFillColumnIndices)
   }
 
   return {
@@ -242,8 +260,8 @@ export const executeAutomaticCategorization = () => {
     );
   }
 
-  const categoryColIndex = getColumnIndexByName('category');
-  const contraAccountIndex = getColumnIndexByName('contra_account');
+  const categoryColIndex = TableUtils.getFireColumnIndexByName('category');
+  const contraAccountIndex = TableUtils.getFireColumnIndexByName('contra_account');
   // we set a filter which hides all categories, leaving only rows without category
   // unfortunately there is no better way to do it currently
   const blankFilterCriteria = SpreadsheetApp.newFilterCriteria()

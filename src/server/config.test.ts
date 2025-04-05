@@ -65,7 +65,7 @@ describe('Configuration Tests', () => {
         ['ref', 'IBAN', 'Saldo'],
         ['1234', 'NL123', '20,20'],
       ];
-      const amountCol = config.getColumnIndex('amount', table);
+      const amountCol = config.getColumnIndex('amount', table[0]);
 
       expect(amountCol).toBe(2);
 
