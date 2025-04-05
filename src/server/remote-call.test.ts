@@ -1,15 +1,21 @@
-import { generatePreview, processCSV } from './remote-calls';
+import { generatePreview, importCSV } from './remote-calls';
 import type { Table } from '@/common/types';
 import { RangeMock, SheetMock } from '../../test-setup';
 import { N26ImportMock } from '@/fixtures/n26';
-import { fakeTestBankImportWithBalance } from '@/fixtures/test-bank';
+import { fakeTestBankImportData } from '@/fixtures/test-bank';
 import { TableUtils } from './table-utils';
 import { raboImportMock } from '@/fixtures/rabobank';
 import { Config } from './config';
 import { Logger } from '@/common/logger';
 import { getSourceSheet } from './globals';
+import bankOfAmericaCSV from '@/fixtures/bank-of-america.csv?raw';
+import Papa from 'papaparse';
+import { getSpreadsheetLocale } from './utils/spreadsheet';
 
 vi.mock('./globals')
+vi.mock('./utils/spreadsheet')
+
+const getSpreadsheetLocaleMock = vi.mocked(getSpreadsheetLocale);
 
 const getSourceSheetMock = vi.mocked(getSourceSheet);
 
@@ -52,26 +58,26 @@ describe('Remote Calls', () => {
       ]);
 
       const { result, newBalance } = generatePreview(
-        fakeTestBankImportWithBalance,
+        fakeTestBankImportData,
         BANK_ID
       );
 
-      expect(result).toStrictEqual(fakeTestBankImportWithBalance);
+      expect(result).toStrictEqual(fakeTestBankImportData);
       expect(newBalance).toBe(358.55);
     });
   });
 
-  describe('processCSV', () => {
+  describe('importCSV', () => {
     beforeAll(() => {
       Logger.disable();
     })
 
     beforeEach(() => {
       importDataSpy.mockClear();
-    });
+    })
 
     test('handles empty import', () => {
-      const result = processCSV([], BANK_ID);
+      const result = importCSV([], BANK_ID);
 
       expect(importDataSpy).not.toHaveBeenCalled();
       expect(result.message).toBe('No rows to import, check your import data or rules!');
@@ -80,7 +86,7 @@ describe('Remote Calls', () => {
     test('removes filters if any are set', () => {
       getSourceSheetMock.mockReturnValueOnce(SheetMock)
 
-      processCSV([], 'test-bank')
+      importCSV([], 'test-bank')
 
       expect(SheetMock.getFilter).toHaveBeenCalled();
     });
@@ -100,17 +106,63 @@ describe('Remote Calls', () => {
 
       configSpy.mockReturnValue(n26Config)
 
-      const result = processCSV(N26ImportMock, 'n26')
+      const result = importCSV(N26ImportMock, 'n26')
 
       expect(importDataSpy).toHaveBeenCalled()
       expect(result.message).toBe('imported 4 rows!')
     });
 
     test('is able to handle rabobank import', () => {
-      const result = processCSV(raboImportMock, 'rabobank');
+      const result = importCSV(raboImportMock, 'rabobank');
 
       expect(importDataSpy).toHaveBeenCalled();
       expect(result.message).toBe('imported 1 rows!');
+    });
+
+    test('is able to handle bank of america', () => {
+      getSpreadsheetLocaleMock.mockReturnValueOnce('en-US')
+
+      const bankOfAmericaConfig = new Config({
+        accountId: 'bank-of-america',
+        columnMap: {
+          amount: 'Amount',
+          date: 'Date',
+          description: 'Description'
+        }
+      })
+
+      const { data } = Papa.parse(bankOfAmericaCSV)
+
+      configSpy.mockReturnValue(bankOfAmericaConfig)
+
+      const result = importCSV(data as Table, 'bank-of-america')
+
+      expect(importDataSpy).toHaveBeenCalled()
+      expect(importDataSpy).toHaveBeenCalledWith(expect.arrayContaining([
+        expect.arrayContaining([new Date('2023-09-12'),-100,'Utility Bill Payment']),
+      ]));
+      expect(result.message).toBe('imported 5 rows!')
+    })
+
+    test('sorts by date before importing', () => {
+      const testBankConfig = new Config({
+        accountId: BANK_ID,
+        columnMap: {
+          amount: 'TransactionAmount',
+          date: 'TransactionDate'
+        }
+      });
+
+      configSpy.mockReturnValue(testBankConfig);
+
+      importCSV(fakeTestBankImportData, BANK_ID);
+
+      expect(importDataSpy).toHaveBeenCalled();
+      expect(importDataSpy).toHaveBeenCalledWith([
+        expect.arrayContaining([new Date('2016-01-23'), -25.6]),
+        expect.arrayContaining([new Date('2015-05-21'), 58.3]),
+        expect.arrayContaining([new Date('2015-05-20'), 20]),
+      ]);
     });
   });
 });

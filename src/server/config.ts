@@ -1,8 +1,3 @@
-import { TableUtils, buildColumn } from './table-utils';
-import { Transformers } from './transformers';
-import type { Table } from '@/common/types';
-import type { Strategy } from './types';
-import { AccountUtils } from './account-utils';
 import { FIRE_COLUMNS } from '@/common/constants';
 import type { FireColumn } from '@/common/constants';
 import { slugify } from './helpers';
@@ -51,9 +46,6 @@ type ConfigParams = {
 }
 
 export class Config {
-  // /** @deprecated */
-  // static oldConfigCache: {} | null = null
-  
   private readonly columnMap: ColumnMap
   public autoFillEnabled: boolean
   public autoCategorizationEnabled: boolean
@@ -78,71 +70,10 @@ export class Config {
     return this.accountId;
   }
 
-  /**
-   * Function that retrieves the import strategy rules for the given account.
-   *
-   * @param {string} accountId The account identifier to retrieve the configuration for
-   * @returns {Strategy | undefined} The import strategy for the given account or undefined if
-   * the strategy cannot be constructed for the given account
-   */
-  static retrieveAccountStrategy(accountId: string): Strategy | undefined {
-    const accountConfig = this.getAccountConfiguration(accountId);
-
-    if (!accountConfig) {
-      return;
-    }
-
-    // the before import rules can manipulate the data before the import
-    let beforeImport: Array<(data: Table) => Table> = [
-      // remove header row before importing
-      // PENDING: perhaps this should not be done here? as every strategy needs to do this
-      // maybe add it directly to the import function?
-      (table) => TableUtils.deleteFirstRow(table),
-      (table) => TableUtils.removeEmptyRows(table),
-      (table) => {
-        const dateColumn = accountConfig.getColumnIndex('date', table);
-        if (!dateColumn) {
-          return table;
-        }
-        return TableUtils.sortByDate(dateColumn)(table)
-      }
-    ]
-    // the after import rules are not able to manipulate the data
-    // therefor the data is only given as reference for any needed calculations
-    let afterImport: Array<(data: Table) => void> = []
-
-    if (accountConfig?.autoFillEnabled) {
-      // add auto fill processing if enabled
-      afterImport.push((table: Table) =>
-        TableUtils.autoFillColumns(table, accountConfig.autoFillColumnIndices),
-      );
-    }
-
-    return {
-      beforeImport,
-      // prettier-ignore
-      columnImportRules: {
-        ref: null,
-        iban: (data) => new Array(data.length).fill(AccountUtils.getBankIban(accountId)),
-        date: buildColumn('date', accountConfig, Transformers.transformDate),
-        amount: buildColumn('amount', accountConfig, Transformers.transformMoney),
-        category: buildColumn('category', accountConfig),
-        contra_account: buildColumn('contra_account', accountConfig),
-        label: buildColumn('label', accountConfig),
-        import_date: (data) => new Array(data.length).fill(new Date()),
-        description: buildColumn('description', accountConfig),
-        contra_iban: buildColumn('contra_iban', accountConfig),
-        currency: buildColumn('currency', accountConfig),
-      },
-      afterImport,
-    };
-  }
-
-  getColumnIndex(fireColumn: FireColumn, inputData: Table): number | undefined {
+  getColumnIndex(fireColumn: FireColumn, headers: string[]): number | undefined {
     const importColumn = this.columnMap?.[fireColumn];
     if (importColumn) {
-      const headerRow = inputData[0];
-      return headerRow.indexOf(importColumn);
+      return headers.indexOf(importColumn);
     }
   }
 

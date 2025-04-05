@@ -19,7 +19,7 @@ class ServerFunctionsMock {
     }
     return bankOptions;
   };
-  static processCSV = async (): Promise<Record<string, string>> => {
+  static importCSV = async (): Promise<Record<string, string>> => {
     await sleep(2000);
     return { message: 'CSV Processed!' };
   };
