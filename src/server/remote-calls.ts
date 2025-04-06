@@ -1,5 +1,5 @@
 import { FireSpreadsheet, sourceSheet } from './globals';
-import { Config } from './config';
+import { Config, SOURCE_SHEET_NAME } from './config';
 import { TableUtils, processTableWithImportRules } from './table-utils';
 import { n26Cols, openbankCols, raboCols } from './types';
 import type { StrategyOptions, ServerResponse, Table } from '@/common/types';
@@ -277,7 +277,7 @@ export const executeFindDuplicates = () => {
   }
 
   const spreadSheet = SpreadsheetApp.getActiveSpreadsheet();
-  const sourceSheet = spreadSheet.getSheetByName('source');
+  const sourceSheet = spreadSheet.getSheetByName(SOURCE_SHEET_NAME);
   const table = sourceSheet.getDataRange().getValues();
   const headers = table[0];
 

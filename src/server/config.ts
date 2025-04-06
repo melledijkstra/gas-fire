@@ -9,7 +9,7 @@ import { AccountUtils } from './account-utils';
 export const SOURCE_SHEET_NAME = 'source';
 export const CATEGORIES_SHEET_NAME = 'categories';
 
-export const AUTO_FILL_COLUMNS = [
+const AUTO_FILL_COLUMNS = [
   1, // ref column
   5, // balance column
   9, // category icon

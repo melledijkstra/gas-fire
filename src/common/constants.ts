@@ -1,4 +1,4 @@
-export enum DialogType {
+enum DialogType {
   import,
   settings,
   about,
@@ -44,6 +44,5 @@ export type FireColumn = (typeof FIRE_COLUMNS)[number];
 
 export const SOURCE_SHEET_ID = 1093484485;
 
-export const PROP_BANK_ACCOUNTS = 'BANK_ACCOUNTS';
 export const PROP_AUTOMATIC_CATEGORIES_CONFIG =
   'AUTOMATIC_CATEGORIZATION_CONFIG';
