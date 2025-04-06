@@ -144,7 +144,7 @@ export class TableUtils {
     return data;
   }
 
-  static sortByDate = (data: Table, dateColumn: number) => {
+  static sortByDate(data: Table, dateColumn: number) {
     data
       .sort(
         (row1, row2) =>
