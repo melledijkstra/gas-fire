@@ -66,5 +66,7 @@ export const activeSpreadsheet = (sheet?: GoogleAppsScript.Spreadsheet.Sheet) =>
 export const getSpreadsheetLocale = (): string | undefined => {
   try {
     return SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetLocale()
-  } catch (ignore) {}
+  } catch(error) {
+    console.warn('Could not retrieve spreadsheet locale')
+  }
 }
