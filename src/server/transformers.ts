@@ -90,6 +90,20 @@ export class Transformers {
           const { year, month, day } = getDateParts(parts);
           return new Date(Date.UTC(year, month - 1, day));
         }
+      },
+      {
+        // Format: 20/6/24
+        regex: /^\d{1,2}\/\d{1,2}\/\d{2}$/,
+        parser: (str: string) => {
+          const parts = str.split("/").map(Number);
+          // Handle two-digit year
+          const currentYear = new Date().getFullYear()
+          const currentMillenium = currentYear - (currentYear % 100);
+          const year = parts[2] + currentMillenium
+          const month = parts[1]
+          const day = parts[0]
+          return new Date(Date.UTC(year, month - 1, day));
+        }
       }
     ];
 
