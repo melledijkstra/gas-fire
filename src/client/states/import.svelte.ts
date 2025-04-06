@@ -11,10 +11,6 @@ export const importState: ImportState = $state({
   selectedRows: new SvelteSet()
 });
 
-export const setImportData = (table?: Table) => {
-  importState.importData = table
-};
-
 export const addSelectedRow = (index: number) => {
   importState.selectedRows.add(index);
 };

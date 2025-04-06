@@ -1,4 +1,4 @@
-export type AppState = {
+type AppState = {
     statusText: string
 }
 

@@ -29,5 +29,3 @@ vi.stubGlobal('Spreadsheet', Spreadsheet);
 
 export const RangeMock = vi.mocked(Range);
 export const SheetMock = vi.mocked(Sheet);
-export const SpreadsheetMock = vi.mocked(Spreadsheet);
-export const SpreadSheetAppMock = vi.mocked(SpreadSheetApp);

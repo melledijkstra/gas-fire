@@ -7,7 +7,7 @@ import {
   build,
   defineConfig,
 } from 'vite';
-import type { OutputAsset, RollupOutput } from 'rollup'; 
+import type { OutputAsset, RollupOutput } from 'rollup';
 import { resolve } from 'path';
 import { existsSync, readFileSync } from 'fs';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
@@ -17,7 +17,7 @@ import { writeFile } from 'fs/promises';
 import packageInfo from './package.json';
 
 const PORT = 3000;
-const clientRoot = './src/client';
+export const clientRoot = './src/client';
 const outDir = './dist';
 const serverEntry = './src/server/index.ts';
 const copyAppscriptEntry = './appsscript.json';
@@ -29,7 +29,7 @@ type DialogEntry = {
   template: string;
 };
 
-const clientEntrypoints: Array<DialogEntry> = [
+export const clientEntrypoints: Array<DialogEntry> = [
   {
     name: 'CLIENT:about',
     filename: 'about-dialog',

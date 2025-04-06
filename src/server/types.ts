@@ -53,7 +53,7 @@ export type InputColumn = n26Cols | raboCols | openbankCols;
  * A column function returns the values for that column
  * it can generate the column based on the data in the CSV
  */
-export type ColumnRule<T> = ((data: Table) => T[]) | null;
+type ColumnRule<T> = ((data: Table) => T[]) | null;
 
 export interface FireColumnRules {
   ref: ColumnRule<string | number>;
