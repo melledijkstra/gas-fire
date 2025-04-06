@@ -22,7 +22,7 @@ import { slugify } from './helpers';
 const listToObject = (list: string[][]): Record<string, string> => {
   return list.reduce<Record<string, string>>((obj, account) => {
     const [id, iban] = account;
-    obj[typeof id === 'string' ? id : id] = iban;
+    obj[id] = iban;
     return obj;
   }, {});
 };
