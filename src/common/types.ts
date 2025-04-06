@@ -25,21 +25,6 @@ export type StrategyOptions = Record<string, string>;
  */
 export type Table = string[][];
 
-/**
- * Table definition in JSON format
- * A JSON table has the following structure
- * ```json
- * [{
- *    "column1": "col1row1",
- *    "column2": "col2row1"
- * }, {
- *    "column1": "col1row2",
- *    "column2": "col2row2"
- * }]
- * ```
- */
-export type JsonTable = Record<string, string>[];
-
 export type ServerResponse = {
   message: string;
 };

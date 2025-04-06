@@ -38,12 +38,3 @@ export function openSettingsDialog(): void {
     .setHeight(height);
   SpreadsheetApp.getUi().showModalDialog(html, 'Settings Dialog');
 }
-
-export function openSvelteDialog(): void {
-  const [width, height] = [600, 600];
-  const html = HtmlService.createTemplateFromFile('svelte-dialog.html')
-    .evaluate()
-    .setWidth(width)
-    .setHeight(height);
-  SpreadsheetApp.getUi().showModalDialog(html, 'Settings Dialog');
-}

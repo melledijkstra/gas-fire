@@ -24,7 +24,8 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "switch-env": "tsx ./scripts/switch-env.ts",
-    "faker": "tsx ./scripts/faker.ts"
+    "faker": "tsx ./scripts/faker.ts",
+    "knip": "knip"
   },
   "dependencies": {
     "papaparse": "^5.5.3",
@@ -57,6 +58,7 @@
     "flowbite-svelte-icons": "^2.2.1",
     "gas-client": "^1.2.1",
     "gas-types-detailed": "^1.1.2",
+    "knip": "^5.47.0",
     "storybook": "^8.6.6",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3",

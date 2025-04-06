@@ -84,7 +84,6 @@ vi.stubGlobal('MailApp', MailApp);
 export const RangeMock = vi.mocked(Range);
 export const SheetMock = vi.mocked(Sheet);
 export const SpreadsheetMock = vi.mocked(Spreadsheet);
-export const SpreadSheetAppMock = vi.mocked(SpreadSheetApp);
 export const UIMock = vi.mocked(UI);
 export const MailAppMock = vi.mocked(MailApp);
 export const FilterMock = vi.mocked(Filter);
