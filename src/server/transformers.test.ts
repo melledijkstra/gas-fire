@@ -34,6 +34,8 @@ describe('Transformers', () => {
     expect(Transformers.transformDate('01/10/2023')).toEqual(new Date('2023-10-01'));
     expect(Transformers.transformDate('01.10.2023')).toEqual(new Date('2023-10-01'));
     expect(Transformers.transformDate('2023.10.01')).toEqual(new Date('2023-10-01'));
+    expect(Transformers.transformDate('20/6/24')).toEqual(new Date('2024-06-20'));
+    expect(Transformers.transformDate('1/6/24')).toEqual(new Date('2024-06-01'));
     
     // US only logic
     getSpreadsheetLocaleMock.mockReturnValue('en-US');
