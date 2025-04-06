@@ -9,27 +9,6 @@ export const SOURCE_SHEET_NAME = 'source'
 export const CATEGORIES_SHEET_NAME = 'categories'
 export const CONFIG_SHEET_NAME = 'import-settings'
 
-// const rabobankConfig: Strategy =
-//   columnImportRules: {
-//     ref: buildColumn(raboCols.Volgnr, parseInt),
-//   },
-// };
-
-// const openbankConfig: Strategy = {
-//   columnImportRules: {
-//     date: buildColumn(openbankCols.Fecha, (val) => {
-//       let [day, month, year] = val.split('/');
-//       let yearNum = +year;
-//       if (year && year.length === 2) {
-//         // if year is of length 2 it means it only provides the year since 2000
-//         // to fix we add 2000
-//         yearNum = +year + 2000;
-//       }
-//       return new Date(new Date(+yearNum, +month - 1, +day).toDateString());
-//     }),
-//   },
-// };
-
 const parseBoolean = (value: string | boolean) =>
   String(value).toLowerCase() === 'true' || value === true;
 
