@@ -1,26 +1,34 @@
-import { FireSpreadsheet, sourceSheet } from './globals';
+import { FireSpreadsheet, getSourceSheet } from './globals';
 import { Config } from './config';
-import { TableUtils, processTableWithImportRules } from './table-utils';
-import { n26Cols, openbankCols, raboCols } from './types';
+import { TableUtils, processInputDataAndShapeFiresheetStructure } from './table-utils';
 import type { StrategyOptions, ServerResponse, Table } from '@/common/types';
 import { AccountUtils, isNumeric } from './account-utils';
 import { Transformers } from './transformers';
 import {
   getCategoryNames,
-  getColumnIndexByName,
-  removeFilterCriteria,
+  slugify,
+  structuredClone
 } from './helpers';
 import { detectCategoryByTextAnalysis } from './category-detection';
-import { NAMED_RANGES } from '../common/constants';
 import { findDuplicates } from './duplicate-finder';
-
-const cleanString = (str: string) => str?.replace(/\n/g, ' ').trim();
+import { NAMED_RANGES } from '../common/constants';
+import { Logger } from '@/common/logger';
+import { activeSpreadsheet, removeFilterCriteria } from './utils/spreadsheet';
+import { cleanString } from './utils';
 
 /**
  * This retrieves the bank accounts set by the user.
  * It uses 2 named ranges to combine them together as a usable object
+ *
+ * example:
+ * ```
+ * {
+ *   "Bank of America": "US1234567890",
+ *   "Revolut": "GB1234567890"
+ * }
+ * ```
+ *
  * @returns An object where the key is the label of the bank and the value the IBAN
- * @rpc_from dialogs/tabs/bank_accounts.html
  */
 export function getBankAccounts(): Record<string, string> {
   const sheet = SpreadsheetApp.getActiveSpreadsheet();
@@ -50,21 +58,38 @@ export function getBankAccounts(): Record<string, string> {
   return bankAccounts;
 }
 
-export function processCSV(
+/**
+ * This very function might be the core of this spreadsheet and project.
+ * It handles incoming CSV (already parsed by the frontend) and processes it in order to be imported
+ * into the spreadsheet.
+ *
+ * It uses configuration from the user to determine how the CSV should be processed.
+ *
+ * @param {Table} inputTable - The table object which contains the CSV data
+ * @param {string} bankAccount - The bank account identifier which is used to lookup configuration
+ * @returns {ServerResponse} A response object which contains a message to be displayed to the user
+ */
+export function importCSV(
   inputTable: Table,
-  importStrategy: string
+  bankAccount: string
 ): ServerResponse {
-  const strategies = Config.getConfig();
+  const sourceSheet = getSourceSheet()
 
   // make the user visually switch to the primary sheet where data will be imported
-  sourceSheet?.activate();
-  sourceSheet?.showSheet();
+  activeSpreadsheet(sourceSheet)
 
-  if (!(importStrategy in strategies)) {
-    throw new Error(`Import strategy ${importStrategy} is not defined!`);
+  const accountConfig = Config.getAccountConfiguration(bankAccount)
+
+  if (!accountConfig) {
+    throw new Error(
+      `Bank with identifier "${bankAccount}" does not have valid configuration!`
+    )
   }
 
-  const filter = sourceSheet?.getFilter();
+  // remove any filters that might be set
+  // importing might go wrong when filters are set
+  const filter = sourceSheet?.getFilter()
+
   if (filter) {
     if (!removeFilterCriteria(filter, true)) {
       throw new Error(
@@ -73,77 +98,103 @@ export function processCSV(
     }
   }
 
-  const { beforeImport, columnImportRules, afterImport } =
-    strategies[importStrategy];
+  // retrieve import strategy for selected account
+  // const accountStrategy = accountConfig?.retrieveAccountImportStrategy();
 
-  if (beforeImport) {
-    for (const rule of beforeImport) {
-      inputTable = rule(inputTable);
+  let result = structuredClone(inputTable)
+  
+  // retrieve the header row and separate from the actual input data
+  const headerRow = result.shift() as string[] // cast because we know first header row exists
+
+  //
+  // BEFORE IMPORT RULES
+  //
+  result = TableUtils.removeEmptyRows(result)
+
+  //
+  // IMPORT RULES
+  //
+  result = processInputDataAndShapeFiresheetStructure({
+    headers: headerRow,
+    rows: result,
+    config: accountConfig,
+  })
+  // ^^ result is now in the firesheet structure
+
+  const dateColumn = TableUtils.getFireColumnIndexByName('date')
+  if (dateColumn) {
+    // if we found a date column, we sort the data by date
+    result = TableUtils.sortByDate(result, dateColumn)
+  }
+
+  if (result.length === 0) {
+    const msg = 'No rows to import, check your import data or rules!';
+    Logger.log(msg)
+    return {
+      message: msg,
     }
   }
 
-  let output = processTableWithImportRules(inputTable, columnImportRules);
-  TableUtils.importData(output);
+  // actual importing of the data into the sheet
+  TableUtils.importData(result)
 
-  if (afterImport) {
-    for (const rule of afterImport) {
-      rule(output);
-    }
+  const msg = `imported ${result.length} rows!`;
+  Logger.log(msg)
+
+  //
+  // AFTER IMPORT RULES
+  //
+  // the after import rules are not able to manipulate the data
+  // therefore the data is only given as reference for any needed calculations
+  // apply any rules that need to be applied after the actual import
+  // e.g. auto filling columns with formulas
+  if (accountConfig.autoFillEnabled) {
+    TableUtils.autoFillColumns(result, accountConfig.autoFillColumnIndices)
   }
-
-  const msg = `imported ${output.length} rows!`;
 
   return {
     message: msg,
   };
 }
 
-export function calculateNewBalance(
-  strategy: string,
-  values: number[]
-) {
-  let balance = AccountUtils.getBalance(strategy);
-
-  for (const amount of values) {
-    balance += amount;
-  }
-
-  return balance;
-}
-
 export function generatePreview(
   table: Table,
-  strategy: string
+  bankAccount: string
 ): {
   result: Table;
   newBalance?: number;
 } {
-  let amounts: string[] = [];
-  switch (strategy) {
-    case 'n26':
-      amounts = TableUtils.retrieveColumn(table, n26Cols.Amount);
-      break;
-    case 'openbank':
-      amounts = TableUtils.retrieveColumn(table, openbankCols.Importe);
-      break;
-    case 'rabobank':
-      amounts = TableUtils.retrieveColumn(table, raboCols.Bedrag);
-      break;
+  let amounts: Array<string> = [];
+
+  // PENDING: retrieve the amounts from CSV using the back account configuration
+  const config = Config.getAccountConfiguration(bankAccount);
+
+  if (!config) {
+    throw new Error(`Configuration for account ${bankAccount} not found`);
+  }
+
+  const balanceColumnName = config?.getImportColumnNameByFireColumn('amount');
+  const balanceColumnIndex = table[0].findIndex(
+    (value) => value === balanceColumnName
+  );
+
+  if (balanceColumnIndex) {
+    amounts = table.map((row) => row[balanceColumnIndex]);
   }
 
   const amountNumbers = amounts
     .map((value) => Transformers.transformMoney(value))
     .filter(isNumeric);
 
-  const newBalance = calculateNewBalance(strategy, amountNumbers);
+  const newBalance = AccountUtils.calculateNewBalance(bankAccount, amountNumbers);
 
   return { result: table, newBalance };
 }
 
 /**
- * This function returns the strategy options available to the client side
+ * This function returns the available bank account options to the client side
  */
-export function getStrategyOptions(): StrategyOptions {
+export function getBankAccountOptions(): StrategyOptions {
   const accountNames = FireSpreadsheet.getRangeByName(NAMED_RANGES.accountNames);
   const accounts = accountNames
     .getValues()
@@ -154,7 +205,7 @@ export function getStrategyOptions(): StrategyOptions {
 
   // we convert the account names to slugs and return them as an object
   const result = accounts.reduce<Record<string, string>>((obj: Record<string, string>, account: string) => {
-    const slug = account.toLowerCase().replaceAll(' ', '_');
+    const slug = slugify(account);
     obj[slug] = account;
     return obj;
   }, {});
@@ -162,11 +213,27 @@ export function getStrategyOptions(): StrategyOptions {
   return result;
 }
 
+export function getBankAccountOptionsCached(): Record<string, string> {
+  const cache = CacheService.getDocumentCache();
+  const accountsCached = cache.get('accounts');
+
+  if (accountsCached) {
+    return JSON.parse(accountsCached);
+  }
+
+  const accounts = getBankAccountOptions();
+  cache.put('accounts', JSON.stringify(accounts), 600);
+
+  return accounts;
+}
+
 /**
  * Performs automatic categorization on the current active spreadsheet
  * Can be called from the menu
  */
 export const executeAutomaticCategorization = () => {
+  const sourceSheet = getSourceSheet()
+
   // 1. first part of the code focusses UX and makes sure the user is focussed on the right sheet
   // also it filters the sheet to only show rows that have no category set
   const ui = SpreadsheetApp.getUi();
@@ -188,8 +255,8 @@ export const executeAutomaticCategorization = () => {
     );
   }
 
-  const categoryColIndex = getColumnIndexByName('category');
-  const contraAccountIndex = getColumnIndexByName('contra_account');
+  const categoryColIndex = TableUtils.getFireColumnIndexByName('category');
+  const contraAccountIndex = TableUtils.getFireColumnIndexByName('contra_account');
   // we set a filter which hides all categories, leaving only rows without category
   // unfortunately there is no better way to do it currently
   const blankFilterCriteria = SpreadsheetApp.newFilterCriteria()
@@ -305,4 +372,16 @@ export const executeFindDuplicates = () => {
   SpreadsheetApp.getUi().alert(
     `Found ${duplicateRows.length / 2} duplicates! Rows have been copied to the "rows-duplicates" sheet`
   );
+}
+
+export const debugImportSettings = () => {
+  const accountConfigs = Config.getConfigurations()
+
+  const ui = SpreadsheetApp.getUi()
+
+  const configKeys = Object.keys(accountConfigs)
+
+  ui.alert(`Found ${configKeys.length} account configurations!\n\n${configKeys.join('\n')}\n\nSee logs for more details`)
+
+  console.log(accountConfigs);
 }

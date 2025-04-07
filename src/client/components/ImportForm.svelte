@@ -29,7 +29,7 @@
 
   const submitDataToServer = (data: Table, importStrategy: string) => {
     serverFunctions
-      .processCSV(data, importStrategy)
+      .importCSV(data, importStrategy)
       .then(() => google.script.host.close())
       .catch(onFailure);
   };
@@ -64,7 +64,7 @@
   onMount(async () => {
     // retrieve import strategy options when mounted
     serverFunctions
-      .getStrategyOptions()
+      .getBankAccountOptionsCached()
       .then((serverStrategyOptions) => {
         strategyOptions = serverStrategyOptions;
       })

@@ -1,0 +1,6 @@
+Date,Account Number,Description,Debit,Credit,Balance
+2023-09-01,****1234,Opening Balance,,,+500.00
+2023-09-02,****1234,Grocery Store,75.00,,425.00
+2023-09-03,****1234,Salary,,2000.00,2425.00
+2023-09-05,****1234,Electricity Bill,100.00,,2325.00
+2023-09-07,****1234,Cafe,15.00,,2310.00

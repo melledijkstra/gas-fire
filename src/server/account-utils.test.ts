@@ -4,16 +4,18 @@ import { RangeMock, SheetMock } from '../../test-setup';
 import { SOURCE_SHEET_ID } from '@/common/constants';
 
 describe('Utility tests', () => {
-  test('Transformers.transformMoney', () => {
+  test('getBankAccounts', () => {
     RangeMock.getValues.mockReturnValueOnce([
-      ['DEUTSCHE_BANK', 'DB123456789'],
-      ['SOMEOTHER_BANK', 'BANK123456789'],
+      ['Deutsche Bank', 'DB123456789'],
+      ['n26', 'BANK123456789'],
+      ['Banco de España', 'BANK124463534'],
       ['', ''],
     ]);
 
     expect(AccountUtils.getBankAccounts()).toStrictEqual({
-      DEUTSCHE_BANK: 'DB123456789',
-      SOMEOTHER_BANK: 'BANK123456789',
+      'deutsche-bank': 'DB123456789',
+      'n26': 'BANK123456789',
+      "banco-de-espaa": "BANK124463534"
     });
   });
 
@@ -25,7 +27,7 @@ describe('Utility tests', () => {
 
   test('retrieve the balance of a specific bank', () => {
     RangeMock.getValues.mockReturnValueOnce([
-      ['n26', 'DB123456789', '302.80'],
+      ['N26', 'DB123456789', '302.80'],
       ['Openbank', 'BANK123456789', '400'],
       ['', '', ''],
     ]);
