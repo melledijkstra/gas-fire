@@ -109,8 +109,8 @@ export class TableUtils {
       data
         .sort(
           (row1, row2) =>
-            new Date(row1[dateColumn]).getUTCDate() -
-            new Date(row2[dateColumn]).getUTCDate()
+            new Date(row1[dateColumn]).getTime() -
+            new Date(row2[dateColumn]).getTime()
         )
         .reverse();
       return data;

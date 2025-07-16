@@ -56,13 +56,18 @@ export function findDuplicates(table: Table, compareCols: FireColumn[], timespan
             // Check if the current row and the comparison row have the same key and their dates 
             // are within the specified timespan
             if (key === compareKey && Math.abs(rowDate.getTime() - compareDate.getTime()) <= timespan) {
-                // Create a unique string representation of the row to track duplicates
+                // Create unique string representations of both rows to track duplicates
                 const duplicateKey = JSON.stringify(row);
-                // If this row has not been seen before, add it to the duplicates array and mark it as seen
+                const compareDuplicateKey = JSON.stringify(compareRow);
+                
+                // Add both rows to duplicates array if they haven't been seen before
                 if (!seen.has(duplicateKey)) {
                     duplicates.push(row);
-                    duplicates.push(compareRow);
                     seen.add(duplicateKey);
+                }
+                if (!seen.has(compareDuplicateKey)) {
+                    duplicates.push(compareRow);
+                    seen.add(compareDuplicateKey);
                 }
                 // Break the loop as we found a duplicate for the current row
                 break;

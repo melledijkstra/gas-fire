@@ -76,6 +76,11 @@ export class AccountUtils {
       throw new Error(`Could not retrieve balance of ${strategy}`);
     }
 
-    return parseFloat(account?.[2]); // balance is at the second index, retrieve it
+    const balance = parseFloat(account[2]);
+    if (isNaN(balance)) {
+      throw new Error(`Invalid balance value for ${strategy}: ${account[2]}`);
+    }
+
+    return balance;
   }
 }
