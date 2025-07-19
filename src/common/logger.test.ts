@@ -10,7 +10,7 @@ describe('Logger', () => {
 
   beforeEach(() => {
     originalEnv = import.meta.env.DEV;
-    Logger.disable();
+    consoleSpy.mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -25,6 +25,7 @@ describe('Logger', () => {
   });
 
   test('should not log message when disabled', () => {
+    Logger.disable();
     Logger.log('Test message');
     expect(consoleSpy).not.toHaveBeenCalled();
   });

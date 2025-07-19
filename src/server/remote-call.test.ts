@@ -4,6 +4,9 @@ import { RangeMock } from '../../test-setup';
 import { fakeN26ImportWithBalance, n26ImportMock } from '@/fixtures/n26';
 import { TableUtils } from './table-utils';
 import { raboImportMock } from '@/fixtures/rabobank';
+import { Logger } from '@/common/logger';
+
+Logger.disable();
 
 const importDataSpy = vi.spyOn(TableUtils, 'importData');
 
