@@ -60,7 +60,7 @@
     "storybook": "^8.6.6",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3",
-    "vite": "^6.3.3",
+    "vite": "^6.3.5",
     "vite-plugin-singlefile": "^2.3.0",
     "vite-plugin-static-copy": "^2.3.1",
     "vitest": "^3.2.4"
