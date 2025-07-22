@@ -109,8 +109,8 @@ export class TableUtils {
       data
         .sort(
           (row1, row2) =>
-            new Date(row1[dateColumn]).getUTCDate() -
-            new Date(row2[dateColumn]).getUTCDate()
+            new Date(row1[dateColumn]).getTime() -
+            new Date(row2[dateColumn]).getTime()
         )
         .reverse();
       return data;
@@ -149,8 +149,11 @@ export class TableUtils {
 
   static ensureLength(arr: unknown[], length: number) {
     if (arr.length < length) {
-      arr = arr.fill(null, arr.length, length - 1);
+      return [
+        ...arr,
+        ...new Array(length - arr.length).fill(null),
+      ];
     }
-    return arr;
+    return arr.slice(0, length);
   }
 }
