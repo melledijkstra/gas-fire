@@ -303,6 +303,6 @@ export const executeFindDuplicates = () => {
   });
 
   SpreadsheetApp.getUi().alert(
-    `Found ${duplicateRows.length / 2} duplicates! Rows have been copied to the "rows-duplicates" sheet`
+    `Found ${duplicateRows.length / 2} duplicates! Rows have been copied to the "duplicate-rows" sheet`
   );
 }
