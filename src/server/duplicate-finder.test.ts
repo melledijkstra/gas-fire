@@ -1,7 +1,7 @@
 import { describe, expect } from 'vitest';
 import { findDuplicates, generateDuplicateHash } from './duplicate-finder';
-import { FireColumn } from '@/common/constants';
-import { Table } from '@/common/types';
+import type { FireColumn } from '@/common/constants';
+import type { Table } from '@/common/types';
 
 const days = (days: number) => days * 24 * 60 * 60 * 1000;
 
