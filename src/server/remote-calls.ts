@@ -234,7 +234,7 @@ export const executeAutomaticCategorization = () => {
 };
 
 export const mailNetWorth = () => {
-  const spreadsheet = SpreadsheetApp.getActive();
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   const locale = spreadsheet.getSpreadsheetLocale().replace('_', '-');
   const userEmail = spreadsheet.getOwner().getEmail();
   const netWorth = Number(
