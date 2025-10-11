@@ -1,7 +1,6 @@
 import {
   RangeMock,
   SheetMock,
-  SpreadsheetAppMock,
   SpreadsheetMock,
   UIMock,
   MailAppMock,
@@ -14,6 +13,20 @@ import { raboImportMock } from '@/fixtures/rabobank';
 import { Logger } from '@/common/logger';
 import * as categoryDetection from './category-detection';
 import * as duplicateFinder from './duplicate-finder';
+import {
+  generatePreview,
+  processCSV,
+  getBankAccounts,
+  executeAutomaticCategorization,
+  getStrategyOptions,
+  executeFindDuplicates,
+  mailNetWorth,
+} from './remote-calls';
+
+vi.mock('./globals', () => ({
+  FireSpreadsheet: SpreadsheetMock,
+  sourceSheet: SheetMock,
+}));
 
 vi.mock('./helpers', () => ({
   getCategoryNames: vi.fn(() => ['cat1', 'cat2']),
@@ -25,28 +38,16 @@ vi.mock('./helpers', () => ({
   removeFilterCriteria: vi.fn(() => true),
 }));
 
-vi.mock('./globals', () => ({
-  FireSpreadsheet: SpreadsheetMock,
-  sourceSheet: SheetMock,
-}));
-
 const detectCategorySpy = vi.spyOn(
   categoryDetection,
   'detectCategoryByTextAnalysis'
 );
 const findDuplicatesSpy = vi.spyOn(duplicateFinder, 'findDuplicates');
+const importDataSpy = vi.spyOn(TableUtils, 'importData');
 
 Logger.disable();
 
-const importDataSpy = vi.spyOn(TableUtils, 'importData');
-
 describe('Remote Calls', () => {
-  let remoteCalls;
-
-  beforeAll(async () => {
-    remoteCalls = await import('./remote-calls');
-  });
-
   afterEach(() => {
     vi.clearAllMocks();
   });
@@ -60,7 +61,7 @@ describe('Remote Calls', () => {
       ]);
 
       const table: Table = [['', '', '', '', '', ''], []];
-      const { result, newBalance } = remoteCalls.generatePreview(table, 'n26');
+      const { result, newBalance } = generatePreview(table, 'n26');
 
       expect(result).toStrictEqual(table);
       expect(newBalance).toBe(302.8);
@@ -73,7 +74,7 @@ describe('Remote Calls', () => {
         ['', '', ''],
       ]);
 
-      const { result, newBalance } = remoteCalls.generatePreview(
+      const { result, newBalance } = generatePreview(
         fakeN26ImportWithBalance,
         'n26'
       );
@@ -86,7 +87,7 @@ describe('Remote Calls', () => {
   describe('processCSV', () => {
     test('is able to handle n26 import', () => {
       FilterMock.remove.mockReturnValue(true);
-      const result = remoteCalls.processCSV(n26ImportMock, 'n26');
+      const result = processCSV(n26ImportMock, 'n26');
 
       expect(importDataSpy).toHaveBeenCalled();
       expect(result.message).toBe('imported 3 rows!');
@@ -94,7 +95,7 @@ describe('Remote Calls', () => {
 
     test('is able to handle rabobank import', () => {
       FilterMock.remove.mockReturnValue(true);
-      const result = remoteCalls.processCSV(raboImportMock, 'rabobank');
+      const result = processCSV(raboImportMock, 'rabobank');
 
       expect(importDataSpy).toHaveBeenCalled();
       expect(result.message).toBe('imported 1 rows!');
@@ -104,7 +105,7 @@ describe('Remote Calls', () => {
   describe('getBankAccounts', () => {
     test('in case there are no accounts, it should return an empty object', () => {
       RangeMock.getValues.mockReturnValue([[], []]);
-      const result = remoteCalls.getBankAccounts();
+      const result = getBankAccounts();
       expect(result).toEqual({});
     });
 
@@ -112,7 +113,7 @@ describe('Remote Calls', () => {
       RangeMock.getValues
         .mockReturnValueOnce([['n26'], ['Openbank']])
         .mockReturnValueOnce([['DB123456789'], ['BANK123456789']]);
-      const result = remoteCalls.getBankAccounts();
+      const result = getBankAccounts();
       expect(result).toEqual({
         n26: 'DB123456789',
         Openbank: 'BANK123456789',
@@ -127,7 +128,7 @@ describe('Remote Calls', () => {
         ['Openbank'],
         ['Trading 212'],
       ]);
-      const result = remoteCalls.getStrategyOptions();
+      const result = getStrategyOptions();
       expect(result).toEqual({
         n26: 'n26',
         openbank: 'Openbank',
@@ -137,9 +138,13 @@ describe('Remote Calls', () => {
   });
 
   describe('executeAutomaticCategorization', () => {
+    beforeEach(() => {
+      SheetMock.getFilter.mockReturnValue(FilterMock);
+    });
+
     test('should do nothing if user cancels', () => {
       UIMock.alert.mockReturnValueOnce(UIMock.Button.NO);
-      remoteCalls.executeAutomaticCategorization();
+      executeAutomaticCategorization();
       expect(UIMock.alert).toHaveBeenCalled();
       expect(detectCategorySpy).not.toHaveBeenCalled();
     });
@@ -150,7 +155,7 @@ describe('Remote Calls', () => {
         ['category', 'contra_account'],
         ['cat1', 'account1'],
       ]);
-      remoteCalls.executeAutomaticCategorization();
+      executeAutomaticCategorization();
       expect(UIMock.alert).toHaveBeenCalledWith('No rows were categorized!');
     });
 
@@ -162,7 +167,7 @@ describe('Remote Calls', () => {
         ['', 'account2'],
       ]);
       detectCategorySpy.mockReturnValue('cat2');
-      remoteCalls.executeAutomaticCategorization();
+      executeAutomaticCategorization();
       expect(detectCategorySpy).toHaveBeenCalledTimes(2);
       expect(UIMock.alert).toHaveBeenCalledWith('Succesfully categorized 2 rows!');
     });
@@ -171,7 +176,7 @@ describe('Remote Calls', () => {
   describe('executeFindDuplicates', () => {
     test('should do nothing if user cancels', () => {
       UIMock.prompt.mockReturnValueOnce({ getSelectedButton: () => UIMock.Button.CANCEL });
-      remoteCalls.executeFindDuplicates();
+      executeFindDuplicates();
       expect(findDuplicatesSpy).not.toHaveBeenCalled();
     });
 
@@ -180,7 +185,7 @@ describe('Remote Calls', () => {
         getSelectedButton: () => UIMock.Button.OK,
         getResponseText: () => 'invalid',
       });
-      remoteCalls.executeFindDuplicates();
+      executeFindDuplicates();
       expect(UIMock.alert).toHaveBeenCalledWith(
         'Invalid input! Please enter a valid number of days (e.g. 7)'
       );
@@ -192,7 +197,7 @@ describe('Remote Calls', () => {
         getResponseText: () => '7',
       });
       findDuplicatesSpy.mockReturnValue([]);
-      remoteCalls.executeFindDuplicates();
+      executeFindDuplicates();
       expect(UIMock.alert).toHaveBeenCalledWith('No duplicates found!');
     });
 
@@ -205,7 +210,7 @@ describe('Remote Calls', () => {
         ['row1'],
         ['row2'],
       ]);
-      remoteCalls.executeFindDuplicates();
+      executeFindDuplicates();
       expect(SheetMock.clear).toHaveBeenCalled();
       expect(SheetMock.getRange).toHaveBeenCalledTimes(3);
       expect(UIMock.alert).toHaveBeenCalledWith(
@@ -217,10 +222,10 @@ describe('Remote Calls', () => {
   describe('mailNetWorth', () => {
     test('should send an email with the net worth', () => {
       RangeMock.getValue.mockReturnValueOnce(12345.67);
-      SpreadsheetMock.getOwner.mockReturnValue({ getEmail: () => 'test@example.com' });
+      SpreadsheetMock.getOwner.mockReturnValue({ getEmail: vi.fn(() => 'test@example.com') });
       SpreadsheetMock.getRangeByName.mockReturnValue(RangeMock);
 
-      remoteCalls.mailNetWorth();
+      mailNetWorth();
       expect(MailAppMock.sendEmail).toHaveBeenCalled();
     });
   });

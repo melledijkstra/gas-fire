@@ -1,4 +1,5 @@
-import { Mock, vi } from 'vitest';
+import type { Mock } from 'vitest';
+import { vi } from 'vitest';
 
 // In order to test our server code we need the Google Apps Script globals to be available
 // These are not available by default when we run vitest in node environment

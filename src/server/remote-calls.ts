@@ -184,7 +184,7 @@ export const executeAutomaticCategorization = () => {
   const filter = sourceSheet?.getFilter();
   if (!filter) {
     throw new Error(
-      'Automatic categorization script needs a filter to be set on the source sheet! Please set a filter before trying again'
+      'Automatic categorization script needs an actual filter configured on the source sheet table! Please set a filter before trying again'
     );
   }
 
