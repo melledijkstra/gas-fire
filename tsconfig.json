@@ -4,9 +4,10 @@
     // we just want to use it as a type checker
     "noEmit": true,
     "strict": true,
-    "moduleResolution": "Bundler",
+    "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
     "module": "ESNext",
+    "target": "ESNext",
     "esModuleInterop": true,
     "noImplicitAny": true,
     "noImplicitThis": true,
