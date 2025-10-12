@@ -1,27 +1,98 @@
 #!/bin/bash
 # .git/hooks/pre-push
+# based of this reddit link with modifications by Gemini Pro 2.5
 # https://www.reddit.com/r/git/comments/3o1tut/precommit_hook_to_make_sure_you_updated_the/
-set -o nounset
+#
+# A git pre-push hook to verify that the package.json version has been updated
+# when pushing to remote.
+#
+
+# --- Script Configuration ---
+# Exit immediately if a command exits with a non-zero status.
 set -o errexit
+# Treat unset variables as an error.
+set -o nounset
 
-REPO_ROOT=$(git rev-parse --show-toplevel)
-echo "Git repo is at $REPO_ROOT"
+# The path to your package.json file, relative to the repository root.
+PACKAGE_JSON_FILE="package.json"
 
-BRANCH=$(git branch | cut -d' ' -f2)
-REMOTE=$(git branch -r | xargs)
-SITE_CHANGES=$(git diff "$BRANCH".."$REMOTE" | wc -l)
+echo "--- [Git Hook] Running pre-push version check ---"
 
-echo "Detected $SITE_CHANGES changes"
+# The pre-push hook receives a list of refs to be pushed on its standard input
+# in the format: <local ref> <local sha> <remote ref> <remote sha>
+# This loop reads that input line by line.
+while read local_ref local_sha remote_ref remote_sha
+do
+    # --- 1. Filter for Relevant Push Events ---
 
-if [ "$SITE_CHANGES" -gt "0" ]; then
-  echo "Checking to make sure package version was updated..."
+    # We only care about updating branches, which look like "refs/heads/branch-name".
+    # This check skips pushes of tags or other ref types.
+    if [[ ! "$local_ref" =~ ^refs/heads/ ]]; then
+        echo "Push does not involve a branch ($local_ref), skipping version check."
+        continue
+    fi
 
-  VERSION_CHANGED=$(git diff "$BRANCH".."$REMOTE" -G '"version":' -- $REPO_ROOT/package.json | wc -l)
+    # Define the 'null sha' which indicates a new or deleted branch.
+    NULL_SHA="0000000000000000000000000000000000000000"
 
-  if [ "$VERSION_CHANGED" -gt "0" ]; then
-    echo "Version was updated!  Continuing..."
-  else
-    echo "Version was not updated :( Aborting push."
-    exit 1
-  fi
-fi
+    # If the remote_sha is null, a new branch is being created.
+    # We don't need to check for a version bump in this case.
+    if [ "$remote_sha" = "$NULL_SHA" ]; then
+        echo "A new branch ($local_ref) is being pushed, skipping version check."
+        continue
+    fi
+
+    # If the local_sha is null, the branch is being deleted. Skip the check.
+    if [ "$local_sha" = "$NULL_SHA" ]; then
+        echo "Branch ($local_ref) is being deleted, skipping version check."
+        continue
+    fi
+
+    # --- 2. Check for Code Changes ---
+
+    # Construct the commit range to see what is being pushed.
+    # This range includes all commits that are in the local branch but not yet in the remote branch.
+    commit_range="$remote_sha..$local_sha"
+    branch_name=${local_ref#refs/heads/} # Extracts the short branch name
+
+    echo "Checking branch '$branch_name' for commits in range $commit_range..."
+
+    # Find the root of the repository to build an absolute path to package.json.
+    repo_root=$(git rev-parse --show-toplevel)
+    package_json_full_path="$repo_root/$PACKAGE_JSON_FILE"
+
+    # If package.json doesn't exist, we can't check the version.
+    if [ ! -f "$package_json_full_path" ]; then
+        echo "Warning: No package.json found at '$package_json_full_path'. Skipping version check for this project."
+        continue
+    fi
+
+    # --- 3. Verify the Version Was Changed ---
+
+    # Use `git diff` with `-G` to see if the line containing '"version":'
+    # has changed within the commits being pushed. We count the lines of output;
+    # if the count is greater than 0, the version string was changed.
+    version_change_count=$(git diff "$commit_range" -G'"version":' -- "$package_json_full_path" | wc -l)
+
+    # If the version has NOT been updated...
+    if [ "$version_change_count" -eq 0 ]; then
+        # ...we should only fail the push if there are actual code changes.
+        # This prevents blocking pushes that only contain, for example, merge commits.
+        commit_count=$(git rev-list --count "$commit_range")
+
+        # If there are new commits, then the version should have been bumped.
+        if [ "$commit_count" -gt 0 ]; then
+            echo "============================================================" >&2
+            echo "!! PUSH REJECTED !!" >&2
+            echo "You are pushing commits to '$branch_name' without updating the version" >&2
+            echo "in '$PACKAGE_JSON_FILE'. Please increment the version before pushing." >&2
+            echo "============================================================" >&2
+            exit 1 # Abort the push with a failure code
+        fi
+    else
+        echo "Version in '$PACKAGE_JSON_FILE' was updated. Great!"
+    fi
+done
+
+echo "--- [Git Hook] All checks passed. Proceeding with push. ---"
+exit 0 # Success, allow the push
