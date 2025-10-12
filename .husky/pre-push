@@ -15,8 +15,11 @@ set -o nounset
 
 # The path to your package.json file, relative to the repository root.
 PACKAGE_JSON_FILE="package.json"
+# The stable base branch to compare against.
+BASE_BRANCH="origin/main"
 
 echo "--- [Git Hook] Running pre-push version check ---"
+echo "Comparing against base branch: '$BASE_BRANCH'"
 
 # The pre-push hook receives a list of refs to be pushed on its standard input
 # in the format: <local ref> <local sha> <remote ref> <remote sha>
@@ -53,44 +56,66 @@ do
     # Construct the commit range to see what is being pushed.
     # This range includes all commits that are in the local branch but not yet in the remote branch.
     commit_range="$remote_sha..$local_sha"
-    branch_name=${local_ref#refs/heads/} # Extracts the short branch name
+    branch_name=${local_ref#refs/heads/}
+    base_branch_name=${BASE_BRANCH#origin/}
 
-    echo "Checking branch '$branch_name' for commits in range $commit_range..."
-
-    # Find the root of the repository to build an absolute path to package.json.
-    repo_root=$(git rev-parse --show-toplevel)
-    package_json_full_path="$repo_root/$PACKAGE_JSON_FILE"
-
-    # If package.json doesn't exist, we can't check the version.
-    if [ ! -f "$package_json_full_path" ]; then
-        echo "Warning: No package.json found at '$package_json_full_path'. Skipping version check for this project."
+    # Don't run the check if we are pushing the base branch itself.
+    if [ "$branch_name" = "$base_branch_name" ]; then
+        echo "Pushing to the base branch ('$branch_name'), skipping version check."
         continue
     fi
 
-    # --- 3. Verify the Version Was Changed ---
+    echo "Checking branch '$branch_name' for commits in range $commit_range"
 
-    # Use `git diff` with `-G` to see if the line containing '"version":'
-    # has changed within the commits being pushed. We count the lines of output;
-    # if the count is greater than 0, the version string was changed.
-    version_change_count=$(git diff "$commit_range" -G'"version":' -- "$package_json_full_path" | wc -l)
+    # Ensure we have the latest version of the base branch for an accurate comparison.
+    echo "Fetching latest changes for '$BASE_BRANCH'..."
+    git fetch origin "$base_branch_name" >/dev/null 2>&1
 
-    # If the version has NOT been updated...
-    if [ "$version_change_count" -eq 0 ]; then
-        # ...we should only fail the push if there are actual code changes.
-        # This prevents blocking pushes that only contain, for example, merge commits.
+    # Helper function to extract the version string from package.json at a specific git ref.
+    get_version_from_ref() {
+        local ref=$1
+        local file_path=$2
+        # Use 'git show' to get the file content at a specific ref.
+        # Pipe to grep to find the version line, then sed to extract the version number.
+        # '|| true' prevents the script from exiting if grep finds nothing.
+        git show "${ref}:${file_path}" 2>/dev/null | \
+            grep '"version":' | \
+            sed -E 's/.*"version": *"([^"]+)".*/\1/' || true
+    }
+
+    # Get the version from the commit being pushed.
+    local_version=$(get_version_from_ref "$local_sha" "$PACKAGE_JSON_FILE")
+    # Get the version from the base branch.
+    main_version=$(get_version_from_ref "$BASE_BRANCH" "$PACKAGE_JSON_FILE")
+
+    echo "Version in '$branch_name' is: '$local_version'"
+    echo "Version in '$BASE_BRANCH' is: '$main_version'"
+
+    # If we couldn't read a version from either branch, we can't compare.
+    # This might happen if package.json doesn't exist on the base branch yet.
+    if [ -z "$local_version" ] || [ -z "$main_version" ]; then
+        echo "Warning: Could not determine version from one of the branches. Skipping check."
+        continue
+    fi
+
+    # --- 3. Enforce Version Bump ---
+
+    # If the version in the feature branch is the same as the base branch...
+    if [ "$local_version" = "$main_version" ]; then
+        # ...we should only fail the push if there are actual new commits being pushed.
         commit_count=$(git rev-list --count "$commit_range")
 
-        # If there are new commits, then the version should have been bumped.
         if [ "$commit_count" -gt 0 ]; then
             echo "============================================================" >&2
             echo "!! PUSH REJECTED !!" >&2
-            echo "You are pushing commits to '$branch_name' without updating the version" >&2
-            echo "in '$PACKAGE_JSON_FILE'. Please increment the version before pushing." >&2
+            echo "The version in '$PACKAGE_JSON_FILE' ('$local_version') has not been updated" >&2
+            echo "relative to the base branch '$BASE_BRANCH' ('$main_version')." >&2
+            echo "Please increment the version before pushing." >&2
             echo "============================================================" >&2
             exit 1 # Abort the push with a failure code
         fi
     else
-        echo "Version in '$PACKAGE_JSON_FILE' was updated. Great!"
+        echo "Version has been updated from '$main_version' to '$local_version'. Great!"
     fi
 done
 
