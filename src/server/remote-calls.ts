@@ -14,7 +14,7 @@ import { detectCategoryByTextAnalysis } from './category-detection';
 import { NAMED_RANGES } from '../common/constants';
 import { findDuplicates } from './duplicate-finder';
 
-const cleanString = (str: string) => str?.replace(/\n/g, ' ').trim();
+const cleanString = (str: string) => str?.replaceAll('\n', ' ').trim();
 
 /**
  * This retrieves the bank accounts set by the user.
@@ -37,7 +37,7 @@ export function getBankAccounts(): Record<string, string> {
 
   const bankAccounts: Record<string, string> = {};
 
-  ibans?.forEach((iban, index) => {
+  for (const [index, iban] of ibans?.entries() ?? []) {
     const label = cleanString(accountNames?.[index]);
     const cleanIban = cleanString(iban);
 
@@ -45,7 +45,7 @@ export function getBankAccounts(): Record<string, string> {
       // this sets the label as the key and the iban as the value
       bankAccounts[label] = cleanIban;
     }
-  });
+  }
 
   return bankAccounts;
 }
@@ -271,7 +271,7 @@ export const executeFindDuplicates = () => {
   const duplicateThresholdInDays = Number(response.getResponseText());
   const duplicateThresholdMs = duplicateThresholdInDays * 24 * 60 * 60 * 1000;
 
-  if (isNaN(duplicateThresholdInDays)) {
+  if (Number.isNaN(duplicateThresholdInDays)) {
     ui.alert('Invalid input! Please enter a valid number of days (e.g. 7)');
     return;
   }
@@ -298,9 +298,9 @@ export const executeFindDuplicates = () => {
   duplicateSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
 
   // Copy duplicate rows
-  duplicateRows.forEach((row, i) => {
+  for (const [i, row] of duplicateRows.entries()) {
     duplicateSheet.getRange(i + 2, 1, 1, row.length).setValues([row]);
-  });
+  }
 
   SpreadsheetApp.getUi().alert(
     `Found ${duplicateRows.length / 2} duplicates! Rows have been copied to the "duplicate-rows" sheet`

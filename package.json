@@ -66,6 +66,7 @@
     "vitest": "^3.2.4"
   },
   "optionalDependencies": {
+    "@esbuild/darwin-x64": "^0.25.10",
     "@rollup/rollup-linux-x64-gnu": "^4.45.1",
     "@tailwindcss/oxide-linux-x64-gnu": "^4.1.11",
     "lightningcss-linux-x64-gnu": "^1.30.1"

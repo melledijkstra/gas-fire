@@ -7,73 +7,73 @@ import { vi } from 'vitest';
 // We utilise the mocking functions from vitest to mock all the functionality
 
 class Range {
-  static getLastRow = vi.fn(() => this);
-  static offset = vi.fn(() => this);
-  static getValues: Mock = vi.fn(() => []);
-  static getValue: Mock = vi.fn(() => '');
-  static setValue = vi.fn();
-  static setValues = vi.fn();
-  static autoFill = vi.fn();
+  static readonly getLastRow = vi.fn(() => this);
+  static readonly offset = vi.fn(() => this);
+  static readonly getValues: Mock = vi.fn(() => []);
+  static readonly getValue: Mock = vi.fn(() => '');
+  static readonly setValue = vi.fn();
+  static readonly setValues = vi.fn();
+  static readonly autoFill = vi.fn();
 }
 
 class Filter {
-  static setColumnFilterCriteria = vi.fn();
-  static remove = vi.fn();
+  static readonly setColumnFilterCriteria = vi.fn();
+  static readonly remove = vi.fn();
 }
 
 class Sheet {
-  static getSheetId = vi.fn();
-  static activate = vi.fn();
-  static showSheet = vi.fn();
-  static getFilter = vi.fn(() => Filter);
-  static getDataRange = vi.fn(() => Range);
-  static getRange = vi.fn(() => Range);
-  static clear = vi.fn();
-  static insertSheet = vi.fn();
-  static insertRowsBefore = vi.fn(() => Sheet);
+  static readonly getSheetId = vi.fn();
+  static readonly activate = vi.fn();
+  static readonly showSheet = vi.fn();
+  static readonly getFilter = vi.fn(() => Filter);
+  static readonly getDataRange = vi.fn(() => Range);
+  static readonly getRange = vi.fn(() => Range);
+  static readonly clear = vi.fn();
+  static readonly insertSheet = vi.fn();
+  static readonly insertRowsBefore = vi.fn(() => Sheet);
 }
 
 class Spreadsheet {
-  static getSheets = vi.fn(() => [Sheet]);
-  static getRangeByName = vi.fn(() => Range);
-  static getSheetByName = vi.fn(() => Sheet);
-  static insertSheet = vi.fn(() => Sheet);
-  static getSpreadsheetLocale = vi.fn(() => 'en-US');
-  static getOwner = vi.fn(() => ({
+  static readonly getSheets = vi.fn(() => [Sheet]);
+  static readonly getRangeByName = vi.fn(() => Range);
+  static readonly getSheetByName = vi.fn(() => Sheet);
+  static readonly insertSheet = vi.fn(() => Sheet);
+  static readonly getSpreadsheetLocale = vi.fn(() => 'en-US');
+  static readonly getOwner = vi.fn(() => ({
     getEmail: vi.fn(() => 'test@example.com'),
   }));
 }
 
 class UI {
-  static Button = {
+  static readonly Button = {
     YES: 'YES',
     NO: 'NO',
     OK: 'OK',
     CANCEL: 'CANCEL',
   };
-  static ButtonSet = {
+  static readonly ButtonSet = {
     YES_NO: 'YES_NO',
     OK_CANCEL: 'OK_CANCEL',
   };
-  static alert = vi.fn();
-  static prompt = vi.fn();
+  static readonly alert = vi.fn();
+  static readonly prompt = vi.fn();
 }
 
 class SpreadSheetApp {
-  static getActiveSpreadsheet = vi.fn(() => Spreadsheet);
-  static getUi = vi.fn(() => UI);
-  static newFilterCriteria = vi.fn(() => ({
+  static readonly getActiveSpreadsheet = vi.fn(() => Spreadsheet);
+  static readonly getUi = vi.fn(() => UI);
+  static readonly newFilterCriteria = vi.fn(() => ({
     setHiddenValues: vi.fn(() => ({
       build: vi.fn(),
     })),
   }));
-  static AutoFillSeries = {
+  static readonly AutoFillSeries = {
     DEFAULT_SERIES: 'DEFAULT_SERIES',
   };
 }
 
 class MailApp {
-  static sendEmail = vi.fn();
+  static readonly sendEmail = vi.fn();
 }
 
 vi.stubGlobal('SpreadsheetApp', SpreadSheetApp);
