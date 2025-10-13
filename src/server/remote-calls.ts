@@ -174,12 +174,12 @@ export function generatePreview(
   }
 
   const balanceColumnName = config?.getImportColumnNameByFireColumn('amount');
-  const balanceColumnIndex = table[0].findIndex(
-    (value) => value === balanceColumnName
-  );
-
-  if (balanceColumnIndex) {
-    amounts = table.map((row) => row[balanceColumnIndex]);
+  
+  if (balanceColumnName) {
+    const balanceColumnIndex = table[0].indexOf(balanceColumnName);
+    if (balanceColumnIndex !== -1) {
+      amounts = table.map((row) => row[balanceColumnIndex]);
+    }
   }
 
   const amountNumbers = amounts
