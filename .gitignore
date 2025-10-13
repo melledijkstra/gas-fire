@@ -21,3 +21,6 @@ certs/
 
 # storybook
 storybook-static/
+
+# generated faker transactions
+transactions/

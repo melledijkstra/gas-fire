@@ -43,8 +43,12 @@ export type Accounts = {
 };
 
 export type FireTransaction = {
+  // an ID for the transaction, can be anything as long as it is unique
   ref: string;
+  // the IBAN of this transaction, either receiving or executing the payment
+  // this is used to link it to an bank account
   iban: string;
+  // the date of the transaction in format: 11/09/2024 (DD/MM/YYYY)
   date: string;
   amount: number;
   balance: number | '';
