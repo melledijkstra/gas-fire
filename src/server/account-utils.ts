@@ -48,11 +48,11 @@ export class AccountUtils {
     }
 
     // slugify the account ids to make sure they are all in the same format
-    accounts.forEach((account) => {
+    for (const account of accounts) {
       const [id] = account;
       const slugifiedId = slugify(id);
       account[0] = slugifiedId;
-    });
+    }
 
     // convert the list to an object to easy work with it
     return listToObject(accounts);

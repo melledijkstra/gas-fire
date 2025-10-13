@@ -114,7 +114,7 @@ export class Transformers {
       }
 
       const date = format.parser(value);
-      if (date instanceof Date && !isNaN(date.getTime())) {
+      if (date instanceof Date && !Number.isNaN(date.getTime())) {
         return date;
       }
     }
