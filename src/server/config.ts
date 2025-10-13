@@ -3,7 +3,7 @@ import { Transformers } from './transformers';
 import type { Table } from '@/common/types';
 import type { Strategy } from './types';
 import { n26Cols, raboCols, openbankCols } from './types';
-import { AccountUtils } from './account-utils';
+import { AccountUtils } from './accounts/account-utils';
 
 // PENDING: Make this configurable by the user, what if they rename the sheets?
 export const SOURCE_SHEET_NAME = 'source';
