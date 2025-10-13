@@ -1,6 +1,6 @@
 import { AccountUtils } from './account-utils';
-import { getSheetById } from './globals';
-import { RangeMock, SheetMock } from '../../test-setup';
+import { getSheetById } from '../globals';
+import { RangeMock, SheetMock } from '../../../test-setup';
 import { SOURCE_SHEET_ID } from '@/common/constants';
 
 describe('Utility tests', () => {

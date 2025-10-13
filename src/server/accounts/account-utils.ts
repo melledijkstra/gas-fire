@@ -1,5 +1,5 @@
-import { FireSpreadsheet } from './globals';
-import { NAMED_RANGES } from '@/common/constants';
+import { FireSpreadsheet } from '../globals';
+import { NAMED_RANGES } from '../../common/constants';
 
 /**
  * Converts a list to an object
