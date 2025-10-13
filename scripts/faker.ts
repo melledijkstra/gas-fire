@@ -68,7 +68,7 @@ function generateAmount(): number {
   ]);
   const isExpense = multiplier === -1
   const isIncome = !isExpense;
-  return parseFloat(
+  return Number.parseFloat(
     faker.finance.amount({
       min: isIncome ? 100 : 0,
       max: isIncome ? 3000 : expenseAmountRange,
