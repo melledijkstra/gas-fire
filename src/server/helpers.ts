@@ -18,7 +18,7 @@ export const getCategoryNames = (): string[] => {
 };
 
 export const slugify = (text: string): string =>
-  text.replace(/(?:^\s+)|(?:\s+$)/g, '') // trim leading/trailing white space
+  text.trim() // trim leading/trailing white space
       .toLowerCase() // convert string to lowercase
       .replace(/[^a-z0-9 -]/g, '') // remove any non-alphanumeric characters
       .replace(/\s+/g, '-') // replace spaces with hyphens
