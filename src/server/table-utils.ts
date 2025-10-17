@@ -73,21 +73,28 @@ export class TableUtils {
    * @see https://github.com/ramda/ramda/blob/v0.27.0/source/transpose.js
    */
   static transpose<T>(outerlist: T[][]): T[][] {
-    let i = 0;
-    let result: T[][] = [];
-    while (i < outerlist.length) {
-      let innerlist = outerlist[i];
-      let j = 0;
-      while (j < innerlist.length) {
-        if (typeof result[j] === 'undefined') {
-          result[j] = [];
-        }
-        result[j].push(innerlist[j]);
-        j += 1;
-      }
-      i += 1;
+    const numRows = outerlist.length;
+    if (numRows === 0) {
+      return [];
     }
-    return result;
+
+    let maxCols = 0;
+    for (const row of outerlist) {
+      if (row && row.length > maxCols) {
+        maxCols = row.length;
+      }
+    }
+
+    const result: (T | undefined)[][] = [];
+
+    for (let j = 0; j < maxCols; j++) {
+      result[j] = [];
+      for (let i = 0; i < numRows; i++) {
+        result[j][i] = outerlist[i]?.[j];
+      }
+    }
+
+    return result as T[][];
   }
 
   static retrieveColumn(data: Table, columnIndex: number): string[] {
