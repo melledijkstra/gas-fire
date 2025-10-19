@@ -24,8 +24,6 @@ export const removeFilterCriteria = (
     }
   }
 
-  console.log(columnsWithCriteria.length)
-
   if (columnsWithCriteria.length === 0) {
     // no columns with criteria, nothing to do
     // return true because there are no criteria set
@@ -58,7 +56,7 @@ export const removeFilterCriteria = (
   return false;
 };
 
-export const activeSpreadsheet = (sheet?: GoogleAppsScript.Spreadsheet.Sheet) => {
+export const activateSpreadsheet = (sheet?: GoogleAppsScript.Spreadsheet.Sheet) => {
   sheet?.activate()
   sheet?.showSheet()
 }

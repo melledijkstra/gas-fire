@@ -13,7 +13,7 @@ import { detectCategoryByTextAnalysis } from './category-detection';
 import { findDuplicates } from './duplicate-finder';
 import { NAMED_RANGES } from '../common/constants';
 import { Logger } from '@/common/logger';
-import { activeSpreadsheet, removeFilterCriteria } from './utils/spreadsheet';
+import { activateSpreadsheet, removeFilterCriteria } from './utils/spreadsheet';
 import { cleanString } from './utils';
 
 /**
@@ -73,12 +73,16 @@ export function importCSV(
   inputTable: Table,
   bankAccount: string
 ): ServerResponse {
+  Logger.time('importCSV')
+
   const sourceSheet = getSourceSheet()
 
   // make the user visually switch to the primary sheet where data will be imported
-  activeSpreadsheet(sourceSheet)
+  activateSpreadsheet(sourceSheet)
 
   const accountConfig = Config.getAccountConfiguration(bankAccount)
+
+  Logger.log('account configuration used for import', accountConfig)
 
   if (!accountConfig) {
     throw new Error(
@@ -98,13 +102,16 @@ export function importCSV(
     }
   }
 
-  // retrieve import strategy for selected account
-  // const accountStrategy = accountConfig?.retrieveAccountImportStrategy();
-
   let result = structuredClone(inputTable)
-  
+
   // retrieve the header row and separate from the actual input data
-  const headerRow = result.shift() as string[] // cast because we know first header row exists
+  const headerRow = result.shift() // cast because we know first header row exists
+
+  if (!headerRow || headerRow.length === 0) {
+    const msg = 'No header row detected in import data!'
+    Logger.log(msg)
+    return { message: msg }
+  }
 
   //
   // BEFORE IMPORT RULES
@@ -114,12 +121,14 @@ export function importCSV(
   //
   // IMPORT RULES
   //
+  Logger.time('processInputDataAndShapeFiresheetStructure')
   result = processInputDataAndShapeFiresheetStructure({
     headers: headerRow,
     rows: result,
     config: accountConfig,
   })
   // ^^ result is now in the firesheet structure
+  Logger.timeEnd('processInputDataAndShapeFiresheetStructure')
 
   const dateColumn = TableUtils.getFireColumnIndexByName('date')
   if (dateColumn) {
@@ -128,7 +137,7 @@ export function importCSV(
   }
 
   if (result.length === 0) {
-    const msg = 'No rows to import, check your import data or rules!';
+    const msg = 'No rows to import, check your import data or configuration!';
     Logger.log(msg)
     return {
       message: msg,
@@ -136,7 +145,9 @@ export function importCSV(
   }
 
   // actual importing of the data into the sheet
+  Logger.time('TableUtils.importData')
   TableUtils.importData(result)
+  Logger.timeEnd('TableUtils.importData')
 
   const msg = `imported ${result.length} rows!`;
   Logger.log(msg)
@@ -149,8 +160,12 @@ export function importCSV(
   // apply any rules that need to be applied after the actual import
   // e.g. auto filling columns with formulas
   if (accountConfig.autoFillEnabled) {
+    Logger.time('TableUtils.autoFillColumns')
     TableUtils.autoFillColumns(result, accountConfig.autoFillColumnIndices)
+    Logger.timeEnd('TableUtils.autoFillColumns')
   }
+
+  Logger.timeEnd('importCSV')
 
   return {
     message: msg,
@@ -174,7 +189,7 @@ export function generatePreview(
   }
 
   const balanceColumnName = config?.getImportColumnNameByFireColumn('amount');
-  
+
   if (balanceColumnName) {
     const balanceColumnIndex = table[0].indexOf(balanceColumnName);
     if (balanceColumnIndex !== -1) {
@@ -309,9 +324,15 @@ export const mailNetWorth = () => {
   const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   const locale = spreadsheet.getSpreadsheetLocale().replace('_', '-');
   const userEmail = spreadsheet.getOwner().getEmail();
-  const netWorth = Number(
-    spreadsheet?.getRangeByName(NAMED_RANGES.netWorth)?.getValue()
-  );
+
+  const netWorthRange = spreadsheet.getRangeByName(NAMED_RANGES.netWorth)
+
+  if (!netWorthRange) {
+    console.error('No net worth named range found, can\'t send email!')
+    return
+  }
+
+  const netWorth = Number(netWorthRange.getValue());
   const currentMonth = new Date().toLocaleString(locale, { month: 'long' });
 
   const formattedNetWorth = netWorth.toLocaleString(locale, {

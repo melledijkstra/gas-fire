@@ -117,7 +117,17 @@ describe('Remote Calls', () => {
       const result = importCSV([], BANK_ID);
 
       expect(importDataSpy).not.toHaveBeenCalled();
-      expect(result.message).toBe('No rows to import, check your import data or rules!');
+      expect(result.message).toBe('No header row detected in import data!');
+    })
+
+    test('handles empty input data', () => {
+      const result = importCSV([
+        // first row is header row, meaning that there are actually no rows to actually import
+        ['header1', 'header2', 'header3', 'header4']
+      ], BANK_ID);
+
+      expect(importDataSpy).not.toHaveBeenCalled();
+      expect(result.message).toBe('No rows to import, check your import data or configuration!');
     })
 
     test('removes filters if any are set', () => {

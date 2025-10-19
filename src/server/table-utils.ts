@@ -21,27 +21,28 @@ const EMPTY = '';
 export function processInputDataAndShapeFiresheetStructure({
   headers,
   rows,
-  config
+  config,
 }: {
-  headers: string[]
-  rows: Table
-  config: Config
+  headers: string[];
+  rows: Table;
+  config: Config;
 }): Table {
   let output: Table = [];
   const rowCount = rows.length;
+  const cols = TableUtils.transpose(rows);
 
   function buildColumn<T>(
-    rows: Table,
     fireColumn: FireColumn,
     transformer?: (value: string) => T
   ): T[] {
     const columnIndex = config.getColumnIndex(fireColumn, headers);
-    const cols = TableUtils.transpose(rows); // try to transpose somewhere else
     if (typeof columnIndex === 'number' && cols[columnIndex] !== undefined) {
       return cols[columnIndex].map((val) =>
         transformer ? transformer(val) : (val as T)
       );
     } else {
+      // if the column is not found in the input data, we return an array of empty strings
+      // with the length of the rowCount to make sure the column still has an empty filled amount of rows
       return new Array(rowCount);
     }
   }
@@ -49,16 +50,16 @@ export function processInputDataAndShapeFiresheetStructure({
   // prettier-ignore
   const columnImportRules: FireColumnRules = {
     ref: null,
-    iban: (data) => new Array(data.length).fill(AccountUtils.getBankIban(config.getAccountId())),
-    date: (data) => buildColumn(data, 'date', Transformers.transformDate),
-    amount: (data) => buildColumn(data, 'amount', Transformers.transformMoney),
-    category: (data) => buildColumn(data, 'category'),
-    contra_account: (data) => buildColumn(data, 'contra_account'),
-    label: (data) => buildColumn(data, 'label'),
-    import_date: (data) => new Array(data.length).fill(new Date()),
-    description: (data) => buildColumn(data, 'description'),
-    contra_iban: (data) => buildColumn(data, 'contra_iban'),
-    currency: (data) => buildColumn(data, 'currency'),
+    iban: () => new Array(rowCount).fill(AccountUtils.getBankIban(config.getAccountId())),
+    date: () => buildColumn('date', Transformers.transformDate),
+    amount: () => buildColumn('amount', Transformers.transformMoney),
+    category: () => buildColumn('category'),
+    contra_account: () => buildColumn('contra_account'),
+    label: () => buildColumn('label'),
+    import_date: () => new Array(rowCount).fill(new Date()),
+    description: () => buildColumn('description'),
+    contra_iban: () => buildColumn('contra_iban'),
+    currency: () => buildColumn('currency'),
   }
 
   for (const columnName of FIRE_COLUMNS) {
@@ -74,10 +75,10 @@ export function processInputDataAndShapeFiresheetStructure({
 
     let column: any[];
     try {
-      column = colRule(rows);
+      column = colRule();
       column = TableUtils.ensureLength(column, rowCount);
     } catch (e) {
-      Logger.log(e);
+      console.error(e);
       column = new Array(rowCount);
     }
     output.push(column);
@@ -95,11 +96,19 @@ export class TableUtils {
     const sourceSheet = getSourceSheet()
     const rowCount = data.length;
     const colCount = data[0].length;
+
+    if (!sourceSheet) {
+      console.error("Error: The sourceSheet was not found. Cannot import data.");
+      return;
+    }
+
     Logger.log(`importing data (rows: ${rowCount}, cols: ${colCount})`);
+    Logger.time('importData (Apps Script API)')
     sourceSheet
-      ?.insertRowsBefore(2, rowCount)
+      .insertRowsBefore(2, rowCount)
       .getRange(2, 1, rowCount, colCount)
       .setValues(data as Table);
+    Logger.timeEnd('importData (Apps Script API)')
   }
 
   /**
