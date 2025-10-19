@@ -18,4 +18,16 @@ export class Logger {
   static reset(): void {
     this.isEnabled = import.meta.env.DEV;
   }
+
+  static time(label: string): void {
+    if (this.isEnabled) {
+      console.time(label)
+    }
+  }
+
+  static timeEnd(label: string) {
+    if (this.isEnabled) {
+      console.timeEnd(label)
+    }
+  }
 }

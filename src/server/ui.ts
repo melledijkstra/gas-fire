@@ -1,8 +1,8 @@
-import { DIALOG_SIZES } from '@/common/constants';
+import { DIALOG_SIZES, NAMED_RANGES } from '@/common/constants';
 import { debugImportSettings, executeAutomaticCategorization, executeFindDuplicates } from './remote-calls';
 
 export function onOpen(): void {
-  const isDebugEnabled: boolean = SpreadsheetApp.getActiveSpreadsheet().getRangeByName('DEBUG').getValue() ?? false;
+  const isDebugEnabled: boolean = SpreadsheetApp.getActiveSpreadsheet().getRangeByName(NAMED_RANGES.debug)?.getValue() ?? false;
   const ui = SpreadsheetApp.getUi();
   const menu = ui.createMenu('FIRE')
     .addItem('Upload Transactions (CSV)', openFileUploadDialog.name)
