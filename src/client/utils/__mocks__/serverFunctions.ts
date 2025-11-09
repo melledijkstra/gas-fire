@@ -12,6 +12,15 @@ import type * as publicServerFunctions from '@/server/index';
 
 type ServerFunctionsInterface = typeof publicServerFunctions;
 
+type Promisified<T> = {
+  [K in keyof T]: T[K] extends (...args: infer A) => infer R
+    ? (...args: A) => Promise<R>
+    : Promise<T[K]>;
+};
+
+type PromisifiedServerFunctionsInterface = Promisified<ServerFunctionsInterface>;
+
+
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const StrategyOptions = {
@@ -20,8 +29,8 @@ const StrategyOptions = {
   emerald_capital_partners: 'Emerald Capital Partners',
 }
 
-class ServerFunctions implements Partial<ServerFunctionsInterface> {
-  getBankAccounts(): Record<string, string> {
+class ServerFunctions implements PromisifiedServerFunctionsInterface {
+  async getBankAccounts(): Promise<Record<string, string>> {
     console.log('getBankAccounts mock called');
     return {
       n26: 'N26',
@@ -29,35 +38,28 @@ class ServerFunctions implements Partial<ServerFunctionsInterface> {
     };
   };
 
-  debugImportSettings() {
+  async debugImportSettings() {
     console.log('debugImportSettings mock called');
   }
 
-  importCSV(
+  async importCSV(
     _inputTable: Table,
     _importStrategy: string
-  ): ServerResponse {
-    console.log('importCSV mock called');
+  ): Promise<ServerResponse> {
+    console.log('importCSV mock called')
+    await sleep(5000)
     return {
       message: 'Successfully imported CSV',
     };
   };
 
-  calculateNewBalance(
-    _strategy: string,
-    _values: number[]
-  ): number {
-    console.log('calculateNewBalance mock called');
-    return 1000;
-  };
-
-  generatePreview(
+  async generatePreview(
     table: Table,
     _strategy: string
-  ): {
+  ): Promise<{
     result: Table;
     newBalance?: number;
-  } {
+  }> {
     console.log('generatePreview mock called');
     return {
       result: table,
@@ -65,58 +67,54 @@ class ServerFunctions implements Partial<ServerFunctionsInterface> {
     };
   };
 
-  getStrategyOptions = fn(async () => {
-    await sleep(1000);
-    return StrategyOptions;
-  });
-
-  executeAutomaticCategorization(): void {
+  async executeAutomaticCategorization(): Promise<void> {
     console.log('executeAutomaticCategorization mock called');
   };
 
-  mailNetWorth(): void {
+  async mailNetWorth(): Promise<void> {
     console.log('mailNetWorth mock called');
   };
 
-  onOpen(): void {
+  async onOpen(): Promise<void> {
     console.log('onOpen mock called');
   };
 
-  openFileUploadDialog(): void {
+  async openFileUploadDialog(): Promise<void> {
     console.log('openFileUploadDialog mock called');
   };
 
-  openAboutDialog(): void {
+  async openAboutDialog(): Promise<void> {
     console.log('openAboutDialog mock called');
   };
 
-  openSettingsDialog(): void {
+  async openSettingsDialog(): Promise<void> {
     console.log('openSettingsDialog mock called');
   };
 
-  MD5(_value: string): string {
+  async MD5(_value: string): Promise<string> {
     console.log('MD5 mock called');
     return 'mocked-md5';
   };
 
-  GET_PROJECT_VERSION(): string {
+  async GET_PROJECT_VERSION(): Promise<string> {
     console.log('GET_PROJECT_VERSION mock called');
     return 'mocked-version';
   };
 
-  executeFindDuplicates(): void {
+  async executeFindDuplicates(): Promise<void> {
     console.log('executeFindDuplicates mock called');
   };
 
-  getBankAccountOptions(): StrategyOptions {
+  async getBankAccountOptions(): Promise<StrategyOptions> {
     console.log('getBankAccountOptions mock called');
     return StrategyOptions;
   };
-  
-  getBankAccountOptionsCached() {
+
+  getBankAccountOptionsCached = fn(async (): Promise<StrategyOptions> => {
+    await sleep(1000);
     console.log('getBankAccountOptionsCached mock called');
-    return {};
-  };
+    return StrategyOptions;
+  });
 }
 
 export const serverFunctions = new ServerFunctions();
