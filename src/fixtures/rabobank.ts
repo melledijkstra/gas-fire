@@ -1,4 +1,4 @@
-import { Table } from '@/common/types';
+import type { Table } from '@/common/types';
 
 // Iban, Munt, BIC, Volgnr, Datum, RenteDatum, Bedrag, Saldo, Tegenrekening, NaamTegenpartij, NaamUiteindelijkePartij, NaamInitierendePartij, BICTegenpartij, Code, BatchID, TransactieReferentie, MachtigingsKenmerk, IncassantID, BetalingsKenmerk, Omschrijving1, Omschrijving2, Omschrijving3
 // prettier-ignore

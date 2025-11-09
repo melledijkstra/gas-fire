@@ -7,7 +7,7 @@
   "type": "module",
   "private": true,
   "engines": {
-    "node": "20"
+    "node": "24"
   },
   "scripts": {
     "prepare": "husky",
@@ -37,14 +37,9 @@
   "devDependencies": {
     "@faker-js/faker": "^9.9.0",
     "@google/clasp": "^2.5.0",
-    "@storybook/addon-essentials": "^8.6.14",
-    "@storybook/addon-interactions": "^8.6.14",
-    "@storybook/addon-links": "^8.6.12",
-    "@storybook/addon-svelte-csf": "^5.0.0-next.28",
-    "@storybook/blocks": "^8.6.14",
-    "@storybook/svelte-vite": "^8.6.14",
-    "@storybook/test": "^8.6.14",
-    "@storybook/types": "^8.6.14",
+    "@storybook/addon-links": "^10.0.6",
+    "@storybook/addon-svelte-csf": "^5.0.10",
+    "@storybook/svelte-vite": "^10.0.6",
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
     "@tailwindcss/postcss": "^4.1.14",
     "@tailwindcss/vite": "^4.1.14",
@@ -61,13 +56,14 @@
     "gas-types-detailed": "^1.1.2",
     "knip": "^5.47.0",
     "husky": "^9.1.7",
-    "storybook": "^8.6.6",
+    "storybook": "^10.0.6",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3",
     "vite": "^6.3.5",
     "vite-plugin-singlefile": "^2.3.0",
     "vite-plugin-static-copy": "^3.1.1",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "@storybook/addon-docs": "^10.0.6"
   },
   "optionalDependencies": {
     "@esbuild/darwin-x64": "^0.25.10",
