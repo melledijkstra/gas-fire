@@ -1,6 +1,6 @@
 {
   "name": "gas-fire",
-  "version": "4.0.0-beta.5",
+  "version": "4.0.0-beta.6",
   "author": "Melle Dijkstra",
   "description": "Google App Script utilities to automate the FIRE google sheet",
   "license": "MIT",
