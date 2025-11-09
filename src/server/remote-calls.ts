@@ -252,7 +252,7 @@ export const mailNetWorth = () => {
     currency: 'EUR',
   });
 
-  if (userEmail && netWorth && !isNaN(netWorth)) {
+  if (userEmail && !isNaN(netWorth)) {
     MailApp.sendEmail({
       to: userEmail,
       subject: `Your Net Worth (Monthly Update: ${currentMonth})`,
