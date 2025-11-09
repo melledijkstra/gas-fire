@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { StrategyOptions } from '@/common/types';
   import type { ServerResponse, Table } from '@/common/types';
-  import { Button, Fileupload, Helper, Label, Select } from 'flowbite-svelte';
+  import { Button, Fileupload, Helper, Label, Select, Spinner } from 'flowbite-svelte';
   import { serverFunctions } from '@/client/utils/serverFunctions';
   import {
     acceptedMimeTypes,
@@ -13,6 +13,7 @@
   import { onMount } from 'svelte';
   import { appState } from '../states/app.svelte';
 
+  let isImporting = $state(false)
   let strategyOptions = $state<StrategyOptions>();
   let selectOptions = $derived.by(() =>
     Object.keys(strategyOptions ?? {})?.map((key) => {
@@ -28,10 +29,12 @@
   const onFailure = (error: ServerResponse) => alert(`Action failed! ${error}`);
 
   const submitDataToServer = (data: Table, importStrategy: string) => {
+    isImporting = true;
     serverFunctions
       .importCSV(data, importStrategy)
       .then(() => google.script.host.close())
-      .catch(onFailure);
+      .catch(onFailure)
+      .finally(() => isImporting = false);
   };
 
   const onParseError = (error: ServerResponse) => {
@@ -111,6 +114,12 @@
         />
       </div>
     </div>
-    <Button type="submit" disabled={!canSubmit}>IMPORT</Button>
+    <Button type="submit" disabled={!canSubmit}>
+      {#if isImporting}
+        <Spinner></Spinner>
+      {:else}
+        IMPORT
+      {/if}
+    </Button>
   </div>
 </form>
