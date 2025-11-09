@@ -16,6 +16,7 @@
     "isolatedModules": true,
     "strictNullChecks": true,
     "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
     "skipLibCheck": true,
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "types": ["gas-types-detailed", "vitest/globals", "vite/client"],

@@ -145,6 +145,11 @@ export function generatePreview(
  */
 export function getStrategyOptions(): StrategyOptions {
   const accountNames = FireSpreadsheet.getRangeByName(NAMED_RANGES.accountNames);
+
+  if (!accountNames) {
+    return {}
+  }
+
   const accounts = accountNames
     .getValues()
     // make sure not to include empty rows
@@ -238,7 +243,7 @@ export const mailNetWorth = () => {
   const locale = spreadsheet.getSpreadsheetLocale().replace('_', '-');
   const userEmail = spreadsheet.getOwner().getEmail();
   const netWorth = Number(
-    spreadsheet.getRangeByName(NAMED_RANGES.netWorth).getValue()
+    spreadsheet?.getRangeByName(NAMED_RANGES.netWorth)?.getValue()
   );
   const currentMonth = new Date().toLocaleString(locale, { month: 'long' });
 
@@ -247,7 +252,7 @@ export const mailNetWorth = () => {
     currency: 'EUR',
   });
 
-  if (userEmail && netWorth) {
+  if (userEmail && !isNaN(netWorth)) {
     MailApp.sendEmail({
       to: userEmail,
       subject: `Your Net Worth (Monthly Update: ${currentMonth})`,

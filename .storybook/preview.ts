@@ -1,15 +1,18 @@
 import type { Preview } from '@storybook/svelte';
-import { ServerMockDecorator } from './__mocks__/server-mock';
+import { sb } from 'storybook/test'
+import '@/client/app.css';
+
+sb.mock(import('../src/client/utils/serverFunctions.ts'))
 
 const preview: Preview = {
   parameters: {
     backgrounds: {
-      values: [
-        {
+      options: {
+        dialog: {
           name: 'dialog',
           value: 'rgba(0, 0, 0, 0.6)',
-        },
-      ],
+        }
+      },
     },
     layout: 'centered',
     controls: {
@@ -19,8 +22,6 @@ const preview: Preview = {
       },
     },
   },
-  decorators: [ServerMockDecorator],
-  tags: ['autodocs'],
 };
 
 export default preview;
