@@ -18,6 +18,11 @@ updates:
         patterns:
           - "storybook"
           - "@storybook/*"
+      svelte:
+        patterns:
+          - "svelte"
+          - "svelte*"
+          - "@sveltejs/*"
       vite:
         patterns:
           - "vite"
