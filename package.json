@@ -35,7 +35,7 @@
     "tailwindcss": "^4.1.17"
   },
   "devDependencies": {
-    "@faker-js/faker": "^9.9.0",
+    "@faker-js/faker": "^10.1.0",
     "@google/clasp": "^2.5.0",
     "@storybook/addon-links": "^10.0.6",
     "@storybook/addon-svelte-csf": "^5.0.10",
