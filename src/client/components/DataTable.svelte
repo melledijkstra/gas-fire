@@ -48,11 +48,11 @@
       <TableHeadCell class="py-2 px-1">{header}</TableHeadCell>
     {/each}
   </TableHead>
-  <TableBody tableBodyClass="divide-y">
+  <TableBody class="divide-y">
     {#each rows as row, rowIndex}
-      <TableBodyRow> <!-- selected={selectable && isRowSelected(rowIndex + 1)}> -->
+      <TableBodyRow>
         {#if selectable}
-          <TableBodyCell tdClass="py-2 px-1 text-xs text-center">
+          <TableBodyCell class="py-2 px-1 text-xs text-center">
             <input
               type="checkbox"
               checked={isRowSelected(rowIndex + 1)}
@@ -61,7 +61,7 @@
           </TableBodyCell>
         {/if}
         {#each row as cell}
-          <TableBodyCell tdClass="py-2 px-1 text-xs">{cell}</TableBodyCell>
+          <TableBodyCell class="py-2 px-1 text-xs">{cell}</TableBodyCell>
         {/each}
       </TableBodyRow>
     {/each}

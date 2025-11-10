@@ -20,7 +20,7 @@
     {appState.statusText}
   </p>
 
-  <Tabs tabStyle="underline" contentClass="p-0">
+  <Tabs tabStyle="underline" classes={{ content: "p-0 m-0" }}>
     <TabItem open id="raw-input-table" title="Raw Data">
       {#if importState.importData}
         {@render rawTable(importState.importData)}
