@@ -45,7 +45,7 @@
     "@tailwindcss/vite": "^4.1.17",
     "@types/google-apps-script": "^1.0.99",
     "@types/node": "^24.0.15",
-    "@types/papaparse": "^5.3.16",
+    "@types/papaparse": "^5.5.0",
     "@vitest/coverage-v8": "^4.0.8",
     "css-loader": "^7.1.2",
     "dotenv": "^17.2.0",
