@@ -11,6 +11,7 @@ import type { OutputAsset, RollupOutput } from 'rollup';
 import { resolve } from 'path';
 import { existsSync, readFileSync } from 'fs';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
+import tailwind from '@tailwindcss/vite';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { viteSingleFile } from 'vite-plugin-singlefile';
 import { writeFile } from 'fs/promises';
@@ -70,7 +71,7 @@ if (existsSync(keyPath) && existsSync(certPath)) {
 
 const clientServeConfig: UserConfig = {
   ...sharedConfig,
-  plugins: [svelte()],
+  plugins: [tailwind(), svelte()],
   server: devServerOptions,
   root: clientRoot,
 };
@@ -78,7 +79,7 @@ const clientServeConfig: UserConfig = {
 const clientBuildConfig = ({ filename, template }: DialogEntry) =>
   defineConfig({
     ...sharedConfig,
-    plugins: [svelte(), viteSingleFile({ useRecommendedBuildConfig: true })],
+    plugins: [tailwind(), svelte(), viteSingleFile({ useRecommendedBuildConfig: true })],
     root: resolve(__dirname, clientRoot, filename),
     build: {
       sourcemap: false,
@@ -93,14 +94,18 @@ const clientBuildConfig = ({ filename, template }: DialogEntry) =>
   });
 
 const serverBuildOptions: BuildOptions = {
+  // this is to make sure the v8 engine of the GAS environment can run the code
+  // Note: it is not confirmed this is the latest target supported by GAS
+  // they are very vague about the exact version
+  target: 'es2019',
   emptyOutDir: true,
-  minify: false, // needed to work with footer
   lib: {
     entry: resolve(__dirname, serverEntry),
     fileName: 'server',
     name: 'globalThis',
     formats: ['iife'],
   },
+  minify: false, // needed to work with footer
   rollupOptions: {
     output: {
       entryFileNames: 'server.js',
@@ -172,6 +177,7 @@ const buildConfig = defineConfig(({ mode }) => {
     ],
     build: serverBuildOptions,
     esbuild: {
+      target: serverBuildOptions.target || 'es2019',
       keepNames: true,
     },
   };
