@@ -1,5 +1,3 @@
-import type { Table } from '@/common/types';
-
 /**
  * A column function returns the values for that column
  * it can generate the column based on the data in the CSV
