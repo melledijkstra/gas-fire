@@ -46,7 +46,6 @@
     "@types/node": "^24.0.15",
     "@types/papaparse": "^5.5.0",
     "@vitest/coverage-v8": "^4.0.8",
-    "css-loader": "^7.1.2",
     "dotenv": "^17.2.0",
     "flowbite": "^3.1.2",
     "flowbite-svelte": "^1.26.0",
