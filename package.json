@@ -27,7 +27,7 @@
     "build-storybook": "storybook build",
     "setup:https": "mkdir certs && mkcert -key-file ./certs/key.pem -cert-file ./certs/cert.pem localhost 127.0.0.1",
     "switch-env": "tsx ./scripts/switch-env.ts",
-    "faker": "tsx ./scripts/faker.ts",
+    "faker": "tsx ./scripts/faker/faker.ts",
     "knip": "knip"
   },
   "dependencies": {

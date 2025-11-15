@@ -1,14 +1,23 @@
-import type { Accounts, FireTransaction } from '../src/common/types';
+import type { Accounts, FireTransaction, Table } from '../../src/common/types';
 import { faker } from '@faker-js/faker';
 import fs from 'fs';
+import { convertFireTransactionToBankDefinition } from './commonwealth-bank';
+
+const fakeBankAccountsConfig: Accounts = {
+  'Commonwealth Bank': 'US1234567890',
+  'Barklays': 'GB13BUKB60161331926819',
+  'Zantander': 'ES7921000813610123456789',
+  'Revolet': 'RS123456789013487',
+  TestBank: 'TEST123456789'
+} as const;
+
+type TransactionTransformer = (transaction: FireTransaction) => Record<string, unknown>;
+
+const bankTransformersMap: Record<string, TransactionTransformer> = {
+  'Commonwealth Bank': convertFireTransactionToBankDefinition
+}
 
 const outDir = 'transactions/'
-
-const fakeBankAccounts: Accounts = {
-  'Bank of America': 'US1234567890',
-  Commerzbank: 'DE89370400440532013000',
-  ING: 'NL01INGB1234567890',
-} as const;
 
 const categories = [
   '',
@@ -77,14 +86,6 @@ function generateAmount(): number {
   ) * multiplier;
 }
 
-function createBankAccounts(amount = 3): Record<string, string> {
-  const accounts = {};
-  for (let i = 0; i < amount; i++) {
-    accounts[faker.company.name()] = faker.finance.iban();
-  }
-  return accounts;
-}
-
 function createTransaction(
   overrides?: Partial<FireTransaction>
 ): FireTransaction {
@@ -109,6 +110,22 @@ function createTransaction(
     currency: faker.finance.currencyCode(),
     ...overrides,
   };
+}
+
+function jsonToTable(input: Record<string, unknown>[]): Table {
+  const output: Table = [];
+
+  const headers = Object.keys(input[0]);
+  const rows = input.slice(1);
+
+  // Add headers as the first row
+  output.push(headers);
+  // Add rows as the subsequent rows
+  for (const row of rows) {
+    output.push(Object.values(row as unknown as string[]));
+  }
+
+  return output;
 }
 
 type GenerateOptions = {
@@ -169,15 +186,21 @@ function generateYearlyTransactions({
   return transactions;
 }
 
-function transactionsToCsv(
-  transactions: FireTransaction[],
+function tableToCSV(
+  transactions: Table,
   delimiter = ';'
 ): string {
-  const header = Object.keys(transactions[0]).join(delimiter);
-  const rows = transactions.map((transaction) =>
-    Object.values(transaction).join(delimiter)
+  const header = transactions[0].join(delimiter);
+  const rows = transactions.slice(1).map((transaction) =>
+    transaction.join(delimiter)
   );
   return [header, ...rows].join('\n');
+}
+
+const generationSettings = {
+  // Whether to convert transactions to bank-specific format
+  // otherwise keep them in the generic FireTransaction format
+  convertTransactions: true
 }
 
 if (import.meta.url.endsWith(process.argv[1])) {
@@ -187,25 +210,47 @@ if (import.meta.url.endsWith(process.argv[1])) {
     fs.mkdirSync(outDir);
   }
 
-  const transactions: Array<FireTransaction> = [];
-
-  for (const [name, iban] of Object.entries(fakeBankAccounts)) {
+  
+  for (const [name, iban] of Object.entries(fakeBankAccountsConfig)) {
     console.log(`generating transactions for "${name}" (${iban})`)
-    const bankTransactions = generateYearlyTransactions({
-      years: 5,
-      overrides: { iban },
-      // receive income on the ING bank account only
-      generateIncome: name === 'ING'
-    })
-    transactions.push(...bankTransactions)
-    // const csvData = transactionsToCsv(bankTransactions)
-    // const fileName = `${name.toLowerCase().replaceAll(' ', '_')}.csv`
-    // const filePath = `${outDir}/${fileName}`
-    // console.log(`Writing transactions to file 📝 (${fileName})`);
+    
+    try {
+      const transactions: Record<string, unknown>[] = [];
+
+      const bankTransactions = generateYearlyTransactions({
+        years: 5,
+        overrides: { iban },
+        // receive income only on one bank account
+        generateIncome: name === 'Zantander'
+      })
+  
+      if (generationSettings.convertTransactions) {
+        const bankTransformer = bankTransformersMap[name]
+        if (!bankTransformer) {
+          throw new Error(`No transformer found for bank "${name}"`)
+        }
+        const convertedTransactions = bankTransactions.map(bankTransformer)
+        transactions.push(...convertedTransactions)
+      } else {
+        transactions.push(...bankTransactions)
+      }
+      
+      const tableData = jsonToTable(transactions);
+      const csvData = tableToCSV(tableData);
+      const fileName = `${name.toLowerCase().replaceAll(' ', '_')}.csv`
+      const filePath = `${outDir}/${fileName}`
+  
+      console.log(`Writing transactions to file 📝 (${fileName})`);
+      fs.writeFileSync(filePath, csvData);
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(`⛔️ Error generating transactions for "${name}":`, error.message);
+      }
+    }
   }
 
-  const csvData = transactionsToCsv(transactions)
-  fs.writeFileSync('transactions.csv', csvData)
+  // const csvData = transactionsToCsv(transactions)
+  // fs.writeFileSync('transactions.csv', csvData)
 
   console.log('Done 🎉');
 }
