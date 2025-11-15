@@ -7,7 +7,7 @@
     acceptedMimeTypes,
     excludeRowsFromData,
     isAllowedFile
-  } from '../utils/importing';
+  } from '../utils/importing'; 
   import Papa from 'papaparse';
   import { importState } from '@/client/states/import.svelte';
   import { onMount } from 'svelte';
@@ -23,6 +23,7 @@
       };
     })
   );
+
   let importFile = $state<File>();
   let canSubmit = $derived(importFile && importState.strategy);
 
