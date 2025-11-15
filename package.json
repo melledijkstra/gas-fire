@@ -65,12 +65,6 @@
     "vitest": "^4.0.8",
     "@storybook/addon-docs": "^10.0.6"
   },
-  "optionalDependencies": {
-    "@esbuild/darwin-x64": "^0.27.0",
-    "@rollup/rollup-linux-x64-gnu": "^4.53.2",
-    "@tailwindcss/oxide-linux-x64-gnu": "^4.1.11",
-    "lightningcss-linux-x64-gnu": "^1.30.1"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/melledijkstra/gas-fire.git"
