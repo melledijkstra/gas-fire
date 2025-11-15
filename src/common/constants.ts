@@ -8,6 +8,7 @@ export enum NAMED_RANGES {
   netWorth = 'netWorth',
   accounts = 'accounts',
   accountNames = 'accountNames',
+  debug = 'DEBUG'
 }
 
 export const DIALOG_SIZES: Record<keyof typeof DialogType, [number, number]> = {

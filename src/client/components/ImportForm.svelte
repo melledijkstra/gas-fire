@@ -1,18 +1,19 @@
 <script lang="ts">
   import type { StrategyOptions } from '@/common/types';
   import type { ServerResponse, Table } from '@/common/types';
-  import { Button, Fileupload, Helper, Label, Select } from 'flowbite-svelte';
+  import { Button, Fileupload, Helper, Label, Select, Spinner } from 'flowbite-svelte';
   import { serverFunctions } from '@/client/utils/serverFunctions';
   import {
     acceptedMimeTypes,
     excludeRowsFromData,
     isAllowedFile
-  } from '../utils/importing';
+  } from '../utils/importing'; 
   import Papa from 'papaparse';
   import { importState } from '@/client/states/import.svelte';
   import { onMount } from 'svelte';
   import { appState } from '../states/app.svelte';
 
+  let isImporting = $state(false)
   let strategyOptions = $state<StrategyOptions>();
   let selectOptions = $derived.by(() =>
     Object.keys(strategyOptions ?? {})?.map((key) => {
@@ -22,16 +23,19 @@
       };
     })
   );
+
   let importFile = $state<File>();
   let canSubmit = $derived(importFile && importState.strategy);
 
   const onFailure = (error: ServerResponse) => alert(`Action failed! ${error}`);
 
   const submitDataToServer = (data: Table, importStrategy: string) => {
+    isImporting = true;
     serverFunctions
-      .processCSV(data, importStrategy)
+      .importCSV(data, importStrategy)
       .then(() => google.script.host.close())
-      .catch(onFailure);
+      .catch(onFailure)
+      .finally(() => isImporting = false);
   };
 
   const onParseError = (error: ServerResponse) => {
@@ -64,7 +68,7 @@
   onMount(async () => {
     // retrieve import strategy options when mounted
     serverFunctions
-      .getStrategyOptions()
+      .getBankAccountOptionsCached()
       .then((serverStrategyOptions) => {
         strategyOptions = serverStrategyOptions;
       })
@@ -111,6 +115,12 @@
         />
       </div>
     </div>
-    <Button type="submit" disabled={!canSubmit}>IMPORT</Button>
+    <Button type="submit" disabled={!canSubmit}>
+      {#if isImporting}
+        <Spinner></Spinner>
+      {:else}
+        IMPORT
+      {/if}
+    </Button>
   </div>
 </form>

@@ -1,13 +1,13 @@
 <script module lang="ts">
   import { defineMeta } from '@storybook/addon-svelte-csf';
   import DataTable from '../client/components/DataTable.svelte';
-  import { n26ImportMock } from '@/fixtures/n26';
+  import { N26ImportMock } from '@/fixtures/n26';
   
   const { Story } = defineMeta({
     title: 'Components/DataTable',
     component: DataTable,
     args: {
-      table: n26ImportMock,
+      table: N26ImportMock,
     },
   });
 </script>

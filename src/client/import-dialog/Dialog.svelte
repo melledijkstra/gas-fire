@@ -1,5 +1,4 @@
 <script lang="ts">
-  import type { Table } from '@/common/types';
   import { Tabs, TabItem } from 'flowbite-svelte';
   import Application from '../Application.svelte';
   import ImportForm from '../components/ImportForm.svelte';
@@ -8,10 +7,6 @@
   import DataTable from '../components/DataTable.svelte';
   import PreviewTable from '../components/PreviewTable.svelte';
 </script>
-
-{#snippet rawTable(importData: Table)}
-  <DataTable table={importData} options={{ selectable: true }} />
-{/snippet}
 
 <Application>
   <ImportForm />
@@ -23,7 +18,7 @@
   <Tabs tabStyle="underline" classes={{ content: "p-0 m-0" }}>
     <TabItem open id="raw-input-table" title="Raw Data">
       {#if importState.importData}
-        {@render rawTable(importState.importData)}
+        <DataTable table={importState.importData} options={{ selectable: true }} />
       {/if}
     </TabItem>
     <TabItem title="Import Preview">

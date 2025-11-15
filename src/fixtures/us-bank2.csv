@@ -1,0 +1,5 @@
+"Transaction Date","Posted Date","Card No.","Description","Category","MCC","Amount"
+"2025-10-27","2025-10-28","...1234","Amazon Prime Video",Services,5815,"$9.99"
+"2025-10-27","2025-10-28","...1234","CARREFOUR EXPRESS M-021",Groceries,5411,"$105.40"
+"2025-10-26","2025-10-27","...1234","Payment Received - Thank You",Payment,,"$-1500.00"
+"2025-10-25","2025-10-26","...1234","New York MTA Subway Station",Travel/Transport,4112,"$4.20"

@@ -7,18 +7,21 @@ import { vi } from 'vitest';
 // We utilise the mocking functions from vitest to mock all the functionality
 
 class Range {
-  static readonly getLastRow = vi.fn(() => this);
-  static readonly offset = vi.fn(() => this);
+  static readonly getLastRow = vi.fn(() => this).bind(this);
+  static readonly offset = vi.fn(() => this).bind(this);
   static readonly getValues: Mock = vi.fn(() => []);
   static readonly getValue: Mock = vi.fn(() => '');
   static readonly setValue = vi.fn();
   static readonly setValues = vi.fn();
   static readonly autoFill = vi.fn();
+  static readonly getNumColumns = vi.fn();
+  static readonly getColumn = vi.fn();
 }
 
 class Filter {
   static readonly setColumnFilterCriteria = vi.fn();
   static readonly remove = vi.fn();
+  static readonly getRange = vi.fn(() => Range);
 }
 
 class Sheet {
@@ -31,6 +34,8 @@ class Sheet {
   static readonly clear = vi.fn();
   static readonly insertSheet = vi.fn();
   static readonly insertRowsBefore = vi.fn(() => Sheet);
+  static readonly getSheetValues = vi.fn<() => unknown[]>(() => []);
+  static readonly getLastRow = vi.fn();
 }
 
 class Spreadsheet {
@@ -50,11 +55,11 @@ class UI {
     NO: 'NO',
     OK: 'OK',
     CANCEL: 'CANCEL',
-  };
+  } as const;
   static readonly ButtonSet = {
     YES_NO: 'YES_NO',
     OK_CANCEL: 'OK_CANCEL',
-  };
+  } as const;
   static readonly alert = vi.fn();
   static readonly prompt = vi.fn();
 }
@@ -69,21 +74,30 @@ class SpreadSheetApp {
   }));
   static readonly AutoFillSeries = {
     DEFAULT_SERIES: 'DEFAULT_SERIES',
-  };
+  } as const;
 }
 
 class MailApp {
   static readonly sendEmail = vi.fn();
 }
 
-vi.stubGlobal('SpreadsheetApp', SpreadSheetApp);
-vi.stubGlobal('Spreadsheet', Spreadsheet);
-vi.stubGlobal('UI', UI);
-vi.stubGlobal('MailApp', MailApp);
+class CacheService {
+  static readonly getDocumentCache = vi.fn(() => ({
+    get: vi.fn(),
+    put: vi.fn()
+  }))
+}
 
-export const RangeMock = vi.mocked(Range);
-export const SheetMock = vi.mocked(Sheet);
 export const SpreadsheetMock = vi.mocked(Spreadsheet);
 export const UIMock = vi.mocked(UI);
 export const MailAppMock = vi.mocked(MailApp);
 export const FilterMock = vi.mocked(Filter);
+export const RangeMock = vi.mocked(Range);
+export const CacheServiceMock = vi.mocked(CacheService);
+export const SheetMock = vi.mocked(Sheet);
+
+vi.stubGlobal('SpreadsheetApp', SpreadSheetApp);
+vi.stubGlobal('Spreadsheet', Spreadsheet);
+vi.stubGlobal('UI', UI);
+vi.stubGlobal('MailApp', MailApp);
+vi.stubGlobal('CacheService', CacheService);
