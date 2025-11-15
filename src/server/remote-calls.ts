@@ -76,10 +76,6 @@ export function importCSV(
   Logger.time('importCSV')
 
   const sourceSheet = getSourceSheet()
-
-  // make the user visually switch to the primary sheet where data will be imported
-  activateSpreadsheet(sourceSheet)
-
   const accountConfig = Config.getAccountConfiguration(bankAccount)
 
   Logger.log('account configuration used for import', accountConfig)
@@ -89,6 +85,9 @@ export function importCSV(
       `Bank with identifier "${bankAccount}" does not have valid configuration!`
     )
   }
+
+  // make the user visually switch to the primary sheet where data will be imported
+  activateSpreadsheet(sourceSheet)
 
   // remove any filters that might be set
   // importing might go wrong when filters are set
@@ -121,14 +120,12 @@ export function importCSV(
   //
   // IMPORT RULES
   //
-  Logger.time('processInputDataAndShapeFiresheetStructure')
   result = processInputDataAndShapeFiresheetStructure({
     headers: headerRow,
     rows: result,
     config: accountConfig,
   })
   // ^^ result is now in the firesheet structure
-  Logger.timeEnd('processInputDataAndShapeFiresheetStructure')
 
   const dateColumn = TableUtils.getFireColumnIndexByName('date')
   if (dateColumn) {

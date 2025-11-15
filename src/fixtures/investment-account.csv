@@ -1,0 +1,4 @@
+Trade Date,Settlement Date,Action,Symbol,Description,Quantity,Price,Commission,Net Amount
+2025-10-25,2025-10-27,BUY,MSFT,"MICROSOFT CORP",10,350.00,-9.99,-3509.99
+2025-10-22,2025-10-22,DIV,"AAPL","APPLE INC",50,0.25,,12.50
+2025-10-21,2025-10-23,SELL,TSLA,"TESLA INC",5,200.00,-9.99,990.01

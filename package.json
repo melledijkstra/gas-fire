@@ -25,6 +25,7 @@
     "analyze:client": "echo 'not implemented yet'",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
+    "setup:https": "mkdir certs && mkcert -key-file ./certs/key.pem -cert-file ./certs/cert.pem localhost 127.0.0.1",
     "switch-env": "tsx ./scripts/switch-env.ts",
     "faker": "tsx ./scripts/faker.ts",
     "knip": "knip"
@@ -36,7 +37,7 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^10.1.0",
-    "@google/clasp": "^2.5.0",
+    "@google/clasp": "^3.1.1",
     "@storybook/addon-links": "^10.0.6",
     "@storybook/addon-svelte-csf": "^5.0.10",
     "@storybook/svelte-vite": "^10.0.6",

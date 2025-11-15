@@ -93,22 +93,77 @@ export class TableUtils {
    * @param {Table} data the data to be imported into the source sheet
    */
   static importData(data: Table) {
-    const sourceSheet = getSourceSheet()
+    const sourceSheet = getSourceSheet();
     const rowCount = data.length;
-    const colCount = data[0].length;
 
     if (!sourceSheet) {
-      console.error("Error: The sourceSheet was not found. Cannot import data.");
+      console.error('Error: The sourceSheet was not found. Cannot import data.');
       return;
     }
 
+    if (rowCount === 0) {
+      Logger.log('No data to import.');
+      return;
+    }
+
+    const colCount = data[0].length;
     Logger.log(`importing data (rows: ${rowCount}, cols: ${colCount})`);
-    Logger.time('importData (Apps Script API)')
-    sourceSheet
-      .insertRowsBefore(2, rowCount)
-      .getRange(2, 1, rowCount, colCount)
-      .setValues(data as Table);
-    Logger.timeEnd('importData (Apps Script API)')
+
+    try {
+      if (typeof Sheets !== 'undefined' && Sheets.Spreadsheets) {
+        Logger.time('importData (Sheets API)');
+        const spreadsheetId = sourceSheet.getParent().getId();
+        const sheetId = sourceSheet.getSheetId();
+
+        const requests: GoogleAppsScript.Sheets.Schema.Request[] = [
+          {
+            insertDimension: {
+              range: {
+                sheetId,
+                dimension: 'ROWS',
+                startIndex: 1,
+                endIndex: 1 + rowCount,
+              },
+              inheritFromBefore: false,
+            },
+          },
+          {
+            updateCells: {
+              rows: data.map((row) => ({
+                values: row.map(generateCellData),
+              })),
+              fields: 'userEnteredValue,userEnteredFormat',
+              range: {
+                sheetId,
+                startRowIndex: 1,
+                endRowIndex: 1 + rowCount,
+                startColumnIndex: 0,
+                endColumnIndex: colCount,
+              },
+            },
+          },
+        ];
+
+        Sheets.Spreadsheets.batchUpdate({ requests }, spreadsheetId);
+        Logger.timeEnd('importData (Sheets API)');
+      } else {
+        Logger.time('importData (Apps Script API) (slower)');
+        Logger.log('Sheets API not available, using native insertion of rows (slower)');
+        sourceSheet.insertRowsBefore(2, rowCount);
+        sourceSheet.getRange(2, 1, rowCount, colCount).setValues(data);
+        Logger.timeEnd('importData (Apps Script API) (slower)');
+      }
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  protected static handleError(error: unknown) {
+    if (error instanceof Error) {
+      console.error('Error: ', error.message);
+    } else {
+      console.error('Unknown error: ', error);
+    }
   }
 
   /**
@@ -206,3 +261,37 @@ export class TableUtils {
     return FIRE_COLUMNS.findIndex((col) => col.toLowerCase() === column);
   }
 }
+
+function generateCellData(cell: unknown): GoogleAppsScript.Sheets.Schema.CellData {
+  const extendedValue: GoogleAppsScript.Sheets.Schema.ExtendedValue = {};
+
+  if (cell === null || typeof cell === 'undefined') {
+    // no value
+  } else if (cell instanceof Date) {
+    // Convert JS date to Google Sheets serial number.
+    // Sheets date epoch is 1899-12-30. JS epoch is 1970-01-01.
+    // @see https://developers.google.com/workspace/sheets/api/reference/rest/v4/DateTimeRenderOption
+    const MS_IN_DAY = 86400000;
+    const DAYS_FROM_JS_EPOCH_TO_SHEETS_EPOCH = 25569;
+    const MINUTES_IN_DAY = 1440;
+    extendedValue.numberValue =
+      cell.getTime() / MS_IN_DAY + DAYS_FROM_JS_EPOCH_TO_SHEETS_EPOCH - cell.getTimezoneOffset() / MINUTES_IN_DAY;
+  } else if (typeof cell === 'number') {
+    extendedValue.numberValue = cell;
+  } else {
+    extendedValue.stringValue = String(cell);
+  }
+
+  const cellData: GoogleAppsScript.Sheets.Schema.CellData = {
+    userEnteredValue: extendedValue,
+  };
+
+  if (cell instanceof Date) {
+    cellData.userEnteredFormat = {
+      numberFormat: { type: 'DATE_TIME' },
+    };
+  }
+
+  return cellData;
+}
+
