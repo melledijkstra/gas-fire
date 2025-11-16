@@ -1,6 +1,6 @@
 {
   "name": "gas-fire",
-  "version": "4.0.0-beta.8",
+  "version": "4.1.1-beta",
   "author": "Melle Dijkstra",
   "description": "Google App Script utilities to automate the FIRE google sheet",
   "license": "MIT",
@@ -18,36 +18,35 @@
     "deploy": "npm run build && npm run publish",
     "publish": "clasp push -f",
     "typecheck": "tsc",
+    "lint": "echo 'not implemented yet'",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
     "analyze:server": "echo 'not implemented yet'",
     "analyze:client": "echo 'not implemented yet'",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
+    "setup:https": "mkdir certs && mkcert -key-file ./certs/key.pem -cert-file ./certs/cert.pem localhost 127.0.0.1",
     "switch-env": "tsx ./scripts/switch-env.ts",
-    "faker": "tsx ./scripts/faker.ts",
+    "faker": "tsx ./scripts/faker/faker.ts",
     "knip": "knip"
   },
   "dependencies": {
     "papaparse": "^5.5.3",
-    "postcss": "^8.5.6",
     "svelte": "^5.43.5",
     "tailwindcss": "^4.1.17"
   },
   "devDependencies": {
     "@faker-js/faker": "^10.1.0",
-    "@google/clasp": "^2.5.0",
+    "@google/clasp": "^3.1.1",
     "@storybook/addon-links": "^10.0.6",
     "@storybook/addon-svelte-csf": "^5.0.10",
     "@storybook/svelte-vite": "^10.0.6",
     "@sveltejs/vite-plugin-svelte": "^6.2.1",
-    "@tailwindcss/postcss": "^4.1.17",
     "@tailwindcss/vite": "^4.1.17",
     "@types/google-apps-script": "^2.0.7",
     "@types/node": "^24.0.15",
     "@types/papaparse": "^5.5.0",
     "@vitest/coverage-v8": "^4.0.8",
-    "css-loader": "^7.1.2",
     "dotenv": "^17.2.0",
     "flowbite": "^3.1.2",
     "flowbite-svelte": "^1.26.0",
@@ -64,12 +63,6 @@
     "vite-plugin-static-copy": "^3.1.4",
     "vitest": "^4.0.8",
     "@storybook/addon-docs": "^10.0.6"
-  },
-  "optionalDependencies": {
-    "@esbuild/darwin-x64": "^0.27.0",
-    "@rollup/rollup-linux-x64-gnu": "^4.53.2",
-    "@tailwindcss/oxide-linux-x64-gnu": "^4.1.11",
-    "lightningcss-linux-x64-gnu": "^1.30.1"
   },
   "repository": {
     "type": "git",

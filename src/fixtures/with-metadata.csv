@@ -1,0 +1,10 @@
+Bank Name: BigBank EU, S.A.
+Account Holder: Jane Doe
+Account Number: ES91 2100 0418 4502 0005 1337
+Export Date: 2025-10-28
+
+Date;Description;Amount;Balance
+28/10/2025;"Transfer from Savings";500,00;2000,00
+27/10/2025;"EL CORTE INGLES";-150,20;1500,00
+
+Ending Balance: 1500,00

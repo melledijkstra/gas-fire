@@ -22,8 +22,8 @@ Two placeholders are used in this file that will need to be replaced in a build 
     <!-- Load gas-client as external. Exposed global variable is GASClient.  -->
     <script
       crossorigin
-      integrity="sha384-pdoLFZ6Km6ToTanpnj5aokMJPkRi1p9b/NI+KaQ230ufwQHp4aRqQkJbY4rmWc4d"
-      src="https://unpkg.com/gas-client@1.1.1/dist/index.js"
+      integrity="sha256-VDJvyGu0rRWnUgYwfc1FageWi4ZK3KyGErJ4WTaOsno="
+      src="https://unpkg.com/gas-client@1.2.1/dist/index.js"
     ></script>
     <style>
       body,
@@ -79,6 +79,7 @@ Two placeholders are used in this file that will need to be replaced in a build 
     <div style="width: 100%; height: 100%">
       <iframe
         title="Development Dialog Loader"
+        allow="local-network-access"
         id="iframe"
         style="width: 100%; height: 100%; border: 0; position: absolute"
       ></iframe>

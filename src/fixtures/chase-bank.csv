@@ -1,0 +1,6 @@
+Transaction Date,Post Date,Description,Category,Type,Amount,Memo
+2023-09-01,2023-09-01,Direct Deposit,Income,Credit,2000.00,
+2023-09-02,2023-09-03,Coffee Shop,Food & Drink,Debit,-5.50,Coffee
+2023-09-04,2023-09-04,Online Retailer,Shopping,Debit,-120.00,Electronics
+2023-09-06,2023-09-07,Gas Station,Auto & Transport,Debit,-40.00,Fuel
+2023-09-08,2023-09-08,Interest Payment,Interest Income,Credit,2.50,
