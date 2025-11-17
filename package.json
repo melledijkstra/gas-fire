@@ -48,7 +48,7 @@
     "@types/papaparse": "^5.5.0",
     "@vitest/coverage-v8": "^4.0.8",
     "dotenv": "^17.2.0",
-    "flowbite": "^3.1.2",
+    "flowbite": "^4.0.0",
     "flowbite-svelte": "^1.26.0",
     "flowbite-svelte-icons": "^3.0.0",
     "gas-client": "^1.2.1",
