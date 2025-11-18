@@ -1,5 +1,5 @@
 import { N26ImportMock } from '@/fixtures/n26';
-import { AccountUtils } from './account-utils';
+import { AccountUtils } from './accounts/account-utils';
 import { Config } from './config';
 import { processInputDataAndShapeFiresheetStructure, TableUtils } from './table-utils';
 import type { Table } from '@/common/types';

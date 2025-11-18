@@ -5,6 +5,7 @@ import tseslint from 'typescript-eslint';
 export default defineConfig([
   {
     ignores: [
+      'node_modules/',
       'dist/',
       'coverage/',
       'storybook-static/',
