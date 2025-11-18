@@ -1,6 +1,6 @@
 import { FireSpreadsheet } from './globals';
 import { NAMED_RANGES } from '@/common/constants';
-import { getBankAccountOptionsCached } from './remote-calls';
+import { getBankAccountOptionsCached } from './accounts';
 import { slugify } from './helpers';
 
 /**
