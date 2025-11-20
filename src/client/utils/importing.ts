@@ -13,7 +13,7 @@ export const csvToJson = (_csvData: Table): Record<string, string>[] => {
   const clonedTable = structuredClone(_csvData);
   const headers = clonedTable.shift();
   return clonedTable.map((row) => {
-    let jsonRow: Record<string, string> = {};
+    const jsonRow: Record<string, string> = {};
     row.forEach((value, index) => {
       if (headers?.[index]) {
         jsonRow[headers[index]] = value;
