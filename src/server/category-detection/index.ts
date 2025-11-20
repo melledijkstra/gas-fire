@@ -3,8 +3,8 @@ import { Logger } from '@/common/logger';
 import { categoriesTermsMap } from './category-term-map';
 import type { CategoryDetectionConfig } from './types';
 
-// @ts-ignore
-const getCategoryMatchesMap = (): CategoryDetectionConfig => {
+// @ts-expect-error -- PropertiesService is a global provided by the Google Apps Script environment
+const _getCategoryMatchesMap = (): CategoryDetectionConfig => {
   try {
     const storeObject = PropertiesService.getDocumentProperties().getProperty(
       PROP_AUTOMATIC_CATEGORIES_CONFIG
