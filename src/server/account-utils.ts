@@ -82,8 +82,12 @@ export class AccountUtils {
       return accountId === accountIdentifier;
     });
 
-    if (!account || !account?.[2] || !isNumeric(account[2])) {
-      // no account found, no balance found, or balance is not a number
+    if (!account) {
+      throw new Error(`Account '${accountIdentifier}' not found`);
+    }
+
+    if (!account?.[2] || !isNumeric(account[2])) {
+      // no balance found, or balance is not a number
       throw new Error(`Could not retrieve balance of ${accountIdentifier}`);
     }
 
