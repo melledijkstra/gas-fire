@@ -37,7 +37,7 @@ export function structuredCloneFallback<T>(input: T): T {
   }
 
   if (input instanceof Date) {
-    return new Date(input.getTime()) as T;
+    return new Date(input) as T;
   }
 
   if (input instanceof RegExp) {
@@ -63,7 +63,7 @@ export function structuredCloneFallback<T>(input: T): T {
   if (isRecord(input)) {
     const clonedObject: Record<string, unknown> = {};
     for (const key in input) {
-      if (Object.prototype.hasOwnProperty.call(input, key)) {
+      if (Object.hasOwn(input, key)) {
         clonedObject[key] = structuredCloneFallback(input[key]);
       }
     }
