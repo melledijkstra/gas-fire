@@ -22,6 +22,21 @@ describe('TableUtils', () => {
     it('should handle empty table', () => {
       expect(TableUtils.transpose([])).toEqual([]);
     });
+
+    it('should handle jagged arrays by padding with undefined', () => {
+      const input = [
+        ['a', 'b', 'c'],
+        ['d', 'e'],
+        ['f', 'g', 'h', 'i'],
+      ];
+      const expected = [
+        ['a', 'd', 'f'],
+        ['b', 'e', 'g'],
+        ['c', undefined, 'h'],
+        [undefined, undefined, 'i'],
+      ];
+      expect(TableUtils.transpose(input)).toEqual(expected);
+    });
   });
 
   describe('sortByDate', () => {
