@@ -1,4 +1,4 @@
-enum _DialogType {
+export enum DialogType {
   import,
   settings,
   about,
