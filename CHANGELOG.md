@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.1.2-beta
+
+- ESLint setup + CI flow
+- Enhanced `structuredCloneFallback` to support Date, Map, Set, and RegExp types, add related tests, update logger parameter types, refine ESLint configuration
+
 ## 4.0.0-beta
 
 - Refactored all UI code to use flowbite + setup Google Sheets green theme for flowbite

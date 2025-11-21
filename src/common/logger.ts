@@ -1,7 +1,7 @@
 export class Logger {
   private static isEnabled: boolean = import.meta.env.DEV;
 
-  static log(message?: any, ...optionalParams: any[]): void {
+  static log(message?: unknown, ...optionalParams: unknown[]): void {
     if (this.isEnabled) {
       console.log(`[FIRE]:`, message, ...optionalParams);
     }

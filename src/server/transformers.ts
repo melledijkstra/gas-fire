@@ -10,8 +10,8 @@ export class Transformers {
     // Remove apostrophes used as thousand separators
     cleanedStr = cleanedStr.replace(/'/g, '');
     // Detect decimal separator
-    let lastComma = cleanedStr.lastIndexOf(',');
-    let lastDot = cleanedStr.lastIndexOf('.');
+    const lastComma = cleanedStr.lastIndexOf(',');
+    const lastDot = cleanedStr.lastIndexOf('.');
     let decimalSeparator = '';
 
     if (lastComma > lastDot) {
@@ -22,7 +22,7 @@ export class Transformers {
 
     if (decimalSeparator) {
       // Identify thousand separator
-      let thousandSeparator = decimalSeparator === '.' ? ',' : '.';
+      const thousandSeparator = decimalSeparator === '.' ? ',' : '.';
       // Remove thousand separators
       cleanedStr = cleanedStr.split(thousandSeparator).join('');
       // Replace decimal separator with a dot
@@ -33,7 +33,7 @@ export class Transformers {
     }
 
     // Convert to number
-    let number = Number(cleanedStr);
+    const number = Number(cleanedStr);
 
     return number;
   }

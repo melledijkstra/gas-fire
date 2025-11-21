@@ -73,7 +73,7 @@ export function processInputDataAndShapeFiresheetStructure({
       continue;
     }
 
-    let column: any[];
+    let column: (string | number | Date | null)[];
     try {
       column = colRule();
       column = TableUtils.ensureLength(column, rowCount);
@@ -171,9 +171,9 @@ export class TableUtils {
    */
   static transpose<T>(outerlist: T[][]): T[][] {
     let i = 0;
-    let result: T[][] = [];
+    const result: T[][] = [];
     while (i < outerlist.length) {
-      let innerlist = outerlist[i];
+      const innerlist = outerlist[i];
       let j = 0;
       while (j < innerlist.length) {
         if (typeof result[j] === 'undefined') {
@@ -221,7 +221,7 @@ export class TableUtils {
     // while traversing the array
     const sortedIndices = colIndices.sort().reverse();
     // tranpose the table so we are working with columns first instead of rows
-    let transposedTable = this.transpose(table);
+    const transposedTable = this.transpose(table);
     // delIndex is the column index to delete in the table
     for (const delIndex of sortedIndices) {
       if (typeof transposedTable[delIndex] !== 'undefined') {
