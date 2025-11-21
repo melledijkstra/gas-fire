@@ -26,6 +26,7 @@
     "analyze:client": "echo 'not implemented yet'",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
+    "ci:local": "CI=true npm run lint && npm run build && npm run test",
     "setup:https": "mkdir certs && mkcert -key-file ./certs/key.pem -cert-file ./certs/cert.pem localhost 127.0.0.1",
     "switch-env": "tsx ./scripts/switch-env.ts",
     "faker": "tsx ./scripts/faker/faker.ts",

@@ -1,12 +1,20 @@
-// eslint.config.js
 import eslint from '@eslint/js';
+import { defineConfig } from 'eslint/config';
 import tseslint from 'typescript-eslint';
 
-export default tseslint.config(
+export default defineConfig([
+  {
+    ignores: [
+      'dist/',
+      'coverage/',
+      'storybook-static/',
+    ],
+  },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   {
     rules: {
+      // Error on unused variables, but allow variables and arguments starting with "_"
       '@typescript-eslint/no-unused-vars': [
         'error',
         {
@@ -15,12 +23,5 @@ export default tseslint.config(
         },
       ],
     },
-  },
-  {
-    files: ['src/common/logger.ts', 'src/server/helpers.ts'],
-    rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-      'no-prototype-builtins': 'off',
-    },
   }
-);
+]);

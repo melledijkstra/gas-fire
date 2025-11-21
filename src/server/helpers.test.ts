@@ -62,5 +62,31 @@ describe('helpers', () => {
       expect(clonedObj).not.toBe(obj);
       expect(clonedObj.b[1]).not.toBe(obj.b[1]);
     });
+
+    it('should clone dates', () => {
+      const date = new Date();
+      const clonedDate = structuredCloneFallback(date);
+      expect(clonedDate).toEqual(date);
+      expect(clonedDate).not.toBe(date);
+      expect(clonedDate instanceof Date).toBe(true);
+      expect(clonedDate.getTime()).toBe(date.getTime());
+    });
+
+    it('should clone maps', () => {
+      const map = new Map([['a', 1], ['b', 2]]);
+      const clonedMap = structuredCloneFallback(map);
+      expect(clonedMap).toEqual(map);
+      expect(clonedMap).not.toBe(map);
+      expect(clonedMap instanceof Map).toBe(true);
+    });
+
+    it('should clone sets', () => {
+      const set = new Set([1, 2, 3]);
+      const clonedSet = structuredCloneFallback(set);
+      expect(clonedSet).toEqual(set);
+      expect(clonedSet).not.toBe(set);
+      expect(clonedSet instanceof Set).toBe(true);
+    });
+
   });
 });
