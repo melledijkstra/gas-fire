@@ -31,7 +31,7 @@ export function generateDuplicateHash(headers: FireColumn[], row: string[], colu
  */
 export function findDuplicates(table: Table, compareCols: FireColumn[], timespan: number, dateColumn: FireColumn = 'date'): Table {
     const duplicates: Table = [];
-    const seen: Set<string> = new Set();
+    const seenIndices: Set<number> = new Set();
     
     // we need at least 1 header row + two data rows to find duplicates
     if (table.length < 2) {
@@ -56,14 +56,17 @@ export function findDuplicates(table: Table, compareCols: FireColumn[], timespan
             // Check if the current row and the comparison row have the same key and their dates 
             // are within the specified timespan
             if (key === compareKey && Math.abs(rowDate.getTime() - compareDate.getTime()) <= timespan) {
-                // Create a unique string representation of the row to track duplicates
-                const duplicateKey = JSON.stringify(row);
-                // If this row has not been seen before, add it to the duplicates array and mark it as seen
-                if (!seen.has(duplicateKey)) {
+
+                if (!seenIndices.has(index)) {
                     duplicates.push(row);
-                    duplicates.push(compareRow);
-                    seen.add(duplicateKey);
+                    seenIndices.add(index);
                 }
+
+                if (!seenIndices.has(i)) {
+                    duplicates.push(compareRow);
+                    seenIndices.add(i);
+                }
+
                 // Break the loop as we found a duplicate for the current row
                 break;
             }
