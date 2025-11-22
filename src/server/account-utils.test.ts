@@ -34,4 +34,14 @@ describe('Utility tests', () => {
 
     expect(AccountUtils.getBalance('n26')).toBe(302.8);
   });
+
+  test('should throw an error if account is not found', () => {
+    RangeMock.getValues.mockReturnValueOnce([
+      ['N26', 'DB123456789', '302.80'],
+    ]);
+
+    expect(() => AccountUtils.getBalance('openbank')).toThrow(
+      "Account 'openbank' not found"
+    );
+  });
 });
