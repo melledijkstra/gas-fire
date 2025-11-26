@@ -132,7 +132,7 @@ export class TableUtils {
               rows: data.map((row) => ({
                 values: row.map(generateCellData),
               })),
-              fields: 'userEnteredValue,userEnteredFormat',
+              fields: 'userEnteredValue',
               range: {
                 sheetId,
                 startRowIndex: 1,
