@@ -84,4 +84,34 @@ describe('findDuplicates', () => {
             ["5", "Bob", "2023-01-02"]
         ]);
     });
+
+    test('should return unique rows when 3 duplicates exist', () => {
+        const table = [
+            ['ref', 'contra_account', 'date'],
+            ['1', 'Alice', '2023-01-01'],
+            ['2', 'Alice', '2023-01-01'],
+            ['3', 'Alice', '2023-01-01']
+        ];
+        const compareCols: FireColumn[] = ['contra_account'];
+        const timespan = days(1);
+        const duplicates = findDuplicates(table, compareCols, timespan);
+
+        expect(duplicates.length).toBe(3);
+        const refs = duplicates.map(r => r[0]);
+        expect(new Set(refs).size).toBe(3);
+    });
+
+    test('should return unique rows when 3 duplicates exist (identical content)', () => {
+        const table = [
+            ['ref', 'contra_account', 'date'],
+            ['1', 'Alice', '2023-01-01'],
+            ['1', 'Alice', '2023-01-01'],
+            ['1', 'Alice', '2023-01-01']
+        ];
+        const compareCols: FireColumn[] = ['contra_account'];
+        const timespan = days(1);
+        const duplicates = findDuplicates(table, compareCols, timespan);
+
+        expect(duplicates.length).toBe(3);
+    });
 });
