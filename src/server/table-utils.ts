@@ -286,12 +286,6 @@ function generateCellData(cell: unknown): GoogleAppsScript.Sheets.Schema.CellDat
     userEnteredValue: extendedValue,
   };
 
-  if (cell instanceof Date) {
-    cellData.userEnteredFormat = {
-      numberFormat: { type: 'DATE_TIME' },
-    };
-  }
-
   return cellData;
 }
 

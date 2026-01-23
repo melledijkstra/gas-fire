@@ -22,7 +22,7 @@ import {
   mailNetWorth,
 } from './remote-calls';
 import { Config } from './config';
-import bankOfAmericaCSV from '@/fixtures/bank-of-america.csv?raw';
+import bankOfAmericaCSV from '@/fixtures/commonwealth-bank.csv?raw';
 import Papa from 'papaparse';
 import { fakeTestBankImportData } from '@/fixtures/test-bank';
 import { getSpreadsheetLocale, removeFilterCriteria } from './utils/spreadsheet';
