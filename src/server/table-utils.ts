@@ -132,7 +132,7 @@ export class TableUtils {
               rows: data.map((row) => ({
                 values: row.map(generateCellData),
               })),
-              fields: 'userEnteredValue,userEnteredFormat',
+              fields: 'userEnteredValue',
               range: {
                 sheetId,
                 startRowIndex: 1,
@@ -285,12 +285,6 @@ function generateCellData(cell: unknown): GoogleAppsScript.Sheets.Schema.CellDat
   const cellData: GoogleAppsScript.Sheets.Schema.CellData = {
     userEnteredValue: extendedValue,
   };
-
-  if (cell instanceof Date) {
-    cellData.userEnteredFormat = {
-      numberFormat: { type: 'DATE_TIME' },
-    };
-  }
 
   return cellData;
 }
