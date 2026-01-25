@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **Migration from npm to pnpm** - Repository now uses pnpm as the package manager instead of npm. All scripts and CI/CD workflows have been updated accordingly.
+
 ## 4.1.2-beta
 
 - ESLint setup + CI flow

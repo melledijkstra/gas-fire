@@ -12,7 +12,7 @@ https://developers.google.com/apps-script/guides/typescript
 
 You will need to install the clasp tooling (@google/clasp)
 
-1. > npm install
+1. > pnpm install
 
 First time running clasp? make sure to login first, follow this guide:
 https://developers.google.com/apps-script/guides/clasp
@@ -31,9 +31,9 @@ To find the Google Apps Script ID for your project:
 
 <br />
 
-3. Then run `npm run switch-env <env>` to switch between environments.
+3. Then run `pnpm switch-env <env>` to switch between environments.
 It will simply update your `.clasp.json` with the script ID for that environment.
 
 4. Then you are ready to make changes make your changes
-5. > npm run build
-6. > npm run publish (or manually "clasp push")
+5. > pnpm build
+6. > pnpm publish (or manually "clasp push")
