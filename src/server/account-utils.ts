@@ -28,7 +28,11 @@ const listToObject = (list: string[][]): Record<string, string> => {
 };
 
 export const isNumeric = (value: unknown): boolean => {
-  return !isNaN(value as number);
+  if (typeof value === 'number') return Number.isFinite(value);
+  if (typeof value === 'string' && value.trim() !== '') {
+    return Number.isFinite(Number(value));
+  }
+  return false;
 };
 
 export class AccountUtils {
