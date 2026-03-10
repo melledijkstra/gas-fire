@@ -9,9 +9,13 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
@@ -27,3 +31,26 @@ jobs:
         run: pnpm build
       - name: Run unit tests
         run: pnpm test
+      - name: Check version bump and create tag
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+
+          if git rev-parse HEAD~1 >/dev/null 2>&1; then
+            PREVIOUS_VERSION=$(git show HEAD~1:package.json | node -e "const fs = require('fs'); try { console.log(JSON.parse(fs.readFileSync(0, 'utf-8')).version) } catch (e) { console.log('') }")
+          else
+            PREVIOUS_VERSION=""
+          fi
+
+          if [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ] && [ -n "$CURRENT_VERSION" ]; then
+            TAG_NAME="v$CURRENT_VERSION"
+            echo "Version changed from '$PREVIOUS_VERSION' to '$CURRENT_VERSION'. Creating tag $TAG_NAME..."
+
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+            git tag "$TAG_NAME"
+            git push origin "$TAG_NAME"
+          else
+            echo "No version change detected or invalid version."
+          fi
