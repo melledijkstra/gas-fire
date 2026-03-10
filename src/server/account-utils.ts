@@ -28,9 +28,9 @@ const listToObject = (list: string[][]): Record<string, string> => {
 };
 
 export const isNumeric = (value: unknown): boolean => {
-  if (typeof value === 'number') return !isNaN(value);
+  if (typeof value === 'number') return isFinite(value);
   if (typeof value === 'string' && value.trim() !== '') {
-    return !isNaN(Number(value));
+    return isFinite(Number(value));
   }
   return false;
 };
