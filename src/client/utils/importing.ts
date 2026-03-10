@@ -1,4 +1,5 @@
 import type { Table } from '@/common/types';
+import { Logger } from '@/common/logger';
 
 export const acceptedMimeTypes = ['text/csv', 'application/vnd.ms-excel'];
 
@@ -27,6 +28,6 @@ export const excludeRowsFromData = (
   data: Table,
   rowsToExclude: Set<number>
 ): Table => {
-  console.log('Excluding rows:', rowsToExclude);
+  Logger.log('Excluding rows:', rowsToExclude);
   return data.filter((_, index) => !rowsToExclude.has(index));
 };
