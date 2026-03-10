@@ -411,5 +411,5 @@ export const debugImportSettings = () => {
 
   ui.alert(`Found ${configKeys.length} account configurations!\n\n${configKeys.join('\n')}\n\nSee logs for more details`)
 
-  console.log(accountConfigs);
+  Logger.log(accountConfigs);
 }
