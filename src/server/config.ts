@@ -25,6 +25,7 @@ type ConfigParams = {
 }
 
 export class Config {
+  private static configCache: Record<string, Config> | null = null;
   private readonly columnMap: ColumnMap
   public autoFillEnabled: boolean
   public autoCategorizationEnabled: boolean
@@ -138,13 +139,23 @@ export class Config {
   }
 
   static getConfigurations(): Record<string, Config> {
+    if (this.configCache) {
+      return this.configCache;
+    }
+
     const cache = CacheService.getDocumentCache();
     const cachedConfig = cache.get(CONFIG_CACHE_KEY);
 
     if (cachedConfig) {
       try {
-        return JSON.parse(cachedConfig) as Record<string, Config>;
-      } catch(error) {
+        const parsed = JSON.parse(cachedConfig) as Record<string, ConfigParams>;
+        const configs: Record<string, Config> = {};
+        for (const accountId in parsed) {
+          configs[accountId] = new Config(parsed[accountId]);
+        }
+        this.configCache = configs;
+        return configs;
+      } catch (error) {
         console.error('Failed to parse cached configuration:', error);
       }
     }
@@ -153,6 +164,7 @@ export class Config {
 
     cache.put(CONFIG_CACHE_KEY, JSON.stringify(configs), 30);
 
+    this.configCache = configs;
     return configs;
   }
 
