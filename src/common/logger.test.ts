@@ -8,14 +8,21 @@ describe('Logger', () => {
     // no-op, prevent logging when running tests
   });
 
+  const consoleErrorSpy = vi.spyOn(console, 'error');
+  consoleErrorSpy.mockImplementation(() => {
+    // no-op, prevent logging when running tests
+  });
+
   beforeEach(() => {
     originalEnv = import.meta.env.DEV;
     consoleSpy.mockImplementation(() => {});
+    consoleErrorSpy.mockImplementation(() => {});
   });
 
   afterEach(() => {
     import.meta.env.DEV = originalEnv;
     consoleSpy.mockClear();
+    consoleErrorSpy.mockClear();
   });
 
   test('should log message when enabled', () => {
@@ -28,6 +35,18 @@ describe('Logger', () => {
     Logger.disable();
     Logger.log('Test message');
     expect(consoleSpy).not.toHaveBeenCalled();
+  });
+
+  test('should log error when enabled', () => {
+    Logger.enable();
+    Logger.error('Test error message');
+    expect(consoleErrorSpy).toHaveBeenCalledWith('[FIRE Error]:', 'Test error message');
+  });
+
+  test('should not log error when disabled', () => {
+    Logger.disable();
+    Logger.error('Test error message');
+    expect(consoleErrorSpy).not.toHaveBeenCalled();
   });
 
   test('should enable logging', () => {
@@ -53,5 +72,19 @@ describe('Logger', () => {
     Logger.reset();
     Logger.log('Test message');
     expect(consoleSpy).not.toHaveBeenCalled();
+  });
+
+  test('should log error if in development', () => {
+    import.meta.env.DEV = true;
+    Logger.reset();
+    Logger.error('Test error message');
+    expect(consoleErrorSpy).toHaveBeenCalledWith('[FIRE Error]:', 'Test error message');
+  });
+
+  test('should not log error if not in development', () => {
+    import.meta.env.DEV = false;
+    Logger.reset();
+    Logger.error('Test error message');
+    expect(consoleErrorSpy).not.toHaveBeenCalled();
   });
 });
