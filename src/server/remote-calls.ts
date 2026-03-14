@@ -325,7 +325,7 @@ export const mailNetWorth = () => {
   const netWorthRange = spreadsheet.getRangeByName(NAMED_RANGES.netWorth)
 
   if (!netWorthRange) {
-    console.error('No net worth named range found, can\'t send email!')
+    Logger.error('No net worth named range found, can\'t send email!')
     return
   }
 
