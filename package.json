@@ -1,6 +1,6 @@
 {
   "name": "gas-fire",
-  "version": "4.3.0-beta",
+  "version": "4.3.1-beta",
   "author": "Melle Dijkstra",
   "description": "Google App Script utilities to automate the FIRE google sheet",
   "license": "MIT",
@@ -12,10 +12,10 @@
   "scripts": {
     "prepare": "husky",
     "serve": "vite",
-    "dev": "pnpm build:dev && pnpm publish && pnpm serve",
+    "dev": "pnpm build:dev && pnpm run publish && pnpm serve",
     "build": "vite build --mode production",
     "build:dev": "vite build --mode development",
-    "deploy": "pnpm build && pnpm publish",
+    "deploy": "pnpm build && pnpm run publish",
     "publish": "clasp push -f",
     "typecheck": "tsc",
     "lint": "eslint .",
