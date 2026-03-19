@@ -216,7 +216,7 @@ export function getBankAccountOptions(): StrategyOptions {
   const accounts = accountNames
     .getValues()
     // make sure not to include empty rows
-    .filter((row) => row.some((cell) => cell !== '' && cell !== null))
+    .filter((row) => row.some((cell: string) => cell !== '' && cell !== null))
     // flatten out the array so it is 1 dimensional with account names
     .flat();
 

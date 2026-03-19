@@ -81,7 +81,8 @@ export function processInputDataAndShapeFiresheetStructure({
       console.error(e);
       column = new Array(rowCount);
     }
-    output.push(column);
+    // PENDING: avoid this cast and instead make sure the column is always of the correct type in the first place
+    output.push(column as string[]);
   }
   output = TableUtils.transpose(output); // flip columns to rows
   return output;
