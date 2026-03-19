@@ -38,7 +38,7 @@
     "tailwindcss": "^4.2.2"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.1",
+    "@eslint/js": "^10.0.1",
     "@faker-js/faker": "^10.3.0",
     "@google/clasp": "^3.3.0",
     "@storybook/addon-docs": "^10.3.0",
@@ -52,7 +52,7 @@
     "@types/papaparse": "^5.5.2",
     "@vitest/coverage-v8": "^4.1.0",
     "dotenv": "^17.3.1",
-    "eslint": "^9.39.1",
+    "eslint": "^10.0.3",
     "flowbite": "^4.0.1",
     "flowbite-svelte": "^1.31.0",
     "flowbite-svelte-icons": "^3.1.0",
