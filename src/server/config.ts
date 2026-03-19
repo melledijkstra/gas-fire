@@ -1,6 +1,7 @@
 import { FIRE_COLUMNS } from '@/common/constants';
 import type { FireColumn } from '@/common/constants';
 import { slugify } from './helpers';
+import { Logger } from '@/common/logger';
 
 const CONFIG_CACHE_KEY = 'cache.config'
 
@@ -156,7 +157,7 @@ export class Config {
         this.configCache = configs;
         return configs;
       } catch (error) {
-        console.error('Failed to parse cached configuration:', error);
+        Logger.error('Failed to parse cached configuration:', error);
       }
     }
 

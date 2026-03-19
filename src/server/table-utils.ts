@@ -78,7 +78,7 @@ export function processInputDataAndShapeFiresheetStructure({
       column = colRule();
       column = TableUtils.ensureLength(column, rowCount);
     } catch (e) {
-      console.error(e);
+      Logger.error(e);
       column = new Array(rowCount);
     }
     // PENDING: avoid this cast and instead make sure the column is always of the correct type in the first place
@@ -98,7 +98,7 @@ export class TableUtils {
     const rowCount = data.length;
 
     if (!sourceSheet) {
-      console.error('Error: The sourceSheet was not found. Cannot import data.');
+      Logger.error('Error: The sourceSheet was not found. Cannot import data.');
       return;
     }
 
@@ -161,9 +161,9 @@ export class TableUtils {
 
   protected static handleError(error: unknown) {
     if (error instanceof Error) {
-      console.error('Error: ', error.message);
+      Logger.error('Error: ', error.message);
     } else {
-      console.error('Unknown error: ', error);
+      Logger.error('Unknown error: ', error);
     }
   }
 

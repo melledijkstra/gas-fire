@@ -12,6 +12,7 @@
   import { importState } from '@/client/states/import.svelte';
   import { onMount } from 'svelte';
   import { appState } from '../states/app.svelte';
+  import { Logger } from '@/common/logger';
 
   let isImporting = $state(false)
   let strategyOptions = $state<StrategyOptions>();
@@ -38,9 +39,9 @@
       .finally(() => isImporting = false);
   };
 
-  const onParseError = (error: ServerResponse) => {
-    console.error(error);
-    alert(`Parsing error: ${error}`);
+  const onParseError = (error: { message: string }) => {
+    Logger.error(error);
+    alert(`Parsing error: ${error.message}`);
   };
 
   const handleFormSubmit = (event: SubmitEvent) => {

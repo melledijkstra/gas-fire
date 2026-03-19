@@ -7,6 +7,12 @@ export class Logger {
     }
   }
 
+  static error(message?: unknown, ...optionalParams: unknown[]): void {
+    if (this.isEnabled) {
+      console.error(`[FIRE Error]:`, message, ...optionalParams);
+    }
+  }
+
   static enable(): void {
     this.isEnabled = true;
   }
