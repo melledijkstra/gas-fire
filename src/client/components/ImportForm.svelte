@@ -39,9 +39,9 @@
       .finally(() => isImporting = false);
   };
 
-  const onParseError = (error: ServerResponse) => {
+  const onParseError = (error: { message: string }) => {
     Logger.error(error);
-    alert(`Parsing error: ${error}`);
+    alert(`Parsing error: ${error.message}`);
   };
 
   const handleFormSubmit = (event: SubmitEvent) => {
