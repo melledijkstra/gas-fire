@@ -277,6 +277,8 @@ export const executeAutomaticCategorization = () => {
   let rowsCategorized = 0;
   const data = sourceSheet?.getDataRange()?.getValues() ?? [];
 
+  const categoryUpdates: Array<Array<string>> = [];
+
   // set the filter to only show rows that have no category
   // loop through all data and only process filtered rows
   // we start at second row because first row contains the column names
@@ -286,22 +288,29 @@ export const executeAutomaticCategorization = () => {
 
     // skip all rows which already have category set
     if (category && category !== '') {
+      categoryUpdates.push([category]);
       continue;
     }
 
     const detectedCategory = detectCategoryByTextAnalysis(contraAccount);
 
     if (detectedCategory) {
-      sourceSheet
-        ?.getRange(row + 1, categoryColIndex + 1)
-        .setValue(detectedCategory);
+      categoryUpdates.push([detectedCategory]);
       rowsCategorized++;
+    } else {
+      categoryUpdates.push([category]);
     }
   }
 
   if (rowsCategorized === 0) {
     ui.alert('No rows were categorized!');
     return;
+  }
+
+  if (categoryUpdates.length > 0) {
+    sourceSheet
+      ?.getRange(2, categoryColIndex + 1, categoryUpdates.length, 1)
+      .setValues(categoryUpdates);
   }
 
   ui.alert(`Succesfully categorized ${rowsCategorized} rows!`);
