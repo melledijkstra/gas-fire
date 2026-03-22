@@ -371,8 +371,8 @@ export const executeFindDuplicates = () => {
   duplicateSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
 
   // Copy duplicate rows
-  for (const [i, row] of duplicateRows.entries()) {
-    duplicateSheet.getRange(i + 2, 1, 1, row.length).setValues([row]);
+  if (duplicateRows.length > 0) {
+    duplicateSheet.getRange(2, 1, duplicateRows.length, duplicateRows[0].length).setValues(duplicateRows);
   }
 
   SpreadsheetApp.getUi().alert(

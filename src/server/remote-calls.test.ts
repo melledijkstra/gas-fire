@@ -307,7 +307,7 @@ describe('Remote Calls', () => {
       ]);
       executeFindDuplicates();
       expect(SheetMock.clear).toHaveBeenCalled();
-      expect(SheetMock.getRange).toHaveBeenCalledTimes(3);
+      expect(SheetMock.getRange).toHaveBeenCalledTimes(2);
       expect(UIMock.alert).toHaveBeenCalledWith(
         'Found 1 duplicates! Rows have been copied to the "duplicate-rows" sheet'
       );
