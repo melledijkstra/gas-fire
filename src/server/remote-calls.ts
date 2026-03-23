@@ -143,24 +143,14 @@ export function importCSV(
 
   // actual importing of the data into the sheet
   Logger.time('TableUtils.importData')
-  TableUtils.importData(result)
+
+  const autoFillColumns = accountConfig.autoFillEnabled ? accountConfig.autoFillColumnIndices : undefined
+  TableUtils.importData(result, autoFillColumns)
+
   Logger.timeEnd('TableUtils.importData')
 
   const msg = `imported ${result.length} rows!`;
   Logger.log(msg)
-
-  //
-  // AFTER IMPORT RULES
-  //
-  // the after import rules are not able to manipulate the data
-  // therefore the data is only given as reference for any needed calculations
-  // apply any rules that need to be applied after the actual import
-  // e.g. auto filling columns with formulas
-  if (accountConfig.autoFillEnabled) {
-    Logger.time('TableUtils.autoFillColumns')
-    TableUtils.autoFillColumns(result, accountConfig.autoFillColumnIndices)
-    Logger.timeEnd('TableUtils.autoFillColumns')
-  }
 
   Logger.timeEnd('importCSV')
 

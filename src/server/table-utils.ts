@@ -92,8 +92,9 @@ export class TableUtils {
   /**
    * Imports data in structure of a table into the source sheet
    * @param {Table} data the data to be imported into the source sheet
+   * @param {number[]} autoFillColumns optional column indices to autofill
    */
-  static importData(data: Table) {
+  static importData(data: Table, autoFillColumns?: number[]) {
     const sourceSheet = getSourceSheet();
     const rowCount = data.length;
 
@@ -145,6 +146,26 @@ export class TableUtils {
           },
         ];
 
+        if (autoFillColumns && autoFillColumns.length > 0) {
+          const autoFillRequests: GoogleAppsScript.Sheets.Schema.Request[] = autoFillColumns.map(column => ({
+            autoFill: {
+              useAlternateSeries: false,
+              sourceAndDestination: {
+                source: {
+                  sheetId,
+                  startRowIndex: 1 + rowCount, // source is at 2 + rowCount (0-indexed 1 + rowCount)
+                  endRowIndex: 2 + rowCount,
+                  startColumnIndex: column - 1,
+                  endColumnIndex: column,
+                },
+                dimension: 'ROWS',
+                fillLength: -rowCount, // negative length fills upwards
+              }
+            }
+          }));
+          requests.push(...autoFillRequests);
+        }
+
         Sheets.Spreadsheets.batchUpdate({ requests }, spreadsheetId);
         Logger.timeEnd('importData (Sheets API)');
       } else {
@@ -152,6 +173,22 @@ export class TableUtils {
         Logger.log('Sheets API not available, using native insertion of rows (slower)');
         sourceSheet.insertRowsBefore(2, rowCount);
         sourceSheet.getRange(2, 1, rowCount, colCount).setValues(data);
+
+        if (autoFillColumns && autoFillColumns.length > 0) {
+          Logger.time('autoFillColumns (Apps Script API) (slower)');
+          for (const column of autoFillColumns) {
+            const sourceRange = sourceSheet.getRange(2 + rowCount, column);
+            const destinationRange = sourceSheet.getRange(2, column, rowCount + 1); // + 1 because sourceRange needs to be included
+            if (destinationRange) {
+              sourceRange.autoFill(
+                destinationRange,
+                SpreadsheetApp.AutoFillSeries.DEFAULT_SERIES
+              );
+            }
+          }
+          Logger.timeEnd('autoFillColumns (Apps Script API) (slower)');
+        }
+
         Logger.timeEnd('importData (Apps Script API) (slower)');
       }
     } catch (error) {
@@ -231,57 +268,6 @@ export class TableUtils {
     }
     // transpose again back to rows first
     return this.transpose(transposedTable);
-  }
-
-  static autoFillColumns(data: Table, columns: number[]) {
-    const sourceSheet = getSourceSheet();
-    if (!sourceSheet) return;
-
-    const rowCount = data.length;
-    if (rowCount === 0) return;
-
-    try {
-      if (typeof Sheets !== 'undefined' && Sheets.Spreadsheets) {
-        Logger.time('autoFillColumns (Sheets API)');
-        const spreadsheetId = sourceSheet.getParent().getId();
-        const sheetId = sourceSheet.getSheetId();
-
-        const requests: GoogleAppsScript.Sheets.Schema.Request[] = columns.map(column => ({
-          autoFill: {
-            useAlternateSeries: false,
-            sourceAndDestination: {
-              source: {
-                sheetId,
-                startRowIndex: 1 + rowCount, // source is at 2 + rowCount (0-indexed 1 + rowCount)
-                endRowIndex: 2 + rowCount,
-                startColumnIndex: column - 1,
-                endColumnIndex: column,
-              },
-              dimension: 'ROWS',
-              fillLength: -rowCount, // negative length fills upwards
-            }
-          }
-        }));
-
-        Sheets.Spreadsheets.batchUpdate({ requests }, spreadsheetId);
-        Logger.timeEnd('autoFillColumns (Sheets API)');
-      } else {
-        Logger.time('autoFillColumns (Apps Script API) (slower)');
-        for (const column of columns) {
-          const sourceRange = sourceSheet.getRange(2 + rowCount, column);
-          const destinationRange = sourceSheet.getRange(2, column, rowCount + 1); // + 1 because sourceRange needs to be included
-          if (destinationRange) {
-            sourceRange.autoFill(
-              destinationRange,
-              SpreadsheetApp.AutoFillSeries.DEFAULT_SERIES
-            );
-          }
-        }
-        Logger.timeEnd('autoFillColumns (Apps Script API) (slower)');
-      }
-    } catch (error) {
-      this.handleError(error);
-    }
   }
 
   static ensureLength<T>(arr: (T | null)[], length: number): (T | null)[] {
