@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "papaparse": "^5.5.3",
-    "svelte": "^5.54.0",
+    "svelte": "^5.54.1",
     "tailwindcss": "^4.2.2"
   },
   "devDependencies": {
