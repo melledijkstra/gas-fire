@@ -7,9 +7,15 @@ export class Logger {
     }
   }
 
+  static warn(message?: unknown, ...optionalParams: unknown[]): void {
+    if (this.isEnabled) {
+      console.warn(`[FIRE ⚠️]:`, message, ...optionalParams);
+    }
+  }
+
   static error(message?: unknown, ...optionalParams: unknown[]): void {
     if (this.isEnabled) {
-      console.error(`[FIRE Error]:`, message, ...optionalParams);
+      console.error(`[FIRE ❌]:`, message, ...optionalParams);
     }
   }
 
