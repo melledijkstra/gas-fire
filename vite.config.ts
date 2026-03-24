@@ -12,7 +12,7 @@ import tailwind from '@tailwindcss/vite';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { viteSingleFile } from 'vite-plugin-singlefile';
 import packageInfo from './package.json';
-import { buildFrontendBundlesPlugin, type DialogEntry } from './src/plugins/buildFrontendBundlesPlugin';
+import { buildFrontendBundlesPlugin, type DialogEntry } from './src/plugins/frontendBundlesPlugin';
 
 const PORT = 3000;
 export const clientRoot = './src/client';
