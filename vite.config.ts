@@ -1,21 +1,18 @@
 /// <reference types="vitest/config" />
 import {
   BuildOptions,
-  Plugin,
   ServerOptions,
   UserConfig,
-  build,
   defineConfig,
 } from 'vite';
-import type { OutputAsset, RollupOutput } from 'rollup';
 import { resolve } from 'path';
 import { existsSync, readFileSync } from 'fs';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import tailwind from '@tailwindcss/vite';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { viteSingleFile } from 'vite-plugin-singlefile';
-import { writeFile } from 'fs/promises';
 import packageInfo from './package.json';
+import { buildFrontendBundlesPlugin, type DialogEntry } from './src/plugins/frontendBundlesPlugin';
 
 const PORT = 3000;
 export const clientRoot = './src/client';
@@ -23,12 +20,6 @@ const outDir = './dist';
 const serverEntry = './src/server/index.ts';
 const copyAppscriptEntry = './appsscript.json';
 const devServerWrapper = './dev/dev-server-wrapper.html';
-
-type DialogEntry = {
-  name: string;
-  filename: string;
-  template: string;
-};
 
 export const clientEntrypoints: Array<DialogEntry> = [
   {
@@ -129,37 +120,6 @@ const buildIFrame = (entrypoint: DialogEntry) => ({
       .replace(/__FILE_NAME__/g, entrypoint.template),
 });
 
-const isRollupOutput = (output: unknown): output is RollupOutput => !!(output as RollupOutput)?.output
-
-/**
- * This builds the client app bundles for production, and writes them to disk.
- * Because multiple client entrypoints (dialogs) are built, we need to loop through
- * each entrypoint and build the client bundle for each. Vite doesn't have great tooling for
- * building multiple single-page apps in one project, so we have to do this manually with a
- * post-build closeBundle hook (https://rollupjs.org/guide/en/#closebundle).
- */
-function buildFrontendBundlesPlugin(): Plugin {
-  return {
-    name: 'build-client-production-bundles',
-    async closeBundle() {
-      this.info('Building client production bundles...');
-      for (const clientEntrypoint of clientEntrypoints) {
-        this.info(`Building client bundle for ${clientEntrypoint.name}`);
-        const buildOutput = await build(clientBuildConfig(clientEntrypoint));
-
-        if (isRollupOutput(buildOutput) && !!(buildOutput.output[0] as unknown as OutputAsset)?.source) {
-          const outputAsset = buildOutput.output[0] as unknown as OutputAsset
-          await writeFile(
-            resolve(__dirname, outDir, `${clientEntrypoint.filename}.html`),
-            outputAsset.source
-          );
-        }
-      }
-      this.info('Finished building client bundles!');
-    },
-  };
-}
-
 const buildConfig = defineConfig(({ mode }) => {
   const targets = [{ src: copyAppscriptEntry, dest: './' }];
 
@@ -173,7 +133,12 @@ const buildConfig = defineConfig(({ mode }) => {
       viteStaticCopy({
         targets,
       }),
-      mode === 'production' && buildFrontendBundlesPlugin(),
+      mode === 'production' && buildFrontendBundlesPlugin({
+        clientEntrypoints,
+        clientBuildConfig,
+        outDir,
+        baseDir: __dirname,
+      }),
     ],
     build: serverBuildOptions,
     esbuild: {
