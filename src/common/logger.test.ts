@@ -40,7 +40,7 @@ describe('Logger', () => {
   test('should log error when enabled', () => {
     Logger.enable();
     Logger.error('Test error message');
-    expect(consoleErrorSpy).toHaveBeenCalledWith('[FIRE Error]:', 'Test error message');
+    expect(consoleErrorSpy).toHaveBeenCalledWith('[FIRE ❌]:', 'Test error message');
   });
 
   test('should not log error when disabled', () => {
@@ -78,7 +78,7 @@ describe('Logger', () => {
     import.meta.env.DEV = true;
     Logger.reset();
     Logger.error('Test error message');
-    expect(consoleErrorSpy).toHaveBeenCalledWith('[FIRE Error]:', 'Test error message');
+    expect(consoleErrorSpy).toHaveBeenCalledWith('[FIRE ❌]:', 'Test error message');
   });
 
   test('should not log error if not in development', () => {
