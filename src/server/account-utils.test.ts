@@ -46,6 +46,34 @@ describe('Utility tests', () => {
   });
 });
 
+describe('calculateNewBalance', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test('should calculate the new balance by adding all values', () => {
+    const getBalanceSpy = vi.spyOn(AccountUtils, 'getBalance').mockReturnValue(100.50);
+
+    const newBalance = AccountUtils.calculateNewBalance('my-bank', [50.25, -20.00, 10.00]);
+
+    expect(getBalanceSpy).toHaveBeenCalledWith('my-bank');
+    expect(newBalance).toBe(140.75);
+  });
+
+  test('should return the current balance when values array is empty', () => {
+    const getBalanceSpy = vi.spyOn(AccountUtils, 'getBalance').mockReturnValue(100.50);
+
+    const newBalance = AccountUtils.calculateNewBalance('my-bank', []);
+
+    expect(getBalanceSpy).toHaveBeenCalledWith('my-bank');
+    expect(newBalance).toBe(100.50);
+  });
+});
+
 describe('isNumeric', () => {
   test('should return true for numbers', () => {
     expect(isNumeric(123)).toBe(true);
