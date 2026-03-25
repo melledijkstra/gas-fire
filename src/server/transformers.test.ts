@@ -27,6 +27,26 @@ describe('Transformers', () => {
     expect(Transformers.transformMoney('! -200,00,234.56')).toBe(-20000234.56);
     expect(Transformers.transformMoney('$-1,234.56')).toBe(-1234.56);
     expect(Transformers.transformMoney('$##@%$$#-1,234.56')).toBe(-1234.56);
+
+    // Edge cases and invalid types
+    expect(Transformers.transformMoney(null as any)).toBeNaN();
+    expect(Transformers.transformMoney(undefined as any)).toBeNaN();
+    expect(Transformers.transformMoney(123 as any)).toBeNaN();
+    expect(Transformers.transformMoney({} as any)).toBeNaN();
+    expect(Transformers.transformMoney([] as any)).toBeNaN();
+
+    // Empty or whitespace strings
+    expect(Transformers.transformMoney('')).toBe(0);
+    expect(Transformers.transformMoney('   ')).toBe(0);
+
+    // Invalid strings without digits
+    expect(Transformers.transformMoney('abc')).toBe(0);
+    expect(Transformers.transformMoney('!@#')).toBe(0);
+
+    // Invalid number formats
+    expect(Transformers.transformMoney('-')).toBeNaN();
+    expect(Transformers.transformMoney('--123')).toBeNaN();
+    expect(Transformers.transformMoney('1.23.45')).toBeNaN();
   });
 
   test('Transformers.transformDate', () => {
