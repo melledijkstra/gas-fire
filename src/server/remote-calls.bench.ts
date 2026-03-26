@@ -1,7 +1,7 @@
 import { bench, describe, vi, beforeAll, afterAll } from 'vitest';
 import { executeAutomaticCategorization } from './remote-calls';
 import { RangeMock, SheetMock, UIMock, FilterMock } from '../../test-setup';
-import * as categoryDetection from './category-detection';
+import * as categoryDetection from './category-detection/detection';
 
 vi.mock('./globals', () => ({
   getSourceSheet: vi.fn(() => SheetMock)
