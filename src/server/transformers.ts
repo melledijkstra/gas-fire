@@ -1,4 +1,4 @@
-import { detectCategoryByTextAnalysis } from './category-detection';
+import { detectCategoryByTextAnalysis } from './category-detection/detection';
 import { getSpreadsheetLocale } from './utils/spreadsheet';
 
 const getDateParts = (parts: number[], locale?: string): { year: number, month: number, day: number } => {

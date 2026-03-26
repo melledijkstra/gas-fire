@@ -11,7 +11,7 @@ import { N26ImportMock } from '@/fixtures/n26';
 import { TableUtils } from './table-utils';
 import { raboImportMock } from '@/fixtures/rabobank';
 import { Logger } from '@/common/logger';
-import * as categoryDetection from './category-detection';
+import * as categoryDetection from './category-detection/detection';
 import * as duplicateFinder from './duplicate-finder';
 import {
   generatePreview,
@@ -236,7 +236,7 @@ describe('Remote Calls', () => {
     });
   });
 
-  describe.skip('executeAutomaticCategorization', () => {
+  describe('executeAutomaticCategorization', () => {
     test('should do nothing if user cancels', () => {
       UIMock.alert.mockReturnValueOnce(UIMock.Button.NO);
       executeAutomaticCategorization();
@@ -247,7 +247,7 @@ describe('Remote Calls', () => {
     test('should show an alert if no rows were categorized', () => {
       UIMock.alert.mockReturnValueOnce(UIMock.Button.YES);
       RangeMock.getValues.mockReturnValue([
-        ['category', 'contra_account'],
+        ['', 'category', 'contra_account'],
         ['cat1', 'account1'],
       ]);
       executeAutomaticCategorization();
@@ -257,9 +257,9 @@ describe('Remote Calls', () => {
     test('should categorize rows', () => {
       UIMock.alert.mockReturnValueOnce(UIMock.Button.YES);
       RangeMock.getValues.mockReturnValue([
-        ['category', 'contra_account'],
-        ['', 'account1'],
-        ['', 'account2'],
+        ['ref', 'date', 'amount', 'description', 'category', 'contra_account', '', '', '', 'category'],
+        ['', '', '', '', '', 'account1', '', '', '', ''],
+        ['', '', '', '', '', 'account2', '', '', '', ''],
       ]);
       detectCategorySpy.mockReturnValue('cat2');
       executeAutomaticCategorization();

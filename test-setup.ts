@@ -1,5 +1,8 @@
+import { Logger } from '@/common/logger';
 import type { Mock } from 'vitest';
 import { vi } from 'vitest';
+
+Logger.disable(); // disable logging during tests to keep the output clean
 
 // In order to test our server code we need the Google Apps Script globals to be available
 // These are not available by default when we run vitest in node environment
