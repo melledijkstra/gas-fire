@@ -23,22 +23,18 @@ export function categorizeTransactions(data: Table): {
     const category = data[row][categoryColIndex];
     const contraAccount = data[row][contraAccountIndex];
 
-    // skip all rows which already have category set
-    if (category && category !== '') {
-      categoryUpdates.push([category]);
-      continue;
+    let newCategory = category;
+
+    if (!category || category === '') {
+      const detectedCategory = detectCategoryByTextAnalysis(contraAccount);
+      if (detectedCategory) {
+        newCategory = detectedCategory;
+        Logger.log(`Row ${row + 1}: detected category "${detectedCategory}" for contra account "${contraAccount}"`)
+        rowsCategorized++;
+      }
     }
 
-    const detectedCategory = detectCategoryByTextAnalysis(contraAccount)
-
-    Logger.log(`Row ${row + 1}: detected category "${detectedCategory}" for contra account "${contraAccount}"`)
-
-    if (detectedCategory) {
-      categoryUpdates.push([detectedCategory]);
-      rowsCategorized++;
-    } else {
-      categoryUpdates.push([category]);
-    }
+    categoryUpdates.push([newCategory]);
   }
 
   Logger.timeEnd('categorizeTransactions');
