@@ -9,7 +9,7 @@ import {
   slugify,
   structuredClone
 } from './helpers';
-import { detectCategoryByTextAnalysis } from './category-detection';
+import { categorizeTransactions } from './category-detection';
 import { findDuplicates } from './duplicate-finder';
 import { NAMED_RANGES } from '../common/constants';
 import { Logger } from '@/common/logger';
@@ -253,54 +253,32 @@ export const executeAutomaticCategorization = () => {
     return;
   }
 
-  sourceSheet?.activate();
+  Logger.time('executeAutomaticCategorization')
 
-  const filter = sourceSheet?.getFilter();
+  sourceSheet?.activate()
+
+  const filter = sourceSheet?.getFilter()
   if (!filter) {
     throw new Error(
       'Automatic categorization script needs an actual filter configured on the source sheet table! Please set a filter before trying again'
     );
   }
 
-  const categoryColIndex = TableUtils.getFireColumnIndexByName('category');
-  const contraAccountIndex = TableUtils.getFireColumnIndexByName('contra_account');
+  const categoryColIndex = TableUtils.getFireColumnIndexByName('category')
   // we set a filter which hides all categories, leaving only rows without category
   // unfortunately there is no better way to do it currently
   const blankFilterCriteria = SpreadsheetApp.newFilterCriteria()
     .setHiddenValues(getCategoryNames())
-    .build();
+    .build()
 
-  filter.setColumnFilterCriteria(categoryColIndex + 1, blankFilterCriteria);
+  filter.setColumnFilterCriteria(categoryColIndex + 1, blankFilterCriteria)
 
   // below code is the actual categorization logic
   // all the code before is just visually for the user
-  let rowsCategorized = 0;
-  const data = sourceSheet?.getDataRange()?.getValues() ?? [];
+  const data = sourceSheet?.getDataRange()?.getValues() ?? []
 
-  const categoryUpdates: Array<Array<string>> = [];
-
-  // set the filter to only show rows that have no category
-  // loop through all data and only process filtered rows
-  // we start at second row because first row contains the column names
-  for (let row = 1; row < data.length; row++) {
-    const category = data[row][categoryColIndex];
-    const contraAccount = data[row][contraAccountIndex];
-
-    // skip all rows which already have category set
-    if (category && category !== '') {
-      categoryUpdates.push([category]);
-      continue;
-    }
-
-    const detectedCategory = detectCategoryByTextAnalysis(contraAccount);
-
-    if (detectedCategory) {
-      categoryUpdates.push([detectedCategory]);
-      rowsCategorized++;
-    } else {
-      categoryUpdates.push([category]);
-    }
-  }
+  // actual categorization logic
+  const { categoryUpdates, rowsCategorized } = categorizeTransactions(data)
 
   if (rowsCategorized === 0) {
     ui.alert('No rows were categorized!');
@@ -314,6 +292,7 @@ export const executeAutomaticCategorization = () => {
   }
 
   ui.alert(`Succesfully categorized ${rowsCategorized} rows!`);
+  Logger.timeEnd('executeAutomaticCategorization');
 };
 
 export const mailNetWorth = () => {
