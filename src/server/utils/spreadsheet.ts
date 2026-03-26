@@ -61,9 +61,14 @@ export const activateSpreadsheet = (sheet?: GoogleAppsScript.Spreadsheet.Sheet) 
   sheet?.showSheet()
 }
 
+/**
+ * Returns the locale of the active spreadsheet, formatted with an underscore (e.g. "en_US").
+ * If the locale cannot be retrieved, returns undefined.
+ */
 export const getSpreadsheetLocale = (): string | undefined => {
   try {
-    return SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetLocale()
+    const locale = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetLocale();
+    return locale.replace('-', '_'); // make sure to always use underscore
   } catch(error) {
     console.warn('Could not retrieve spreadsheet locale: ', error)
   }

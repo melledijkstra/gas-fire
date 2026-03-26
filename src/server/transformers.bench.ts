@@ -1,6 +1,5 @@
 import { bench, describe, vi } from 'vitest';
 import { Transformers } from './transformers';
-import { getSpreadsheetLocale } from './utils/spreadsheet';
 
 vi.mock('./utils/spreadsheet', () => ({
   getSpreadsheetLocale: vi.fn().mockReturnValue('en-GB'),

@@ -5,8 +5,8 @@ const getDateParts = (parts: number[], locale?: string): { year: number, month: 
   const [part1, part2, part3] = parts;
   return {
     year: part3,
-    month: locale === 'en-US' ? part1 : part2,
-    day: locale === 'en-US' ? part2 : part1
+    month: locale === 'en_US' ? part1 : part2,
+    day: locale === 'en_US' ? part2 : part1
   };
 }
 
@@ -52,16 +52,24 @@ const DATE_FORMATS = [
     }
   },
   {
-    // Format: 20/6/24
+    // Format with 2 digit year
+    // EU: "dd/MM/yy"
+    // US: "MM/dd/yy"
     regex: /^\d{1,2}\/\d{1,2}\/\d{2}$/,
-    parser: (str: string) => {
+    parser: (str: string, locale?: string) => {
       const parts = str.split("/").map(Number);
       // Handle two-digit year
       const currentYear = new Date().getFullYear()
-      const currentMillenium = currentYear - (currentYear % 100);
-      const year = parts[2] + currentMillenium
-      const month = parts[1]
-      const day = parts[0]
+      let year = parts[2] + Math.floor(currentYear / 100) * 100;
+      // If the resulting year is more than 20 years in the future,  
+      // assume it belongs to the previous century.  
+      if (year > currentYear + 20) {
+        year -= 100;
+      }
+
+      // Use locale to determine month/day order.
+      const month = locale === 'en_US' ? parts[0] : parts[1];  
+      const day = locale === 'en_US' ? parts[1] : parts[0];
       return new Date(Date.UTC(year, month - 1, day));
     }
   }
