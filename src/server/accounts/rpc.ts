@@ -25,11 +25,11 @@ export function getBankAccounts(): Record<string, string> {
   const accountNames = sheet
     .getRangeByName(NAMED_RANGES.accountNames)
     ?.getValues()
-    .flat() as Array<string>;
+    ?.flat() as Array<string>;
   const ibans = sheet
     .getRangeByName(NAMED_RANGES.accounts)
     ?.getValues()
-    .flat() as Array<string>;
+    ?.flat() as Array<string>;
 
   const bankAccounts: Record<string, string> = {};
 
