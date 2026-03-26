@@ -62,9 +62,10 @@ describe('Transformers', () => {
     expect(Transformers.transformDate('1/6/24')).toEqual(new Date('2024-06-01'));
     
     // US only logic
-    getSpreadsheetLocaleMock.mockReturnValue('en-US');
+    getSpreadsheetLocaleMock.mockReturnValue('en_US');
     expect(Transformers.transformDate('10.01.2023')).toEqual(new Date('2023-10-01'));
     expect(Transformers.transformDate('10/01/2023')).toEqual(new Date('2023-10-01'));
+    expect(Transformers.transformDate('10/01/23')).toEqual(new Date('2023-10-01'));
     getSpreadsheetLocaleMock.mockReset();
   });
 });

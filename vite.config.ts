@@ -162,7 +162,7 @@ const testConfig: UserConfig = {
 
 // https://vitejs.dev/config/
 export default defineConfig(async ({ command, mode }) => {
-  if (mode === 'test') {
+  if (mode === 'test' || mode === 'benchmark') {
     return testConfig;
   } else if (command === 'serve') {
     // for 'serve' mode, we only want to serve the client bundle locally
