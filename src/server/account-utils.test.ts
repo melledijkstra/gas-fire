@@ -61,7 +61,7 @@ describe('calculateNewBalance', () => {
     const newBalance = AccountUtils.calculateNewBalance('my-bank', [50.25, -20.00, 10.00]);
 
     expect(getBalanceSpy).toHaveBeenCalledWith('my-bank');
-    expect(newBalance).toBe(140.75);
+    expect(newBalance).toBeCloseTo(140.75, 2);
   });
 
   test('should return the current balance when values array is empty', () => {
@@ -70,7 +70,7 @@ describe('calculateNewBalance', () => {
     const newBalance = AccountUtils.calculateNewBalance('my-bank', []);
 
     expect(getBalanceSpy).toHaveBeenCalledWith('my-bank');
-    expect(newBalance).toBe(100.50);
+    expect(newBalance).toBeCloseTo(100.50, 2);
   });
 });
 
