@@ -2,7 +2,8 @@ import { detectCategoryByTextAnalysis } from './category-detection';
 import { getSpreadsheetLocale } from './utils/spreadsheet';
 
 export class Transformers {
-  static transformMoney(value: string): number {
+  static transformMoney(value: string | number): number {
+    if (typeof value === 'number') return value;
     if (typeof value !== 'string') return NaN;
 
     // Remove currency symbols and irrelevant characters

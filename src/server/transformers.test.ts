@@ -31,7 +31,7 @@ describe('Transformers', () => {
     // Edge cases and invalid types
     expect(Transformers.transformMoney(null as unknown as string)).toBeNaN();
     expect(Transformers.transformMoney(undefined as unknown as string)).toBeNaN();
-    expect(Transformers.transformMoney(123 as unknown as string)).toBeNaN();
+    expect(Transformers.transformMoney(123 as unknown as string)).toBe(123);
     expect(Transformers.transformMoney({} as unknown as string)).toBeNaN();
     expect(Transformers.transformMoney([] as unknown as string)).toBeNaN();
 
