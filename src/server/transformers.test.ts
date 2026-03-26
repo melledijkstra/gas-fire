@@ -29,11 +29,11 @@ describe('Transformers', () => {
     expect(Transformers.transformMoney('$##@%$$#-1,234.56')).toBe(-1234.56);
 
     // Edge cases and invalid types
-    expect(Transformers.transformMoney(null as any)).toBeNaN();
-    expect(Transformers.transformMoney(undefined as any)).toBeNaN();
-    expect(Transformers.transformMoney(123 as any)).toBeNaN();
-    expect(Transformers.transformMoney({} as any)).toBeNaN();
-    expect(Transformers.transformMoney([] as any)).toBeNaN();
+    expect(Transformers.transformMoney(null as unknown as string)).toBeNaN();
+    expect(Transformers.transformMoney(undefined as unknown as string)).toBeNaN();
+    expect(Transformers.transformMoney(123 as unknown as string)).toBeNaN();
+    expect(Transformers.transformMoney({} as unknown as string)).toBeNaN();
+    expect(Transformers.transformMoney([] as unknown as string)).toBeNaN();
 
     // Empty or whitespace strings
     expect(Transformers.transformMoney('')).toBe(0);
