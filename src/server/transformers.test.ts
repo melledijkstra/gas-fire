@@ -31,9 +31,13 @@ describe('Transformers', () => {
     // Edge cases and invalid types
     expect(Transformers.transformMoney(null as unknown as string)).toBeNaN();
     expect(Transformers.transformMoney(undefined as unknown as string)).toBeNaN();
-    expect(Transformers.transformMoney(123 as unknown as string)).toBe(123);
     expect(Transformers.transformMoney({} as unknown as string)).toBeNaN();
     expect(Transformers.transformMoney([] as unknown as string)).toBeNaN();
+    
+    // Already a number should return the number itself
+    expect(Transformers.transformMoney(123)).toBe(123);
+    expect(Transformers.transformMoney(123.234)).toBe(123.234);
+    expect(Transformers.transformMoney(2136892376478)).toBe(2136892376478);
 
     // Empty or whitespace strings
     expect(Transformers.transformMoney('')).toBe(0);
