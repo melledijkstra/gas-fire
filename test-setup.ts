@@ -43,7 +43,7 @@ class Spreadsheet {
   static readonly getRangeByName = vi.fn(() => Range);
   static readonly getSheetByName = vi.fn(() => Sheet);
   static readonly insertSheet = vi.fn(() => Sheet);
-  static readonly getSpreadsheetLocale = vi.fn(() => 'en-US');
+  static readonly getSpreadsheetLocale = vi.fn(() => 'en_US');
   static readonly getOwner = vi.fn(() => ({
     getEmail: vi.fn(() => 'test@example.com'),
   }));

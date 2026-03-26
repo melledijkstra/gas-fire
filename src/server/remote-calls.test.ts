@@ -172,7 +172,7 @@ describe('Remote Calls', () => {
     });
 
     test('is able to handle bank of america', () => {
-      getSpreadsheetLocaleMock.mockReturnValueOnce('en-US')
+      getSpreadsheetLocaleMock.mockReturnValueOnce('en_US')
 
       const bankOfAmericaConfig = new Config({
         accountId: 'bank-of-america',

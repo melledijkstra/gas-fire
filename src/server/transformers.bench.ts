@@ -2,7 +2,7 @@ import { bench, describe, vi } from 'vitest';
 import { Transformers } from './transformers';
 
 vi.mock('./utils/spreadsheet', () => ({
-  getSpreadsheetLocale: vi.fn().mockReturnValue('en-GB'),
+  getSpreadsheetLocale: vi.fn().mockReturnValue('en_GB'),
 }));
 
 describe('Transformers.transformDate', () => {
