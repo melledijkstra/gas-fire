@@ -371,9 +371,7 @@ export const executeFindDuplicates = () => {
   duplicateSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
 
   // Copy duplicate rows
-  if (duplicateRows.length > 0) {
-    duplicateSheet.getRange(2, 1, duplicateRows.length, duplicateRows[0].length).setValues(duplicateRows);
-  }
+  duplicateSheet.getRange(2, 1, duplicateRows.length, duplicateRows[0].length).setValues(duplicateRows)
 
   SpreadsheetApp.getUi().alert(
     `Found ${duplicateRows.length / 2} duplicates! Rows have been copied to the "duplicate-rows" sheet`
