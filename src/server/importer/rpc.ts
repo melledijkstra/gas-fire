@@ -127,10 +127,10 @@ export function generatePreview(
 
   const balanceColumnName = config?.getImportColumnNameByFireColumn('amount');
 
-  if (balanceColumnName) {
+  if (balanceColumnName && table.length > 0) {
     const balanceColumnIndex = table[0].indexOf(balanceColumnName);
     if (balanceColumnIndex !== -1) {
-      amounts = table.map((row) => row[balanceColumnIndex]);
+      amounts = table.slice(1).map((row) => row[balanceColumnIndex]);
     }
   }
 
