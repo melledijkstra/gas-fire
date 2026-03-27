@@ -1,5 +1,6 @@
 import { DIALOG_SIZES, NAMED_RANGES } from '@/common/constants';
-import { debugImportSettings, executeAutomaticCategorization, executeFindDuplicates } from './remote-calls';
+import { executeAutomaticCategorization } from '../category-detection/rpc';
+import { debugImportSettings, executeFindDuplicates } from '../other/rpc';
 
 export function onOpen(): void {
   const isDebugEnabled: boolean = SpreadsheetApp.getActiveSpreadsheet().getRangeByName(NAMED_RANGES.debug)?.getValue() ?? false;

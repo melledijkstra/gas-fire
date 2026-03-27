@@ -5,9 +5,9 @@ import { FIRE_COLUMNS } from '@/common/constants';
 import type { FireColumn } from '@/common/constants';
 import { Logger } from '@/common/logger';
 import { Config } from './config';
-import { AccountUtils } from './account-utils';
+import { AccountUtils } from './accounts/account-utils';
 import { Transformers } from './transformers';
-import { SheetsRequestBuilder } from './request-generator';
+import { SheetsRequestBuilder } from './request-builder';
 
 const EMPTY = '';
 

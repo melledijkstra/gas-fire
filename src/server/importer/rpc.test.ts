@@ -2,64 +2,41 @@ import {
   RangeMock,
   SheetMock,
   SpreadsheetMock,
-  UIMock,
-  MailAppMock,
   FilterMock,
-} from '../../test-setup';
+} from '../../../test-setup';
 import type { Table } from '@/common/types';
 import { N26ImportMock } from '@/fixtures/n26';
-import { TableUtils } from './table-utils';
+import { TableUtils } from '../table-utils';
 import { raboImportMock } from '@/fixtures/rabobank';
 import { Logger } from '@/common/logger';
-import * as categoryDetection from './category-detection/detection';
-import * as duplicateFinder from './duplicate-finder';
 import {
   generatePreview,
   importCSV,
-  getBankAccounts,
-  executeAutomaticCategorization,
-  executeFindDuplicates,
-  mailNetWorth,
-} from './remote-calls';
-import { Config } from './config';
+} from './rpc';
+import { Config } from '../config';
 import bankOfAmericaCSV from '@/fixtures/commonwealth-bank.csv?raw';
 import Papa from 'papaparse';
 import { fakeTestBankImportData } from '@/fixtures/test-bank';
-import { getSpreadsheetLocale, removeFilterCriteria } from './utils/spreadsheet';
-import { slugify } from './helpers';
+import { getSpreadsheetLocale, removeFilterCriteria } from '../utils/spreadsheet';
+import { slugify } from '../helpers';
 
-vi.mock('./globals', () => ({
+vi.mock('../globals', () => ({
   FireSpreadsheet: SpreadsheetMock,
   getSourceSheet: vi.fn(() => SheetMock)
 }));
 
-vi.mock('./helpers', async (actualImport) => ({
-  ...await actualImport<typeof import('./helpers')>(),
-  getCategoryNames: vi.fn(() => ['cat1', 'cat2']),
-  getColumnIndexByName: vi.fn(name => {
-    if (name === 'category') return 0;
-    if (name === 'contra_account') return 1;
-    return -1;
-  }),
-}))
-
-vi.mock('./utils/spreadsheet')
+vi.mock('../utils/spreadsheet')
 
 const getSpreadsheetLocaleMock = vi.mocked(getSpreadsheetLocale)
 const removeFilterCriteriaMock = vi.mocked(removeFilterCriteria)
 removeFilterCriteriaMock.mockReturnValue(true)
 
 const configSpy = vi.spyOn(Config, 'getAccountConfiguration');
-const detectCategorySpy = vi.spyOn(
-  categoryDetection,
-  'detectCategoryByTextAnalysis'
-);
-const findDuplicatesSpy = vi.spyOn(duplicateFinder, 'findDuplicates');
 const importDataSpy = vi.spyOn(TableUtils, 'importData');
 
 const BANK_ID = 'TestBank';
 
-describe('Remote Calls', () => {
+describe('RPC: Import Functions', () => {
   beforeAll(() => {
     configSpy.mockReturnValue(new Config({
       accountId: BANK_ID,
@@ -214,114 +191,6 @@ describe('Remote Calls', () => {
         expect.arrayContaining([new Date('2015-05-21'), 58.3]),
         expect.arrayContaining([new Date('2015-05-20'), 20]),
       ], undefined);
-    });
-  });
-
-  describe('getBankAccounts', () => {
-    test('in case there are no accounts, it should return an empty object', () => {
-      RangeMock.getValues.mockReturnValue([[], []]);
-      const result = getBankAccounts();
-      expect(result).toEqual({});
-    });
-
-    test('should return a list of bank accounts', () => {
-      RangeMock.getValues
-        .mockReturnValueOnce([['n26'], ['Openbank']])
-        .mockReturnValueOnce([['DB123456789'], ['BANK123456789']]);
-      const result = getBankAccounts();
-      expect(result).toEqual({
-        n26: 'DB123456789',
-        Openbank: 'BANK123456789',
-      });
-    });
-  });
-
-  describe('executeAutomaticCategorization', () => {
-    test('should do nothing if user cancels', () => {
-      UIMock.alert.mockReturnValueOnce(UIMock.Button.NO);
-      executeAutomaticCategorization();
-      expect(UIMock.alert).toHaveBeenCalled();
-      expect(detectCategorySpy).not.toHaveBeenCalled();
-    });
-
-    test('should show an alert if no rows were categorized', () => {
-      UIMock.alert.mockReturnValueOnce(UIMock.Button.YES);
-      RangeMock.getValues.mockReturnValue([
-        ['', 'category', 'contra_account'],
-        ['cat1', 'account1'],
-      ]);
-      executeAutomaticCategorization();
-      expect(UIMock.alert).toHaveBeenCalledWith('No rows were categorized!');
-    });
-
-    test('should categorize rows', () => {
-      UIMock.alert.mockReturnValueOnce(UIMock.Button.YES);
-      RangeMock.getValues.mockReturnValue([
-        ['ref', 'date', 'amount', 'description', 'category', 'contra_account', '', '', '', 'category'],
-        ['', '', '', '', '', 'account1', '', '', '', ''],
-        ['', '', '', '', '', 'account2', '', '', '', ''],
-      ]);
-      detectCategorySpy.mockReturnValue('cat2');
-      executeAutomaticCategorization();
-      expect(detectCategorySpy).toHaveBeenCalledTimes(2);
-      expect(UIMock.alert).toHaveBeenCalledWith('Succesfully categorized 2 rows!');
-    });
-  });
-
-  describe('executeFindDuplicates', () => {
-    test('should do nothing if user cancels', () => {
-      UIMock.prompt.mockReturnValueOnce({ getSelectedButton: () => UIMock.Button.CANCEL });
-      executeFindDuplicates();
-      expect(findDuplicatesSpy).not.toHaveBeenCalled();
-    });
-
-    test('should show an alert if input is invalid', () => {
-      UIMock.prompt.mockReturnValueOnce({
-        getSelectedButton: () => UIMock.Button.OK,
-        getResponseText: () => 'invalid',
-      });
-      executeFindDuplicates();
-      expect(UIMock.alert).toHaveBeenCalledWith(
-        'Invalid input! Please enter a valid number of days (e.g. 7)'
-      );
-    });
-
-    test('should show an alert if no duplicates are found', () => {
-      UIMock.prompt.mockReturnValueOnce({
-        getSelectedButton: () => UIMock.Button.OK,
-        getResponseText: () => '7',
-      });
-      findDuplicatesSpy.mockReturnValue([]);
-      executeFindDuplicates();
-      expect(UIMock.alert).toHaveBeenCalledWith('No duplicates found!');
-    });
-
-    test('should copy duplicates to a new sheet', () => {
-      UIMock.prompt.mockReturnValueOnce({
-        getSelectedButton: () => UIMock.Button.OK,
-        getResponseText: () => '7',
-      });
-      findDuplicatesSpy.mockReturnValue([
-        ['row1'],
-        ['row2'],
-      ]);
-      executeFindDuplicates();
-      expect(SheetMock.clear).toHaveBeenCalled();
-      expect(SheetMock.getRange).toHaveBeenCalledTimes(2);
-      expect(UIMock.alert).toHaveBeenCalledWith(
-        'Found 1 duplicates! Rows have been copied to the "duplicate-rows" sheet'
-      );
-    });
-  });
-
-  describe('mailNetWorth', () => {
-    test('should send an email with the net worth', () => {
-      RangeMock.getValue.mockReturnValueOnce(12345.67);
-      SpreadsheetMock.getOwner.mockReturnValue({ getEmail: vi.fn(() => 'test@example.com') });
-      SpreadsheetMock.getRangeByName.mockReturnValue(RangeMock);
-
-      mailNetWorth();
-      expect(MailAppMock.sendEmail).toHaveBeenCalled();
     });
   });
 });
