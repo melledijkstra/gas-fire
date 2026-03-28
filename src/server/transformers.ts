@@ -1,5 +1,6 @@
 import { detectCategoryByTextAnalysis } from './category-detection/detection';
 import { getSpreadsheetLocale } from './utils/spreadsheet';
+import { Logger } from '@/common/logger';
 
 const getDateParts = (parts: number[], locale?: string): { year: number, month: number, day: number } => {
   const [part1, part2, part3] = parts;
@@ -82,31 +83,60 @@ export class Transformers {
     // If not a number neither a string, then we can't return a valid number
     if (typeof value !== 'string') return NaN;
 
+    if (!value.trim()) return 0;
+
     // Remove currency symbols and irrelevant characters
-    let cleanedStr = value.replace(/[^0-9.,'-]/g, '');
-    // Remove apostrophes used as thousand separators
-    cleanedStr = cleanedStr.replace(/'/g, '');
+    // Keeping digits, minus sign, and potential separators (., ' and space)
+    let cleanedStr = value.replace(/[^\d.,'\s-]/g, '').trim();
+
+    // If the string is empty after cleaning, it means it had no valid characters, return 0.
+    if (!cleanedStr) return 0;
+
+    // If there are no digits but there is a minus sign, return NaN, else 0
+    if (!/\d/.test(cleanedStr)) {
+      return cleanedStr.includes('-') ? NaN : 0;
+    }
+
     // Detect decimal separator
     const lastComma = cleanedStr.lastIndexOf(',');
     const lastDot = cleanedStr.lastIndexOf('.');
     let decimalSeparator = '';
 
+    // Detect decimal separator by finding the last occurrence of comma or dot.
+    // This allows for correct parsing of numbers containing both, e.g. "1.234,56" or "1,234.56"
     if (lastComma > lastDot) {
       decimalSeparator = ',';
     } else if (lastDot > lastComma) {
       decimalSeparator = '.';
+    } else {
+      // If neither comma nor dot found, or they are at the same position (-1)
+      try {
+        const locale = getSpreadsheetLocale() || 'en_US';
+        const normalizedLocale = locale.replace('_', '-');
+        const parts = new Intl.NumberFormat(normalizedLocale).formatToParts(1234.5);
+        const localeDecimal = parts.find(p => p.type === 'decimal')?.value;
+
+        if (localeDecimal && cleanedStr.includes(localeDecimal)) {
+          decimalSeparator = localeDecimal;
+        }
+      } catch {
+        // Ignore Intl.NumberFormat errors if any
+      }
     }
 
     if (decimalSeparator) {
-      // Identify thousand separator
-      const thousandSeparator = decimalSeparator === '.' ? ',' : '.';
+      // Identify thousand separator characters (anything other than digits, minus sign, and decimal separator)
+      const escapedDecSepChar = decimalSeparator.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const groupCharsRegex = new RegExp(`[^\\d${escapedDecSepChar}-]`, 'g');
+
       // Remove thousand separators
-      cleanedStr = cleanedStr.split(thousandSeparator).join('');
-      // Replace decimal separator with a dot
+      cleanedStr = cleanedStr.replace(groupCharsRegex, '');
+
+      // Replace the first occurrence of the decimal separator with a dot
       cleanedStr = cleanedStr.replace(decimalSeparator, '.');
     } else {
-      // No decimal separator found; remove all commas and dots
-      cleanedStr = cleanedStr.replace(/[.,]/g, '');
+      // No decimal separator found; remove all non-digit, non-minus chars
+      cleanedStr = cleanedStr.replace(/[^\d-]/g, '');
     }
 
     // Convert to number
@@ -115,7 +145,7 @@ export class Transformers {
     return number;
   }
 
-  static transformDate(value: string): Date | string {
+  static transformDate(value: string): Date {
     const locale = getSpreadsheetLocale();
 
     // Try each format.
@@ -130,9 +160,9 @@ export class Transformers {
       }
     }
 
-    // As a fallback, return the string itself in the hopes that it will be formatted
-    // inside the google sheet
-    return value;
+    // Log a warning and throw an Error to prevent silent data corruption
+    Logger.warn(`Failed to parse date: "${value}" with locale: "${locale}"`);
+    throw new Error(`Failed to parse date: "${value}"`);
   }
 
   static transformCategory(value: string): string | null {

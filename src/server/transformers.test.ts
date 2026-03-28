@@ -28,6 +28,12 @@ describe('Transformers', () => {
     expect(Transformers.transformMoney('$-1,234.56')).toBe(-1234.56);
     expect(Transformers.transformMoney('$##@%$$#-1,234.56')).toBe(-1234.56);
 
+    // Test Swiss and Indian formats
+    expect(Transformers.transformMoney("1'234'567.89")).toBe(1234567.89);
+    expect(Transformers.transformMoney("1'234'567,89")).toBe(1234567.89);
+    expect(Transformers.transformMoney('1,23,456.78')).toBe(123456.78);
+    expect(Transformers.transformMoney('1 234 567.89')).toBe(1234567.89);
+
     // Edge cases and invalid types
     expect(Transformers.transformMoney(null as unknown as string)).toBeNaN();
     expect(Transformers.transformMoney(undefined as unknown as string)).toBeNaN();
@@ -61,11 +67,15 @@ describe('Transformers', () => {
     expect(Transformers.transformDate('20/6/24')).toEqual(new Date('2024-06-20'));
     expect(Transformers.transformDate('1/6/24')).toEqual(new Date('2024-06-01'));
     
+    // Invalid date inputs
+    expect(() => Transformers.transformDate('invalid-date')).toThrowError('Failed to parse date: "invalid-date"');
+
     // US only logic
     getSpreadsheetLocaleMock.mockReturnValue('en_US');
     expect(Transformers.transformDate('10.01.2023')).toEqual(new Date('2023-10-01'));
     expect(Transformers.transformDate('10/01/2023')).toEqual(new Date('2023-10-01'));
     expect(Transformers.transformDate('10/01/23')).toEqual(new Date('2023-10-01'));
+
     getSpreadsheetLocaleMock.mockReset();
   });
 });
