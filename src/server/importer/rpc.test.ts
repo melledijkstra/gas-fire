@@ -59,13 +59,14 @@ describe('RPC: Import Functions', () => {
       ]);
 
       const table: Table = [['', '', '', '', '', ''], []];
-      const { result, newBalance } = generatePreview(
+      const response = generatePreview(
         table,
         slugify(BANK_ID)
       );
 
-      expect(result).toStrictEqual(table);
-      expect(newBalance).toBe(302.8);
+      expect(response.success).toBe(true);
+      expect(response.data?.result).toStrictEqual(table);
+      expect(response.data?.newBalance).toBe(302.8);
     });
 
     test('is able to calculate new balance when there is useful data in the amounts column', () => {
@@ -75,13 +76,14 @@ describe('RPC: Import Functions', () => {
         ['', '', ''],
       ]);
 
-      const { result, newBalance } = generatePreview(
+      const response = generatePreview(
         fakeTestBankImportData,
         slugify(BANK_ID)
       );
 
-      expect(result).toStrictEqual(fakeTestBankImportData);
-      expect(newBalance).toBe(358.55);
+      expect(response.success).toBe(true);
+      expect(response.data?.result).toStrictEqual(fakeTestBankImportData);
+      expect(response.data?.newBalance).toBe(358.55);
     });
   });
 
@@ -95,6 +97,7 @@ describe('RPC: Import Functions', () => {
 
       expect(importDataSpy).not.toHaveBeenCalled();
       expect(result.message).toBe('No header row detected in import data!');
+      expect(result.success).toBe(false);
     })
 
     test('handles empty input data', () => {
@@ -105,6 +108,7 @@ describe('RPC: Import Functions', () => {
 
       expect(importDataSpy).not.toHaveBeenCalled();
       expect(result.message).toBe('No rows to import, check your import data or configuration!');
+      expect(result.success).toBe(false);
     })
 
     test('removes filters if any are set', () => {
@@ -134,6 +138,7 @@ describe('RPC: Import Functions', () => {
 
       expect(importDataSpy).toHaveBeenCalled();
       expect(result.message).toBe('imported 4 rows!');
+      expect(result.success).toBe(true);
     });
 
     test('is able to handle rabobank import', () => {
@@ -146,6 +151,7 @@ describe('RPC: Import Functions', () => {
 
       expect(importDataSpy).toHaveBeenCalled();
       expect(result.message).toBe('imported 1 rows!');
+      expect(result.success).toBe(true);
     });
 
     test('is able to handle bank of america', () => {
@@ -170,6 +176,7 @@ describe('RPC: Import Functions', () => {
         expect.arrayContaining([new Date('2023-09-12'),-100,'Utility Bill Payment']),
       ]), undefined);
       expect(result.message).toBe('imported 5 rows!')
+      expect(result.success).toBe(true);
     })
 
     test('sorts by date before importing', () => {

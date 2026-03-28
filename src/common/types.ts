@@ -25,8 +25,11 @@ export type StrategyOptions = Record<string, string>;
  */
 export type Table = string[][];
 
-export type ServerResponse = {
-  message: string;
+export type ServerResponse<T = undefined> = {
+  success: boolean;
+  message?: string;
+  error?: string;
+  data?: T;
 };
 
 /**

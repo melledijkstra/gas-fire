@@ -16,13 +16,16 @@
 
   let previewData = $state<Table | undefined>(tableData);
 
-  const onGeneratePreviewSuccess = ({
-    result,
-    newBalance,
-  }: {
-    result: Table;
-    newBalance?: number;
+  const onGeneratePreviewSuccess = (response: {
+    success: boolean;
+    error?: string;
+    data?: { result: Table; newBalance?: number };
   }) => {
+    if (!response.success || !response.data) {
+      appState.statusText = `Failed to create preview: ${response.error || 'Unknown error'}`;
+      return;
+    }
+    const { result, newBalance } = response.data;
     const locale = getBrowserLocale()
     const newBalanceFormatted = newBalance?.toLocaleString(locale, {
       style: 'currency',

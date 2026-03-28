@@ -6,7 +6,7 @@ describe('RPC: Account Functions', () => {
     test('in case there are no accounts, it should return an empty object', () => {
       RangeMock.getValues.mockReturnValue([[], []]);
       const result = getBankAccounts();
-      expect(result).toEqual({});
+      expect(result).toEqual({ success: true, data: {} });
     });
 
     test('should return a list of bank accounts', () => {
@@ -15,8 +15,11 @@ describe('RPC: Account Functions', () => {
         .mockReturnValueOnce([['DB123456789'], ['BANK123456789']]);
       const result = getBankAccounts();
       expect(result).toEqual({
-        n26: 'DB123456789',
-        Openbank: 'BANK123456789',
+        success: true,
+        data: {
+          n26: 'DB123456789',
+          Openbank: 'BANK123456789',
+        }
       });
     });
   });

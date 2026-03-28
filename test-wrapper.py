@@ -1,0 +1,8 @@
+print("Plan outline")
+print("1. Update ServerResponse in `src/common/types.ts` to be a generic type")
+print("`export type ServerResponse<T = undefined> = { success: boolean; data?: T; message?: string; error?: string };`")
+print("2. Update all rpc functions in `src/server` that are used from frontend via `serverFunctions` to return `ServerResponse<T>` and catch errors. Wait, the prompt says 'Implement a standard ServerResponse wrapper for all rpc.ts (remote calls made from the frontend)'")
+print("We have `src/server/importer/rpc.ts` (`importCSV`, `generatePreview`)")
+print("`src/server/accounts/rpc.ts` (`getBankAccounts`, `getBankAccountOptions`, `getBankAccountOptionsCached`)")
+print("Other functions are executed from GAS menu, but they are also exported from `index.ts` and can potentially be called via `serverFunctions`. The prompt says 'for all rpc.ts (remote calls made from the frontend)'. Should I just wrap all RPC functions, or specifically the ones we see being called? 'wrapper for all rpc.ts that includes a success boolean and a localized error message'. To be safe, wrapping `importCSV`, `generatePreview`, `getBankAccountOptionsCached` because they are explicitly called from the frontend.")
+print("Wait, 'for all rpc.ts'. To be safe, maybe I can create a HOC (higher order function) or just add try-catch in those functions.")
