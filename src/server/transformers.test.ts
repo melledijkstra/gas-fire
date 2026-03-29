@@ -35,6 +35,11 @@ describe('Transformers', () => {
     expect(Transformers.transformMoney('1 234 567.89')).toBe(1234567.89);
     expect(Transformers.transformMoney('1.234,56')).toBe(1234.56);
 
+    // Double grouping separator is the same character as the decimal separator
+    expect(Transformers.transformMoney('1.234.567,89')).toBe(1234567.89);
+    expect(Transformers.transformMoney('1,234,56')).toBe(1234.56);
+    expect(Transformers.transformMoney('1.23.45')).toBe(123.45);
+
     // Edge cases and invalid types
     expect(Transformers.transformMoney(null as unknown as string)).toBeNaN();
     expect(Transformers.transformMoney(undefined as unknown as string)).toBeNaN();
@@ -57,7 +62,6 @@ describe('Transformers', () => {
     // Invalid number formats
     expect(Transformers.transformMoney('-')).toBeNaN();
     expect(Transformers.transformMoney('--123')).toBeNaN();
-    expect(Transformers.transformMoney('1.23.45')).toBeNaN();
   });
 
   test('Transformers.transformDate', () => {
