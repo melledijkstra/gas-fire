@@ -8,13 +8,13 @@
   import { Button } from 'flowbite-svelte';
 
   let { tableData }: { tableData?: Table } = $props();
+  // svelte-ignore state_referenced_locally
+let previewData = $state<Table | undefined>(tableData);
 
   const getBrowserLocale = () => {
     if (navigator.languages != undefined) return navigator.languages[0];
     return navigator.language;
   };
-
-  let previewData = $state<Table | undefined>(tableData);
 
   const onGeneratePreviewSuccess = (response: ServerResponse<{
     result: Table;

@@ -29,7 +29,16 @@
   let canSubmit = $derived(importFile && importState.strategy);
 
   const onFailure = (error: ServerResponse | string) => {
-    const errorMsg = typeof error === 'string' ? error : error?.error || error?.message || 'Unknown error';
+    let errorMsg: string = 'Unknown error';
+    if (typeof error === 'string') {
+      errorMsg = error;
+    } else if (error.success) {
+      // In case of a successful response, we don't want to show an error message
+      return;
+    } else {
+      errorMsg = error.error;
+    }
+
     alert(`Action failed! ${errorMsg}`);
   };
 
@@ -50,7 +59,7 @@
 
   const onParseError = (error: { message: string }) => {
     Logger.error(error);
-    alert(`Parsing error: ${error.message}`);
+    onFailure(`Parsing error: ${error.message}`);
   };
 
   const handleFormSubmit = (event: SubmitEvent) => {

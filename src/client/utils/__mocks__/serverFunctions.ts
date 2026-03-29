@@ -53,7 +53,7 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     await sleep(5000)
     return {
       success: true,
-      message: 'Successfully imported CSV',
+      message: 'Successfully imported CSV'
     };
   };
 
