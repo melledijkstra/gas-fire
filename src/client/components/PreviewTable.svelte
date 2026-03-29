@@ -16,13 +16,12 @@
 
   let previewData = $state<Table | undefined>(tableData);
 
-  const onGeneratePreviewSuccess = (response: {
-    success: boolean;
-    error?: string;
-    data?: { result: Table; newBalance?: number };
-  }) => {
+  const onGeneratePreviewSuccess = (response: import('@/common/types').ServerResponse<{
+    result: Table;
+    newBalance?: number;
+  }>) => {
     if (!response.success || !response.data) {
-      appState.statusText = `Failed to create preview: ${response.error || 'Unknown error'}`;
+      appState.statusText = `Failed to create preview: ${response.success === false ? response.error : 'Unknown error'}`;
       return;
     }
     const { result, newBalance } = response.data;
