@@ -1,7 +1,37 @@
 import { getSpreadsheetLocale } from "../utils/spreadsheet";
 import { Logger } from "@/common/logger";
 
-export const parseMoney = (value: string | number): number => {
+function detectDecimalSeparator(value: string): string | null {
+  const lastComma = value.lastIndexOf(',');
+  const lastDot = value.lastIndexOf('.');
+  let decimalSeparator = '';
+
+  // Detect decimal separator by finding the last occurrence of comma or dot.
+  // This allows for correct parsing of numbers containing both, e.g. "1.234,56" or "1,234.56"
+  if (lastComma > lastDot) {
+    decimalSeparator = ',';
+  } else if (lastDot > lastComma) {
+    decimalSeparator = '.';
+  } else {
+    // If neither comma nor dot found, or they are at the same position (-1)
+    try {
+      const locale = getSpreadsheetLocale() ?? 'en_US';
+      const normalizedLocale = locale.replace('_', '-');
+      const parts = new Intl.NumberFormat(normalizedLocale).formatToParts(1234.5);
+      const localeDecimal = parts.find(p => p.type === 'decimal')?.value;
+
+      if (localeDecimal && value.includes(localeDecimal)) {
+        decimalSeparator = localeDecimal;
+      }
+    } catch (error) {
+      Logger.warn("Failed to use Intl.NumberFormat to determine decimal separator: " + error);
+    }
+  }
+
+  return decimalSeparator ?? null;
+}
+
+export function parseMoney(value: string | number): number {
   // If already a number, return it directly
   if (typeof value === 'number') return value;
   // If not a number neither a string, then we can't return a valid number
@@ -22,31 +52,7 @@ export const parseMoney = (value: string | number): number => {
   }
 
   // Detect decimal separator
-  const lastComma = cleanedStr.lastIndexOf(',');
-  const lastDot = cleanedStr.lastIndexOf('.');
-  let decimalSeparator = '';
-
-  // Detect decimal separator by finding the last occurrence of comma or dot.
-  // This allows for correct parsing of numbers containing both, e.g. "1.234,56" or "1,234.56"
-  if (lastComma > lastDot) {
-    decimalSeparator = ',';
-  } else if (lastDot > lastComma) {
-    decimalSeparator = '.';
-  } else {
-    // If neither comma nor dot found, or they are at the same position (-1)
-    try {
-      const locale = getSpreadsheetLocale() || 'en_US';
-      const normalizedLocale = locale.replace('_', '-');
-      const parts = new Intl.NumberFormat(normalizedLocale).formatToParts(1234.5);
-      const localeDecimal = parts.find(p => p.type === 'decimal')?.value;
-
-      if (localeDecimal && cleanedStr.includes(localeDecimal)) {
-        decimalSeparator = localeDecimal;
-      }
-    } catch (error) {
-      Logger.warn("Failed to use Intl.NumberFormat to determine decimal separator: " + error);
-    }
-  }
+  const decimalSeparator = detectDecimalSeparator(cleanedStr);
 
   if (decimalSeparator) {
     // Find the position of the decimal separator
