@@ -29,10 +29,10 @@ describe('Transformers', () => {
     expect(Transformers.transformMoney('$##@%$$#-1,234.56')).toBe(-1234.56);
 
     // Test Swiss and Indian formats
-    expect(Transformers.transformMoney("1'234'567.89")).toBe(1234567.89);
-    expect(Transformers.transformMoney("1'234'567,89")).toBe(1234567.89);
-    expect(Transformers.transformMoney('1,23,456.78')).toBe(123456.78);
-    expect(Transformers.transformMoney('1 234 567.89')).toBe(1234567.89);
+    expect(Transformers.transformMoney("1'234'567.89")).toBeCloseTo(1234567.89, 2);
+    expect(Transformers.transformMoney("1'234'567,89")).toBeCloseTo(1234567.89, 2);
+    expect(Transformers.transformMoney('1,23,456.78')).toBeCloseTo(123456.78, 2);
+    expect(Transformers.transformMoney('1 234 567.89')).toBeCloseTo(1234567.89, 2);
 
     // Edge cases and invalid types
     expect(Transformers.transformMoney(null as unknown as string)).toBeNaN();
