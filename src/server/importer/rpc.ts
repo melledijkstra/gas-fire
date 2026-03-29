@@ -23,122 +23,141 @@ export function importCSV(
   inputTable: Table,
   bankAccount: string
 ): ServerResponse {
-  Logger.time('importCSV')
+  try {
+    Logger.time('importCSV')
 
-  const sourceSheet = getSourceSheet()
-  const accountConfig = Config.getAccountConfiguration(bankAccount)
+    const sourceSheet = getSourceSheet()
+    const accountConfig = Config.getAccountConfiguration(bankAccount)
 
-  Logger.log('account configuration used for import', accountConfig)
+    Logger.log('account configuration used for import', accountConfig)
 
-  if (!accountConfig) {
-    throw new Error(
-      `Bank with identifier "${bankAccount}" does not have valid configuration!`
-    )
-  }
-
-  // make the user visually switch to the primary sheet where data will be imported
-  activateSpreadsheet(sourceSheet)
-
-  // remove any filters that might be set
-  // importing might go wrong when filters are set
-  const filter = sourceSheet?.getFilter()
-
-  if (filter) {
-    if (!removeFilterCriteria(filter, true)) {
+    if (!accountConfig) {
       throw new Error(
-        'Filters need to be removed before importing, cancelling import'
-      );
+        `Bank with identifier "${bankAccount}" does not have valid configuration!`
+      )
     }
-  }
 
-  let result = structuredClone(inputTable)
+    // make the user visually switch to the primary sheet where data will be imported
+    activateSpreadsheet(sourceSheet)
 
-  // retrieve the header row and separate from the actual input data
-  const headerRow = result.shift() // cast because we know first header row exists
+    // remove any filters that might be set
+    // importing might go wrong when filters are set
+    const filter = sourceSheet?.getFilter()
 
-  if (!headerRow || headerRow.length === 0) {
-    const msg = 'No header row detected in import data!'
+    if (filter) {
+      if (!removeFilterCriteria(filter, true)) {
+        throw new Error(
+          'Filters need to be removed before importing, cancelling import'
+        );
+      }
+    }
+
+    let result = structuredClone(inputTable)
+
+    // retrieve the header row and separate from the actual input data
+    const headerRow = result.shift() // cast because we know first header row exists
+
+    if (!headerRow || headerRow.length === 0) {
+      const msg = 'No header row detected in import data!'
+      Logger.log(msg)
+      return { success: false, message: msg, error: msg }
+    }
+
+    //
+    // BEFORE IMPORT RULES
+    //
+    result = TableUtils.removeEmptyRows(result)
+
+    //
+    // IMPORT RULES
+    //
+    result = processInputDataAndShapeFiresheetStructure({
+      headers: headerRow,
+      rows: result,
+      config: accountConfig,
+    })
+    // ^^ result is now in the firesheet structure
+
+    const dateColumn = TableUtils.getFireColumnIndexByName('date')
+    if (dateColumn) {
+      // if we found a date column, we sort the data by date
+      result = TableUtils.sortByDate(result, dateColumn)
+    }
+
+    if (result.length === 0) {
+      const msg = 'No rows to import, check your import data or configuration!';
+      Logger.log(msg)
+      return {
+        success: false,
+        message: msg,
+        error: msg
+      }
+    }
+
+    // actual importing of the data into the sheet
+    Logger.time('TableUtils.importData')
+
+    const autoFillColumns = accountConfig.autoFillEnabled ? accountConfig.autoFillColumnIndices : undefined
+    TableUtils.importData(result, autoFillColumns)
+
+    Logger.timeEnd('TableUtils.importData')
+
+    const msg = `imported ${result.length} rows!`;
     Logger.log(msg)
-    return { message: msg }
-  }
 
-  //
-  // BEFORE IMPORT RULES
-  //
-  result = TableUtils.removeEmptyRows(result)
+    Logger.timeEnd('importCSV')
 
-  //
-  // IMPORT RULES
-  //
-  result = processInputDataAndShapeFiresheetStructure({
-    headers: headerRow,
-    rows: result,
-    config: accountConfig,
-  })
-  // ^^ result is now in the firesheet structure
-
-  const dateColumn = TableUtils.getFireColumnIndexByName('date')
-  if (dateColumn) {
-    // if we found a date column, we sort the data by date
-    result = TableUtils.sortByDate(result, dateColumn)
-  }
-
-  if (result.length === 0) {
-    const msg = 'No rows to import, check your import data or configuration!';
-    Logger.log(msg)
     return {
+      success: true,
       message: msg,
+    };
+  } catch (error) {
+    Logger.error(error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error)
     }
   }
-
-  // actual importing of the data into the sheet
-  Logger.time('TableUtils.importData')
-
-  const autoFillColumns = accountConfig.autoFillEnabled ? accountConfig.autoFillColumnIndices : undefined
-  TableUtils.importData(result, autoFillColumns)
-
-  Logger.timeEnd('TableUtils.importData')
-
-  const msg = `imported ${result.length} rows!`;
-  Logger.log(msg)
-
-  Logger.timeEnd('importCSV')
-
-  return {
-    message: msg,
-  };
 }
 
 export function generatePreview(
   table: Table,
   bankAccount: string
-): {
-  result: Table;
-  newBalance?: number;
-} {
-  let amounts: Array<string> = [];
+): ServerResponse<{ result: Table; newBalance?: number }> {
+  try {
+    let amounts: Array<string> = [];
 
-  // PENDING: retrieve the amounts from CSV using the back account configuration
-  const config = Config.getAccountConfiguration(bankAccount);
+    // PENDING: retrieve the amounts from CSV using the back account configuration
+    const config = Config.getAccountConfiguration(bankAccount);
 
-  if (!config) {
-    throw new Error(`Configuration for account ${bankAccount} not found`);
-  }
+    if (!config) {
+      throw new Error(`Configuration for account ${bankAccount} not found`);
+    }
 
-  const balanceColumnName = config?.getImportColumnNameByFireColumn('amount');
+    const balanceColumnName = config?.getImportColumnNameByFireColumn('amount');
 
-  if (balanceColumnName && table.length > 0) {
-    const balanceColumnIndex = table[0].indexOf(balanceColumnName);
-    if (balanceColumnIndex !== -1) {
-      amounts = table.slice(1).map((row) => row[balanceColumnIndex]);
+    if (balanceColumnName && table.length > 0) {
+      const balanceColumnIndex = table[0].indexOf(balanceColumnName);
+      if (balanceColumnIndex !== -1) {
+        amounts = table.slice(1).map((row) => row[balanceColumnIndex]);
+      }
+    }
+
+    const amountNumbers = amounts
+      .map((value) => Transformers.transformMoney(value))
+      .filter(isNumeric);
+
+    const newBalance = AccountUtils.calculateNewBalance(bankAccount, amountNumbers);
+
+    return {
+      success: true,
+      data: { result: table, newBalance }
+    };
+  } catch (error) {
+    Logger.error(error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error)
     }
   }
-
-  const amountNumbers = amounts
-    .map((value) => Transformers.transformMoney(value))
-    .filter(isNumeric);
-
-  const newBalance = AccountUtils.calculateNewBalance(bankAccount, amountNumbers);
-
-  return { result: table, newBalance };
 }

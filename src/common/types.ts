@@ -25,9 +25,9 @@ export type StrategyOptions = Record<string, string>;
  */
 export type Table = string[][];
 
-export type ServerResponse = {
-  message: string;
-};
+export type ServerResponse<T = unknown> =
+  | { success: true; data?: T; message?: string }
+  | { success: false; error: string; message?: string };
 
 /**
  * Account definition

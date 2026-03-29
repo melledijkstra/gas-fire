@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Table } from '@/common/types';
+  import type { Table, ServerResponse } from '@/common/types';
   import { serverFunctions } from '@/client/utils/serverFunctions';
   import DataTable from './DataTable.svelte';
   import { excludeRowsFromData } from '../utils/importing';
@@ -8,21 +8,23 @@
   import { Button } from 'flowbite-svelte';
 
   let { tableData }: { tableData?: Table } = $props();
+  // svelte-ignore state_referenced_locally
+let previewData = $state<Table | undefined>(tableData);
 
   const getBrowserLocale = () => {
     if (navigator.languages != undefined) return navigator.languages[0];
     return navigator.language;
   };
 
-  let previewData = $state<Table | undefined>(tableData);
-
-  const onGeneratePreviewSuccess = ({
-    result,
-    newBalance,
-  }: {
+  const onGeneratePreviewSuccess = (response: ServerResponse<{
     result: Table;
     newBalance?: number;
-  }) => {
+  }>) => {
+    if (!response.success || !response.data) {
+      appState.statusText = `Failed to create preview: ${!response.success ? response.error : 'Unknown error'}`;
+      return;
+    }
+    const { result, newBalance } = response.data;
     const locale = getBrowserLocale()
     const newBalanceFormatted = newBalance?.toLocaleString(locale, {
       style: 'currency',

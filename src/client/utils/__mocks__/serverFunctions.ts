@@ -30,11 +30,14 @@ const StrategyOptions = {
 }
 
 class ServerFunctions implements PromisifiedServerFunctionsInterface {
-  async getBankAccounts(): Promise<Record<string, string>> {
+  async getBankAccounts(): Promise<ServerResponse<Record<string, string>>> {
     console.log('getBankAccounts mock called');
     return {
-      n26: 'N26',
-      rabobank: 'Rabobank',
+      success: true,
+      data: {
+        n26: 'N26',
+        rabobank: 'Rabobank',
+      }
     };
   };
 
@@ -49,21 +52,25 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     console.log('importCSV mock called')
     await sleep(5000)
     return {
-      message: 'Successfully imported CSV',
+      success: true,
+      message: 'Successfully imported CSV'
     };
   };
 
   async generatePreview(
     table: Table,
     _strategy: string
-  ): Promise<{
+  ): Promise<ServerResponse<{
     result: Table;
     newBalance?: number;
-  }> {
+  }>> {
     console.log('generatePreview mock called');
     return {
-      result: table,
-      newBalance: 1234,
+      success: true,
+      data: {
+        result: table,
+        newBalance: 1234,
+      }
     };
   };
 
@@ -105,15 +112,15 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     console.log('executeFindDuplicates mock called');
   };
 
-  async getBankAccountOptions(): Promise<StrategyOptions> {
+  async getBankAccountOptions(): Promise<ServerResponse<StrategyOptions>> {
     console.log('getBankAccountOptions mock called');
-    return StrategyOptions;
+    return { success: true, data: StrategyOptions };
   };
 
-  getBankAccountOptionsCached = fn(async (): Promise<StrategyOptions> => {
+  getBankAccountOptionsCached = fn(async (): Promise<ServerResponse<StrategyOptions>> => {
     await sleep(1000);
     console.log('getBankAccountOptionsCached mock called');
-    return StrategyOptions;
+    return { success: true, data: StrategyOptions };
   });
 }
 

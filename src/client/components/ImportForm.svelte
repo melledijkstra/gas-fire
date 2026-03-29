@@ -28,20 +28,38 @@
   let importFile = $state<File>();
   let canSubmit = $derived(importFile && importState.strategy);
 
-  const onFailure = (error: ServerResponse) => alert(`Action failed! ${error}`);
+  const onFailure = (error: ServerResponse | string) => {
+    let errorMsg: string = 'Unknown error';
+    if (typeof error === 'string') {
+      errorMsg = error;
+    } else if (error.success) {
+      // In case of a successful response, we don't want to show an error message
+      return;
+    } else {
+      errorMsg = error.error;
+    }
+
+    alert(`Action failed! ${errorMsg}`);
+  };
 
   const submitDataToServer = (data: Table, importStrategy: string) => {
     isImporting = true;
     serverFunctions
       .importCSV(data, importStrategy)
-      .then(() => google.script.host.close())
+      .then((response) => {
+        if (response.success) {
+          google.script.host.close();
+        } else {
+          onFailure(response);
+        }
+      })
       .catch(onFailure)
       .finally(() => isImporting = false);
   };
 
   const onParseError = (error: { message: string }) => {
     Logger.error(error);
-    alert(`Parsing error: ${error.message}`);
+    onFailure(`Parsing error: ${error.message}`);
   };
 
   const handleFormSubmit = (event: SubmitEvent) => {
@@ -70,8 +88,12 @@
     // retrieve import strategy options when mounted
     serverFunctions
       .getBankAccountOptionsCached()
-      .then((serverStrategyOptions) => {
-        strategyOptions = serverStrategyOptions;
+      .then((response) => {
+        if (response.success && response.data) {
+          strategyOptions = response.data;
+        } else {
+          onFailure(response);
+        }
       })
       .catch((reason) => onFailure(reason));
   });

@@ -23,44 +23,49 @@ export const executeAutomaticCategorization = () => {
     return;
   }
 
-  Logger.time('executeAutomaticCategorization')
+  try {
+    Logger.time('executeAutomaticCategorization')
 
-  sourceSheet?.activate()
+    sourceSheet?.activate()
 
-  const filter = sourceSheet?.getFilter()
-  if (!filter) {
-    throw new Error(
-      'Automatic categorization script needs an actual filter configured on the source sheet table! Please set a filter before trying again'
-    );
+    const filter = sourceSheet?.getFilter()
+    if (!filter) {
+      throw new Error(
+        'Automatic categorization script needs an actual filter configured on the source sheet table! Please set a filter before trying again'
+      );
+    }
+
+    const categoryColIndex = TableUtils.getFireColumnIndexByName('category')
+    // we set a filter which hides all categories, leaving only rows without category
+    // unfortunately there is no better way to do it currently
+    const blankFilterCriteria = SpreadsheetApp.newFilterCriteria()
+      .setHiddenValues(getCategoryNames())
+      .build()
+
+    filter.setColumnFilterCriteria(categoryColIndex + 1, blankFilterCriteria)
+
+    // below code is the actual categorization logic
+    // all the code before is just visually for the user
+    const data = sourceSheet?.getDataRange()?.getValues() ?? []
+
+    // actual categorization logic
+    const { categoryUpdates, rowsCategorized } = categorizeTransactions(data)
+
+    if (rowsCategorized === 0) {
+      ui.alert('No rows were categorized!');
+      return;
+    }
+
+    if (categoryUpdates.length > 0) {
+      sourceSheet
+        ?.getRange(2, categoryColIndex + 1, categoryUpdates.length, 1)
+        .setValues(categoryUpdates);
+    }
+
+    ui.alert(`Succesfully categorized ${rowsCategorized} rows!`);
+    Logger.timeEnd('executeAutomaticCategorization');
+  } catch (error) {
+    Logger.error(error);
+    ui.alert(`An error occurred during categorization: ${error instanceof Error ? error.message : String(error)}`);
   }
-
-  const categoryColIndex = TableUtils.getFireColumnIndexByName('category')
-  // we set a filter which hides all categories, leaving only rows without category
-  // unfortunately there is no better way to do it currently
-  const blankFilterCriteria = SpreadsheetApp.newFilterCriteria()
-    .setHiddenValues(getCategoryNames())
-    .build()
-
-  filter.setColumnFilterCriteria(categoryColIndex + 1, blankFilterCriteria)
-
-  // below code is the actual categorization logic
-  // all the code before is just visually for the user
-  const data = sourceSheet?.getDataRange()?.getValues() ?? []
-
-  // actual categorization logic
-  const { categoryUpdates, rowsCategorized } = categorizeTransactions(data)
-
-  if (rowsCategorized === 0) {
-    ui.alert('No rows were categorized!');
-    return;
-  }
-
-  if (categoryUpdates.length > 0) {
-    sourceSheet
-      ?.getRange(2, categoryColIndex + 1, categoryUpdates.length, 1)
-      .setValues(categoryUpdates);
-  }
-
-  ui.alert(`Succesfully categorized ${rowsCategorized} rows!`);
-  Logger.timeEnd('executeAutomaticCategorization');
 };

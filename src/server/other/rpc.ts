@@ -35,56 +35,61 @@ export const mailNetWorth = () => {
 
 export const executeFindDuplicates = () => {
   const ui = SpreadsheetApp.getUi()
-  const response = ui.prompt(
-    `How many days should be considered for duplicates?`,
-    `Please enter a full number of days (e.g. 7)`,
-    ui.ButtonSet.OK_CANCEL
-  );
+  try {
+    const response = ui.prompt(
+      `How many days should be considered for duplicates?`,
+      `Please enter a full number of days (e.g. 7)`,
+      ui.ButtonSet.OK_CANCEL
+    );
 
-  if (response.getSelectedButton() !== ui.Button.OK) {
-    return;
+    if (response.getSelectedButton() !== ui.Button.OK) {
+      return;
+    }
+
+    const duplicateThresholdInDays = Number(response.getResponseText());
+    const duplicateThresholdMs = duplicateThresholdInDays * 24 * 60 * 60 * 1000;
+
+    if (Number.isNaN(duplicateThresholdInDays)) {
+      ui.alert('Invalid input! Please enter a valid number of days (e.g. 7)');
+      return;
+    }
+
+    const spreadSheet = SpreadsheetApp.getActiveSpreadsheet();
+    const sourceSheet = getSourceSheet();
+
+    if (!sourceSheet) {
+      throw new Error('Could not retrieve the source sheet from the spreadsheet')
+    }
+
+    const table = sourceSheet.getDataRange().getValues();
+    const headers = table[0];
+
+    const duplicateRows = findDuplicates(table, ['iban', 'amount', 'contra_account', 'description'], duplicateThresholdMs);
+
+    if (duplicateRows.length === 0) {
+      ui.alert('No duplicates found!');
+      return;
+    }
+
+    const duplicateSheet =
+      spreadSheet.getSheetByName('duplicate-rows') ??
+      spreadSheet.insertSheet('duplicate-rows');
+
+    duplicateSheet.clear(); // Clear any existing content
+
+    // Copy headers
+    duplicateSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+
+    // Copy duplicate rows
+    duplicateSheet.getRange(2, 1, duplicateRows.length, duplicateRows[0].length).setValues(duplicateRows)
+
+    ui.alert(
+      `Found ${duplicateRows.length / 2} duplicates! Rows have been copied to the "duplicate-rows" sheet`
+    );
+  } catch (error) {
+    Logger.error(error);
+    ui.alert(`An error occurred while finding duplicates: ${error instanceof Error ? error.message : String(error)}`);
   }
-
-  const duplicateThresholdInDays = Number(response.getResponseText());
-  const duplicateThresholdMs = duplicateThresholdInDays * 24 * 60 * 60 * 1000;
-
-  if (Number.isNaN(duplicateThresholdInDays)) {
-    ui.alert('Invalid input! Please enter a valid number of days (e.g. 7)');
-    return;
-  }
-
-  const spreadSheet = SpreadsheetApp.getActiveSpreadsheet();
-  const sourceSheet = getSourceSheet();
-
-  if (!sourceSheet) {
-    throw new Error('Could not retrieve the source sheet from the spreadsheet')
-  }
-
-  const table = sourceSheet.getDataRange().getValues();
-  const headers = table[0];
-
-  const duplicateRows = findDuplicates(table, ['iban', 'amount', 'contra_account', 'description'], duplicateThresholdMs);
-
-  if (duplicateRows.length === 0) {
-    SpreadsheetApp.getUi().alert('No duplicates found!');
-    return;
-  }
-
-  const duplicateSheet =
-    spreadSheet.getSheetByName('duplicate-rows') ??
-    spreadSheet.insertSheet('duplicate-rows');
-
-  duplicateSheet.clear(); // Clear any existing content
-
-  // Copy headers
-  duplicateSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-
-  // Copy duplicate rows
-  duplicateSheet.getRange(2, 1, duplicateRows.length, duplicateRows[0].length).setValues(duplicateRows)
-
-  SpreadsheetApp.getUi().alert(
-    `Found ${duplicateRows.length / 2} duplicates! Rows have been copied to the "duplicate-rows" sheet`
-  );
 }
 
 export const debugImportSettings = () => {
