@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Table } from '@/common/types';
+  import type { Table, ServerResponse } from '@/common/types';
   import { serverFunctions } from '@/client/utils/serverFunctions';
   import DataTable from './DataTable.svelte';
   import { excludeRowsFromData } from '../utils/importing';
@@ -16,12 +16,12 @@
 
   let previewData = $state<Table | undefined>(tableData);
 
-  const onGeneratePreviewSuccess = (response: import('@/common/types').ServerResponse<{
+  const onGeneratePreviewSuccess = (response: ServerResponse<{
     result: Table;
     newBalance?: number;
   }>) => {
     if (!response.success || !response.data) {
-      appState.statusText = `Failed to create preview: ${response.success === false ? response.error : 'Unknown error'}`;
+      appState.statusText = `Failed to create preview: ${!response.success ? response.error : 'Unknown error'}`;
       return;
     }
     const { result, newBalance } = response.data;
