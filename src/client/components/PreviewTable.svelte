@@ -7,9 +7,6 @@
   import { importState } from '../states/import.svelte';
   import { Button, Spinner } from 'flowbite-svelte';
 
-  let { tableData }: { tableData?: Table } = $props();
-  // svelte-ignore state_referenced_locally
-let previewData = $state<Table | undefined>(tableData);
   let isGeneratingPreview = $state(false);
 
   const getBrowserLocale = () => {
@@ -32,7 +29,7 @@ let previewData = $state<Table | undefined>(tableData);
       currency: 'EUR',
     })
     appState.statusText = `Import preview set${newBalanceFormatted ? ` - new balance: ${newBalanceFormatted}` : ''}`
-    previewData = result
+    importState.previewData = result
   };
 
   const generatePreview = () => {
@@ -52,8 +49,8 @@ let previewData = $state<Table | undefined>(tableData);
   };
 </script>
 
-{#if previewData}
-  <DataTable table={previewData} />
+{#if importState.previewData}
+  <DataTable table={importState.previewData} />
 {/if}
 
 <Button

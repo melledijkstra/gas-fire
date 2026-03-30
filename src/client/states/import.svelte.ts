@@ -5,6 +5,7 @@ type ImportState = {
   importData?: Table;
   strategy?: string;
   selectedRows: SvelteSet<number>;
+  previewData?: Table;
 };
 
 export const importState: ImportState = $state({
