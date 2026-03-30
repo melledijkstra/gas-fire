@@ -64,7 +64,7 @@ describe('RPC: Import Functions', () => {
     let getBalanceSpy: ReturnType<typeof vi.spyOn>;
 
     beforeEach(() => {
-      getBalanceSpy = vi.spyOn(AccountUtils, 'getBalance').mockReturnValue(302.80);
+      getBalanceSpy = vi.spyOn(AccountUtils, 'getBalance').mockReturnValue(302.8);
     });
 
     afterEach(() => {

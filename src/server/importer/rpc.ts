@@ -20,7 +20,7 @@ function processImportData(inputTable: Table, accountConfig: Config): Table {
   let result = structuredClone(inputTable)
 
   // retrieve the header row and separate from the actual input data
-  const headerRow = result.shift() // cast because we know first header row exists
+  const headerRow = result.shift()
 
   if (!headerRow || headerRow.length === 0) {
     throw new Error('No header row detected in import data!')
@@ -153,9 +153,7 @@ export function generatePreview(
     if (amountColumnIndex !== -1 && processedData.length > 0) {
       const amounts = processedData.map((row) => row[amountColumnIndex]);
       // The amount is already transformed to a number in processImportData
-      amountNumbers = amounts
-        .map(val => Number(val))
-        .filter(isNumeric);
+      amountNumbers = amounts.filter(isNumeric).map(Number);
     }
 
     const newBalance = AccountUtils.calculateNewBalance(bankAccount, amountNumbers);
@@ -191,16 +189,10 @@ export function generatePreview(
     });
 
     // Generate headers for the preview
-    const headers = FIRE_COLUMNS.map((col, index) => {
-      // AutoFill columns are 1-indexed
-      if (autoFillColumns.includes(index + 1)) {
-        return `${col} (auto-filled)`;
-      }
-      return col;
-    });
+    const headers = Array.from(FIRE_COLUMNS);
 
     // Prepend the header row to the result for the DataTable component
-    result.unshift(headers as string[]);
+    result.unshift(headers);
 
     return {
       success: true,
