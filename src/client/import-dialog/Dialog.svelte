@@ -11,7 +11,7 @@
 <Application>
   <ImportForm />
 
-  <p class="text-base my-2">
+  <p class="text-base my-2" role="status" aria-live="polite">
     {appState.statusText}
   </p>
 
