@@ -5,7 +5,7 @@
   import { appState } from '../states/app.svelte';
   import { importState } from '../states/import.svelte';
   import DataTable from '../components/DataTable.svelte';
-  import PreviewTable from '../components/PreviewTable.svelte';
+  import PreviewTab from '../components/PreviewTab.svelte';
 </script>
 
 <Application>
@@ -22,7 +22,7 @@
       {/if}
     </TabItem>
     <TabItem title="Import Preview">
-      <PreviewTable />
+      <PreviewTab />
     </TabItem>
   </Tabs>
 </Application>
