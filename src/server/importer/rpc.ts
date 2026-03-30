@@ -186,7 +186,7 @@ export function generatePreview(
             return cell.toISOString().split('T')[0];
           }
         }
-        return String(cell || '');
+        return String(cell ?? '');
       });
     });
 
