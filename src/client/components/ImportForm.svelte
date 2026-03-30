@@ -15,6 +15,8 @@
   import { Logger } from '@/common/logger';
 
   let isImporting = $state(false)
+  let isParsing = $state(false);
+  let isLoadingOptions = $state(true);
   let strategyOptions = $state<StrategyOptions>();
   let selectOptions = $derived.by(() =>
     Object.keys(strategyOptions ?? {})?.map((key) => {
@@ -26,7 +28,7 @@
   );
 
   let importFile = $state<File>();
-  let canSubmit = $derived(importFile && importState.strategy);
+  let canSubmit = $derived(importFile && importState.strategy && !isParsing && !isLoadingOptions);
 
   const onFailure = (error: ServerResponse | string) => {
     let errorMsg: string = 'Unknown error';
@@ -86,6 +88,7 @@
 
   onMount(async () => {
     // retrieve import strategy options when mounted
+    isLoadingOptions = true;
     serverFunctions
       .getBankAccountOptionsCached()
       .then((response) => {
@@ -95,7 +98,8 @@
           onFailure(response);
         }
       })
-      .catch((reason) => onFailure(reason));
+      .catch((reason) => onFailure(reason))
+      .finally(() => isLoadingOptions = false);
   });
 </script>
 
@@ -113,11 +117,16 @@
             const newFile = event.currentTarget?.files?.[0];
             importFile = newFile;
             if (newFile) {
+              isParsing = true;
               Papa.parse<string[]>(newFile, {
                 complete: (result) => {
                   importState.importData = result.data;
+                  isParsing = false;
                 },
-                error: onParseError
+                error: (error) => {
+                  onParseError(error);
+                  isParsing = false;
+                }
               });
             } else {
               delete importState.importData;
@@ -135,12 +144,17 @@
           required
           items={selectOptions}
           bind:value={importState.strategy}
+          disabled={isLoadingOptions}
         />
+        {#if isLoadingOptions}
+          <Helper>Loading banks...</Helper>
+        {/if}
       </div>
     </div>
-    <Button type="submit" disabled={!canSubmit}>
-      {#if isImporting}
-        <Spinner></Spinner>
+    <Button type="submit" disabled={!canSubmit || isImporting || isParsing || isLoadingOptions}>
+      {#if isImporting || isParsing}
+        <Spinner class="me-2" size="4" />
+        {isParsing ? 'Parsing...' : 'Importing...'}
       {:else}
         IMPORT
       {/if}

@@ -5,11 +5,12 @@
   import { excludeRowsFromData } from '../utils/importing';
   import { appState } from '../states/app.svelte';
   import { importState } from '../states/import.svelte';
-  import { Button } from 'flowbite-svelte';
+  import { Button, Spinner } from 'flowbite-svelte';
 
   let { tableData }: { tableData?: Table } = $props();
   // svelte-ignore state_referenced_locally
 let previewData = $state<Table | undefined>(tableData);
+  let isGeneratingPreview = $state(false);
 
   const getBrowserLocale = () => {
     if (navigator.languages != undefined) return navigator.languages[0];
@@ -39,13 +40,15 @@ let previewData = $state<Table | undefined>(tableData);
       return;
     }
 
+    isGeneratingPreview = true;
     const dataToProcess = excludeRowsFromData(importState.importData, importState.selectedRows)
     appState.statusText = 'Data is being processed...'
     
     serverFunctions
       .generatePreview(dataToProcess, importState.strategy)
       .then(onGeneratePreviewSuccess)
-      .catch((error) => appState.statusText = `Failed to create preview: ${error}`);
+      .catch((error) => appState.statusText = `Failed to create preview: ${error}`)
+      .finally(() => isGeneratingPreview = false);
   };
 </script>
 
@@ -56,8 +59,13 @@ let previewData = $state<Table | undefined>(tableData);
 <Button
   class="my-2"
   color="green"
-  disabled={!importState.importData || !importState.strategy}
+  disabled={!importState.importData || !importState.strategy || isGeneratingPreview}
   onclick={generatePreview}
 >
-  Generate Preview
+  {#if isGeneratingPreview}
+    <Spinner class="me-2" size="4" />
+    Generating...
+  {:else}
+    Generate Preview
+  {/if}
 </Button>

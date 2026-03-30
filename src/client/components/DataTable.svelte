@@ -19,11 +19,11 @@
     options?: TableOptions;
   } = $props();
 
-  const { selectable } = options;
-  const { selectedRows } = importState;
+  const selectable = $derived(options.selectable);
+  const selectedRows = $derived(importState.selectedRows);
 
-  const headers = table?.[0];
-  const rows = table?.slice(1);
+  const headers = $derived(table?.[0] ?? []);
+  const rows = $derived(table?.slice(1) ?? []);
 
   // Toggle row selection
   const handleRowSelect = (index: number) => {
@@ -44,17 +44,18 @@
       <!-- Checkbox column header -->
       <TableHeadCell></TableHeadCell>
     {/if}
-    {#each headers as header}
+    {#each headers as header, headerIndex (headerIndex)}
       <TableHeadCell class="py-2 px-1 normal-case">{header}</TableHeadCell>
     {/each}
   </TableHead>
   <TableBody class="divide-y">
-    {#each rows as row, rowIndex}
+    {#each rows as row, rowIndex (rowIndex)}
       <TableBodyRow>
         {#if selectable}
           <TableBodyCell class="py-2 px-1 text-xs text-center">
             <input
               type="checkbox"
+              aria-label={`Select row ${rowIndex + 1}`}
               checked={isRowSelected(rowIndex + 1)}
               onchange={() => handleRowSelect(rowIndex + 1)}
             />
