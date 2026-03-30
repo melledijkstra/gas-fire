@@ -55,7 +55,7 @@
     "dotenv": "^17.3.1",
     "eslint": "^10.1.0",
     "flowbite": "^4.0.1",
-    "flowbite-svelte": "^1.31.0",
+    "flowbite-svelte": "^1.33.0",
     "flowbite-svelte-icons": "^3.1.0",
     "gas-client": "^1.2.1",
     "gas-types-detailed": "^1.1.3",
