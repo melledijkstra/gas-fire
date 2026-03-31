@@ -1,5 +1,6 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 import { SheetsRequestBuilder } from './request-builder';
+import type { Table } from '@/common/types';
 
 describe('SheetsRequestBuilder', () => {
   let builder: SheetsRequestBuilder;
@@ -53,7 +54,7 @@ describe('SheetsRequestBuilder', () => {
         userEnteredValue: { stringValue: String(cell) },
       });
 
-      builder.insertData(123, data, 10, 5, generator);
+      builder.insertData(123, data as Table, 10, 5, generator);
 
       expect(builder.requests).toHaveLength(1);
       expect(builder.requests[0]).toEqual({
@@ -160,7 +161,7 @@ describe('SheetsRequestBuilder', () => {
         userEnteredValue: { stringValue: String(cell) },
       });
 
-      builder.insertData(123, data, 10, 5, generator);
+      builder.insertData(123, data as Table, 10, 5, generator);
 
       expect(builder.requests).toHaveLength(1);
       expect(builder.requests[0]).toEqual({
