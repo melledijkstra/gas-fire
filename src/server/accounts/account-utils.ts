@@ -3,6 +3,10 @@ import { NAMED_RANGES } from '@/common/constants';
 import { getBankAccountOptionsCached } from '../accounts/rpc';
 import { slugify } from '@/common/helpers';
 
+const BANK_ACCOUNTS_CACHE_KEY = 'bank_accounts_ibans';
+
+const CACHE_EXPIRATION_SECONDS = 10 * 60; // 10 minutes
+
 /**
  * Converts a list to an object
  * Example:
@@ -44,7 +48,7 @@ export class AccountUtils {
     }
 
     const cache = CacheService.getDocumentCache();
-    const cachedData = cache?.get('bank_accounts_ibans');
+    const cachedData = cache?.get(BANK_ACCOUNTS_CACHE_KEY);
     if (cachedData) {
       try {
         this.cachedBankAccounts = JSON.parse(cachedData);
@@ -78,7 +82,7 @@ export class AccountUtils {
     const result = listToObject(accounts);
 
     this.cachedBankAccounts = result;
-    cache?.put('bank_accounts_ibans', JSON.stringify(result), 600); // cache for 10 mins
+    cache?.put(BANK_ACCOUNTS_CACHE_KEY, JSON.stringify(result), CACHE_EXPIRATION_SECONDS); // cache for 10 mins
 
     return result;
   }
