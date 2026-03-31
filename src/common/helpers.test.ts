@@ -1,4 +1,3 @@
-import { describe, it, expect, test, vi } from 'vitest';
 import { slugify, structuredCloneFallback, structuredClone } from './helpers';
 
 describe('helpers', () => {
