@@ -1,7 +1,7 @@
 import { FireSpreadsheet } from '../globals';
 import { NAMED_RANGES } from '@/common/constants';
 import { getBankAccountOptionsCached } from '../accounts/rpc';
-import { slugify } from '../helpers';
+import { slugify } from '@/common/helpers';
 
 /**
  * Converts a list to an object

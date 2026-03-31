@@ -18,7 +18,7 @@ import bankOfAmericaCSV from '@/fixtures/commonwealth-bank.csv?raw';
 import Papa from 'papaparse';
 import { fakeTestBankImportData } from '@/fixtures/test-bank';
 import { getSpreadsheetLocale, removeFilterCriteria } from '../utils/spreadsheet';
-import { slugify } from '../helpers';
+import { slugify } from '@/common/helpers';
 
 vi.mock('../globals', () => ({
   FireSpreadsheet: SpreadsheetMock,
