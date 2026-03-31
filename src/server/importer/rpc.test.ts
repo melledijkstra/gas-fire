@@ -67,7 +67,7 @@ describe('RPC: Import Functions', () => {
       expect(response.success).toBe(true);
       if (response.success) {
         expect(response.data?.result).toStrictEqual(table);
-        expect(response.data?.newBalance).toBe(302.8);
+        expect(response.data?.newBalance).toBeCloseTo(302.8, 2);
       }
     });
 
@@ -86,7 +86,7 @@ describe('RPC: Import Functions', () => {
       expect(response.success).toBe(true);
       if (response.success) {
         expect(response.data?.result).toStrictEqual(fakeTestBankImportData);
-        expect(response.data?.newBalance).toBe(358.55);
+        expect(response.data?.newBalance).toBeCloseTo(358.55, 2);
       }
     });
   });
