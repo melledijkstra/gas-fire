@@ -78,13 +78,16 @@ const DATE_FORMATS = [
 export function parseDate(value: string): Date {
   const locale = getSpreadsheetLocale();
 
+  // Extract just the date part if it contains a time or timestamp
+  const cleanValue = value.split(/[\sT]/)[0];
+
   // Try each format.
   for (const format of DATE_FORMATS) {
-    if (!format.regex.test(value)) {
+    if (!format.regex.test(cleanValue)) {
       continue;
     }
 
-    const date = format.parser(value, locale);
+    const date = format.parser(cleanValue, locale);
     if (date instanceof Date && !Number.isNaN(date.getTime())) {
       return date;
     }
