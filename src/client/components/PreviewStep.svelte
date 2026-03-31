@@ -8,8 +8,6 @@
   import { Alert, Button, Spinner } from "flowbite-svelte";
   import { InfoCircleSolid } from "flowbite-svelte-icons";
 
-  let isGeneratingPreview = $state(false);
-
   const getBrowserLocale = () => {
     if (navigator.languages != undefined) return navigator.languages[0];
     return navigator.language;
@@ -36,50 +34,50 @@
   };
 
   const generatePreview = () => {
-    if (!importState.importData || !importState.strategy) {
+    if (!importState.rawImportData || !importState.selectedBank) {
       return;
     }
 
-    isGeneratingPreview = true;
+    importState.isProcessing = true;
     const dataToProcess = excludeRowsFromData(
-      importState.importData,
+      importState.rawImportData,
       importState.selectedRows,
     );
     appState.statusText = "Data is being processed...";
 
     serverFunctions
-      .generatePreview(dataToProcess, importState.strategy)
+      .generatePreview(dataToProcess, importState.selectedBank)
       .then(onGeneratePreviewSuccess)
       .catch(
         (error) => (appState.statusText = `Failed to create preview: ${error}`),
       )
-      .finally(() => (isGeneratingPreview = false));
+      .finally(() => (importState.isProcessing = false));
   };
 </script>
 
+<Alert color="blue" class="my-4">
+  {#snippet icon()}<InfoCircleSolid class="w-5 h-5" />{/snippet}
+  <span class="font-medium">Import Preview</span>
+  <p class="mt-1">
+    This table shows how the data will be structured in
+    your Google Sheet (formatting might be different). Columns marked with <strong>(auto-filled)</strong> will
+    be automatically populated by Google Sheets formulas if auto-fill is enabled
+    for your account configuration.
+  </p>
+</Alert>
+
 {#if importState.previewData}
-  <Alert color="blue" class="mb-4">
-    <InfoCircleSolid slot="icon" class="w-5 h-5" />
-    <span class="font-medium">Import Preview</span>
-    <p class="mt-1">
-      This table shows how the data will be structured in
-      your Google Sheet (formatting might be different). Columns marked with <strong>(auto-filled)</strong> will
-      be automatically populated by Google Sheets formulas if auto-fill is enabled
-      for your account configuration.
-    </p>
-  </Alert>
   <DataTable table={importState.previewData} />
 {/if}
 
 <Button
-  class="my-2"
-  color="green"
-  disabled={!importState.importData ||
-    !importState.strategy ||
-    isGeneratingPreview}
+  class="my-2" color="green"
+  disabled={!importState.rawImportData ||
+    !importState.selectedBank ||
+    importState.isProcessing}
   onclick={generatePreview}
 >
-  {#if isGeneratingPreview}
+  {#if importState.isProcessing}
     <Spinner class="me-2" size="4" />
     Generating...
   {:else}

@@ -1,6 +1,6 @@
 import type {
   ServerResponse,
-  StrategyOptions,
+  BankOptions,
   Table,
 } from '@/common/types';
 import { fn } from 'storybook/test'
@@ -46,14 +46,14 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
   }
 
   async importCSV(
-    _inputTable: Table,
-    _importStrategy: string
+    data: Table,
+    selectedBank: string
   ): Promise<ServerResponse> {
-    console.log('importCSV mock called')
+    console.log('importCSV mock called with data:', data, 'and selectedBank:', selectedBank);
     await sleep(5000)
     return {
       success: true,
-      message: 'Successfully imported CSV'
+      message: `Successfully imported ${data.length} rows!`
     };
   };
 
@@ -65,6 +65,7 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     newBalance?: number;
   }>> {
     console.log('generatePreview mock called');
+    await sleep(2000);
     return {
       success: true,
       data: {
@@ -112,12 +113,12 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     console.log('executeFindDuplicates mock called');
   };
 
-  async getBankAccountOptions(): Promise<ServerResponse<StrategyOptions>> {
+  async getBankAccountOptions(): Promise<ServerResponse<BankOptions>> {
     console.log('getBankAccountOptions mock called');
     return { success: true, data: StrategyOptions };
   };
 
-  getBankAccountOptionsCached = fn(async (): Promise<ServerResponse<StrategyOptions>> => {
+  getBankAccountOptionsCached = fn(async (): Promise<ServerResponse<BankOptions>> => {
     await sleep(1000);
     console.log('getBankAccountOptionsCached mock called');
     return { success: true, data: StrategyOptions };

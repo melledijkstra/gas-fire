@@ -1,14 +1,19 @@
-import type { Table } from '@/common/types';
+import type { BankOptions, Table } from '@/common/types';
 import { SvelteSet } from 'svelte/reactivity';
 
 type ImportState = {
-  importData?: Table;
-  strategy?: string;
+  bankOptions: BankOptions;
+  isProcessing: boolean;
+  inputFiles?: FileList;
+  rawImportData?: Table;
+  selectedBank?: string;
   selectedRows: SvelteSet<number>;
   previewData?: Table;
 };
 
 export const importState: ImportState = $state({
+  bankOptions: {},
+  isProcessing: false,
   selectedRows: new SvelteSet()
 });
 
