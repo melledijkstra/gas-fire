@@ -101,7 +101,6 @@ export function importCSV(
       Logger.log(msg)
       return {
         success: false,
-        message: msg,
         error: msg
       }
     }
@@ -202,7 +201,7 @@ export function generatePreview(
     Logger.error(error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     }
   }
 }
