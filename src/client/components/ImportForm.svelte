@@ -104,8 +104,8 @@
 </script>
 
 <form onsubmit={handleFormSubmit}>
-  <div class="flex flex-col gap-5">
-    <div class="grid grid-cols-2 gap-5">
+  <div class="flex flex-col gap-4">
+    <div class="grid grid-cols-2 gap-4">
       <div>
         <Label class="pb-2" for="file_input">{'Upload CSV'}</Label>
         <Fileupload
