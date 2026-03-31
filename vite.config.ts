@@ -62,7 +62,7 @@ if (existsSync(keyPath) && existsSync(certPath)) {
 
 const clientServeConfig: UserConfig = {
   ...sharedConfig,
-  plugins: [tailwind(), svelte()],
+  plugins: [svelte(), tailwind()],
   server: devServerOptions,
   root: clientRoot,
 };
@@ -70,7 +70,7 @@ const clientServeConfig: UserConfig = {
 const clientBuildConfig = ({ filename, template }: DialogEntry) =>
   defineConfig({
     ...sharedConfig,
-    plugins: [tailwind(), svelte(), viteSingleFile({ useRecommendedBuildConfig: true })],
+    plugins: [svelte(), tailwind(), viteSingleFile({ useRecommendedBuildConfig: true })],
     root: resolve(__dirname, clientRoot, filename),
     build: {
       sourcemap: false,

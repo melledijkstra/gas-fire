@@ -3,10 +3,52 @@ import { Config } from '../config';
 import { TableUtils, processInputDataAndShapeFiresheetStructure } from '../table-utils';
 import type { ServerResponse, Table } from '@/common/types';
 import { AccountUtils, isNumeric } from '../accounts/account-utils';
-import { Transformers } from '../transformers';
 import { structuredClone } from '../helpers';
 import { Logger } from '@/common/logger';
 import { activateSpreadsheet, removeFilterCriteria } from '../utils/spreadsheet';
+import { FIRE_COLUMNS } from '@/common/constants';
+
+/**
+ * Processes raw input data into the structured Firesheet format,
+ * applying filtering and sorting rules.
+ *
+ * @param {Table} inputTable - The raw input data
+ * @param {Config} accountConfig - The configuration for the account
+ * @returns {Table} The processed data, ready for import
+ */
+function processImportData(inputTable: Table, accountConfig: Config): Table {
+  let result = structuredClone(inputTable)
+
+  // retrieve the header row and separate from the actual input data
+  const headerRow = result.shift()
+
+  if (!headerRow || headerRow.length === 0) {
+    throw new Error('No header row detected in import data!')
+  }
+
+  //
+  // BEFORE IMPORT RULES
+  //
+  result = TableUtils.removeEmptyRows(result)
+
+  //
+  // IMPORT RULES
+  //
+  result = processInputDataAndShapeFiresheetStructure({
+    headers: headerRow,
+    rows: result,
+    config: accountConfig,
+  })
+  // ^^ result is now in the firesheet structure
+
+  const dateColumn = TableUtils.getFireColumnIndexByName('date')
+  if (dateColumn !== -1) {
+    // if we found a date column, we sort the data by date
+    result = TableUtils.sortByDate(result, dateColumn)
+  }
+
+  return result
+}
 
 /**
  * This very function might be the core of this spreadsheet and project.
@@ -52,44 +94,13 @@ export function importCSV(
       }
     }
 
-    let result = structuredClone(inputTable)
-
-    // retrieve the header row and separate from the actual input data
-    const headerRow = result.shift() // cast because we know first header row exists
-
-    if (!headerRow || headerRow.length === 0) {
-      const msg = 'No header row detected in import data!'
-      Logger.log(msg)
-      return { success: false, message: msg, error: msg }
-    }
-
-    //
-    // BEFORE IMPORT RULES
-    //
-    result = TableUtils.removeEmptyRows(result)
-
-    //
-    // IMPORT RULES
-    //
-    result = processInputDataAndShapeFiresheetStructure({
-      headers: headerRow,
-      rows: result,
-      config: accountConfig,
-    })
-    // ^^ result is now in the firesheet structure
-
-    const dateColumn = TableUtils.getFireColumnIndexByName('date')
-    if (dateColumn) {
-      // if we found a date column, we sort the data by date
-      result = TableUtils.sortByDate(result, dateColumn)
-    }
+    const result = processImportData(inputTable, accountConfig)
 
     if (result.length === 0) {
       const msg = 'No rows to import, check your import data or configuration!';
       Logger.log(msg)
       return {
         success: false,
-        message: msg,
         error: msg
       }
     }
@@ -125,39 +136,72 @@ export function generatePreview(
   bankAccount: string
 ): ServerResponse<{ result: Table; newBalance?: number }> {
   try {
-    let amounts: Array<string> = [];
-
-    // PENDING: retrieve the amounts from CSV using the back account configuration
     const config = Config.getAccountConfiguration(bankAccount);
 
     if (!config) {
       throw new Error(`Configuration for account ${bankAccount} not found`);
     }
 
-    const balanceColumnName = config?.getImportColumnNameByFireColumn('amount');
+    // Process the data using the exact same logic as the actual import
+    const processedData = processImportData(table, config);
 
-    if (balanceColumnName && table.length > 0) {
-      const balanceColumnIndex = table[0].indexOf(balanceColumnName);
-      if (balanceColumnIndex !== -1) {
-        amounts = table.slice(1).map((row) => row[balanceColumnIndex]);
-      }
+    // Calculate new balance based on the shaped data
+    const amountColumnIndex = TableUtils.getFireColumnIndexByName('amount');
+    let amountNumbers: number[] = [];
+
+    if (amountColumnIndex !== -1 && processedData.length > 0) {
+      const amounts = processedData.map((row) => row[amountColumnIndex]);
+      // The amount is already transformed to a number in processImportData
+      amountNumbers = amounts.filter(isNumeric).map(Number);
     }
-
-    const amountNumbers = amounts
-      .map((value) => Transformers.transformMoney(value))
-      .filter(isNumeric);
 
     const newBalance = AccountUtils.calculateNewBalance(bankAccount, amountNumbers);
 
+    // Apply auto-filled visual indications
+    const autoFillColumns = config.autoFillEnabled ? config.autoFillColumnIndices : [];
+
+    const result = processedData.map(row => {
+      const newRow = [...row];
+      for (const colIndex of autoFillColumns) {
+        // AutoFill columns are 1-indexed, so we subtract 1 for array index
+        const arrayIndex = colIndex - 1;
+        if (arrayIndex >= 0 && arrayIndex < newRow.length) {
+          if (!newRow[arrayIndex] || newRow[arrayIndex] === '') {
+            newRow[arrayIndex] = '(auto-filled)';
+          }
+        }
+      }
+      // Format Date objects to strings for the frontend
+      return newRow.map(cell => {
+        if (cell instanceof Date) {
+          try {
+            // Use the active spreadsheet's timezone so dates are properly formatted
+            const timeZone = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+            return Utilities.formatDate(cell, timeZone, "yyyy-MM-dd");
+          } catch {
+             // Fallback if Utilities/SpreadsheetApp is not available in mock/testing
+            return cell.toISOString().split('T')[0];
+          }
+        }
+        return String(cell ?? '');
+      });
+    });
+
+    // Generate headers for the preview
+    const headers = Array.from(FIRE_COLUMNS);
+
+    // Prepend the header row to the result for the DataTable component
+    result.unshift(headers);
+
     return {
       success: true,
-      data: { result: table, newBalance }
+      data: { result, newBalance }
     };
   } catch (error) {
     Logger.error(error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     }
   }
 }

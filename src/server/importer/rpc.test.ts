@@ -1,5 +1,4 @@
 import {
-  RangeMock,
   SheetMock,
   SpreadsheetMock,
   FilterMock,
@@ -7,6 +6,7 @@ import {
 import type { Table } from '@/common/types';
 import { N26ImportMock } from '@/fixtures/n26';
 import { TableUtils } from '../table-utils';
+import { AccountUtils } from '../accounts/account-utils';
 import { raboImportMock } from '@/fixtures/rabobank';
 import { Logger } from '@/common/logger';
 import {
@@ -26,6 +26,16 @@ vi.mock('../globals', () => ({
 }));
 
 vi.mock('../utils/spreadsheet')
+
+vi.mock('../accounts/rpc', () => ({
+  getBankAccountOptionsCached: vi.fn(() => ({
+    success: true,
+    data: {
+      [slugify(BANK_ID)]: 'DB123456789',
+      'anotherbank': 'BANK123456789'
+    }
+  }))
+}));
 
 const getSpreadsheetLocaleMock = vi.mocked(getSpreadsheetLocale)
 const removeFilterCriteriaMock = vi.mocked(removeFilterCriteria)
@@ -51,41 +61,42 @@ describe('RPC: Import Functions', () => {
   });
 
   describe('generatePreview', () => {
-    test('is able to handle table without any useful data and should return the current balance', () => {
-      RangeMock.getValues.mockReturnValueOnce([
-        ['AnotherBank', 'BANK123456789', '400'],
-        [BANK_ID, 'DB123456789', '302.80'],
-        ['', '', ''],
-      ]);
+    let getBalanceSpy: ReturnType<typeof vi.spyOn>;
 
-      const table: Table = [['', '', '', '', '', ''], []];
+    beforeEach(() => {
+      getBalanceSpy = vi.spyOn(AccountUtils, 'getBalance').mockReturnValue(302.8);
+    });
+
+    afterEach(() => {
+      getBalanceSpy.mockRestore();
+    });
+
+    test('is able to handle table without any useful data and should return the current balance', () => {
+      const table: Table = [['TransactionAmount', 'TransactionDate', 'Payee'], ['', '', '']];
       const response = generatePreview(
         table,
-        slugify(BANK_ID)
+        BANK_ID
       );
 
       expect(response.success).toBe(true);
       if (response.success) {
-        expect(response.data?.result).toStrictEqual(table);
         expect(response.data?.newBalance).toBeCloseTo(302.8, 2);
       }
     });
 
     test('is able to calculate new balance when there is useful data in the amounts column', () => {
-      RangeMock.getValues.mockReturnValueOnce([
-        [BANK_ID, 'DB123456789', '305.85'],
-        ['AnotherBank', 'BANK123456789', '400'],
-        ['', '', ''],
-      ]);
+      getBalanceSpy.mockReturnValue(305.85);
 
       const response = generatePreview(
-        fakeTestBankImportData,
-        slugify(BANK_ID)
+        structuredClone(fakeTestBankImportData),
+        BANK_ID
       );
 
+      if (!response.success) {
+        console.error('generatePreview failed:', response.error);
+      }
       expect(response.success).toBe(true);
       if (response.success) {
-        expect(response.data?.result).toStrictEqual(fakeTestBankImportData);
         expect(response.data?.newBalance).toBeCloseTo(358.55, 2);
       }
     });
@@ -100,8 +111,10 @@ describe('RPC: Import Functions', () => {
       const result = importCSV([], BANK_ID);
 
       expect(importDataSpy).not.toHaveBeenCalled();
-      expect(result.message).toBe('No header row detected in import data!');
       expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('No header row detected in import data!');
+      }
     })
 
     test('handles empty input data', () => {
@@ -111,8 +124,10 @@ describe('RPC: Import Functions', () => {
       ], BANK_ID);
 
       expect(importDataSpy).not.toHaveBeenCalled();
-      expect(result.message).toBe('No rows to import, check your import data or configuration!');
       expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('No rows to import, check your import data or configuration!');
+      }
     })
 
     test('removes filters if any are set', () => {

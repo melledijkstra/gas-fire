@@ -25,9 +25,13 @@ export type StrategyOptions = Record<string, string>;
  */
 export type Table = string[][];
 
-export type ServerResponse<T = unknown> =
-  | { success: true; data: T; message?: string }
-  | { success: false; error: string; message?: string };
+type EmptyServerResponse = { success: true; message?: string };
+type ErrorServerResponse = { success: false; error: string; };
+type PayloadServerResponse<T> = { success: true; data: T; message?: string };
+
+export type ServerResponse<T = void> =
+  | (T extends void ? EmptyServerResponse : PayloadServerResponse<T>)
+  | ErrorServerResponse;
 
 /**
  * Account definition
