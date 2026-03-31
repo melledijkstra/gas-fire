@@ -1,6 +1,6 @@
 import { FireSpreadsheet } from '../globals';
 import type { StrategyOptions, ServerResponse } from '@/common/types';
-import { slugify } from '../helpers';
+import { slugify } from '@/common/helpers';
 import { NAMED_RANGES } from '../../common/constants';
 import { cleanString } from '../utils';
 import { Logger } from '@/common/logger';

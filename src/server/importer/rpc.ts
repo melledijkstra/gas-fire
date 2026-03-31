@@ -3,7 +3,7 @@ import { Config } from '../config';
 import { TableUtils, processInputDataAndShapeFiresheetStructure } from '../table-utils';
 import type { ServerResponse, Table } from '@/common/types';
 import { AccountUtils, isNumeric } from '../accounts/account-utils';
-import { structuredClone } from '../helpers';
+import { structuredClone } from '@/common/helpers';
 import { Logger } from '@/common/logger';
 import { activateSpreadsheet, removeFilterCriteria } from '../utils/spreadsheet';
 import { FIRE_COLUMNS } from '@/common/constants';

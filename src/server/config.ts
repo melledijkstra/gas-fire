@@ -1,6 +1,6 @@
 import { FIRE_COLUMNS } from '@/common/constants';
 import type { FireColumn } from '@/common/constants';
-import { slugify } from './helpers';
+import { slugify } from '@/common/helpers';
 import { Logger } from '@/common/logger';
 
 const CONFIG_CACHE_KEY = 'cache.config'
