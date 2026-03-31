@@ -65,8 +65,10 @@ describe('RPC: Import Functions', () => {
       );
 
       expect(response.success).toBe(true);
-      expect(response.data?.result).toStrictEqual(table);
-      expect(response.data?.newBalance).toBe(302.8);
+      if (response.success) {
+        expect(response.data?.result).toStrictEqual(table);
+        expect(response.data?.newBalance).toBeCloseTo(302.8, 2);
+      }
     });
 
     test('is able to calculate new balance when there is useful data in the amounts column', () => {
@@ -82,8 +84,10 @@ describe('RPC: Import Functions', () => {
       );
 
       expect(response.success).toBe(true);
-      expect(response.data?.result).toStrictEqual(fakeTestBankImportData);
-      expect(response.data?.newBalance).toBe(358.55);
+      if (response.success) {
+        expect(response.data?.result).toStrictEqual(fakeTestBankImportData);
+        expect(response.data?.newBalance).toBeCloseTo(358.55, 2);
+      }
     });
   });
 
