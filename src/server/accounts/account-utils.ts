@@ -3,6 +3,10 @@ import { NAMED_RANGES } from '@/common/constants';
 import { getBankAccountOptionsCached } from '../accounts/rpc';
 import { slugify } from '@/common/helpers';
 
+const BANK_ACCOUNTS_CACHE_KEY = 'bank_accounts_ibans';
+
+const CACHE_EXPIRATION_SECONDS = 10 * 60; // 10 minutes
+
 /**
  * Converts a list to an object
  * Example:
@@ -36,8 +40,24 @@ export const isNumeric = (value: unknown): boolean => {
 };
 
 export class AccountUtils {
-  // PENDING: cache bank account retrieval
+  private static cachedBankAccounts: Record<string, string> | null = null;
+
   static getBankAccounts(): Record<string, string> {
+    if (this.cachedBankAccounts) {
+      return this.cachedBankAccounts;
+    }
+
+    const cache = CacheService.getDocumentCache();
+    const cachedData = cache?.get(BANK_ACCOUNTS_CACHE_KEY);
+    if (cachedData) {
+      try {
+        this.cachedBankAccounts = JSON.parse(cachedData);
+        return this.cachedBankAccounts!;
+      } catch {
+        // Fall back to live retrieval if parsing fails
+      }
+    }
+
     // this range contains the ibans only
     const ibans = FireSpreadsheet.getRangeByName(NAMED_RANGES.accounts);
     // we also need to include the labels
@@ -59,7 +79,12 @@ export class AccountUtils {
     }
 
     // convert the list to an object to easy work with it
-    return listToObject(accounts);
+    const result = listToObject(accounts);
+
+    this.cachedBankAccounts = result;
+    cache?.put(BANK_ACCOUNTS_CACHE_KEY, JSON.stringify(result), CACHE_EXPIRATION_SECONDS); // cache for 10 mins
+
+    return result;
   }
 
   static getBankIban(bankId: string): string {
