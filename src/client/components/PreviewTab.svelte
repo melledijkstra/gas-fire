@@ -62,8 +62,8 @@
     <InfoCircleSolid slot="icon" class="w-5 h-5" />
     <span class="font-medium">Import Preview</span>
     <p class="mt-1">
-      This table shows exactly how the data will be formatted and structured in
-      your Google Sheet. Columns marked with <strong>(auto-filled)</strong> will
+      This table shows how the data will be structured in
+      your Google Sheet (formatting might be different). Columns marked with <strong>(auto-filled)</strong> will
       be automatically populated by Google Sheets formulas if auto-fill is enabled
       for your account configuration.
     </p>
