@@ -34,6 +34,8 @@ export class SheetsRequestBuilder {
     cellDataGenerator: (cell: unknown) => GoogleAppsScript.Sheets.Schema.CellData,
     fields: string = 'userEnteredValue'
   ): this {
+    const maxRowLength = data.reduce((max, row) => Math.max(max, row.length), 0);
+
     const request: GoogleAppsScript.Sheets.Schema.Request = {
       updateCells: {
         rows: data.map((row) => ({
@@ -45,7 +47,7 @@ export class SheetsRequestBuilder {
           startRowIndex,
           endRowIndex: startRowIndex + data.length,
           startColumnIndex,
-          endColumnIndex: startColumnIndex + (data[0]?.length || 0),
+          endColumnIndex: startColumnIndex + maxRowLength,
         },
       },
     };

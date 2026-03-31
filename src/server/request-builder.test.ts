@@ -47,6 +47,63 @@ describe('SheetsRequestBuilder', () => {
       });
     });
 
+    it('should handle data arrays with empty rows correctly', () => {
+      const data: unknown[][] = [[]];
+      const generator = (cell: unknown): GoogleAppsScript.Sheets.Schema.CellData => ({
+        userEnteredValue: { stringValue: String(cell) },
+      });
+
+      builder.insertData(123, data, 10, 5, generator);
+
+      expect(builder.requests).toHaveLength(1);
+      expect(builder.requests[0]).toEqual({
+        updateCells: {
+          rows: [{ values: [] }],
+          fields: 'userEnteredValue',
+          range: {
+            sheetId: 123,
+            startRowIndex: 10,
+            endRowIndex: 11,
+            startColumnIndex: 5,
+            endColumnIndex: 5,
+          },
+        },
+      });
+    });
+
+    it('should handle data arrays with uneven row lengths safely based on the longest row', () => {
+      const data: unknown[][] = [
+        ['A1'],
+        ['A2', 'B2', 'C2'],
+        ['A3', 'B3'],
+      ];
+
+      const generator = (cell: unknown): GoogleAppsScript.Sheets.Schema.CellData => ({
+        userEnteredValue: { stringValue: String(cell) },
+      });
+
+      builder.insertData(123, data, 10, 5, generator);
+
+      expect(builder.requests).toHaveLength(1);
+      expect(builder.requests[0]?.updateCells?.range?.endColumnIndex).toBe(8); // 5 + 3 (max row length is 3)
+    });
+
+    it('should handle data where the first row is empty but subsequent rows are not', () => {
+      const data: unknown[][] = [
+        [],
+        ['A2', 'B2'],
+      ];
+
+      const generator = (cell: unknown): GoogleAppsScript.Sheets.Schema.CellData => ({
+        userEnteredValue: { stringValue: String(cell) },
+      });
+
+      builder.insertData(123, data, 10, 5, generator);
+
+      expect(builder.requests).toHaveLength(1);
+      expect(builder.requests[0]?.updateCells?.range?.endColumnIndex).toBe(7); // 5 + 2
+    });
+
     it('should return this to allow chaining', () => {
       const result = builder.insertRows(123, 5, 10);
       expect(result).toBe(builder);
