@@ -123,7 +123,7 @@ describe('SheetsRequestBuilder', () => {
 
     it('should return this to allow chaining', () => {
       const data = [['A1']];
-      const result = builder.insertData(123, data, 10, 5, (c) => ({}));
+      const result = builder.insertData(123, data, 10, 5, (_c) => ({}));
       expect(result).toBe(builder);
     });
   });
