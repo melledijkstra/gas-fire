@@ -164,8 +164,8 @@ export function generatePreview(
     const newBalance = AccountUtils.calculateNewBalance(bankAccount, amountNumbers);
 
     const compareCols: FireColumn[] = ['iban', 'amount', 'contra_account', 'description'];
-    const compareIndices = compareCols.map(col => headers.indexOf(col));
     const headers = Array.from(FIRE_COLUMNS);
+    const compareIndices = compareCols.map(col => headers.indexOf(col));
     const existingHashes = new Set<string>();
 
     if (FEATURES.IMPORT_DUPLICATE_DETECTION) {
