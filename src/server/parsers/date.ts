@@ -78,17 +78,41 @@ const DATE_FORMATS = [
 export function parseDate(value: string): Date {
   const locale = getSpreadsheetLocale();
 
-  // Extract just the date part if it contains a time or timestamp
-const cleanValue = value.trim().split(/[\sT]/)[0];
+  // Separate the date part from an optional time or timestamp component
+  const [datePart, timePart] = value.trim().split(/[\sT]/);
 
   // Try each format.
   for (const format of DATE_FORMATS) {
-    if (!format.regex.test(cleanValue)) {
+    if (!format.regex.test(datePart)) {
       continue;
     }
 
-    const date = format.parser(cleanValue, locale);
+    const date = format.parser(datePart, locale);
     if (date instanceof Date && !Number.isNaN(date.getTime())) {
+      // If a time component is present, apply it to the UTC date
+      if (timePart) {
+        /**
+         * Matches a time string in the format `HH:MM` or `HH:MM:SS`.
+         *
+         * The regex pattern breakdown:
+         * - `(\d{1,2})` - Captures 1 or 2 digits for the hours (e.g., `9` or `12`)
+         * - `:` - Matches a literal colon separator
+         * - `(\d{2})` - Captures exactly 2 digits for the minutes (e.g., `05` or `59`)
+         * - `(?::(\d{2}))?` - Optionally captures a second colon followed by exactly 2 digits for the seconds (e.g., `:30`)
+         *
+         * @example
+         * // Matches "12:30" -> groups: ["12", "30", undefined]
+         * // Matches "9:05:45" -> groups: ["9", "05", "45"]
+         * // Does not match "123:00" or ":30"
+         */
+        const timeMatch = timePart.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+        if (timeMatch) {
+          const hours = parseInt(timeMatch[1], 10);
+          const minutes = parseInt(timeMatch[2], 10);
+          const seconds = timeMatch[3] ? parseInt(timeMatch[3], 10) : 0;
+          date.setUTCHours(hours, minutes, seconds, 0);
+        }
+      }
       return date;
     }
   }
