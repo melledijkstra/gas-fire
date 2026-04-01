@@ -159,18 +159,20 @@ export function generatePreview(
     const newBalance = AccountUtils.calculateNewBalance(bankAccount, amountNumbers);
 
     // Detect duplicates against last imported batch
-    const lastImported = TableUtils.getLastImportedTransactions();
+    const lastImportedTransactions = TableUtils.getLastImportedTransactions();
+
     const compareCols: FireColumn[] = ['iban', 'amount', 'contra_account', 'date'];
     const headers = Array.from(FIRE_COLUMNS);
+    const compareIndices = compareCols.map(col => headers.indexOf(col))
     const existingHashes = new Set<string>();
 
-    for (const row of lastImported) {
-      // Map to strings for generateDuplicateHash which expects string[]
-      const stringRow = row.map(cell => {
-        if (cell instanceof Date) return cell.toISOString();
-        return String(cell ?? '');
-      });
-      existingHashes.add(generateDuplicateHash(headers, stringRow, compareCols));
+    const getHash = (row: unknown[]) => compareIndices.map(idx => {
+      const cell = row[idx];
+      return cell instanceof Date ? cell.toISOString() : String(cell ?? '');  
+    }).join('|');
+
+    for (const row of lastImportedTransactions) {  
+      existingHashes.add(getHash(row));  
     }
 
     const duplicateIndices: number[] = [];
@@ -179,13 +181,8 @@ export function generatePreview(
     const autoFillColumns = config.autoFillEnabled ? config.autoFillColumnIndices : [];
 
     const result = processedData.map((row, index) => {
-      // Hash check
-      const stringRow = row.map(cell => {
-        if (cell instanceof Date) return cell.toISOString();
-        return String(cell ?? '');
-      });
-      if (existingHashes.has(generateDuplicateHash(headers, stringRow, compareCols))) {
-        duplicateIndices.push(index + 1); // 1-based index (header is 0)
+      if (existingHashes.has(getHash(row))) {  
+        duplicateIndices.push(index + 1); // 1-based index (header is 0)  
       }
 
       const newRow = [...row];

@@ -6,7 +6,6 @@
   - The import preview now compares incoming transactions against the last imported batch.
   - Duplicates are detected by hashing 'iban', 'amount', 'contra_account', and 'date'.
   - Matching duplicate rows in the UI are visually highlighted with a "Duplicate Detected" badge to prevent accidental re-imports.
-  - The backend execution logic has been optimized to limit Google Apps Script execution time by fetching only the latest batch of transactions.
 
 ## 4.10.1-beta
 
