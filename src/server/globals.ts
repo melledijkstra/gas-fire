@@ -9,7 +9,7 @@ export function getSheetById(id: number) {
 
 let sourceSheet: GoogleAppsScript.Spreadsheet.Sheet | undefined
 
-export const getSourceSheet = () => {
+export const getSourceSheet = (): GoogleAppsScript.Spreadsheet.Sheet | undefined => {
   sourceSheet ??= sheets.find((sheet) => sheet.getSheetId() === SOURCE_SHEET_ID)
   return sourceSheet
 }

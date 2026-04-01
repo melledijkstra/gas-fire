@@ -18,13 +18,14 @@
     response: ServerResponse<{
       result: Table;
       newBalance?: number;
+      duplicateIndices?: number[];
     }>,
   ) => {
     if (!response.success || !response.data) {
       statusText = `Failed to create preview: ${!response.success ? response.error : "Unknown error"}`;
       return;
     }
-    const { result, newBalance } = response.data;
+    const { result, newBalance, duplicateIndices } = response.data;
     const locale = getBrowserLocale();
     const newBalanceFormatted = newBalance?.toLocaleString(locale, {
       style: 'currency',
@@ -32,6 +33,13 @@
     })
     statusText = `Import preview set${newBalanceFormatted ? ` - new balance: ${newBalanceFormatted}` : ''}`
     importState.previewData = result
+
+    importState.duplicateRows.clear();
+    if (duplicateIndices) {
+      for (const index of duplicateIndices) {
+        importState.duplicateRows.add(index);
+      }
+    }
   };
 
   const generatePreview = () => {
@@ -88,5 +96,5 @@
 </Alert>
 
 {#if importState.previewData}
-  <DataTable table={importState.previewData} />
+  <DataTable table={importState.previewData} duplicateRows={importState.duplicateRows} />
 {/if}

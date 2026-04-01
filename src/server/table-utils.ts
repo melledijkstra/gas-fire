@@ -266,6 +266,71 @@ export class TableUtils {
   static getFireColumnIndexByName(column: FireColumn): number {
     return FIRE_COLUMNS.findIndex((col) => col.toLowerCase() === column);
   }
+
+  static getLastImportDate(data: Table): Date | null {
+    const importDateCol = this.getFireColumnIndexByName('import_date');
+    if (importDateCol === -1) {
+      return null;
+    }
+
+    const lastImportDateRaw = data[1][importDateCol] as unknown;
+    if (lastImportDateRaw === undefined || lastImportDateRaw === null || lastImportDateRaw === '') {
+      return null;
+    }
+
+    const lastImportDateTime = lastImportDateRaw instanceof Date
+      ? lastImportDateRaw.getTime()
+      : new Date(String(lastImportDateRaw)).getTime();
+
+    if (Number.isNaN(lastImportDateTime)) {
+      return null;
+    }
+
+    return new Date(lastImportDateTime);
+  }
+
+  static getLastImportedTransactions(): Table {
+    const sourceSheet = getSourceSheet();
+    if (!sourceSheet) return [];
+
+    const lastRow = sourceSheet.getLastRow();
+    if (lastRow <= 1) return [];
+    // don't read the entire sheet if it's very long, we only need to look at the last few rows where the last import date is located
+    // the sheet should be sorted by date descending, so the last import date is at the top, we can stop reading once we reach a different import date
+    const values = sourceSheet.getRange(1, 1, Math.min(lastRow, 500), sourceSheet.getLastColumn()).getValues();
+
+    if (values.length <= 1) return []; // Only headers or empty
+
+    const importDateCol = this.getFireColumnIndexByName('import_date');
+
+    const lastImportDate = this.getLastImportDate(values);
+
+    if (!lastImportDate) return [];
+
+    const lastImportedRows: Table = [];
+
+    // Iterate from row 2 (index 1) onwards
+    for (let i = 1; i < values.length; i++) {
+      const row = values[i];
+      const rowDateRaw = row[importDateCol];
+
+      let rowDateTime = -1;
+
+      if (rowDateRaw instanceof Date) {
+        rowDateTime = rowDateRaw.getTime();
+      } else if (rowDateRaw !== undefined && rowDateRaw !== null && rowDateRaw !== '') {
+        rowDateTime = new Date(String(rowDateRaw)).getTime();
+      }
+
+      if (rowDateTime === lastImportDate.getTime()) {
+        lastImportedRows.push(row);
+      } else {
+        break; // Stop as soon as the import date changes
+      }
+    }
+
+    return lastImportedRows;
+  }
 }
 
 function generateCellData(cell: unknown): GoogleAppsScript.Sheets.Schema.CellData {
