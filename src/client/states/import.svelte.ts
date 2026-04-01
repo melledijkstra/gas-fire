@@ -8,13 +8,15 @@ type ImportState = {
   rawImportData?: Table;
   selectedBank?: string;
   selectedRows: SvelteSet<number>;
+  duplicateRows: SvelteSet<number>;
   previewData?: Table;
 };
 
 export const importState: ImportState = $state({
   bankOptions: {},
   isProcessing: false,
-  selectedRows: new SvelteSet()
+  selectedRows: new SvelteSet(),
+  duplicateRows: new SvelteSet()
 });
 
 export const addSelectedRow = (index: number) => {

@@ -266,6 +266,48 @@ export class TableUtils {
   static getFireColumnIndexByName(column: FireColumn): number {
     return FIRE_COLUMNS.findIndex((col) => col.toLowerCase() === column);
   }
+
+  static getLastImportedTransactions(): unknown[][] {
+    const sourceSheet = getSourceSheet();
+    if (!sourceSheet) return [];
+
+    const values = sourceSheet.getDataRange().getValues();
+    if (values.length <= 1) return []; // Only headers or empty
+
+    const importDateCol = this.getFireColumnIndexByName('import_date');
+    if (importDateCol === -1) return [];
+
+    const lastImportDateRaw = values[1][importDateCol];
+    if (lastImportDateRaw === undefined || lastImportDateRaw === null || lastImportDateRaw === '') return [];
+
+    const lastImportDateTime = lastImportDateRaw instanceof Date
+      ? lastImportDateRaw.getTime()
+      : new Date(String(lastImportDateRaw)).getTime();
+
+    if (Number.isNaN(lastImportDateTime)) return [];
+
+    const lastImportedRows: unknown[][] = [];
+
+    // Iterate from row 2 (index 1) onwards
+    for (let i = 1; i < values.length; i++) {
+      const row = values[i];
+      const rowDateRaw = row[importDateCol];
+
+      const rowDateTime = rowDateRaw instanceof Date
+        ? rowDateRaw.getTime()
+        : (rowDateRaw !== undefined && rowDateRaw !== null && rowDateRaw !== '')
+          ? new Date(String(rowDateRaw)).getTime()
+          : -1;
+
+      if (rowDateTime === lastImportDateTime) {
+        lastImportedRows.push(row);
+      } else {
+        break; // Stop as soon as the import date changes
+      }
+    }
+
+    return lastImportedRows;
+  }
 }
 
 function generateCellData(cell: unknown): GoogleAppsScript.Sheets.Schema.CellData {

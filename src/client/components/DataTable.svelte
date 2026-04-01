@@ -7,10 +7,12 @@
     table,
     selectable = false,
     tableClass,
+    duplicateRows = new Set(),
   }: {
     table: Table;
     selectable?: boolean;
     tableClass?: string;
+    duplicateRows?: Set<number>;
   } = $props();
 
   const selectedRows = $derived(importState.selectedRows);
@@ -63,7 +65,7 @@
   </TableHead>
   <TableBody>
     {#each rows as row, rowIndex (rowIndex)}
-      <TableBodyRow>
+      <TableBodyRow class={duplicateRows.has(rowIndex + 1) ? 'bg-yellow-100 dark:bg-yellow-900 opacity-75' : ''}>
         {#if selectable}
           <TableBodyCell class="py-2 px-1 text-xs text-center">
             <Checkbox
@@ -74,8 +76,19 @@
             />
           </TableBodyCell>
         {/if}
-        {#each row as cell}
-          <TableBodyCell class="py-2 px-1 text-xs">{cell}</TableBodyCell>
+        {#each row as cell, cellIndex}
+          <TableBodyCell class="py-2 px-1 text-xs">
+            {#if cellIndex === 0 && duplicateRows.has(rowIndex + 1) && !selectable}
+              <div class="flex flex-col gap-1">
+                <span>{cell}</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-200 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200 w-max">
+                  Duplicate Detected
+                </span>
+              </div>
+            {:else}
+              {cell}
+            {/if}
+          </TableBodyCell>
         {/each}
       </TableBodyRow>
     {/each}

@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.11.0-beta
+
+- **Feature** - Added Smart Duplicate Transaction Detection on Import Preview.
+  - The import preview now compares incoming transactions against the last imported batch.
+  - Duplicates are detected by hashing 'iban', 'amount', 'contra_account', and 'date'.
+  - Matching duplicate rows in the UI are visually highlighted with a "Duplicate Detected" badge to prevent accidental re-imports.
+  - The backend execution logic has been optimized to limit Google Apps Script execution time by fetching only the latest batch of transactions.
+
 ## 4.10.1-beta
 
 - **Bug fix** - Empty strings in uploaded file columns are now mapped to `null` to avoid empty strings in Google Sheet cells, which ensures proper data formatting.
