@@ -35,16 +35,17 @@ export function processInputDataAndShapeFiresheetStructure({
   function buildColumn<T>(
     fireColumn: FireColumn,
     transformer?: (value: string) => T
-  ): T[] {
+  ): (T | null)[] {
     const columnIndex = config.getColumnIndex(fireColumn, headers);
     if (typeof columnIndex === 'number' && cols[columnIndex] !== undefined) {
-      return cols[columnIndex].map((val) =>
-        transformer ? transformer(val) : (val as T)
-      );
+      return cols[columnIndex].map((val) => {
+        if (val === '') return null;
+        return transformer ? transformer(val) : (val as unknown as T);
+      });
     } else {
-      // if the column is not found in the input data, we return an array of empty strings
+      // if the column is not found in the input data, we return an array of nulls
       // with the length of the rowCount to make sure the column still has an empty filled amount of rows
-      return new Array(rowCount);
+      return new Array(rowCount).fill(null);
     }
   }
 

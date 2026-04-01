@@ -161,6 +161,32 @@ describe('TableUtils', () => {
       expect(result[0]?.length || 0).toBeGreaterThan(0);
     })
 
+    it('should map empty strings to null instead of keeping them as empty strings', () => {
+      const headers = ['Date', 'Amount', 'Description', 'IBAN'];
+      const rows = [
+        ['2024-01-01', '100', '', 'NL01BANK001'],
+      ];
+
+      const config = new Config({
+        accountId: 'TestBank',
+        columnMap: {
+          date: 'Date',
+          amount: 'Amount',
+          description: 'Description',
+          iban: 'IBAN'
+        },
+      });
+
+      const result = processInputDataAndShapeFiresheetStructure({
+        headers,
+        rows,
+        config,
+      });
+
+      const descriptionIndex = TableUtils.getFireColumnIndexByName('description');
+      expect(result[0][descriptionIndex]).toBe(null);
+    })
+
     it('should correctly import mapped data from input table when column map is provided', () => {
       // mocking the IBAN of the TestBank, for now we want this value to populate the iban column
       // however in the future we might want to take the column that is configured in the column map instead
