@@ -76,7 +76,7 @@
   {/if}
 </div>
 
-<Alert color="blue" class="my-4">
+<Alert color="blue" class="my-2">
   {#snippet icon()}<InfoCircleSolid class="w-5 h-5" />{/snippet}
   <span class="font-medium">Import Preview</span>
   <p class="mt-1">
