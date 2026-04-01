@@ -4,13 +4,13 @@
   import ImportForm from '../components/ImportForm.svelte';
   import { importState } from '../states/import.svelte';
   import DataTable from '../components/DataTable.svelte';
-  import PreviewTab from '../components/PreviewStep.svelte';
+  import PreviewStep from '../components/PreviewStep.svelte';
   import ImportStep from './ImportStep.svelte';
 
-  let currentStep = $state(2);
+  let currentStep = $state(1);
 
   function nextStep() {
-    if (currentStep < 4) {
+    if (currentStep < 3) {
       currentStep += 1;
     }
   }
@@ -37,7 +37,7 @@
   {:else if currentStep === 2}
     <Button disabled={importState.isProcessing} onclick={prevStep}>←</Button>
     <Button disabled={importState.isProcessing} onclick={nextStep}>Skip / Next</Button>
-    <PreviewTab />
+    <PreviewStep />
   {:else if currentStep === 3}
     <Button disabled={importState.isProcessing} onclick={prevStep}>←</Button>
     <ImportStep />

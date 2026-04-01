@@ -13,9 +13,8 @@
     tableClass?: string;
   } = $props();
 
-  // const selectable = $derived(options.selectable);
   const selectedRows = $derived(importState.selectedRows);
-  const allRowsSelected = $derived(table ? selectedRows.size === table.length - 1 : false);
+  const allRowsSelected = $derived(table && table.length > 1 ? selectedRows.size === table.length - 1 : false);
 
   const headers = $derived(table?.[0] ?? []);
   const rows = $derived(table?.slice(1) ?? []);

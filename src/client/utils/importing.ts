@@ -2,7 +2,7 @@ import type { Table } from '@/common/types';
 import { Logger } from '@/common/logger';
 import { structuredClone } from '@/common/helpers';
 
-export const acceptedMimeTypes = ['text/csv', 'application/vnd.ms-excel'];
+export const acceptedMimeTypes = ['text/csv'];
 
 export const isAllowedFile = (mimeType: string) => {
   if (!acceptedMimeTypes.includes(mimeType)) {

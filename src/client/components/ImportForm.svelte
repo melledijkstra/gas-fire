@@ -1,11 +1,10 @@
 <script lang="ts">
   import { Button, Fileupload, Helper, Label, Select, Spinner } from 'flowbite-svelte';
   import { serverFunctions } from '@/client/utils/serverFunctions';
-  // import {
-  //   acceptedMimeTypes,
-  //   excludeRowsFromData,
-  //   isAllowedFile
-  // } from '../utils/importing';
+  import {
+    acceptedMimeTypes,
+    isAllowedFile
+  } from '../utils/importing';
   import Papa from 'papaparse';
   import { importState } from '@/client/states/import.svelte';
   import { onMount } from 'svelte';
@@ -16,6 +15,7 @@
   let { onSubmit } = $props();
 
   let isLoadingOptions = $state(true);
+  let fileError = $state<string | null>(null);
   let selectOptions = $derived.by(() =>
     Object.keys(importState.bankOptions ?? {})?.map((key) => {
       return {
@@ -39,10 +39,16 @@
     onFailure(`Parsing error: ${error.message}`);
   };
 
-  const handleFileSelect: ChangeEventHandler<HTMLInputElement> = () => {
+  const processFile: ChangeEventHandler<HTMLInputElement> = () => {
+    fileError = null;
     const [newFile] = importState.inputFiles ?? [];
     delete importState.previewData;
     if (newFile) {
+      if (!isAllowedFile(newFile.type)) {
+        fileError = `File type not allowed. Accepted types: ${acceptedMimeTypes.join(', ')}`;
+        delete importState.inputFiles;
+        return;
+      }
       importState.isProcessing = true;
       Papa.parse<string[]>(newFile, {
         complete: (result) => {
@@ -95,9 +101,13 @@
         required
         accept="text/csv"
         bind:files={importState.inputFiles}
-        onchange={handleFileSelect}
+        onchange={processFile}
       />
-      <Helper>Only CSV files are allowed</Helper>
+      {#if fileError}
+        <Helper color="red">{fileError}</Helper>
+      {:else}
+        <Helper>Only CSV files are allowed</Helper>
+      {/if}
     </div>
     <div>
       <Label class="pb-2" for="import-bank">

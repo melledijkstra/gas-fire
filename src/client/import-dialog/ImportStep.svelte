@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Button, Spinner, type Table } from "flowbite-svelte";
+  import { Button, Spinner } from "flowbite-svelte";
   import { importState } from "../states/import.svelte";
   import { onFailure } from "../utils/error-handling";
   import {
@@ -9,6 +9,7 @@
   } from "../utils/importing";
   import { serverFunctions } from "../utils/serverFunctions";
   import { BadgeCheckSolid } from "flowbite-svelte-icons";
+    import type { Table } from "@/common/types";
 
   let importFinished = $state(false);
   let message = $state("Ready to import your data?");
@@ -37,7 +38,7 @@
       !isAllowedFile(importState.inputFiles[0].type) ||
       !importState.selectedBank
     ) {
-      message = `No import file or import selectedBank selected, or you selected a file type that is not supported (only: ${acceptedMimeTypes.join(
+      message = `No file or bank selected, or you selected a file type that is not supported (only: ${acceptedMimeTypes.join(
         ", ",
       )})`;
       return;

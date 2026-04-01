@@ -3,7 +3,6 @@
   import { serverFunctions } from "@/client/utils/serverFunctions";
   import DataTable from "./DataTable.svelte";
   import { excludeRowsFromData } from "../utils/importing";
-  import { appState } from "../states/app.svelte";
   import { importState } from "../states/import.svelte";
   import { Alert, Button, Spinner } from "flowbite-svelte";
   import { InfoCircleSolid } from "flowbite-svelte-icons";
@@ -20,7 +19,7 @@
     }>,
   ) => {
     if (!response.success || !response.data) {
-      appState.statusText = `Failed to create preview: ${!response.success ? response.error : "Unknown error"}`;
+      importState.statusText = `Failed to create preview: ${!response.success ? response.error : "Unknown error"}`;
       return;
     }
     const { result, newBalance } = response.data;
@@ -29,7 +28,7 @@
       style: 'currency',
       currency: 'EUR',
     })
-    appState.statusText = `Import preview set${newBalanceFormatted ? ` - new balance: ${newBalanceFormatted}` : ''}`
+    importState.statusText = `Import preview set${newBalanceFormatted ? ` - new balance: ${newBalanceFormatted}` : ''}`
     importState.previewData = result
   };
 
@@ -43,13 +42,13 @@
       importState.rawImportData,
       importState.selectedRows,
     );
-    appState.statusText = "Data is being processed...";
+    importState.statusText = "Data is being processed...";
 
     serverFunctions
       .generatePreview(dataToProcess, importState.selectedBank)
       .then(onGeneratePreviewSuccess)
       .catch(
-        (error) => (appState.statusText = `Failed to create preview: ${error}`),
+        (error) => (importState.statusText = `Failed to create preview: ${error}`),
       )
       .finally(() => (importState.isProcessing = false));
   };
