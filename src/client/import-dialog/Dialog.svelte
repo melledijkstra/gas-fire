@@ -1,28 +1,45 @@
 <script lang="ts">
-  import { Tabs, TabItem } from 'flowbite-svelte';
+  import { StepIndicator, Button } from 'flowbite-svelte';
   import Application from '../Application.svelte';
   import ImportForm from '../components/ImportForm.svelte';
-  import { appState } from '../states/app.svelte';
   import { importState } from '../states/import.svelte';
   import DataTable from '../components/DataTable.svelte';
-  import PreviewTab from '../components/PreviewTab.svelte';
+  import PreviewStep from '../components/PreviewStep.svelte';
+  import ImportStep from './ImportStep.svelte';
+
+  let currentStep = $state(1);
+
+  function nextStep() {
+    if (currentStep < 3) {
+      currentStep += 1;
+    }
+  }
+
+  function prevStep() {
+    if (currentStep > 1) {
+      currentStep -= 1;
+    }
+  }
 </script>
 
 <Application>
-  <ImportForm />
+  <StepIndicator steps={[
+    '1. Upload File',
+    '2. Generate Preview',
+    '3. Import',
+  ]} bind:currentStep clickable={false} class="mb-4" />
 
-  <p class="text-base my-2" role="status" aria-live="polite">
-    {appState.statusText}
-  </p>
-
-  <Tabs tabStyle="underline" classes={{ content: "p-0 m-0" }}>
-    <TabItem open id="raw-input-table" title="Raw Data">
-      {#if importState.importData}
-        <DataTable table={importState.importData} options={{ selectable: true }} />
-      {/if}
-    </TabItem>
-    <TabItem title="Import Preview">
-      <PreviewTab />
-    </TabItem>
-  </Tabs>
+  {#if currentStep === 1}
+    <ImportForm onSubmit={nextStep} />
+    {#if importState.rawImportData}
+      <DataTable table={importState.rawImportData} selectable tableClass="mt-4" />
+    {/if}
+  {:else if currentStep === 2}
+    <Button disabled={importState.isProcessing} onclick={prevStep}>←</Button>
+    <Button disabled={importState.isProcessing} onclick={nextStep}>Skip / Next</Button>
+    <PreviewStep />
+  {:else if currentStep === 3}
+    <Button disabled={importState.isProcessing} onclick={prevStep}>←</Button>
+    <ImportStep />
+  {/if}
 </Application>

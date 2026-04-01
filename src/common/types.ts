@@ -1,5 +1,5 @@
 /**
- * The import strategies, basically a list of different bank accounts the user has defined
+ * The import bank options, basically a list of different bank accounts the user has defined
  * e.g.
  * ```
  * {
@@ -10,7 +10,7 @@
  * }
  * ```
  */
-export type StrategyOptions = Record<string, string>;
+export type BankOptions = Record<string, string>;
 
 /**
  * Table definition

@@ -1,5 +1,5 @@
 import { FireSpreadsheet } from '../globals';
-import type { StrategyOptions, ServerResponse } from '@/common/types';
+import type { BankOptions, ServerResponse } from '@/common/types';
 import { slugify } from '@/common/helpers';
 import { NAMED_RANGES } from '../../common/constants';
 import { cleanString } from '../utils';
@@ -58,7 +58,7 @@ export function getBankAccounts(): ServerResponse<Record<string, string>> {
 /**
  * This function returns the available bank account options to the client side
  */
-export function getBankAccountOptions(): ServerResponse<StrategyOptions> {
+export function getBankAccountOptions(): ServerResponse<BankOptions> {
   try {
     const accountNames = FireSpreadsheet.getRangeByName(NAMED_RANGES.accountNames);
 
@@ -90,7 +90,7 @@ export function getBankAccountOptions(): ServerResponse<StrategyOptions> {
   }
 }
 
-export function getBankAccountOptionsCached(): ServerResponse<Record<string, string>> {
+export function getBankAccountOptionsCached(): ServerResponse<BankOptions> {
   try {
     const cache = CacheService.getDocumentCache();
     const accountsCached = cache.get('accounts');
