@@ -28,5 +28,11 @@
   --color-primary-900: #14532d;
 }
 
+/* Explicitly scan the entire src/client/ directory.
+   Without this, @tailwindcss/vite defaults to scanning only the Vite root,
+   which is set per-dialog (e.g. src/client/import-dialog/) during production
+   builds. That misses all shared components in src/client/components/, etc. */
+@source "./";
+
 /* this does not respond to vite aliases unfortunately :( */
 @source "../../node_modules/flowbite-svelte/dist";
