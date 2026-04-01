@@ -75,6 +75,32 @@ const DATE_FORMATS = [
   }
 ];
 
+function parseTime(timeStr: string): { hours: number, minutes: number, seconds: number } | undefined {
+  /**
+   * Matches a time string in the format `HH:MM` or `HH:MM:SS`.
+   *
+   * The regex pattern breakdown:
+   * - `(\d{1,2})` - Captures 1 or 2 digits for the hours (e.g., `9` or `12`)
+   * - `:` - Matches a literal colon separator
+   * - `(\d{2})` - Captures exactly 2 digits for the minutes (e.g., `05` or `59`)
+   * - `(?::(\d{2}))?` - Optionally captures a second colon followed by exactly 2 digits for the seconds (e.g., `:30`)
+   *
+   * @example
+   * // Matches "12:30" -> groups: ["12", "30", undefined]
+   * // Matches "9:05:45" -> groups: ["9", "05", "45"]
+   * // Does not match "123:00" or ":30"
+   */
+
+  const timeMatch = timeStr.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if (timeMatch) {
+    const hours = Number.parseInt(timeMatch[1], 10);
+    const minutes = Number.parseInt(timeMatch[2], 10);
+    const seconds = timeMatch[3] ? Number.parseInt(timeMatch[3], 10) : 0;
+
+    return { hours, minutes, seconds };
+  }
+}
+
 export function parseDate(value: string): Date {
   const locale = getSpreadsheetLocale();
 
@@ -91,26 +117,9 @@ export function parseDate(value: string): Date {
     if (date instanceof Date && !Number.isNaN(date.getTime())) {
       // If a time component is present, apply it to the UTC date
       if (timePart) {
-        /**
-         * Matches a time string in the format `HH:MM` or `HH:MM:SS`.
-         *
-         * The regex pattern breakdown:
-         * - `(\d{1,2})` - Captures 1 or 2 digits for the hours (e.g., `9` or `12`)
-         * - `:` - Matches a literal colon separator
-         * - `(\d{2})` - Captures exactly 2 digits for the minutes (e.g., `05` or `59`)
-         * - `(?::(\d{2}))?` - Optionally captures a second colon followed by exactly 2 digits for the seconds (e.g., `:30`)
-         *
-         * @example
-         * // Matches "12:30" -> groups: ["12", "30", undefined]
-         * // Matches "9:05:45" -> groups: ["9", "05", "45"]
-         * // Does not match "123:00" or ":30"
-         */
-        const timeMatch = timePart.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?/);
-        if (timeMatch) {
-          const hours = parseInt(timeMatch[1], 10);
-          const minutes = parseInt(timeMatch[2], 10);
-          const seconds = timeMatch[3] ? parseInt(timeMatch[3], 10) : 0;
-          date.setUTCHours(hours, minutes, seconds, 0);
+        const time = parseTime(timePart);
+        if (time) {
+          date.setUTCHours(time.hours, time.minutes, time.seconds, 0);
         }
       }
       return date;
