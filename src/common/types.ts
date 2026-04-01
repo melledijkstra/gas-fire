@@ -13,8 +13,10 @@
 export type BankOptions = Record<string, string>;
 
 /**
- * Table definition
- * tables by default should define rows
+ * Raw table definition for client-server data transfer.
+ * Tables by default should define rows and only contain string values.
+ * On the server side, use the `Table` or `FireTable` classes instead
+ * for richer data manipulation.
  * e.g.
  * ```
  * [
@@ -23,7 +25,7 @@ export type BankOptions = Record<string, string>;
  * ]
  * ```
  */
-export type Table = string[][];
+export type RawTable = string[][];
 
 type EmptyServerResponse = { success: true; message?: string };
 type ErrorServerResponse = { success: false; error: string; };

@@ -1,6 +1,6 @@
-import { getSourceSheet } from '../globals';
+import { FireSheet } from '../table';
+import { FIRE_COLUMNS } from '@/common/constants';
 import { Config } from '../config';
-import { findDuplicates } from '../duplicate-finder';
 import { NAMED_RANGES } from '../../common/constants';
 import { Logger } from '@/common/logger';
 
@@ -55,21 +55,22 @@ export const executeFindDuplicates = () => {
     }
 
     const spreadSheet = SpreadsheetApp.getActiveSpreadsheet();
-    const sourceSheet = getSourceSheet();
+    const fireSheet = new FireSheet();
 
-    if (!sourceSheet) {
-      throw new Error('Could not retrieve the source sheet from the spreadsheet')
-    }
+    const fireTable = fireSheet.getData();
+    const headers = Array.from(FIRE_COLUMNS);
 
-    const table = sourceSheet.getDataRange().getValues();
-    const headers = table[0];
+    const duplicateTable = fireTable.findDuplicates(
+      ['iban', 'amount', 'contra_account', 'description'],
+      duplicateThresholdMs,
+    );
 
-    const duplicateRows = findDuplicates(table, ['iban', 'amount', 'contra_account', 'description'], duplicateThresholdMs);
-
-    if (duplicateRows.length === 0) {
+    if (duplicateTable.isEmpty()) {
       ui.alert('No duplicates found!');
       return;
     }
+
+    const duplicateRows = duplicateTable.getData();
 
     const duplicateSheet =
       spreadSheet.getSheetByName('duplicate-rows') ??

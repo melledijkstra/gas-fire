@@ -1,4 +1,4 @@
-import type { Table } from "@/common/types";
+import type { CellValue } from './table/types';
 
 export class SheetsRequestBuilder {
   public requests: GoogleAppsScript.Sheets.Schema.Request[] = [];
@@ -28,7 +28,7 @@ export class SheetsRequestBuilder {
 
   insertData(
     sheetId: number,
-    data: Table,
+    data: CellValue[][],
     startRowIndex: number,
     startColumnIndex: number,
     cellDataGenerator: (cell: unknown) => GoogleAppsScript.Sheets.Schema.CellData,

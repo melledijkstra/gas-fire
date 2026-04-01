@@ -1,7 +1,7 @@
 import { describe, expect } from 'vitest';
 import { findDuplicates, generateDuplicateHash } from './duplicate-finder';
 import type { FireColumn } from '@/common/constants';
-import type { Table } from '@/common/types';
+import type { RawTable } from '@/common/types';
 
 const days = (days: number) => days * 24 * 60 * 60 * 1000;
 
@@ -46,7 +46,7 @@ describe('findDuplicates', () => {
     });
 
     test('should handle an empty table', () => {
-        const table: Table = [];
+        const table: RawTable = [];
         const columns: FireColumn[] = ['contra_account'];
         const timespan = days(1);
         const duplicates = findDuplicates(table, columns, timespan);

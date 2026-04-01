@@ -1,16 +1,18 @@
 import { categorizeTransactions } from './index';
+import { FireTable } from '../table';
 
 
 describe('categorizeTransactions', () => {
   test('should categorize transactions correctly', () => {
-    const data = [
-      ['ref', 'iban', 'date', 'description', 'amount', 'contra_account', '', '', '', 'category'],
-      ['1', 'NL91ABNA0417164300', '2023-01-01', 'Grocery Store', '-50', 'supermercado', '', '', '', ''],
-      ['2', 'NL91ABNA0417164300', '2023-01-02', 'Salary Payment', '2000', 'adidas espana s.a.', '', '', '', ''],
-      ['3', 'NL91ABNA0417164300', '2023-01-03', 'Restaurant Bill', '-30', 'restaurant', '', '', '', ''],
-    ];
+    // FireTable data rows (no header row — FireTable uses FIRE_COLUMNS for structure)
+    // FIRE_COLUMNS order: ref, iban, date, amount, balance, contra_account, description, comments, icon, category, label, import_date, hours, disabled, contra_iban, currency
+    const fireTable = new FireTable([
+      ['1', 'NL91ABNA0417164300', '2023-01-01', '-50', '', 'supermercado', 'Grocery Store', '', '', '', '', '', '', '', '', ''],
+      ['2', 'NL91ABNA0417164300', '2023-01-02', '2000', '', 'adidas espana s.a.', 'Salary Payment', '', '', '', '', '', '', '', '', ''],
+      ['3', 'NL91ABNA0417164300', '2023-01-03', '-30', '', 'restaurant', 'Restaurant Bill', '', '', '', '', '', '', '', '', ''],
+    ]);
 
-    const { categoryUpdates, rowsCategorized } = categorizeTransactions(data);
+    const { categoryUpdates, rowsCategorized } = categorizeTransactions(fireTable);
 
     expect(categoryUpdates).toEqual([
       ['Food & Groceries'],

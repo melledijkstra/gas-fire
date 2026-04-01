@@ -9,12 +9,12 @@
   } from "../utils/importing";
   import { serverFunctions } from "../utils/serverFunctions";
   import { BadgeCheckSolid } from "flowbite-svelte-icons";
-    import type { Table } from "@/common/types";
+    import type { RawTable } from "@/common/types";
 
   let importFinished = $state(false);
   let message = $state("Ready to import your data?");
 
-  const submitDataToServer = (data: Table, importStrategy: string) => {
+  const submitDataToServer = (data: RawTable, importStrategy: string) => {
     importState.isProcessing = true;
     serverFunctions
       .importCSV(data, importStrategy)

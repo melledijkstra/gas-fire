@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Table } from '@/common/types';
+  import type { RawTable } from '@/common/types';
   import { addSelectedRow, importState, removeSelectedRow } from '../states/import.svelte';
   import { Checkbox, Table as FlowTable, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell } from 'flowbite-svelte';
 
@@ -9,7 +9,7 @@
     tableClass,
     duplicateRows = new Set(),
   }: {
-    table: Table;
+    table: RawTable;
     selectable?: boolean;
     tableClass?: string;
     duplicateRows?: Set<number>;
