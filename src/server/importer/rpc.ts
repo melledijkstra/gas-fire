@@ -7,7 +7,6 @@ import { structuredClone } from '@/common/helpers';
 import { Logger } from '@/common/logger';
 import { activateSpreadsheet, removeFilterCriteria } from '../utils/spreadsheet';
 import { FIRE_COLUMNS, type FireColumn } from '@/common/constants';
-import { generateDuplicateHash } from '../duplicate-finder';
 
 /**
  * Processes raw input data into the structured Firesheet format,
