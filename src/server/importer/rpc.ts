@@ -7,6 +7,7 @@ import { structuredClone } from '@/common/helpers';
 import { Logger } from '@/common/logger';
 import { activateSpreadsheet, removeFilterCriteria } from '../utils/spreadsheet';
 import { FIRE_COLUMNS, type FireColumn } from '@/common/constants';
+import { FEATURES } from '@/common/features';
 
 /**
  * Processes raw input data into the structured Firesheet format,
@@ -131,6 +132,11 @@ export function importCSV(
   }
 }
 
+const getRowHash = (row: unknown[], compareIndices: number[]) => compareIndices.map(idx => {
+  const cell = row[idx];
+  return cell instanceof Date ? cell.toISOString() : String(cell ?? '');
+}).join('|');
+
 export function generatePreview(
   table: Table,
   bankAccount: string
@@ -157,21 +163,18 @@ export function generatePreview(
 
     const newBalance = AccountUtils.calculateNewBalance(bankAccount, amountNumbers);
 
-    // Detect duplicates against last imported batch
-    const lastImportedTransactions = TableUtils.getLastImportedTransactions();
-
-    const compareCols: FireColumn[] = ['iban', 'amount', 'contra_account', 'date'];
+    const compareCols: FireColumn[] = ['iban', 'amount', 'contra_account', 'description'];
+    const compareIndices = compareCols.map(col => headers.indexOf(col));
     const headers = Array.from(FIRE_COLUMNS);
-    const compareIndices = compareCols.map(col => headers.indexOf(col))
     const existingHashes = new Set<string>();
 
-    const getHash = (row: unknown[]) => compareIndices.map(idx => {
-      const cell = row[idx];
-      return cell instanceof Date ? cell.toISOString() : String(cell ?? '');  
-    }).join('|');
+    if (FEATURES.IMPORT_DUPLICATE_DETECTION) {
+      // Detect duplicates against last imported batch
+      const lastImportedTransactions = TableUtils.getLastImportedTransactions();
 
-    for (const row of lastImportedTransactions) {  
-      existingHashes.add(getHash(row));  
+      for (const row of lastImportedTransactions) {
+        existingHashes.add(getRowHash(row, compareIndices));
+      }
     }
 
     const duplicateIndices: number[] = [];
@@ -180,7 +183,7 @@ export function generatePreview(
     const autoFillColumns = config.autoFillEnabled ? config.autoFillColumnIndices : [];
 
     const result = processedData.map((row, index) => {
-      if (existingHashes.has(getHash(row))) {  
+      if (existingHashes.has(getRowHash(row, compareIndices))) {
         duplicateIndices.push(index + 1); // 1-based index (header is 0)  
       }
 
@@ -202,7 +205,7 @@ export function generatePreview(
             const timeZone = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
             return Utilities.formatDate(cell, timeZone, "yyyy-MM-dd");
           } catch {
-             // Fallback if Utilities/SpreadsheetApp is not available in mock/testing
+            // Fallback if Utilities/SpreadsheetApp is not available in mock/testing
             return cell.toISOString().split('T')[0];
           }
         }

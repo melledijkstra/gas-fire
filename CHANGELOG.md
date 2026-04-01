@@ -4,7 +4,7 @@
 
 - **Feature** - Added Smart Duplicate Transaction Detection on Import Preview.
   - The import preview now compares incoming transactions against the last imported batch.
-  - Duplicates are detected by hashing 'iban', 'amount', 'contra_account', and 'date'.
+  - Duplicates are detected by hashing 'iban', 'amount', 'contra_account', and 'description'.
   - Matching duplicate rows in the UI are visually highlighted with a "Duplicate Detected" badge to prevent accidental re-imports.
 
 ## 4.10.1-beta
