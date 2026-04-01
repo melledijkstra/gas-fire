@@ -79,7 +79,7 @@ export function parseDate(value: string): Date {
   const locale = getSpreadsheetLocale();
 
   // Extract just the date part if it contains a time or timestamp
-  const cleanValue = value.split(/[\sT]/)[0];
+const cleanValue = value.trim().split(/[\sT]/)[0];
 
   // Try each format.
   for (const format of DATE_FORMATS) {
