@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.10.1-beta
+
+- **Bug fix** - Empty strings in uploaded file columns are now mapped to `null` to avoid empty strings in Google Sheet cells, which ensures proper data formatting.
+
 ## 4.2.0-beta
 
 - **Migration from npm to pnpm** - Repository now uses pnpm as the package manager instead of npm. All scripts and CI/CD workflows have been updated accordingly.
