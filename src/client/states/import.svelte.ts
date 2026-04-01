@@ -9,7 +9,6 @@ type ImportState = {
   selectedBank?: string;
   selectedRows: SvelteSet<number>;
   previewData?: Table;
-  statusText?: string;
 };
 
 export const importState: ImportState = $state({

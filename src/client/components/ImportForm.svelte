@@ -42,11 +42,13 @@
   const processFile: ChangeEventHandler<HTMLInputElement> = () => {
     fileError = null;
     const [newFile] = importState.inputFiles ?? [];
-    delete importState.previewData;
+    importState.rawImportData = undefined;
+    importState.previewData = undefined;
+    importState.selectedRows.clear();
     if (newFile) {
       if (!isAllowedFile(newFile.type)) {
         fileError = `File type not allowed. Accepted types: ${acceptedMimeTypes.join(', ')}`;
-        delete importState.inputFiles;
+        importState.inputFiles = undefined;
         return;
       }
       importState.isProcessing = true;
@@ -60,8 +62,6 @@
           importState.isProcessing = false;
         },
       });
-    } else {
-      delete importState.rawImportData;
     }
   }
 

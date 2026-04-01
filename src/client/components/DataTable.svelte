@@ -14,10 +14,11 @@
   } = $props();
 
   const selectedRows = $derived(importState.selectedRows);
-  const allRowsSelected = $derived(table && table.length > 1 ? selectedRows.size === table.length - 1 : false);
-
+  
   const headers = $derived(table?.[0] ?? []);
   const rows = $derived(table?.slice(1) ?? []);
+
+  const allRowsSelected = $derived(rows.length > 0 && rows.every((_, i) => selectedRows.has(i + 1)));
 
   // Toggle row selection
   const handleRowSelect = (index: number) => {

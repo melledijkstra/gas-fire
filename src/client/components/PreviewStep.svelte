@@ -7,6 +7,8 @@
   import { Alert, Button, Spinner } from "flowbite-svelte";
   import { InfoCircleSolid } from "flowbite-svelte-icons";
 
+  let statusText = $state("");
+
   const getBrowserLocale = () => {
     if (navigator.languages != undefined) return navigator.languages[0];
     return navigator.language;
@@ -19,7 +21,7 @@
     }>,
   ) => {
     if (!response.success || !response.data) {
-      importState.statusText = `Failed to create preview: ${!response.success ? response.error : "Unknown error"}`;
+      statusText = `Failed to create preview: ${!response.success ? response.error : "Unknown error"}`;
       return;
     }
     const { result, newBalance } = response.data;
@@ -28,7 +30,7 @@
       style: 'currency',
       currency: 'EUR',
     })
-    importState.statusText = `Import preview set${newBalanceFormatted ? ` - new balance: ${newBalanceFormatted}` : ''}`
+    statusText = `Import preview set${newBalanceFormatted ? ` - new balance: ${newBalanceFormatted}` : ''}`
     importState.previewData = result
   };
 
@@ -42,17 +44,37 @@
       importState.rawImportData,
       importState.selectedRows,
     );
-    importState.statusText = "Data is being processed...";
+    statusText = "Data is being processed...";
 
     serverFunctions
       .generatePreview(dataToProcess, importState.selectedBank)
       .then(onGeneratePreviewSuccess)
       .catch(
-        (error) => (importState.statusText = `Failed to create preview: ${error}`),
+        (error) => (statusText = `Failed to create preview: ${error}`),
       )
       .finally(() => (importState.isProcessing = false));
   };
 </script>
+
+<div class="flex flex-col mt-2">
+  <Button
+    color="green"
+    disabled={!importState.rawImportData ||
+      !importState.selectedBank ||
+      importState.isProcessing}
+    onclick={generatePreview}
+  >
+    {#if importState.isProcessing}
+      <Spinner class="me-2" size="4" />
+      Generating...
+    {:else}
+      Generate Preview
+    {/if}
+  </Button>
+  {#if statusText}
+    <p class="mt-1">{statusText}</p>
+  {/if}
+</div>
 
 <Alert color="blue" class="my-4">
   {#snippet icon()}<InfoCircleSolid class="w-5 h-5" />{/snippet}
@@ -68,18 +90,3 @@
 {#if importState.previewData}
   <DataTable table={importState.previewData} />
 {/if}
-
-<Button
-  class="my-2" color="green"
-  disabled={!importState.rawImportData ||
-    !importState.selectedBank ||
-    importState.isProcessing}
-  onclick={generatePreview}
->
-  {#if importState.isProcessing}
-    <Spinner class="me-2" size="4" />
-    Generating...
-  {:else}
-    Generate Preview
-  {/if}
-</Button>

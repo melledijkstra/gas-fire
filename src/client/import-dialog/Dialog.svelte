@@ -7,7 +7,7 @@
   import PreviewStep from '../components/PreviewStep.svelte';
   import ImportStep from './ImportStep.svelte';
 
-  let currentStep = $state(1);
+  let currentStep = $state(2);
 
   function nextStep() {
     if (currentStep < 3) {
