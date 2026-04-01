@@ -156,7 +156,7 @@ describe('RPC: Import Functions', () => {
       const result = importCSV(N26ImportMock, 'N26');
 
       expect(importDataSpy).toHaveBeenCalled();
-      expect(result.message).toBe('imported 4 rows!');
+      expect((result as { success: true; message: string }).message).toBe('imported 4 rows!');
       expect(result.success).toBe(true);
     });
 
@@ -169,7 +169,7 @@ describe('RPC: Import Functions', () => {
       const result = importCSV(raboImportMock, 'rabobank');
 
       expect(importDataSpy).toHaveBeenCalled();
-      expect(result.message).toBe('imported 1 rows!');
+      expect((result as { success: true; message: string }).message).toBe('imported 1 rows!');
       expect(result.success).toBe(true);
     });
 
@@ -194,7 +194,7 @@ describe('RPC: Import Functions', () => {
       expect(importDataSpy).toHaveBeenCalledWith(expect.arrayContaining([
         expect.arrayContaining([new Date('2023-09-12'),-100,'Utility Bill Payment']),
       ]), undefined);
-      expect(result.message).toBe('imported 5 rows!')
+      expect((result as { success: true; message: string }).message).toBe('imported 5 rows!')
       expect(result.success).toBe(true);
     })
 

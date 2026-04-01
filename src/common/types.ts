@@ -23,7 +23,7 @@ export type BankOptions = Record<string, string>;
  * ]
  * ```
  */
-export type Table = string[][];
+export type Table = unknown[][];
 
 type EmptyServerResponse = { success: true; message?: string };
 type ErrorServerResponse = { success: false; error: string; };

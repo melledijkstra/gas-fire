@@ -1,23 +1,19 @@
-import type { Table } from '@/common/types';
+import type { Table as TableType } from '@/common/types';
 import { getSourceSheet } from './globals';
-import type { FireColumnRules } from './types';
-import { FIRE_COLUMNS } from '@/common/constants';
+import type { Config } from './config';
+import { FireTable } from './models/FireTable';
+import { FireSheet } from './models/FireSheet';
+import { Table } from '@/common/models/Table';
 import type { FireColumn } from '@/common/constants';
-import { Logger } from '@/common/logger';
-import { Config } from './config';
-import { AccountUtils } from './accounts/account-utils';
-import { Transformers } from './transformers';
-import { SheetsRequestBuilder } from './request-builder';
-
-const EMPTY = '';
 
 /**
  * Uses the account configuration and the input data from the user
  * to generate import data structured in the way of the Firesheet
  * 
- * @param {Table} input the input data from the user in the CSV format of the bank
+ * @param {TableType} input the input data from the user in the CSV format of the bank
  * @param {Config} config the configuration for the account that is used to import the data
- * @returns {Table} the data structured in the way of the Firesheet
+ * @returns {TableType} the data structured in the way of the Firesheet
+ * @deprecated Use FireTable.fromBankData instead
  */
 export function processInputDataAndShapeFiresheetStructure({
   headers,
@@ -25,234 +21,84 @@ export function processInputDataAndShapeFiresheetStructure({
   config,
 }: {
   headers: string[];
-  rows: Table;
+  rows: TableType;
   config: Config;
-}): Table {
-  let output: Table = [];
-  const rowCount = rows.length;
-  const cols = TableUtils.transpose(rows);
-
-  function buildColumn<T>(
-    fireColumn: FireColumn,
-    transformer?: (value: string) => T
-  ): (T | null)[] {
-    const columnIndex = config.getColumnIndex(fireColumn, headers);
-    if (typeof columnIndex === 'number' && cols[columnIndex] !== undefined) {
-      return cols[columnIndex].map((val) => {
-        if (val === '') return null;
-        return transformer ? transformer(val) : (val as unknown as T);
-      });
-    } else {
-      // if the column is not found in the input data, we return an array of nulls
-      // with the length of the rowCount to make sure the column still has an empty filled amount of rows
-      return new Array(rowCount).fill(null);
-    }
-  }
-
-  // prettier-ignore
-  const columnImportRules: FireColumnRules = {
-    ref: null,
-    iban: () => new Array(rowCount).fill(AccountUtils.getBankIban(config.getAccountId())),
-    date: () => buildColumn('date', Transformers.transformDate),
-    amount: () => buildColumn('amount', Transformers.transformMoney),
-    category: () => buildColumn('category'),
-    contra_account: () => buildColumn('contra_account'),
-    label: () => buildColumn('label'),
-    import_date: () => new Array(rowCount).fill(new Date()),
-    description: () => buildColumn('description'),
-    contra_iban: () => buildColumn('contra_iban'),
-    currency: () => buildColumn('currency'),
-  }
-
-  for (const columnName of FIRE_COLUMNS) {
-    const colRule = columnImportRules[columnName as keyof FireColumnRules];
-
-    if (!colRule) {
-      // if the column is not defined in the rules, we just add an empty column
-      // this is import for the import to work correctly
-      // otherwise we end up with a mismatch of columns
-      output.push(new Array(rowCount));
-      continue;
-    }
-
-    let column: (string | number | Date | null)[];
-    try {
-      column = colRule();
-      column = TableUtils.ensureLength(column, rowCount);
-    } catch (e) {
-      Logger.error(e);
-      column = new Array(rowCount);
-    }
-    // PENDING: avoid this cast and instead make sure the column is always of the correct type in the first place
-    output.push(column as string[]);
-  }
-  output = TableUtils.transpose(output); // flip columns to rows
-  return output;
+}): TableType {
+  const fireTable = FireTable.fromBankData({ headers, rows, config });
+  return fireTable.getData() as TableType;
 }
 
 export class TableUtils {
   /**
    * Imports data in structure of a table into the source sheet
-   * @param {Table} data the data to be imported into the source sheet
+   * @param {TableType} data the data to be imported into the source sheet
    * @param {number[]} autoFillColumns optional column indices to autofill
    */
-  static importData(data: Table, autoFillColumns?: number[]) {
+  static importData(data: TableType, autoFillColumns?: number[]) {
     const sourceSheet = getSourceSheet();
-    const rowCount = data.length;
-
     if (!sourceSheet) {
-      Logger.error('Error: The sourceSheet was not found. Cannot import data.');
+      console.error('Error: The sourceSheet was not found. Cannot import data.');
       return;
     }
 
-    if (rowCount === 0) {
-      Logger.log('No data to import.');
-      return;
-    }
-
-    const colCount = data[0].length;
-    Logger.log(`importing data (rows: ${rowCount}, cols: ${colCount})`);
-
-    try {
-      if (typeof Sheets !== 'undefined' && Sheets.Spreadsheets) {
-        const requestBuilder = new SheetsRequestBuilder();
-        const spreadsheetId = sourceSheet.getParent().getId();
-        const sheetId = sourceSheet.getSheetId();
-
-        Logger.time('importData (Sheets API)');
-
-        requestBuilder
-          .insertRows(sheetId, 1, rowCount)
-          .insertData(sheetId, data, 1, 0, generateCellData);
-
-        if (autoFillColumns && autoFillColumns.length > 0) {
-          // we need to generate an autofill request for each column that needs to be autofilled
-          for (const column of autoFillColumns) {
-            if (column < 1 || column > colCount) {
-              Logger.warn(`Invalid autoFill column index: ${column}. Skipping autoFill for this column.`);
-              continue;
-            }
-
-            // autofill the column based on the last value in the column
-            // (which is now at row 2 + rowCount because we inserted rows above)
-            requestBuilder.autoFill(
-              {
-                sheetId,
-                startRowIndex: 1 + rowCount, // 1 (header row) + rowCount (0-indexed)
-                endRowIndex: 1 + rowCount + 1, // 1 (header row) + rowCount (0-indexed) + 1 (to include the source row)
-                startColumnIndex: column - 1, // convert to 0-indexed
-                endColumnIndex: column,
-              },
-              -rowCount, // negative length fills upwards
-              "ROWS"
-            );
-          }
-        }
-
-        Sheets.Spreadsheets.batchUpdate({ requests: requestBuilder.requests }, spreadsheetId);
-        Logger.timeEnd('importData (Sheets API)');
-      } else {
-        Logger.time('importData (Apps Script API) (slower)');
-        Logger.warn('Sheets API not available, using native insertion of rows (slower)');
-        sourceSheet.insertRowsBefore(2, rowCount);
-        sourceSheet.getRange(2, 1, rowCount, colCount).setValues(data);
-
-        Logger.time('autoFillColumns (Apps Script API) (slower)');
-        if (autoFillColumns && autoFillColumns.length > 0) {
-          for (const column of autoFillColumns) {
-            const sourceRange = sourceSheet.getRange(2 + rowCount, column);
-            const destinationRange = sourceSheet.getRange(2, column, rowCount + 1); // + 1 because sourceRange needs to be included
-            if (destinationRange) {
-              sourceRange.autoFill(
-                destinationRange,
-                SpreadsheetApp.AutoFillSeries.DEFAULT_SERIES
-              );
-            }
-          }
-        }
-        Logger.timeEnd('autoFillColumns (Apps Script API) (slower)');
-
-        Logger.timeEnd('importData (Apps Script API) (slower)');
-      }
-    } catch (error) {
-      this.handleError(error);
-    }
-  }
-
-  protected static handleError(error: unknown) {
-    if (error instanceof Error) {
-      Logger.error('Error: ', error.message);
-    } else {
-      Logger.error('Unknown error: ', error);
-    }
+    const fireSheet = new FireSheet(sourceSheet);
+    const fireTable = new FireTable(data as unknown[][]);
+    fireSheet.importData(fireTable, autoFillColumns);
   }
 
   /**
-   * @see https://github.com/ramda/ramda/blob/v0.27.0/source/transpose.js
+   * @deprecated Use Table.transpose() instead
    */
   static transpose<T>(outerlist: T[][]): T[][] {
-    let i = 0;
-    const result: T[][] = [];
-    while (i < outerlist.length) {
-      const innerlist = outerlist[i];
-      let j = 0;
-      while (j < innerlist.length) {
-        if (typeof result[j] === 'undefined') {
-          result[j] = [];
-        }
-        result[j].push(innerlist[j]);
-        j += 1;
-      }
-      i += 1;
-    }
-    return result;
+    return new Table(outerlist).transpose().getData();
   }
 
-  static retrieveColumn(data: Table, columnIndex: number): string[] {
-    return data?.map((row) => row?.[columnIndex] ?? EMPTY) ?? [];
+  /**
+   * @deprecated Use Table.getColumn() instead
+   */
+  static retrieveColumn(data: TableType, columnIndex: number): string[] {
+    return new Table(data).getColumn(columnIndex);
   }
 
-  static deleteFirstRow(data: Table): Table {
-    data.shift();
-    return data;
+  /**
+   * @deprecated Use Table.deleteRow(0) instead
+   */
+  static deleteFirstRow(data: TableType): TableType {
+    return new Table(data).deleteRow(0).getData();
   }
 
-  static removeEmptyRows(data: Table): Table {
-    const filteredData = data.filter((row) => { // filter omits false values
-      return row.some((cell) => cell !== EMPTY); // some returns true if at least one cell is not empty
-    });
-    return filteredData;
+  /**
+   * @deprecated Use Table.removeEmptyRows() instead
+   */
+  static removeEmptyRows(data: TableType): TableType {
+    return new Table(data).removeEmptyRows().getData();
   }
 
-  static deleteLastRow(data: Table): Table {
-    data.pop();
-    return data;
+  /**
+   * @deprecated Use Table.deleteRow(data.length - 1) instead
+   */
+  static deleteLastRow(data: TableType): TableType {
+    const table = new Table(data);
+    return table.deleteRow(table.getRowCount() - 1).getData();
   }
 
-  static sortByDate(data: Table, dateColumn: number) {
-    return data.toSorted(
-      (row1, row2) =>
-        new Date(row1[dateColumn]).getTime() -
-        new Date(row2[dateColumn]).getTime()
-    ).reverse();
+  /**
+   * @deprecated Use Table.sortByColumn() instead
+   */
+  static sortByDate(data: TableType, dateColumn: number) {
+    return new Table(data).sortByColumn(dateColumn, 'desc').getData();
   }
 
-  static deleteColumns(table: Table, colIndices: number[]): Table {
-    // we want to have the indices sorted backwards to prevent shifting of elements
-    // while traversing the array
-    const sortedIndices = colIndices.sort().reverse();
-    // tranpose the table so we are working with columns first instead of rows
-    const transposedTable = this.transpose(table);
-    // delIndex is the column index to delete in the table
-    for (const delIndex of sortedIndices) {
-      if (typeof transposedTable[delIndex] !== 'undefined') {
-        transposedTable.splice(delIndex, 1);
-      }
-    }
-    // transpose again back to rows first
-    return this.transpose(transposedTable);
+  /**
+   * @deprecated Use Table.deleteColumns() instead
+   */
+  static deleteColumns(table: TableType, colIndices: number[]): TableType {
+    return new Table(table).deleteColumns(colIndices).getData();
   }
 
+  /**
+   * @deprecated Handled internally by Table class or specific logic
+   */
   static ensureLength<T>(arr: (T | null)[], length: number): (T | null)[] {
     if (arr.length < length) {
       return [
@@ -263,35 +109,10 @@ export class TableUtils {
     return arr.slice(0, length);
   }
 
+  /**
+   * @deprecated Use FireTable.getColumnIndex instead
+   */
   static getFireColumnIndexByName(column: FireColumn): number {
-    return FIRE_COLUMNS.findIndex((col) => col.toLowerCase() === column);
+    return FireTable.getColumnIndex(column);
   }
 }
-
-function generateCellData(cell: unknown): GoogleAppsScript.Sheets.Schema.CellData {
-  const extendedValue: GoogleAppsScript.Sheets.Schema.ExtendedValue = {};
-
-  if (cell === null || typeof cell === 'undefined') {
-    // no value
-  } else if (cell instanceof Date) {
-    // Convert JS date to Google Sheets serial number.
-    // Sheets date epoch is 1899-12-30. JS epoch is 1970-01-01.
-    // @see https://developers.google.com/workspace/sheets/api/reference/rest/v4/DateTimeRenderOption
-    const MS_IN_DAY = 86400000;
-    const DAYS_FROM_JS_EPOCH_TO_SHEETS_EPOCH = 25569;
-    const MINUTES_IN_DAY = 1440;
-    extendedValue.numberValue =
-      cell.getTime() / MS_IN_DAY + DAYS_FROM_JS_EPOCH_TO_SHEETS_EPOCH - cell.getTimezoneOffset() / MINUTES_IN_DAY;
-  } else if (typeof cell === 'number') {
-    extendedValue.numberValue = cell;
-  } else {
-    extendedValue.stringValue = String(cell);
-  }
-
-  const cellData: GoogleAppsScript.Sheets.Schema.CellData = {
-    userEnteredValue: extendedValue,
-  };
-
-  return cellData;
-}
-
