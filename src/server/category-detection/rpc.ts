@@ -1,5 +1,5 @@
 import { getSourceSheet } from '../globals';
-import { TableUtils } from '../table-utils';
+import { FireTable } from '../fire-table';
 import { getCategoryNames } from '../helpers';
 import { Logger } from '@/common/logger';
 import { categorizeTransactions } from '.';
@@ -35,7 +35,9 @@ export const executeAutomaticCategorization = () => {
       );
     }
 
-    const categoryColIndex = TableUtils.getFireColumnIndexByName('category')
+    const fireTable = new FireTable();
+    const categoryColIndex = fireTable.getColumnIndex('category');
+
     // we set a filter which hides all categories, leaving only rows without category
     // unfortunately there is no better way to do it currently
     const blankFilterCriteria = SpreadsheetApp.newFilterCriteria()

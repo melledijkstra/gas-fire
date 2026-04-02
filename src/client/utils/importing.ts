@@ -18,7 +18,7 @@ export const csvToJson = (_csvData: Table): Record<string, string>[] => {
     const jsonRow: Record<string, string> = {};
     row.forEach((value, index) => {
       if (headers?.[index]) {
-        jsonRow[headers[index]] = value;
+        jsonRow[String(headers[index])] = String(value);
       }
     });
     return jsonRow;

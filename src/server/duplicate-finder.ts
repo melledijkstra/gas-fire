@@ -1,12 +1,12 @@
-import type { Table } from "@/common/types";
+import type { Table, TableCell } from "@/common/types";
 import type { FireColumn } from "@/common/constants";
 
 function findIndexByHeaderName(headers: FireColumn[], headerName: FireColumn): number {
     return headers.findIndex(cell => cell.toLowerCase() === headerName.toLowerCase());
 }
 
-export function generateDuplicateHash(headers: FireColumn[], row: string[], columns: FireColumn[]): string {
-    return columns.map(col => row[findIndexByHeaderName(headers, col)]).join('|');
+export function generateDuplicateHash(headers: FireColumn[], row: TableCell[], columns: FireColumn[]): string {
+    return columns.map(col => String(row[findIndexByHeaderName(headers, col)] ?? '')).join('|');
 }
 
 /**
@@ -46,12 +46,12 @@ export function findDuplicates(table: Table, compareCols: FireColumn[], timespan
 
     rows.forEach((row, index) => {
         const key = generateDuplicateHash(headers, row, compareCols);
-        const rowDate = new Date(row[dateColumnIndex]);
+        const rowDate = new Date(row[dateColumnIndex] as string | number | Date);
 
         for (let i = index + 1; i < rows.length; i++) {
             const compareRow = rows[i];
             const compareKey = generateDuplicateHash(headers, compareRow, compareCols);
-            const compareDate = new Date(compareRow[dateColumnIndex]);
+            const compareDate = new Date(compareRow[dateColumnIndex] as string | number | Date);
 
             // Check if the current row and the comparison row have the same key and their dates 
             // are within the specified timespan

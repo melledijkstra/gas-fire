@@ -12,8 +12,12 @@
  */
 export type BankOptions = Record<string, string>;
 
+export type TableCell = string | number | Date | null | boolean | undefined;
+
+export type TableData = TableCell[][];
+
 /**
- * Table definition
+ * Table definition (Legacy, prefer TableData/TableCell and the Table class)
  * tables by default should define rows
  * e.g.
  * ```
@@ -23,7 +27,7 @@ export type BankOptions = Record<string, string>;
  * ]
  * ```
  */
-export type Table = string[][];
+export type Table = TableData;
 
 type EmptyServerResponse = { success: true; message?: string };
 type ErrorServerResponse = { success: false; error: string; };

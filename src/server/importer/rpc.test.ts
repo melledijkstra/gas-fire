@@ -3,9 +3,9 @@ import {
   SpreadsheetMock,
   FilterMock,
 } from '../../../test-setup';
-import type { Table } from '@/common/types';
+import type { TableData } from '@/common/types';
 import { N26ImportMock } from '@/fixtures/n26';
-import { TableUtils } from '../table-utils';
+import { FireSheet } from '../fire-sheet';
 import { AccountUtils } from '../accounts/account-utils';
 import { raboImportMock } from '@/fixtures/rabobank';
 import { Logger } from '@/common/logger';
@@ -42,7 +42,7 @@ const removeFilterCriteriaMock = vi.mocked(removeFilterCriteria)
 removeFilterCriteriaMock.mockReturnValue(true)
 
 const configSpy = vi.spyOn(Config, 'getAccountConfiguration');
-const importDataSpy = vi.spyOn(TableUtils, 'importData');
+const importDataSpy = vi.spyOn(FireSheet.prototype, 'importData');
 
 const BANK_ID = 'TestBank';
 
@@ -72,7 +72,7 @@ describe('RPC: Import Functions', () => {
     });
 
     test('is able to handle table without any useful data and should return the current balance', () => {
-      const table: Table = [['TransactionAmount', 'TransactionDate', 'Payee'], ['', '', '']];
+      const table: TableData = [['TransactionAmount', 'TransactionDate', 'Payee'], ['', '', '']];
       const response = generatePreview(
         table,
         BANK_ID
@@ -192,12 +192,14 @@ describe('RPC: Import Functions', () => {
       configSpy.mockReturnValue(bankOfAmericaConfig)
 
       const { data } = Papa.parse(bankOfAmericaCSV)
-      const result = importCSV(data as Table, 'bank-of-america')
+      const result = importCSV(data as TableData, 'bank-of-america')
 
       expect(importDataSpy).toHaveBeenCalled()
-      expect(importDataSpy).toHaveBeenCalledWith(expect.arrayContaining([
-        expect.arrayContaining([new Date('2023-09-12'),-100,'Utility Bill Payment']),
-      ]), undefined);
+      expect(importDataSpy).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.arrayContaining([
+          expect.arrayContaining([new Date('2023-09-12'),-100,'Utility Bill Payment']),
+        ])
+      }), undefined);
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.message).toBe('imported 5 rows!')
@@ -218,11 +220,13 @@ describe('RPC: Import Functions', () => {
       importCSV(fakeTestBankImportData, BANK_ID);
 
       expect(importDataSpy).toHaveBeenCalled();
-      expect(importDataSpy).toHaveBeenCalledWith([
-        expect.arrayContaining([new Date('2016-01-23'), -25.6]),
-        expect.arrayContaining([new Date('2015-05-21'), 58.3]),
-        expect.arrayContaining([new Date('2015-05-20'), 20]),
-      ], undefined);
+      expect(importDataSpy).toHaveBeenCalledWith(expect.objectContaining({
+        data: [
+          expect.arrayContaining([new Date('2016-01-23'), -25.6]),
+          expect.arrayContaining([new Date('2015-05-21'), 58.3]),
+          expect.arrayContaining([new Date('2015-05-20'), 20]),
+        ]
+      }), undefined);
     });
   });
 });
