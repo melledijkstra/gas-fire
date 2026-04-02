@@ -100,7 +100,7 @@ jobs:
           CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
         run: |
           cp .clasp.json.sample .clasp.json
-          pnpm switch-env.js production ${{ env.SCRIPT_ID }}
+          pnpm switch-env production ${{ env.SCRIPT_ID }}
           echo "${{ env.CLASPRC_JSON }}" > ~/.clasprc.json
       - name: Deploy to Google Apps Script
         run: pnpm push
