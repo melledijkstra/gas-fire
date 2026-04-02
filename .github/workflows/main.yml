@@ -95,10 +95,13 @@ jobs:
           path: dist/
       # prepare the clasp configuration with the correct script ID for deployment
       - name: Setup clasp configuration
+        env:
+          SCRIPT_ID: ${{ secrets.SCRIPT_ID }}
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
         run: |
           cp .clasp.json.sample .clasp.json
-          pnpm switch-env.js production ${{ secrets.SCRIPT_ID }}
-          echo "${{ secrets.CLASPRC_JSON }}" > ~/.clasprc.json
+          pnpm switch-env.js production ${{ env.SCRIPT_ID }}
+          echo "${{ env.CLASPRC_JSON }}" > ~/.clasprc.json
       - name: Deploy to Google Apps Script
         run: pnpm push
       - name: Tag clasp version with app version + commit SHA
