@@ -92,9 +92,6 @@ describe('RPC: Import Functions', () => {
         BANK_ID
       );
 
-      if (!response.success) {
-        console.error('generatePreview failed:', response.error);
-      }
       expect(response.success).toBe(true);
       if (response.success) {
         expect(response.data?.newBalance).toBeCloseTo(358.55, 2);

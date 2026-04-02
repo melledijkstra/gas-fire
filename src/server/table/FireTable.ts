@@ -96,6 +96,42 @@ export class FireTable extends Table {
     return new FireTable(duplicates);
   }
 
+  /**
+   * Auto-categorizes transactions that don't have a category set.
+   * Uses text analysis on the `contra_account` column to detect categories.
+   *
+   * @returns An object with category update values (one per row) and a count of categorized rows.
+   */
+  categorize(): {
+    categoryUpdates: string[][];
+    rowsCategorized: number;
+  } {
+    const categoryColIndex = this.getFireColumnIndex('category');
+    const contraAccountIndex = this.getFireColumnIndex('contra_account');
+
+    let rowsCategorized = 0;
+    const categoryUpdates: string[][] = [];
+
+    for (const row of this.data) {
+      const category = String(row[categoryColIndex] ?? '');
+      const contraAccount = String(row[contraAccountIndex] ?? '');
+
+      let newCategory = category;
+
+      if (!category || category === '') {
+        const detectedCategory = detectCategoryByTextAnalysis(contraAccount);
+        if (detectedCategory) {
+          newCategory = detectedCategory;
+          rowsCategorized++;
+        }
+      }
+
+      categoryUpdates.push([newCategory]);
+    }
+
+    return { categoryUpdates, rowsCategorized };
+  }
+
   /** Groups rows by a hash key, pairing each with its parsed date. */
   private groupRowsByHash(
     generateHash: (row: CellValue[]) => string,
@@ -158,42 +194,6 @@ export class FireTable extends Table {
     return isDuplicate;
   }
 
-  /**
-   * Auto-categorizes transactions that don't have a category set.
-   * Uses text analysis on the `contra_account` column to detect categories.
-   *
-   * @returns An object with category update values (one per row) and a count of categorized rows.
-   */
-  categorize(): {
-    categoryUpdates: string[][];
-    rowsCategorized: number;
-  } {
-    const categoryColIndex = this.getFireColumnIndex('category');
-    const contraAccountIndex = this.getFireColumnIndex('contra_account');
-
-    let rowsCategorized = 0;
-    const categoryUpdates: string[][] = [];
-
-    for (const row of this.data) {
-      const category = String(row[categoryColIndex] ?? '');
-      const contraAccount = String(row[contraAccountIndex] ?? '');
-
-      let newCategory = category;
-
-      if (!category || category === '') {
-        const detectedCategory = detectCategoryByTextAnalysis(contraAccount);
-        if (detectedCategory) {
-          newCategory = detectedCategory;
-          rowsCategorized++;
-        }
-      }
-
-      categoryUpdates.push([newCategory]);
-    }
-
-    return { categoryUpdates, rowsCategorized };
-  }
-
   // ──────────────────────────────────────────────
   // Factory: Build a FireTable from CSV import data
   // ──────────────────────────────────────────────
@@ -245,7 +245,7 @@ export class FireTable extends Table {
       category: () => buildColumn('category'),
       contra_account: () => buildColumn('contra_account'),
       label: () => buildColumn('label'),
-      import_date: () => new Array(rowCount).fill(new Date()),
+      import_date: () => Array.from({ length: rowCount }, () => new Date()),
       description: () => buildColumn('description'),
       contra_iban: () => buildColumn('contra_iban'),
       currency: () => buildColumn('currency'),
@@ -255,18 +255,19 @@ export class FireTable extends Table {
       const colRule =
         columnImportRules[columnName as keyof FireColumnRules];
 
+      // If no rule defined for this column, fill with nulls
       if (!colRule) {
-        output.push(new Array(rowCount));
+        output.push(new Array(rowCount).fill(null));
         continue;
       }
 
-      let column: (string | number | Date | null)[];
+      let column: CellValue[];
       try {
         column = colRule();
         column = Table.ensureLength(column, rowCount);
       } catch (e) {
         Logger.error(e);
-        column = new Array(rowCount);
+        column = new Array(rowCount).fill(null);
       }
       output.push(column as CellValue[]);
     }

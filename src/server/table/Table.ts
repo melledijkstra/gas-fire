@@ -25,13 +25,6 @@ export class Table {
   }
 
   /**
-   * Factory method to create a Table from a 2D array.
-   */
-  static from(data: CellValue[][]): Table {
-    return new Table(data);
-  }
-
-  /**
    * Creates a shallow clone of the table (each row is shallow-copied).
    */
   clone(): Table {
@@ -53,7 +46,7 @@ export class Table {
    * Returns a single row by index, or undefined if out of bounds.
    */
   getRow(index: number): CellValue[] | undefined {
-    return this.data[index];
+    return this.data?.[index];
   }
 
   getRowCount(): number {
@@ -61,7 +54,7 @@ export class Table {
   }
 
   getColumnCount(): number {
-    return this.data[0]?.length ?? 0;
+    return this.data.reduce((max, row) => Math.max(max, row?.length ?? 0), 0);
   }
 
   isEmpty(): boolean {
@@ -70,10 +63,10 @@ export class Table {
 
   /**
    * Returns all values in the given column index.
-   * Missing values default to an empty string.
+   * Missing values default to null.
    */
   retrieveColumn(columnIndex: number): CellValue[] {
-    return this.data.map((row) => row?.[columnIndex] ?? EMPTY);
+    return this.data.map((row) => row?.[columnIndex] ?? null);
   }
 
   // ──────────────────────────────────────────────
@@ -82,33 +75,18 @@ export class Table {
 
   /**
    * Transposes the table: rows become columns and columns become rows.
-   * @see https://github.com/ramda/ramda/blob/v0.27.0/source/transpose.js
    */
   transpose(): this {
-    let i = 0;
-    const result: CellValue[][] = [];
-    while (i < this.data.length) {
-      const innerlist = this.data[i];
-      let j = 0;
-      while (j < innerlist.length) {
-        if (typeof result[j] === 'undefined') {
-          result[j] = [];
-        }
-        result[j].push(innerlist[j]);
-        j += 1;
-      }
-      i += 1;
-    }
-    this.data = result;
+    this.data = Table.transpose(this.data);
     return this;
   }
 
   /**
-   * Removes rows where every cell is empty (empty string or null).
+   * Removes rows where every cell is empty (empty string, null, or undefined).
    */
   removeEmptyRows(): this {
     this.data = this.data.filter((row) =>
-      row.some((cell) => cell !== EMPTY && cell !== null),
+      row.some((cell) => cell !== EMPTY && cell !== null && cell !== undefined),
     );
     return this;
   }
@@ -146,6 +124,29 @@ export class Table {
   }
 
   /**
+   * Deletes a row at the given index.
+   * Mutates the current table.
+   */
+  deleteRow(index: number): this {
+    this.data.splice(index, 1);
+    return this;
+  }
+
+  /**
+   * Deletes rows at the specified indices.
+   * Indices are 0-based.
+   */
+  deleteRows(rowIndices: number[]): this {
+    const sortedIndices = [...rowIndices].sort((a, b) => b - a);
+    for (const delIndex of sortedIndices) {
+      if (this.data[delIndex] !== undefined) {
+        this.data.splice(delIndex, 1);
+      }
+    }
+    return this;
+  }
+
+  /**
    * Deletes columns at the specified indices.
    * Indices are 0-based.
    */
@@ -161,9 +162,34 @@ export class Table {
     return this;
   }
 
+  /**
+   * Filters rows based on a predicate.
+   * Mutates the current table.
+   */
+  filter(predicate: (row: CellValue[], index: number) => boolean): this {
+    this.data = this.data.filter((row, index) => predicate(row, index));
+    return this;
+  }
+
+  /**
+   * Maps each row to a new format.
+   * Mutates the current table.
+   */
+  map(callback: (row: CellValue[], index: number) => CellValue[]): this {
+    this.data = this.data.map((row, index) => callback(row, index));
+    return this;
+  }
+
   // ──────────────────────────────────────────────
   // Static utilities
   // ──────────────────────────────────────────────
+
+  /**
+   * Factory method to create a Table from a 2D array.
+   */
+  static from(data: CellValue[][]): Table {
+    return new Table(data);
+  }
 
   /**
    * Ensures an array has exactly the given length by padding with null or truncating.
@@ -177,6 +203,7 @@ export class Table {
 
   /**
    * Static transpose utility that works on raw 2D arrays without needing an instance.
+   * @see https://github.com/ramda/ramda/blob/v0.27.0/source/transpose.js
    */
   static transpose<T>(outerlist: T[][]): T[][] {
     let i = 0;

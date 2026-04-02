@@ -25,32 +25,32 @@ const MINUTES_IN_DAY = 1440;
  * ```
  */
 export class FireSheet {
-  private readonly sheet: GoogleAppsScript.Spreadsheet.Sheet;
+  protected readonly _sheet: GoogleAppsScript.Spreadsheet.Sheet;
 
-  constructor(sheet?: GoogleAppsScript.Spreadsheet.Sheet) {
-    const resolved = sheet ?? getSourceSheet();
-    if (!resolved) {
+  constructor() {
+    const sourceSheet = getSourceSheet();
+    if (!sourceSheet) {
       throw new Error(
         'Error: The source sheet was not found. Cannot operate on FireSheet.',
       );
     }
-    this.sheet = resolved;
+    this._sheet = sourceSheet;
   }
 
   // ──────────────────────────────────────────────
   // Accessors
   // ──────────────────────────────────────────────
 
-  getSheet(): GoogleAppsScript.Spreadsheet.Sheet {
-    return this.sheet;
+  get sheet(): GoogleAppsScript.Spreadsheet.Sheet {
+    return this._sheet;
   }
 
   getSheetId(): number {
-    return this.sheet.getSheetId();
+    return this._sheet.getSheetId();
   }
 
   getSpreadsheetId(): string {
-    return this.sheet.getParent().getId();
+    return this._sheet.getParent().getId();
   }
 
   // ──────────────────────────────────────────────
@@ -60,9 +60,10 @@ export class FireSheet {
   /**
    * Reads all data from the source sheet and returns it as a FireTable.
    * The header row (row 1) is excluded from the data.
+   * Careful with large sheets, as this reads all data into memory. Use `getRawData()` for more control.
    */
   getData(): FireTable {
-    const allValues = this.sheet.getDataRange().getValues();
+    const allValues = this._sheet.getDataRange().getValues();
     // first row is headers, omit it — FireTable knows its columns via FIRE_COLUMNS
     const data = allValues.slice(1) as CellValue[][];
     return new FireTable(data);
@@ -73,7 +74,7 @@ export class FireSheet {
    * Useful when callers need the raw sheet data as-is.
    */
   getRawData(): CellValue[][] {
-    return this.sheet.getDataRange().getValues() as CellValue[][];
+    return this._sheet.getDataRange().getValues() as CellValue[][];
   }
 
   // ──────────────────────────────────────────────
@@ -90,28 +91,21 @@ export class FireSheet {
    * @param autoFillColumns - Optional 1-based column indices to autofill after import
    */
   importData(fireTable: FireTable, autoFillColumns?: number[]): void {
-    const data = fireTable.getData();
-    const rowCount = fireTable.getRowCount();
-
-    if (rowCount === 0) {
+    if (fireTable.isEmpty()) {
       throw new Error('No data to import.');
     }
 
-    const colCount = fireTable.getColumnCount();
-    Logger.log(`importing data (rows: ${rowCount}, cols: ${colCount})`);
+    Logger.log(`importing data (rows: ${fireTable.getRowCount()}, cols: ${fireTable.getColumnCount()})`);
 
     try {
       if (typeof Sheets !== 'undefined' && Sheets.Spreadsheets) {
-        this.importViaSheetsAPI(data, rowCount, colCount, autoFillColumns);
+        // preferably use the Sheets API for better performance in general
+        this.importWithSheetsAPI(fireTable, autoFillColumns);
       } else {
-        this.importViaAppsScriptAPI(data, rowCount, colCount, autoFillColumns);
+        this.importWithAppsScriptAPI(fireTable, autoFillColumns);
       }
     } catch (error) {
-      if (error instanceof Error) {
-        Logger.error('Error: ', error.message);
-      } else {
-        Logger.error('Unknown error: ', error);
-      }
+      this.handleError(error);
     }
   }
 
@@ -123,8 +117,8 @@ export class FireSheet {
    * Activates and shows the source sheet so the user can see it.
    */
   activate(): this {
-    this.sheet.activate();
-    this.sheet.showSheet();
+    this._sheet.activate();
+    this._sheet.showSheet();
     return this;
   }
 
@@ -132,7 +126,7 @@ export class FireSheet {
    * Returns the filter on the source sheet, or null if no filter is set.
    */
   getFilter(): GoogleAppsScript.Spreadsheet.Filter | null {
-    return this.sheet.getFilter();
+    return this._sheet.getFilter();
   }
 
   /**
@@ -150,7 +144,7 @@ export class FireSheet {
     numColumns: number,
     values: CellValue[][],
   ): void {
-    this.sheet
+    this._sheet
       .getRange(row, column, numRows, numColumns)
       .setValues(values);
   }
@@ -168,12 +162,12 @@ export class FireSheet {
    * @returns A FireTable containing only the rows from the last import, or an empty FireTable.
    */
   getLastImportedTransactions(): FireTable {
-    const lastRow = this.sheet.getLastRow();
+    const lastRow = this._sheet.getLastRow();
     if (lastRow <= 1) return new FireTable([]);
 
     // Only read up to 500 rows since data is sorted newest-first
-    const values = this.sheet
-      .getRange(1, 1, Math.min(lastRow, 500), this.sheet.getLastColumn())
+    const values = this._sheet
+      .getRange(1, 1, Math.min(lastRow, 500), this._sheet.getLastColumn())
       .getValues() as CellValue[][];
 
     if (values.length <= 1) return new FireTable([]);
@@ -211,6 +205,14 @@ export class FireSheet {
     return new FireTable(lastImportedRows);
   }
 
+  private handleError(error: unknown): void {
+    const message = error instanceof Error
+      ? `Error: ${error.message}`
+      : `Unknown Error: ${String(error)}`;
+
+    Logger.error(message);
+  }
+
   /**
    * Returns the most recent import date found in sheet data.
    * Looks at row index 1 (first data row after header) since data is sorted newest-first.
@@ -243,12 +245,13 @@ export class FireSheet {
   // Private import strategies
   // ──────────────────────────────────────────────
 
-  private importViaSheetsAPI(
-    data: CellValue[][],
-    rowCount: number,
-    colCount: number,
+  private importWithSheetsAPI(
+    fireTable: FireTable,
     autoFillColumns?: number[],
   ): void {
+    const data = fireTable.getData();
+    const rowCount = fireTable.getRowCount();
+    const colCount = fireTable.getColumnCount();
     const requestBuilder = new SheetsRequestBuilder();
     const spreadsheetId = this.getSpreadsheetId();
     const sheetId = this.getSheetId();
@@ -289,25 +292,27 @@ export class FireSheet {
     Logger.timeEnd('importData (Sheets API)');
   }
 
-  private importViaAppsScriptAPI(
-    data: CellValue[][],
-    rowCount: number,
-    colCount: number,
+  private importWithAppsScriptAPI(
+    fireTable: FireTable,
     autoFillColumns?: number[],
   ): void {
+    const data = fireTable.getData();
+    const rowCount = fireTable.getRowCount();
+    const colCount = fireTable.getColumnCount();
+
     Logger.time('importData (Apps Script API) (slower)');
     Logger.warn(
       'Sheets API not available, using native insertion of rows (slower)',
     );
 
-    this.sheet.insertRowsBefore(2, rowCount);
-    this.sheet.getRange(2, 1, rowCount, colCount).setValues(data);
+    this._sheet.insertRowsBefore(2, rowCount);
+    this._sheet.getRange(2, 1, rowCount, colCount).setValues(data);
 
     Logger.time('autoFillColumns (Apps Script API) (slower)');
     if (autoFillColumns && autoFillColumns.length > 0) {
       for (const column of autoFillColumns) {
-        const sourceRange = this.sheet.getRange(2 + rowCount, column);
-        const destinationRange = this.sheet.getRange(
+        const sourceRange = this._sheet.getRange(2 + rowCount, column);
+        const destinationRange = this._sheet.getRange(
           2,
           column,
           rowCount + 1,
