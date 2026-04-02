@@ -61,13 +61,13 @@ export class Table {
   }
 
   public sortByDate(dateColumnIndex: number): this {
-    this.data = this.data.toSorted(
+    this.data = [...this.data].sort(
       (row1, row2) => {
         const d1 = new Date(row1[dateColumnIndex] as string | number | Date).getTime();
         const d2 = new Date(row2[dateColumnIndex] as string | number | Date).getTime();
-        return d1 - d2;
+        return d2 - d1;
       }
-    ).reverse();
+    );
     return this;
   }
 
