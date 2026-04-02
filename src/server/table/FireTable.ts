@@ -1,4 +1,3 @@
-import type { RawTable } from '@/common/types';
 import type { FireColumn } from '@/common/constants';
 import { FIRE_COLUMNS } from '@/common/constants';
 import type { FireColumnRules } from '../types';
@@ -83,9 +82,6 @@ export class FireTable extends Table {
     timespanMs: number,
     dateColumn: FireColumn = 'date',
   ): FireTable {
-    const duplicates: CellValue[][] = [];
-    const seenIndices: Set<number> = new Set();
-
     if (this.data.length < 2) {
       return new FireTable([]);
     }
@@ -98,29 +94,43 @@ export class FireTable extends Table {
         .join('|');
     };
 
-    for (let index = 0; index < this.data.length; index++) {
-      const row = this.data[index];
+    // Group rows by hash to reduce comparisons from O(n²) to ~O(n)
+    const hashGroups = new Map<string, { row: CellValue[]; date: Date }[]>();
+
+    for (const row of this.data) {
       const key = generateHash(row);
-      const rowDate = new Date(String(row[dateColumnIndex]));
+      const entry = { row, date: new Date(String(row[dateColumnIndex])) };
+      const group = hashGroups.get(key);
+      if (group) {
+        group.push(entry);
+      } else {
+        hashGroups.set(key, [entry]);
+      }
+    }
 
-      for (let i = index + 1; i < this.data.length; i++) {
-        const compareRow = this.data[i];
-        const compareKey = generateHash(compareRow);
-        const compareDate = new Date(String(compareRow[dateColumnIndex]));
+    const duplicates: CellValue[][] = [];
 
-        if (
-          key === compareKey &&
-          Math.abs(rowDate.getTime() - compareDate.getTime()) <= timespanMs
-        ) {
-          if (!seenIndices.has(index)) {
-            duplicates.push(row);
-            seenIndices.add(index);
+    for (const group of hashGroups.values()) {
+      if (group.length < 2) continue;
+
+      // Sort by date within the group for efficient timespan comparison
+      group.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+      const isDuplicate = new Array<boolean>(group.length).fill(false);
+
+      for (let i = 0; i < group.length; i++) {
+        for (let j = i + 1; j < group.length; j++) {
+          if (group[j].date.getTime() - group[i].date.getTime() > timespanMs) {
+            break; // sorted by date, no further matches possible for this index
           }
-          if (!seenIndices.has(i)) {
-            duplicates.push(compareRow);
-            seenIndices.add(i);
-          }
-          break;
+          isDuplicate[i] = true;
+          isDuplicate[j] = true;
+        }
+      }
+
+      for (let i = 0; i < group.length; i++) {
+        if (isDuplicate[i]) {
+          duplicates.push(group[i].row);
         }
       }
     }
@@ -185,7 +195,7 @@ export class FireTable extends Table {
     config,
   }: {
     headers: string[];
-    rows: RawTable;
+    rows: CellValue[][];
     config: Config;
   }): FireTable {
     const output: CellValue[][] = [];
@@ -199,8 +209,8 @@ export class FireTable extends Table {
       const columnIndex = config.getColumnIndex(fireColumn, headers);
       if (typeof columnIndex === 'number' && cols[columnIndex] !== undefined) {
         return cols[columnIndex].map((val) => {
-          if (val === '') return null;
-          return transformer ? transformer(val) : (val as unknown as T);
+          if (val === '' || val === null || typeof val === 'undefined') return null;
+          return transformer ? transformer(String(val)) : (val as unknown as T);
         });
       }
       return new Array<T | null>(rowCount).fill(null);

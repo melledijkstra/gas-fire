@@ -39,7 +39,7 @@ function processImportData(inputTable: RawTable, accountConfig: Config): FireTab
   //
   const fireTable = FireTable.fromCSV({
     headers: headerRow,
-    rows: rawTable.getData() as RawTable,
+    rows: rawTable.getData(),
     config: accountConfig,
   })
   // ^^ result is now in the firesheet structure

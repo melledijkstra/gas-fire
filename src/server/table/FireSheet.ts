@@ -94,8 +94,7 @@ export class FireSheet {
     const rowCount = fireTable.getRowCount();
 
     if (rowCount === 0) {
-      Logger.log('No data to import.');
-      return;
+      throw new Error('No data to import.');
     }
 
     const colCount = fireTable.getColumnCount();
