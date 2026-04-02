@@ -22,7 +22,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "vitest",
-    "test:coverage": "vitest --coverage",
+    "test:coverage": "vitest run --coverage",
     "analyze:server": "echo 'not implemented yet'",
     "analyze:client": "echo 'not implemented yet'",
     "storybook": "storybook dev -p 6006",
