@@ -6,7 +6,8 @@ import { AccountUtils, isNumeric } from '../accounts/account-utils';
 import { structuredClone } from '@/common/helpers';
 import { Logger } from '@/common/logger';
 import { activateSpreadsheet, removeFilterCriteria } from '../utils/spreadsheet';
-import { FIRE_COLUMNS } from '@/common/constants';
+import { FIRE_COLUMNS, type FireColumn } from '@/common/constants';
+import { FEATURES } from '@/common/features';
 
 /**
  * Processes raw input data into the structured Firesheet format,
@@ -131,10 +132,15 @@ export function importCSV(
   }
 }
 
+const getRowHash = (row: unknown[], compareIndices: number[]) => compareIndices.map(idx => {
+  const cell = row[idx];
+  return cell instanceof Date ? cell.toISOString() : String(cell ?? '');
+}).join('|');
+
 export function generatePreview(
   table: Table,
   bankAccount: string
-): ServerResponse<{ result: Table; newBalance?: number }> {
+): ServerResponse<{ result: Table; newBalance?: number; duplicateIndices?: number[] }> {
   try {
     const config = Config.getAccountConfiguration(bankAccount);
 
@@ -157,10 +163,30 @@ export function generatePreview(
 
     const newBalance = AccountUtils.calculateNewBalance(bankAccount, amountNumbers);
 
+    const compareCols: FireColumn[] = ['iban', 'amount', 'contra_account', 'description'];
+    const headers = Array.from(FIRE_COLUMNS);
+    const compareIndices = compareCols.map(col => headers.indexOf(col));
+    const existingHashes = new Set<string>();
+
+    if (FEATURES.IMPORT_DUPLICATE_DETECTION) {
+      // Detect duplicates against last imported batch
+      const lastImportedTransactions = TableUtils.getLastImportedTransactions();
+
+      for (const row of lastImportedTransactions) {
+        existingHashes.add(getRowHash(row, compareIndices));
+      }
+    }
+
+    const duplicateIndices: number[] = [];
+
     // Apply auto-filled visual indications
     const autoFillColumns = config.autoFillEnabled ? config.autoFillColumnIndices : [];
 
-    const result = processedData.map(row => {
+    const result = processedData.map((row, index) => {
+      if (existingHashes.has(getRowHash(row, compareIndices))) {
+        duplicateIndices.push(index + 1); // 1-based index (header is 0)  
+      }
+
       const newRow = [...row];
       for (const colIndex of autoFillColumns) {
         // AutoFill columns are 1-indexed, so we subtract 1 for array index
@@ -179,7 +205,7 @@ export function generatePreview(
             const timeZone = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
             return Utilities.formatDate(cell, timeZone, "yyyy-MM-dd");
           } catch {
-             // Fallback if Utilities/SpreadsheetApp is not available in mock/testing
+            // Fallback if Utilities/SpreadsheetApp is not available in mock/testing
             return cell.toISOString().split('T')[0];
           }
         }
@@ -187,15 +213,12 @@ export function generatePreview(
       });
     });
 
-    // Generate headers for the preview
-    const headers = Array.from(FIRE_COLUMNS);
-
     // Prepend the header row to the result for the DataTable component
     result.unshift(headers);
 
     return {
       success: true,
-      data: { result, newBalance }
+      data: { result, newBalance, duplicateIndices }
     };
   } catch (error) {
     Logger.error(error);

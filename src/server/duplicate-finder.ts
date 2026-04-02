@@ -32,7 +32,7 @@ export function generateDuplicateHash(headers: FireColumn[], row: string[], colu
 export function findDuplicates(table: Table, compareCols: FireColumn[], timespan: number, dateColumn: FireColumn = 'date'): Table {
     const duplicates: Table = [];
     const seenIndices: Set<number> = new Set();
-    
+
     // we need at least 1 header row + two data rows to find duplicates
     if (table.length < 2) {
         return [];
