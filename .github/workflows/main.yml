@@ -30,7 +30,7 @@ jobs:
       - name: Run build
         run: pnpm build
       - name: Run unit tests
-        run: pnpm test
+        run: pnpm test:coverage
       - name: Check version bump and create tag
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |

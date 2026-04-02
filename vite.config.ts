@@ -154,7 +154,12 @@ const testConfig: UserConfig = {
     globals: true,
     setupFiles: ['./test-setup.ts'],
     coverage: {
-      reporter: ['text', 'json', 'html'],
+      exclude: [
+        'src/fixtures/**',
+        'src/plugins/**',
+        'src/stories/**'
+      ],
+      reporter: ['text', 'json', 'html', 'lcov'],
       provider: 'v8',
     }
   },
