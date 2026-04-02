@@ -164,10 +164,10 @@ export function generatePreview(
 
     if (FEATURES.IMPORT_DUPLICATE_DETECTION) {
       // Detect duplicates against last imported batch
-      const fireTable = new FireTable();
-      const lastImportedTransactions = fireTable.getLastImportedTransactions();
+      const fireSheet = new FireSheet();
+      const lastImportedTransactions = fireSheet.getLastImportedTransactions();
 
-      for (const row of lastImportedTransactions) {
+      for (const row of lastImportedTransactions.getData()) {
         existingHashes.add(getRowHash(row, compareIndices));
       }
     }

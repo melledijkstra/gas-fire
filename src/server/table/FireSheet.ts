@@ -3,6 +3,7 @@ import { FireTable } from './FireTable';
 import { SheetsRequestBuilder } from '../request-builder';
 import { Logger } from '@/common/logger';
 import { getSourceSheet } from '../globals';
+import { FIRE_COLUMNS } from '@/common/constants';
 
 const MS_IN_DAY = 86400000;
 const DAYS_FROM_JS_EPOCH_TO_SHEETS_EPOCH = 25569;
@@ -153,6 +154,90 @@ export class FireSheet {
     this.sheet
       .getRange(row, column, numRows, numColumns)
       .setValues(values);
+  }
+
+  // ──────────────────────────────────────────────
+  // Read: last import batch
+  // ──────────────────────────────────────────────
+
+  /**
+   * Reads the source sheet and returns all rows from the most recent import batch.
+   *
+   * The sheet is expected to be sorted by date descending, so the most recent
+   * import date is at the top. Stops reading once a different import date is found.
+   *
+   * @returns A FireTable containing only the rows from the last import, or an empty FireTable.
+   */
+  getLastImportedTransactions(): FireTable {
+    const lastRow = this.sheet.getLastRow();
+    if (lastRow <= 1) return new FireTable([]);
+
+    // Only read up to 500 rows since data is sorted newest-first
+    const values = this.sheet
+      .getRange(1, 1, Math.min(lastRow, 500), this.sheet.getLastColumn())
+      .getValues() as CellValue[][];
+
+    if (values.length <= 1) return new FireTable([]);
+
+    const lastImportDate = this.getLastImportDate(values);
+    if (!lastImportDate) return new FireTable([]);
+
+    const importDateCol = FIRE_COLUMNS.indexOf('import_date');
+    const lastImportedRows: CellValue[][] = [];
+
+    // Iterate from row 2 (index 1) onwards, skipping the header
+    for (let i = 1; i < values.length; i++) {
+      const row = values[i];
+      const rowDateRaw = row[importDateCol];
+
+      let rowDateTime = -1;
+
+      if (rowDateRaw instanceof Date) {
+        rowDateTime = rowDateRaw.getTime();
+      } else if (
+        rowDateRaw !== undefined &&
+        rowDateRaw !== null &&
+        rowDateRaw !== ''
+      ) {
+        rowDateTime = new Date(String(rowDateRaw)).getTime();
+      }
+
+      if (rowDateTime === lastImportDate.getTime()) {
+        lastImportedRows.push(row);
+      } else {
+        break; // Stop as soon as the import date changes
+      }
+    }
+
+    return new FireTable(lastImportedRows);
+  }
+
+  /**
+   * Returns the most recent import date found in sheet data.
+   * Looks at row index 1 (first data row after header) since data is sorted newest-first.
+   */
+  private getLastImportDate(data: CellValue[][]): Date | null {
+    const importDateCol = FIRE_COLUMNS.indexOf('import_date');
+    if (importDateCol === -1) return null;
+    if (data.length < 2) return null;
+
+    const lastImportDateRaw = data[1][importDateCol];
+    if (
+      lastImportDateRaw === undefined ||
+      lastImportDateRaw === null ||
+      lastImportDateRaw === ''
+    ) {
+      return null;
+    }
+
+    const lastImportDateTime =
+      lastImportDateRaw instanceof Date
+        ? lastImportDateRaw.getTime()
+        : new Date(String(lastImportDateRaw)).getTime();
+
+    if (Number.isNaN(lastImportDateTime)) return null;
+
+    return new Date(lastImportDateTime);
   }
 
   // ──────────────────────────────────────────────
