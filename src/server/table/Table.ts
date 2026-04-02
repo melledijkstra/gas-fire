@@ -150,7 +150,7 @@ export class Table {
    * Indices are 0-based.
    */
   deleteColumns(colIndices: number[]): this {
-    const sortedIndices = [...colIndices].sort().reverse();
+    const sortedIndices = [...colIndices].sort((a, b) => b - a);
     this.transpose();
     for (const delIndex of sortedIndices) {
       if (this.data[delIndex] !== undefined) {

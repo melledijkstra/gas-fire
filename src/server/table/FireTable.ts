@@ -87,55 +87,75 @@ export class FireTable extends Table {
     }
 
     const dateColumnIndex = this.getFireColumnIndex(dateColumn);
+    const generateHash = (row: CellValue[]): string =>
+      compareCols.map((col) => row[this.getFireColumnIndex(col)]).join('|');
 
-    const generateHash = (row: CellValue[]): string => {
-      return compareCols
-        .map((col) => row[this.getFireColumnIndex(col)])
-        .join('|');
-    };
+    const hashGroups = this.groupRowsByHash(generateHash, dateColumnIndex);
+    const duplicates = this.collectDuplicatesFromGroups(hashGroups, timespanMs);
 
-    // Group rows by hash to reduce comparisons from O(n²) to ~O(n)
-    const hashGroups = new Map<string, { row: CellValue[]; date: Date }[]>();
+    return new FireTable(duplicates);
+  }
+
+  /** Groups rows by a hash key, pairing each with its parsed date. */
+  private groupRowsByHash(
+    generateHash: (row: CellValue[]) => string,
+    dateColumnIndex: number,
+  ): Map<string, { row: CellValue[]; date: Date }[]> {
+    const groups = new Map<string, { row: CellValue[]; date: Date }[]>();
 
     for (const row of this.data) {
       const key = generateHash(row);
       const entry = { row, date: new Date(String(row[dateColumnIndex])) };
-      const group = hashGroups.get(key);
+      const group = groups.get(key);
       if (group) {
         group.push(entry);
       } else {
-        hashGroups.set(key, [entry]);
+        groups.set(key, [entry]);
       }
     }
 
+    return groups;
+  }
+
+  /** Collects duplicate rows from hash groups using a time-window comparison. */
+  private collectDuplicatesFromGroups(
+    hashGroups: Map<string, { row: CellValue[]; date: Date }[]>,
+    timespanMs: number,
+  ): CellValue[][] {
     const duplicates: CellValue[][] = [];
 
     for (const group of hashGroups.values()) {
       if (group.length < 2) continue;
 
-      // Sort by date within the group for efficient timespan comparison
+      // Sort by date for efficient sliding-window comparison
       group.sort((a, b) => a.date.getTime() - b.date.getTime());
 
-      const isDuplicate = new Array<boolean>(group.length).fill(false);
+      const isDuplicate = this.markDuplicatesInGroup(group, timespanMs);
 
       for (let i = 0; i < group.length; i++) {
-        for (let j = i + 1; j < group.length; j++) {
-          if (group[j].date.getTime() - group[i].date.getTime() > timespanMs) {
-            break; // sorted by date, no further matches possible for this index
-          }
-          isDuplicate[i] = true;
-          isDuplicate[j] = true;
-        }
-      }
-
-      for (let i = 0; i < group.length; i++) {
-        if (isDuplicate[i]) {
-          duplicates.push(group[i].row);
-        }
+        if (isDuplicate[i]) duplicates.push(group[i].row);
       }
     }
 
-    return new FireTable(duplicates);
+    return duplicates;
+  }
+
+  /** Marks which entries in a date-sorted group are duplicates within the timespan. */
+  private markDuplicatesInGroup(
+    group: { row: CellValue[]; date: Date }[],
+    timespanMs: number,
+  ): boolean[] {
+    const isDuplicate = new Array<boolean>(group.length).fill(false);
+
+    for (let i = 0; i < group.length; i++) {
+      for (let j = i + 1; j < group.length; j++) {
+        if (group[j].date.getTime() - group[i].date.getTime() > timespanMs) break;
+        isDuplicate[i] = true;
+        isDuplicate[j] = true;
+      }
+    }
+
+    return isDuplicate;
   }
 
   /**
