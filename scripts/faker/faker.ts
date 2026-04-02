@@ -1,4 +1,4 @@
-import type { Accounts, FireTransaction, Table } from '../../src/common/types';
+import type { Accounts, FireTransaction, RawTable } from '../../src/common/types';
 import { faker } from '@faker-js/faker';
 import fs from 'fs';
 import { convertFireTransactionToBankDefinition } from './commonwealth-bank';
@@ -112,8 +112,8 @@ function createTransaction(
   };
 }
 
-function jsonToTable(input: Record<string, unknown>[]): Table {
-  const output: Table = [];
+function jsonToTable(input: Record<string, unknown>[]): RawTable {
+  const output: RawTable = [];
 
   const headers = Object.keys(input[0]);
   const rows = input.slice(1);
@@ -187,7 +187,7 @@ function generateYearlyTransactions({
 }
 
 function tableToCSV(
-  transactions: Table,
+  transactions: RawTable,
   delimiter = ';'
 ): string {
   const header = transactions[0].join(delimiter);

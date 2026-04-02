@@ -1,15 +1,15 @@
-import type { BankOptions, Table } from '@/common/types';
+import type { BankOptions, RawTable } from '@/common/types';
 import { SvelteSet } from 'svelte/reactivity';
 
 type ImportState = {
   bankOptions: BankOptions;
   isProcessing: boolean;
   inputFiles?: FileList;
-  rawImportData?: Table;
+  rawImportData?: RawTable;
   selectedBank?: string;
   selectedRows: SvelteSet<number>;
   duplicateRows: SvelteSet<number>;
-  previewData?: Table;
+  previewData?: RawTable;
 };
 
 export const importState: ImportState = $state({

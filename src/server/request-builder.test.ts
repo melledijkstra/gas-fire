@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 import { SheetsRequestBuilder } from './request-builder';
-import type { Table } from '@/common/types';
+import type { CellValue } from './table/types';
 
 describe('SheetsRequestBuilder', () => {
   let builder: SheetsRequestBuilder;
@@ -49,12 +49,12 @@ describe('SheetsRequestBuilder', () => {
     });
 
     it('should handle data arrays with empty rows correctly', () => {
-      const data: unknown[][] = [[]];
+      const data: CellValue[][] = [[]];
       const generator = (cell: unknown): GoogleAppsScript.Sheets.Schema.CellData => ({
         userEnteredValue: { stringValue: String(cell) },
       });
 
-      builder.insertData(123, data as Table, 10, 5, generator);
+      builder.insertData(123, data, 10, 5, generator);
 
       expect(builder.requests).toHaveLength(1);
       expect(builder.requests[0]).toEqual({
@@ -73,7 +73,7 @@ describe('SheetsRequestBuilder', () => {
     });
 
     it('should handle data arrays with uneven row lengths safely based on the longest row', () => {
-      const data: unknown[][] = [
+      const data: CellValue[][] = [
         ['A1'],
         ['A2', 'B2', 'C2'],
         ['A3', 'B3'],
@@ -90,7 +90,7 @@ describe('SheetsRequestBuilder', () => {
     });
 
     it('should handle data where the first row is empty but subsequent rows are not', () => {
-      const data: unknown[][] = [
+      const data: CellValue[][] = [
         [],
         ['A2', 'B2'],
       ];
@@ -156,12 +156,12 @@ describe('SheetsRequestBuilder', () => {
     });
 
     it('should handle an empty data array correctly', () => {
-      const data: unknown[][] = [];
+      const data: CellValue[][] = [];
       const generator = (cell: unknown): GoogleAppsScript.Sheets.Schema.CellData => ({
         userEnteredValue: { stringValue: String(cell) },
       });
 
-      builder.insertData(123, data as Table, 10, 5, generator);
+      builder.insertData(123, data, 10, 5, generator);
 
       expect(builder.requests).toHaveLength(1);
       expect(builder.requests[0]).toEqual({

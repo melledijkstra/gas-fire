@@ -1,4 +1,4 @@
-import type { Table } from "@/common/types";
+import type { RawTable } from "@/common/types";
 import type { FireColumn } from "@/common/constants";
 
 function findIndexByHeaderName(headers: FireColumn[], headerName: FireColumn): number {
@@ -29,8 +29,8 @@ export function generateDuplicateHash(headers: FireColumn[], row: string[], colu
  * const duplicates = findDuplicates(rows, columns, timespan);
  * duplicates will contain the first two rows
  */
-export function findDuplicates(table: Table, compareCols: FireColumn[], timespan: number, dateColumn: FireColumn = 'date'): Table {
-    const duplicates: Table = [];
+export function findDuplicates(table: RawTable, compareCols: FireColumn[], timespan: number, dateColumn: FireColumn = 'date'): RawTable {
+    const duplicates: RawTable = [];
     const seenIndices: Set<number> = new Set();
 
     // we need at least 1 header row + two data rows to find duplicates

@@ -1,7 +1,7 @@
 import type {
   ServerResponse,
   BankOptions,
-  Table,
+  RawTable,
 } from '@/common/types';
 import { fn } from 'storybook/test'
 import type * as publicServerFunctions from '@/server/index';
@@ -46,7 +46,7 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
   }
 
   async importCSV(
-    data: Table,
+    data: RawTable,
     selectedBank: string
   ): Promise<ServerResponse> {
     console.log('importCSV mock called with data:', data, 'and selectedBank:', selectedBank);
@@ -58,10 +58,10 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
   };
 
   async generatePreview(
-    table: Table,
+    table: RawTable,
     _strategy: string
   ): Promise<ServerResponse<{
-    result: Table;
+    result: RawTable;
     newBalance?: number;
   }>> {
     console.log('generatePreview mock called');

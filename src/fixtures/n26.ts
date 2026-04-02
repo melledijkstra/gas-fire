@@ -1,7 +1,7 @@
-import type { Table } from '@/common/types';
+import type { RawTable } from '@/common/types';
 
 // prettier-ignore
-export const N26ImportMock: Table = [
+export const N26ImportMock: RawTable = [
   ['Date','Payee','Account number','Transaction type','Payment reference','Amount','Amount (Foreign Currency)','Type Foreign Currency','Exchange Rate'],
   ['2023-11-26','Supermarket X','','MasterCard Payment','Ticket is attached to the email','-11.63','-11.63','EUR','1.0'],
   ['2023-11-26','Restaurant X','','MasterCard Payment','','-13.08','-13.08','EUR','1.0'],

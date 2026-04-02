@@ -1,5 +1,4 @@
-import { getSourceSheet } from '../globals';
-import { TableUtils } from '../table-utils';
+import { FireSheet } from '../table';
 import { getCategoryNames } from '../helpers';
 import { Logger } from '@/common/logger';
 import { categorizeTransactions } from '.';
@@ -9,7 +8,7 @@ import { categorizeTransactions } from '.';
  * Can be called from the menu
  */
 export const executeAutomaticCategorization = () => {
-  const sourceSheet = getSourceSheet()
+  const fireSheet = new FireSheet()
 
   // 1. first part of the code focusses UX and makes sure the user is focussed on the right sheet
   // also it filters the sheet to only show rows that have no category set
@@ -26,16 +25,18 @@ export const executeAutomaticCategorization = () => {
   try {
     Logger.time('executeAutomaticCategorization')
 
-    sourceSheet?.activate()
+    fireSheet.activate()
 
-    const filter = sourceSheet?.getFilter()
+    const filter = fireSheet.getFilter()
     if (!filter) {
       throw new Error(
         'Automatic categorization script needs an actual filter configured on the source sheet table! Please set a filter before trying again'
       );
     }
 
-    const categoryColIndex = TableUtils.getFireColumnIndexByName('category')
+    const fireTable = fireSheet.getData();
+    const categoryColIndex = fireTable.getFireColumnIndex('category')
+
     // we set a filter which hides all categories, leaving only rows without category
     // unfortunately there is no better way to do it currently
     const blankFilterCriteria = SpreadsheetApp.newFilterCriteria()
@@ -44,12 +45,8 @@ export const executeAutomaticCategorization = () => {
 
     filter.setColumnFilterCriteria(categoryColIndex + 1, blankFilterCriteria)
 
-    // below code is the actual categorization logic
-    // all the code before is just visually for the user
-    const data = sourceSheet?.getDataRange()?.getValues() ?? []
-
     // actual categorization logic
-    const { categoryUpdates, rowsCategorized } = categorizeTransactions(data)
+    const { categoryUpdates, rowsCategorized } = categorizeTransactions(fireTable)
 
     if (rowsCategorized === 0) {
       ui.alert('No rows were categorized!');
@@ -57,9 +54,7 @@ export const executeAutomaticCategorization = () => {
     }
 
     if (categoryUpdates.length > 0) {
-      sourceSheet
-        ?.getRange(2, categoryColIndex + 1, categoryUpdates.length, 1)
-        .setValues(categoryUpdates);
+      fireSheet.setValues(2, categoryColIndex + 1, categoryUpdates.length, 1, categoryUpdates);
     }
 
     ui.alert(`Succesfully categorized ${rowsCategorized} rows!`);

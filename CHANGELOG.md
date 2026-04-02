@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.12.0-beta
+
+- **New: `Table` class** - Generic in-memory table abstraction with mutable builder-pattern operations (`transpose()`, `removeEmptyRows()`, `deleteColumns()`, `sortByColumn()`, `clone()`) and static utilities. Replaces scattered `TableUtils` static methods.
+- **New: `FireTable` class** - Extends `Table` with FIRE column-aware operations: `getFireColumn()`, `sortByDate()`, `findDuplicates()`, `categorize()`, and a `FireTable.fromCSV()` factory that replaces `processInputDataAndShapeFiresheetStructure()`.
+- **New: `FireSheet` class** - Wraps the FIRE source Google Sheet, encapsulating all sheet I/O (`importData()`, `getData()`, `activate()`, `getFilter()`, `setValues()`). Separates sheet interaction from data manipulation.
+- **Renamed `Table` type to `RawTable`** - The `string[][]` type alias used for client-server data transfer has been renamed to `RawTable` to avoid naming collision with the new `Table` class and to better describe its purpose.
+- **New: `CellValue` type** - Introduced `CellValue = string | number | Date | boolean | null` to accurately represent cell data during processing, replacing the inaccurate `string[][]` for server-side table operations.
+- **Removed `TableUtils` class and `table-utils.ts`** - All functionality has been migrated to the new `Table`, `FireTable`, and `FireSheet` classes with improved separation of concerns (SRP).
+- **Full migration** - All server modules (`importer`, `category-detection`, `other`, `request-builder`) and their tests have been updated to use the new classes.
+
 ## 4.11.0-beta
 
 - **Feature** - Added Smart Duplicate Transaction Detection on Import Preview.

@@ -1,27 +1,29 @@
-import { getSourceSheet } from '../globals';
+import type { ServerResponse, RawTable } from '@/common/types';
+import type { FireColumn } from '@/common/constants';
 import { Config } from '../config';
-import { TableUtils, processInputDataAndShapeFiresheetStructure } from '../table-utils';
-import type { ServerResponse, Table } from '@/common/types';
+import { FireTable, FireSheet } from '../table';
+import { Table } from '../table/Table';
 import { AccountUtils, isNumeric } from '../accounts/account-utils';
 import { structuredClone } from '@/common/helpers';
 import { Logger } from '@/common/logger';
-import { activateSpreadsheet, removeFilterCriteria } from '../utils/spreadsheet';
-import { FIRE_COLUMNS, type FireColumn } from '@/common/constants';
+import { removeFilterCriteria } from '../utils/spreadsheet';
+import { FIRE_COLUMNS } from '@/common/constants';
 import { FEATURES } from '@/common/features';
 
 /**
  * Processes raw input data into the structured Firesheet format,
  * applying filtering and sorting rules.
  *
- * @param {Table} inputTable - The raw input data
+ * @param {RawTable} inputTable - The raw input data
  * @param {Config} accountConfig - The configuration for the account
- * @returns {Table} The processed data, ready for import
+ * @returns {FireTable} The processed data, ready for import
  */
-function processImportData(inputTable: Table, accountConfig: Config): Table {
-  let result = structuredClone(inputTable)
+function processImportData(inputTable: RawTable, accountConfig: Config): FireTable {
+  const cloned = structuredClone(inputTable)
+  const rawTable = new Table(cloned);
 
   // retrieve the header row and separate from the actual input data
-  const headerRow = result.shift()
+  const headerRow = rawTable.shiftRow() as string[] | undefined;
 
   if (!headerRow || headerRow.length === 0) {
     throw new Error('No header row detected in import data!')
@@ -30,25 +32,21 @@ function processImportData(inputTable: Table, accountConfig: Config): Table {
   //
   // BEFORE IMPORT RULES
   //
-  result = TableUtils.removeEmptyRows(result)
+  rawTable.removeEmptyRows()
 
   //
   // IMPORT RULES
   //
-  result = processInputDataAndShapeFiresheetStructure({
+  const fireTable = FireTable.fromCSV({
     headers: headerRow,
-    rows: result,
+    rows: rawTable.getData(),
     config: accountConfig,
   })
   // ^^ result is now in the firesheet structure
 
-  const dateColumn = TableUtils.getFireColumnIndexByName('date')
-  if (dateColumn !== -1) {
-    // if we found a date column, we sort the data by date
-    result = TableUtils.sortByDate(result, dateColumn)
-  }
+  fireTable.sortByDate()
 
-  return result
+  return fireTable
 }
 
 /**
@@ -58,18 +56,18 @@ function processImportData(inputTable: Table, accountConfig: Config): Table {
  *
  * It uses configuration from the user to determine how the CSV should be processed.
  *
- * @param {Table} inputTable - The table object which contains the CSV data
+ * @param {RawTable} inputTable - The table object which contains the CSV data
  * @param {string} bankAccount - The bank account identifier which is used to lookup configuration
  * @returns {ServerResponse} A response object which contains a message to be displayed to the user
  */
 export function importCSV(
-  inputTable: Table,
+  inputTable: RawTable,
   bankAccount: string
 ): ServerResponse {
   try {
     Logger.time('importCSV')
 
-    const sourceSheet = getSourceSheet()
+    const fireSheet = new FireSheet()
     const accountConfig = Config.getAccountConfiguration(bankAccount)
 
     Logger.log('account configuration used for import', accountConfig)
@@ -81,11 +79,11 @@ export function importCSV(
     }
 
     // make the user visually switch to the primary sheet where data will be imported
-    activateSpreadsheet(sourceSheet)
+    fireSheet.activate()
 
     // remove any filters that might be set
     // importing might go wrong when filters are set
-    const filter = sourceSheet?.getFilter()
+    const filter = fireSheet.getFilter()
 
     if (filter) {
       if (!removeFilterCriteria(filter, true)) {
@@ -97,7 +95,7 @@ export function importCSV(
 
     const result = processImportData(inputTable, accountConfig)
 
-    if (result.length === 0) {
+    if (result.isEmpty()) {
       const msg = 'No rows to import, check your import data or configuration!';
       Logger.log(msg)
       return {
@@ -107,14 +105,14 @@ export function importCSV(
     }
 
     // actual importing of the data into the sheet
-    Logger.time('TableUtils.importData')
+    Logger.time('FireSheet.importData')
 
     const autoFillColumns = accountConfig.autoFillEnabled ? accountConfig.autoFillColumnIndices : undefined
-    TableUtils.importData(result, autoFillColumns)
+    fireSheet.importData(result, autoFillColumns)
 
-    Logger.timeEnd('TableUtils.importData')
+    Logger.timeEnd('FireSheet.importData')
 
-    const msg = `imported ${result.length} rows!`;
+    const msg = `imported ${result.getRowCount()} rows!`;
     Logger.log(msg)
 
     Logger.timeEnd('importCSV')
@@ -138,9 +136,9 @@ const getRowHash = (row: unknown[], compareIndices: number[]) => compareIndices.
 }).join('|');
 
 export function generatePreview(
-  table: Table,
+  table: RawTable,
   bankAccount: string
-): ServerResponse<{ result: Table; newBalance?: number; duplicateIndices?: number[] }> {
+): ServerResponse<{ result: RawTable; newBalance?: number; duplicateIndices?: number[] }> {
   try {
     const config = Config.getAccountConfiguration(bankAccount);
 
@@ -149,17 +147,13 @@ export function generatePreview(
     }
 
     // Process the data using the exact same logic as the actual import
-    const processedData = processImportData(table, config);
+    const fireTable = processImportData(table, config);
 
     // Calculate new balance based on the shaped data
-    const amountColumnIndex = TableUtils.getFireColumnIndexByName('amount');
-    let amountNumbers: number[] = [];
-
-    if (amountColumnIndex !== -1 && processedData.length > 0) {
-      const amounts = processedData.map((row) => row[amountColumnIndex]);
-      // The amount is already transformed to a number in processImportData
-      amountNumbers = amounts.filter(isNumeric).map(Number);
-    }
+    const amountNumbers = fireTable
+      .getFireColumn('amount')
+      .filter(isNumeric)
+      .map(Number);
 
     const newBalance = AccountUtils.calculateNewBalance(bankAccount, amountNumbers);
 
@@ -170,9 +164,10 @@ export function generatePreview(
 
     if (FEATURES.IMPORT_DUPLICATE_DETECTION) {
       // Detect duplicates against last imported batch
-      const lastImportedTransactions = TableUtils.getLastImportedTransactions();
+      const fireSheet = new FireSheet();
+      const lastImportedTransactions = fireSheet.getLastImportedTransactions();
 
-      for (const row of lastImportedTransactions) {
+      for (const row of lastImportedTransactions.getData()) {
         existingHashes.add(getRowHash(row, compareIndices));
       }
     }
@@ -182,7 +177,7 @@ export function generatePreview(
     // Apply auto-filled visual indications
     const autoFillColumns = config.autoFillEnabled ? config.autoFillColumnIndices : [];
 
-    const result = processedData.map((row, index) => {
+    const result = fireTable.getData().map((row, index) => {
       if (existingHashes.has(getRowHash(row, compareIndices))) {
         duplicateIndices.push(index + 1); // 1-based index (header is 0)  
       }

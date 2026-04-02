@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Table, ServerResponse } from "@/common/types";
+  import type { RawTable, ServerResponse } from "@/common/types";
   import { serverFunctions } from "@/client/utils/serverFunctions";
   import DataTable from "./DataTable.svelte";
   import { excludeRowsFromData } from "../utils/importing";
@@ -16,7 +16,7 @@
 
   const onGeneratePreviewSuccess = (
     response: ServerResponse<{
-      result: Table;
+      result: RawTable;
       newBalance?: number;
       duplicateIndices?: number[];
     }>,

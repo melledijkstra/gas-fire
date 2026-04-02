@@ -5,7 +5,7 @@ import {
   SpreadsheetMock,
   UIMock
 } from '../../../test-setup';
-import * as duplicateFinder from '../duplicate-finder';
+import { FireTable, FireSheet } from '../table';
 import { executeFindDuplicates, mailNetWorth } from '../other/rpc';
 
 vi.mock('../globals', () => ({
@@ -13,7 +13,8 @@ vi.mock('../globals', () => ({
   getSourceSheet: vi.fn(() => SheetMock)
 }));
 
-const findDuplicatesSpy = vi.spyOn(duplicateFinder, 'findDuplicates');
+const findDuplicatesSpy = vi.spyOn(FireTable.prototype, 'findDuplicates');
+const getDataSpy = vi.spyOn(FireSheet.prototype, 'getData');
 
 describe('RPC: Miscellaneous Functions', () => {
   describe('executeFindDuplicates', () => {
@@ -39,24 +40,24 @@ describe('RPC: Miscellaneous Functions', () => {
         getSelectedButton: () => UIMock.Button.OK,
         getResponseText: () => '7',
       });
-      findDuplicatesSpy.mockReturnValue([]);
+      getDataSpy.mockReturnValueOnce(new FireTable([]));
+      findDuplicatesSpy.mockReturnValue(new FireTable([]));
       executeFindDuplicates();
       expect(UIMock.alert).toHaveBeenCalledWith('No duplicates found!');
     });
 
     test('should copy duplicates to a new sheet', () => {
-      // needed to return at least the headers
-      RangeMock.getValues.mockReturnValue([
-        ['ref', 'iban', 'amount', 'contra_account', 'description'],
-      ]);
       UIMock.prompt.mockReturnValueOnce({
         getSelectedButton: () => UIMock.Button.OK,
         getResponseText: () => '7',
       });
-      findDuplicatesSpy.mockReturnValue([
-        ['row1'],
-        ['row2'],
-      ]);
+      getDataSpy.mockReturnValueOnce(new FireTable([
+        ['1', 'NL01', '2023-01-01', '100', '', 'Store A', '', '', '', '', '', '', '', '', '', ''],
+      ]));
+      findDuplicatesSpy.mockReturnValue(new FireTable([
+        ['row1', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
+        ['row2', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
+      ]));
       executeFindDuplicates();
       expect(SheetMock.clear).toHaveBeenCalled();
       expect(SheetMock.getRange).toHaveBeenCalledTimes(2);
