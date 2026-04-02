@@ -1,4 +1,4 @@
-name: Build Check
+name: CI/CD Pipeline
 
 on:
   pull_request:
@@ -7,20 +7,22 @@ on:
     branches: [main]
 
 jobs:
+  ################
+  # CI pipeline
+  ################
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 2
       - name: Use Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
         with:
           version: 10
       - name: Install dependencies
@@ -32,6 +34,7 @@ jobs:
       - name: Run unit tests
         run: pnpm test:coverage
       - name: Check version bump and create tag
+        # only run this step for pushes to main, not for pull requests
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           CURRENT_VERSION=$(node -p "require('./package.json').version")
@@ -54,3 +57,55 @@ jobs:
           else
             echo "No version change detected or invalid version."
           fi
+      # Upload the built dist folder so the deploy job can use it
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: gas-build
+          path: dist/
+          retention-days: 1
+  ################
+  # Deploy pipeline
+  ################
+  deployment:
+    needs: build # depends on the build job to complete successfully
+    # only run this step for pushes to main, not for pull requests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+      # we need pnpm to run the switch-env script and clasp commands.
+      # however no need to build the application. we already have the build artifact.
+      - uses: pnpm/action-setup@v5
+        with:
+          version: 10
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      # we retrieve the build artifact from the build job, no need to install dependencies or build again
+      # this optimizes the deployment pipeline by reusing the already built code from the CI pipeline
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: gas-build
+          path: dist/
+      # prepare the clasp configuration with the correct script ID for deployment
+      - name: Setup clasp configuration
+        env:
+          SCRIPT_ID: ${{ secrets.SCRIPT_ID }}
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: |
+          cp .clasp.json.sample .clasp.json
+          pnpm switch-env.js production ${{ env.SCRIPT_ID }}
+          echo "${{ env.CLASPRC_JSON }}" > ~/.clasprc.json
+      - name: Deploy to Google Apps Script
+        run: pnpm push
+      - name: Tag clasp version with app version + commit SHA
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          pnpm exec clasp version "$CURRENT_VERSION-$(git rev-parse --short HEAD)"
+

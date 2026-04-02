@@ -7,22 +7,28 @@ dotenv.config();
 
 const cwd = process.cwd();
 const argument = process.argv?.[2];
+const scriptIdArg = process.argv?.[3];
 
 // 1. figure out what kind of environment we want to switch to
 if (!['prod', 'dev'].includes(argument)) {
   console.error(
-    "[env] argument is not provided, run the command like below\n> node switch-env.js [env] # where [env] can be choose 'dev' or 'prod'"
+    "[env] argument is not provided, run the command like below\n> node switch-env.js [env] [script-id] # where [env] can be 'dev' or 'prod' and [script-id] is optional"
   );
   process.exit(1);
 }
 
 // 2. retrieve the new environment script id based on the selected environment
-const envVar = argument === 'prod' ? 'PROD_SCRIPT_ID' : 'DEV_SCRIPT_ID';
-const newScriptId = process.env?.[envVar];
+//    a script id provided directly on the command line takes precedence over the .env file
+let newScriptId: string | undefined = scriptIdArg;
 
 if (!newScriptId) {
-  console.error(`${envVar} not found in .env file, please add it`);
-  process.exit(1);
+  const envVar = argument === 'prod' ? 'PROD_SCRIPT_ID' : 'DEV_SCRIPT_ID';
+  newScriptId = process.env?.[envVar];
+
+  if (!newScriptId) {
+    console.error(`${envVar} not found in .env file, please add it or pass the script id directly as a third argument`);
+    process.exit(1);
+  }
 }
 
 // Path to .clasp.json
@@ -58,8 +64,15 @@ fs.readFile(claspPath, 'utf8', (err, data) => {
       process.exit(1);
     }
 
-    console.log(
-      `successfully updated .clasp.json with new script id (${envVar})\n${newScriptId}`
-    );
+    // prevent logging the script ID in CI environments for security reasons
+    if (process.env.CI) {
+      console.log(
+        `successfully updated .clasp.json with script id`
+      );
+    } else {
+      console.log(
+        `successfully updated .clasp.json with new script id (${argument})\n${newScriptId}`
+      );
+    }
   });
 });
