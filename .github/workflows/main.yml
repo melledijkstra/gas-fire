@@ -101,7 +101,7 @@ jobs:
         run: |
           cp .clasp.json.sample .clasp.json
           pnpm switch-env prod ${{ env.SCRIPT_ID }}
-          echo "${{ env.CLASPRC_JSON }}" > ~/.clasprc.json
+          echo '${{ env.CLASPRC_JSON }}' > ~/.clasprc.json
       - name: Deploy to Google Apps Script
         run: pnpm push
       - name: Tag clasp version with app version + commit SHA
