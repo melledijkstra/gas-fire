@@ -15,8 +15,6 @@
     duplicateRows?: Set<number>;
   } = $props();
 
-  $inspect(selectable)
-
   const selectedRows = $derived(importState.selectedRows);
   
   const headers = $derived(table?.[0] ?? []);
