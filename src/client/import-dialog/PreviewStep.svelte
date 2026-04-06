@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { ImportPreviewReport, ServerResponse } from "@/common/types";
   import { serverFunctions } from "@/client/utils/serverFunctions";
-  import DataTable from "./DataTable.svelte";
+  import DataTable from "../components/DataTable.svelte";
   import { excludeRowsFromData } from "../utils/importing";
   import { importState } from "../states/import.svelte";
   import { Alert, Button, Spinner } from "flowbite-svelte";

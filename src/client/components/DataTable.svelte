@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { RawTable, ImportPreviewReport, TransactionAction } from '@/common/types';
+  import type { RawTable, ImportPreviewReport, TransactionAction, TransactionStatus } from '@/common/types';
   import { addSelectedRow, importState, removeSelectedRow } from '../states/import.svelte';
   import { Checkbox, Table as FlowTable, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell, Select } from 'flowbite-svelte';
 
@@ -24,7 +24,7 @@
   const isPreview = $derived(!!report);
   const hasDetectedDuplicates = $derived(report ? report.summary.duplicateCount > 0 : false);
 
-  const getRowClass = (status: string) => {
+  const getRowClass = (status: TransactionStatus) => {
     if (status === 'removed') return 'opacity-50 line-through';
     if (status === 'duplicate') return 'bg-yellow-100! dark:bg-yellow-900! opacity-75';
     return '';
@@ -77,7 +77,7 @@
   </TableHead>
   <TableBody>
     {#if isPreview && report}
-      {#each report.transactions as transaction (transaction.hash)}
+      {#each report.transactions as transaction, i (`${transaction.hash}-${i}`)}
         <TableBodyRow class={getRowClass(transaction.status)}>
           {#if hasDetectedDuplicates}
             <TableBodyCell class="py-2 px-1 text-xs text-center">
@@ -85,10 +85,12 @@
                 <Select
                   size="sm"
                   class="p-1 text-xs"
-                  value={importState.userDecisions.get(transaction.hash) || 'skip'}
-                  onchange={(e) => {
-                    importState.userDecisions.set(transaction.hash, e.target.value as TransactionAction);
-                  }}
+                  value={importState.userDecisions.get(transaction.hash) ?? transaction.action}
+                  onchange={((e) => {
+                    if (e?.currentTarget?.value) {
+                      importState.userDecisions.set(transaction.hash, e.currentTarget.value as TransactionAction);
+                    }
+                  })}
                 >
                   <option value="skip">Skip</option>
                   <option value="import">Force Import</option>

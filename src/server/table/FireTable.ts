@@ -8,6 +8,7 @@ import { AccountUtils } from '../accounts/account-utils';
 import { Transformers } from '../transformers';
 import { detectCategoryByTextAnalysis } from '../category-detection/detection';
 import { Logger } from '@/common/logger';
+import { DUPLICATE_COMPARE_COLS } from '@/common/settings';
 
 /**
  * A table with knowledge of the FIRE column structure.
@@ -275,5 +276,14 @@ export class FireTable extends Table {
     // output is currently column-oriented, transpose to row-oriented
     const transposed = Table.transpose(output);
     return new FireTable(transposed);
+  }
+
+  /**
+   * Returns the column indices used to compare transactions for duplicate detection,
+   * derived from FIRE_COLUMNS and DUPLICATE_COMPARE_COLS.
+   */
+  static getCompareIndices(): number[] {
+    const headers = Array.from(FIRE_COLUMNS);
+    return DUPLICATE_COMPARE_COLS.map(col => headers.indexOf(col));
   }
 }

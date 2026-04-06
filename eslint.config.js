@@ -12,8 +12,9 @@ export default defineConfig([
     ],
   },
   eslint.configs.recommended,
-  ...tseslint.configs.recommended,
+  tseslint.configs.recommended,
   {
+    files: ['**/*.{js,ts,tsx}'],
     rules: {
       // Error on unused variables, but allow variables and arguments starting with "_"
       '@typescript-eslint/no-unused-vars': [
@@ -23,6 +24,9 @@ export default defineConfig([
           varsIgnorePattern: '^_',
         },
       ],
+      // Sonar Cloud recommended rules
+      "complexity": ["error", 15],
+      // End Sonar Cloud rules
     },
   }
 ]);

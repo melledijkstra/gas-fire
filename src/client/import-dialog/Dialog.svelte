@@ -4,7 +4,7 @@
   import ImportForm from '../components/ImportForm.svelte';
   import { importState } from '../states/import.svelte';
   import DataTable from '../components/DataTable.svelte';
-  import PreviewStep from '../components/PreviewStep.svelte';
+  import PreviewStep from './PreviewStep.svelte';
   import ImportStep from './ImportStep.svelte';
 
   let currentStep = $state(1);
@@ -32,7 +32,7 @@
   {#if currentStep === 1}
     <ImportForm onSubmit={nextStep} />
     {#if importState.rawImportData}
-      <DataTable table={importState.rawImportData} selectable tableClass="mt-4" />
+      <DataTable table={importState.rawImportData} tableClass="mt-4" />
     {/if}
   {:else if currentStep === 2}
     <Button disabled={importState.isProcessing} onclick={prevStep}>←</Button>
