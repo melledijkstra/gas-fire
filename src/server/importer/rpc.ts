@@ -1,4 +1,4 @@
-import type { ServerResponse, RawTable, ImportPreviewReport, UserDecisions, PreviewTransaction } from '@/common/types';
+import type { ServerResponse, RawTable, ImportPreviewReport, UserDecisions, PreviewTransaction, TransactionAction, TransactionStatus } from '@/common/types';
 import type { FireColumn } from '@/common/constants';
 import { Config } from '../config';
 import { FireTable, FireSheet } from '../table';
@@ -107,7 +107,7 @@ export function importCSV(
 
     // Apply duplicate detection and user decisions if userDecisions are provided
     // or if the feature is enabled (in direct import without userDecisions)
-    const compareCols: FireColumn[] = ['iban', 'amount', 'contra_account', 'description'];
+    const compareCols: FireColumn[] = ['date', 'iban', 'amount', 'contra_account', 'description'];
     const headers = Array.from(FIRE_COLUMNS);
     const compareIndices = compareCols.map(col => headers.indexOf(col));
     const existingHashes = new Set<string>();
@@ -130,18 +130,14 @@ export function importCSV(
       const validRows = fireTable.getData().filter(row => {
         const hash = getRowHash(row, compareIndices);
 
-        let action = 'import';
-        let status = existingHashes.has(hash) ? 'duplicate' : 'valid';
+        let action: TransactionAction = 'import';
+        const status: TransactionStatus = existingHashes.has(hash) ? 'duplicate' : 'valid';
 
         if (userDecisions && userDecisions[hash]) {
            action = userDecisions[hash];
-        } else {
+        } else if (status === 'duplicate') {
            // Default if no explicit user decision
            action = 'import';
-        }
-
-        if (status === 'removed') {
-          return false;
         }
 
         return action === 'import';
@@ -230,8 +226,8 @@ export function generatePreview(
 
     const transactions: PreviewTransaction[] = fireTable.getData().map((row) => {
       const hash = getRowHash(row, compareIndices);
-      let status: 'valid' | 'duplicate' | 'removed' = 'valid';
-      let action: 'import' | 'skip' = 'import';
+      let status: TransactionStatus;
+      const action: TransactionAction = 'import';
 
       if (existingHashes.has(hash)) {
         status = 'duplicate';
