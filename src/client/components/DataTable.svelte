@@ -21,7 +21,7 @@
   const rows = $derived(table?.slice(1) ?? []);
 
   const allRowsSelected = $derived(rows.length > 0 && rows.every((_, i) => selectedRows.has(i + 1)));
-  const hasDetectedDuplicate = $derived(duplicateRows.size > 0);
+  const hasDetectedDuplicates = $derived(duplicateRows.size > 0);
 
   // Toggle row selection
   const handleRowSelect = (index: number) => {
@@ -60,7 +60,7 @@
         />
       </TableHeadCell>
     {/if}
-    {#if hasDetectedDuplicate}
+    {#if hasDetectedDuplicates}
       <!-- warning column empty header, just to align space -->
       <TableHeadCell class="py-2 px-1 normal-case" />
     {/if}
@@ -71,7 +71,7 @@
   <TableBody>
     {#each rows as row, rowIndex (rowIndex)}
       {@const isDuplicate = duplicateRows.has(rowIndex + 1)}
-      <TableBodyRow class={isDuplicate ? 'bg-yellow-100 dark:bg-yellow-900 opacity-75' : ''}>
+      <TableBodyRow class={isDuplicate ? 'bg-yellow-100! dark:bg-yellow-900! opacity-75' : ''}>
         {#if selectable}
           <TableBodyCell class="py-2 px-1 text-xs text-center">
             <Checkbox
@@ -82,13 +82,18 @@
             />
           </TableBodyCell>
         {/if}
-        {#if isDuplicate}
-          <!-- Warning icon cell -->
-          <TableBodyCell class="py-2 px-1 text-xs text-center">
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-200 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200">
-              ⚠️
-            </span>
-          </TableBodyCell>
+        {#if hasDetectedDuplicates}
+          {#if isDuplicate}
+            <!-- Warning icon cell -->
+            <TableBodyCell class="py-2 px-1 text-xs text-center">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-200 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200">
+                ⚠️
+              </span>
+            </TableBodyCell>
+          {:else}
+            <!-- Empty cell for non-duplicates to maintain alignment -->
+            <TableBodyCell class="py-2 px-1" />
+          {/if}
         {/if}
         {#each row as cell}
           <TableBodyCell class="py-2 px-1 text-xs">
