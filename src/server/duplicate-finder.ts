@@ -9,6 +9,13 @@ export function generateDuplicateHash(headers: FireColumn[], row: string[], colu
     return columns.map(col => row[findIndexByHeaderName(headers, col)]).join('|');
 }
 
+export function getRowHash(row: unknown[], compareIndices: number[]): string {
+  return compareIndices.map(idx => {
+    const cell = row[idx];
+    return cell instanceof Date ? cell.toISOString() : String(cell ?? '');
+  }).join('|');
+}
+
 /**
  * Finds duplicate rows in a dataset based on specified columns and a timespan.
  *

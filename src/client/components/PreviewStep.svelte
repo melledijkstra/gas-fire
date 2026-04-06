@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { RawTable, ServerResponse } from "@/common/types";
+  import type { ImportPreviewReport, ServerResponse } from "@/common/types";
   import { serverFunctions } from "@/client/utils/serverFunctions";
   import DataTable from "./DataTable.svelte";
   import { excludeRowsFromData } from "../utils/importing";
@@ -15,31 +15,27 @@
   };
 
   const onGeneratePreviewSuccess = (
-    response: ServerResponse<{
-      result: RawTable;
-      newBalance?: number;
-      duplicateIndices?: number[];
-    }>,
+    response: ServerResponse<ImportPreviewReport>,
   ) => {
     if (!response.success || !response.data) {
       statusText = `Failed to create preview: ${!response.success ? response.error : "Unknown error"}`;
       return;
     }
-    const { result, newBalance, duplicateIndices } = response.data;
+    const report = response.data;
     const locale = getBrowserLocale();
-    const newBalanceFormatted = newBalance?.toLocaleString(locale, {
+    const newBalanceFormatted = report.newBalance?.toLocaleString(locale, {
       style: 'currency',
       currency: 'EUR',
-    })
-    statusText = `Import preview set${newBalanceFormatted ? ` - new balance: ${newBalanceFormatted}` : ''}`
-    importState.previewData = result
+    });
 
-    importState.duplicateRows.clear();
-    if (duplicateIndices) {
-      for (const index of duplicateIndices) {
-        importState.duplicateRows.add(index);
-      }
-    }
+    let summaryText = `Total: ${report.summary.totalRows} | Valid: ${report.summary.validCount}`;
+    if (report.summary.duplicateCount > 0) summaryText += ` | Duplicates: ${report.summary.duplicateCount}`;
+    if (report.summary.removedCount > 0) summaryText += ` | Removed: ${report.summary.removedCount}`;
+
+    statusText = `Preview generated. ${summaryText}${newBalanceFormatted ? ` | New Balance: ${newBalanceFormatted}` : ''}`;
+
+    importState.previewReport = report;
+    importState.userDecisions.clear();
   };
 
   const generatePreview = () => {
@@ -95,6 +91,6 @@
   </p>
 </Alert>
 
-{#if importState.previewData}
-  <DataTable table={importState.previewData} duplicateRows={importState.duplicateRows} />
+{#if importState.previewReport}
+  <DataTable report={importState.previewReport} />
 {/if}

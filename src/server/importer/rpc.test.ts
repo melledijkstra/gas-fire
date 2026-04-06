@@ -5,7 +5,7 @@ import {
 } from '../../../test-setup';
 import type { RawTable } from '@/common/types';
 import { N26ImportMock } from '@/fixtures/n26';
-import { FireSheet } from '../table';
+import { FireSheet, FireTable } from '../table';
 import { AccountUtils } from '../accounts/account-utils';
 import { raboImportMock } from '@/fixtures/rabobank';
 import { Logger } from '@/common/logger';
@@ -62,13 +62,16 @@ describe('RPC: Import Functions', () => {
 
   describe('generatePreview', () => {
     let getBalanceSpy: ReturnType<typeof vi.spyOn>;
+    let fireSheetSpy: ReturnType<typeof vi.spyOn>;
 
     beforeEach(() => {
       getBalanceSpy = vi.spyOn(AccountUtils, 'getBalance').mockReturnValue(302.8);
+      fireSheetSpy = vi.spyOn(FireSheet.prototype, 'getLastImportedTransactions').mockReturnValue(new FireTable([]));
     });
 
     afterEach(() => {
       getBalanceSpy.mockRestore();
+      fireSheetSpy.mockRestore();
     });
 
     test('is able to handle table without any useful data and should return the current balance', () => {
@@ -81,6 +84,7 @@ describe('RPC: Import Functions', () => {
       expect(response.success).toBe(true);
       if (response.success) {
         expect(response.data?.newBalance).toBeCloseTo(302.8, 2);
+        expect(response.data?.summary.validCount).toBe(0);
       }
     });
 
@@ -95,6 +99,7 @@ describe('RPC: Import Functions', () => {
       expect(response.success).toBe(true);
       if (response.success) {
         expect(response.data?.newBalance).toBeCloseTo(358.55, 2);
+        expect(response.data?.summary.validCount).toBe(3);
       }
     });
   });
@@ -103,6 +108,16 @@ describe('RPC: Import Functions', () => {
     beforeAll(() => {
       Logger.disable()
     })
+
+    let fireSheetSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      fireSheetSpy = vi.spyOn(FireSheet.prototype, 'getLastImportedTransactions').mockReturnValue(new FireTable([]));
+    });
+
+    afterEach(() => {
+      fireSheetSpy.mockRestore();
+    });
 
     test('handles empty import', () => {
       const result = importCSV([], BANK_ID);

@@ -1,4 +1,4 @@
-import type { ServerResponse, RawTable } from '@/common/types';
+import type { ServerResponse, RawTable, ImportPreviewReport, UserDecisions, PreviewTransaction } from '@/common/types';
 import type { FireColumn } from '@/common/constants';
 import { Config } from '../config';
 import { FireTable, FireSheet } from '../table';
@@ -9,6 +9,7 @@ import { Logger } from '@/common/logger';
 import { removeFilterCriteria } from '../utils/spreadsheet';
 import { FIRE_COLUMNS } from '@/common/constants';
 import { FEATURES } from '@/common/features';
+import { getRowHash } from '../duplicate-finder';
 
 /**
  * Processes raw input data into the structured Firesheet format,
@@ -62,7 +63,8 @@ function processImportData(inputTable: RawTable, accountConfig: Config): FireTab
  */
 export function importCSV(
   inputTable: RawTable,
-  bankAccount: string
+  bankAccount: string,
+  userDecisions?: UserDecisions
 ): ServerResponse {
   try {
     Logger.time('importCSV')
@@ -93,26 +95,76 @@ export function importCSV(
       }
     }
 
-    const result = processImportData(inputTable, accountConfig)
+    const fireTable = processImportData(inputTable, accountConfig);
 
-    if (result.isEmpty()) {
+    if (fireTable.isEmpty()) {
       const msg = 'No rows to import, check your import data or configuration!';
-      Logger.log(msg)
-      return {
-        success: false,
-        error: msg
+      Logger.log(msg);
+      return { success: false, error: msg };
+    }
+
+    let finalTable = fireTable;
+
+    // Apply duplicate detection and user decisions if userDecisions are provided
+    // or if the feature is enabled (in direct import without userDecisions)
+    const compareCols: FireColumn[] = ['iban', 'amount', 'contra_account', 'description'];
+    const headers = Array.from(FIRE_COLUMNS);
+    const compareIndices = compareCols.map(col => headers.indexOf(col));
+    const existingHashes = new Set<string>();
+
+    if (FEATURES.IMPORT_DUPLICATE_DETECTION || userDecisions) {
+      if (FEATURES.IMPORT_DUPLICATE_DETECTION) {
+        try {
+          const lastImportedTransactions = fireSheet.getLastImportedTransactions();
+          if (lastImportedTransactions) {
+            for (const row of lastImportedTransactions.getData()) {
+              existingHashes.add(getRowHash(row, compareIndices));
+            }
+          }
+        } catch (e) {
+          Logger.warn('Could not retrieve last imported transactions for duplicate detection', e);
+        }
       }
+
+      // Filter rows based on duplicates and user decisions
+      const validRows = fireTable.getData().filter(row => {
+        const hash = getRowHash(row, compareIndices);
+
+        let action = 'import';
+        let status = existingHashes.has(hash) ? 'duplicate' : 'valid';
+
+        if (userDecisions && userDecisions[hash]) {
+           action = userDecisions[hash];
+        } else {
+           // Default if no explicit user decision
+           action = 'import';
+        }
+
+        if (status === 'removed') {
+          return false;
+        }
+
+        return action === 'import';
+      });
+
+      finalTable = new FireTable(validRows);
+    }
+
+    if (finalTable.isEmpty()) {
+      const msg = 'No rows to import after applying rules and user decisions.';
+      Logger.log(msg);
+      return { success: false, error: msg };
     }
 
     // actual importing of the data into the sheet
     Logger.time('FireSheet.importData')
 
     const autoFillColumns = accountConfig.autoFillEnabled ? accountConfig.autoFillColumnIndices : undefined
-    fireSheet.importData(result, autoFillColumns)
+    fireSheet.importData(finalTable, autoFillColumns)
 
     Logger.timeEnd('FireSheet.importData')
 
-    const msg = `imported ${result.getRowCount()} rows!`;
+    const msg = `imported ${finalTable.getRowCount()} rows!`;
     Logger.log(msg)
 
     Logger.timeEnd('importCSV')
@@ -130,15 +182,10 @@ export function importCSV(
   }
 }
 
-const getRowHash = (row: unknown[], compareIndices: number[]) => compareIndices.map(idx => {
-  const cell = row[idx];
-  return cell instanceof Date ? cell.toISOString() : String(cell ?? '');
-}).join('|');
-
 export function generatePreview(
   table: RawTable,
   bankAccount: string
-): ServerResponse<{ result: RawTable; newBalance?: number; duplicateIndices?: number[] }> {
+): ServerResponse<ImportPreviewReport> {
   try {
     const config = Config.getAccountConfiguration(bankAccount);
 
@@ -149,71 +196,96 @@ export function generatePreview(
     // Process the data using the exact same logic as the actual import
     const fireTable = processImportData(table, config);
 
-    // Calculate new balance based on the shaped data
-    const amountNumbers = fireTable
-      .getFireColumn('amount')
-      .filter(isNumeric)
-      .map(Number);
-
-    const newBalance = AccountUtils.calculateNewBalance(bankAccount, amountNumbers);
-
     const compareCols: FireColumn[] = ['iban', 'amount', 'contra_account', 'description'];
     const headers = Array.from(FIRE_COLUMNS);
     const compareIndices = compareCols.map(col => headers.indexOf(col));
     const existingHashes = new Set<string>();
 
-    if (FEATURES.IMPORT_DUPLICATE_DETECTION) {
-      // Detect duplicates against last imported batch
+    // We always detect duplicates in preview, even if feature is toggled off for general import
+    // so that the user gets transparency and control.
+    try {
       const fireSheet = new FireSheet();
       const lastImportedTransactions = fireSheet.getLastImportedTransactions();
-
-      for (const row of lastImportedTransactions.getData()) {
-        existingHashes.add(getRowHash(row, compareIndices));
+      if (lastImportedTransactions) {
+        for (const row of lastImportedTransactions.getData()) {
+          existingHashes.add(getRowHash(row, compareIndices));
+        }
       }
+    } catch (e) {
+      Logger.warn('Could not retrieve last imported transactions for duplicate detection', e);
     }
 
-    const duplicateIndices: number[] = [];
+    const summary = {
+      totalRows: fireTable.getRowCount(),
+      validCount: 0,
+      removedCount: 0,
+      duplicateCount: 0,
+      rulesApplied: 0
+    };
 
-    // Apply auto-filled visual indications
     const autoFillColumns = config.autoFillEnabled ? config.autoFillColumnIndices : [];
 
-    const result = fireTable.getData().map((row, index) => {
-      if (existingHashes.has(getRowHash(row, compareIndices))) {
-        duplicateIndices.push(index + 1); // 1-based index (header is 0)  
+    // We only want to include valid and kept items for the new balance calculation
+    const validAmountNumbers: number[] = [];
+
+    const transactions: PreviewTransaction[] = fireTable.getData().map((row) => {
+      const hash = getRowHash(row, compareIndices);
+      let status: 'valid' | 'duplicate' | 'removed' = 'valid';
+      let action: 'import' | 'skip' = 'import';
+
+      if (existingHashes.has(hash)) {
+        status = 'duplicate';
+        summary.duplicateCount++;
+      } else {
+        status = 'valid';
+        summary.validCount++;
+        // we extract the number before formatting the row visually
+        const amountStr = String(row[fireTable.getFireColumnIndex('amount')] ?? '');
+        if (isNumeric(amountStr)) {
+          validAmountNumbers.push(Number(amountStr));
+        }
       }
 
-      const newRow = [...row];
+      const formattedRow = [...row];
       for (const colIndex of autoFillColumns) {
-        // AutoFill columns are 1-indexed, so we subtract 1 for array index
         const arrayIndex = colIndex - 1;
-        if (arrayIndex >= 0 && arrayIndex < newRow.length) {
-          if (!newRow[arrayIndex] || newRow[arrayIndex] === '') {
-            newRow[arrayIndex] = '(auto-filled)';
+        if (arrayIndex >= 0 && arrayIndex < formattedRow.length) {
+          if (!formattedRow[arrayIndex] || formattedRow[arrayIndex] === '') {
+            formattedRow[arrayIndex] = '(auto-filled)';
           }
         }
       }
-      // Format Date objects to strings for the frontend
-      return newRow.map(cell => {
+
+      const stringRow = formattedRow.map(cell => {
         if (cell instanceof Date) {
           try {
-            // Use the active spreadsheet's timezone so dates are properly formatted
             const timeZone = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
             return Utilities.formatDate(cell, timeZone, "yyyy-MM-dd");
           } catch {
-            // Fallback if Utilities/SpreadsheetApp is not available in mock/testing
             return cell.toISOString().split('T')[0];
           }
         }
         return String(cell ?? '');
       });
+
+      return {
+        hash,
+        row: stringRow,
+        status,
+        action
+      };
     });
 
-    // Prepend the header row to the result for the DataTable component
-    result.unshift(headers);
+    const newBalance = AccountUtils.calculateNewBalance(bankAccount, validAmountNumbers);
 
     return {
       success: true,
-      data: { result, newBalance, duplicateIndices }
+      data: {
+        headers,
+        transactions,
+        newBalance,
+        summary
+      }
     };
   } catch (error) {
     Logger.error(error);

@@ -1,27 +1,34 @@
 <script lang="ts">
-  import type { RawTable } from '@/common/types';
+  import type { RawTable, ImportPreviewReport, TransactionAction } from '@/common/types';
   import { addSelectedRow, importState, removeSelectedRow } from '../states/import.svelte';
-  import { Checkbox, Table as FlowTable, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell } from 'flowbite-svelte';
+  import { Checkbox, Table as FlowTable, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell, Select } from 'flowbite-svelte';
 
   const {
     table,
+    report,
     selectable = false,
     tableClass,
-    duplicateRows = new Set(),
   }: {
-    table: RawTable;
+    table?: RawTable;
+    report?: ImportPreviewReport;
     selectable?: boolean;
     tableClass?: string;
-    duplicateRows?: Set<number>;
   } = $props();
 
   const selectedRows = $derived(importState.selectedRows);
   
-  const headers = $derived(table?.[0] ?? []);
+  const headers = $derived(report ? report.headers : (table?.[0] ?? []));
   const rows = $derived(table?.slice(1) ?? []);
 
   const allRowsSelected = $derived(rows.length > 0 && rows.every((_, i) => selectedRows.has(i + 1)));
-  const hasDetectedDuplicates = $derived(duplicateRows.size > 0);
+  const isPreview = $derived(!!report);
+  const hasDetectedDuplicates = $derived(report ? report.summary.duplicateCount > 0 : false);
+
+  const getRowClass = (status: string) => {
+    if (status === 'removed') return 'opacity-50 line-through';
+    if (status === 'duplicate') return 'bg-yellow-100! dark:bg-yellow-900! opacity-75';
+    return '';
+  };
 
   // Toggle row selection
   const handleRowSelect = (index: number) => {
@@ -61,46 +68,65 @@
       </TableHeadCell>
     {/if}
     {#if hasDetectedDuplicates}
-      <!-- warning column empty header, just to align space -->
-      <TableHeadCell class="py-2 px-1 normal-case" />
+      <!-- action column header for preview mode -->
+      <TableHeadCell class="py-2 px-1 normal-case">Action</TableHeadCell>
     {/if}
     {#each headers as header, headerIndex (headerIndex)}
       <TableHeadCell class="py-2 px-1 normal-case">{header}</TableHeadCell>
     {/each}
   </TableHead>
   <TableBody>
-    {#each rows as row, rowIndex (rowIndex)}
-      {@const isDuplicate = duplicateRows.has(rowIndex + 1)}
-      <TableBodyRow class={isDuplicate ? 'bg-yellow-100! dark:bg-yellow-900! opacity-75' : ''}>
-        {#if selectable}
-          <TableBodyCell class="py-2 px-1 text-xs text-center">
-            <Checkbox
-              type="checkbox"
-              aria-label={`Select row ${rowIndex + 1}`}
-              checked={isRowSelected(rowIndex + 1)}
-              onchange={() => handleRowSelect(rowIndex + 1)}
-            />
-          </TableBodyCell>
-        {/if}
-        {#if hasDetectedDuplicates}
-          {#if isDuplicate}
-            <!-- Warning icon cell -->
+    {#if isPreview && report}
+      {#each report.transactions as transaction (transaction.hash)}
+        <TableBodyRow class={getRowClass(transaction.status)}>
+          {#if hasDetectedDuplicates}
             <TableBodyCell class="py-2 px-1 text-xs text-center">
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-200 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200">
-                ⚠️
-              </span>
+              {#if transaction.status === 'duplicate'}
+                <Select
+                  size="sm"
+                  class="p-1 text-xs"
+                  value={importState.userDecisions.get(transaction.hash) || 'skip'}
+                  onchange={(e) => {
+                    importState.userDecisions.set(transaction.hash, e.target.value as TransactionAction);
+                  }}
+                >
+                  <option value="skip">Skip</option>
+                  <option value="import">Force Import</option>
+                </Select>
+              {:else if transaction.status === 'removed'}
+                <span class="text-gray-500">Removed</span>
+              {:else}
+                <span class="text-green-600">Import</span>
+              {/if}
             </TableBodyCell>
-          {:else}
-            <!-- Empty cell for non-duplicates to maintain alignment -->
-            <TableBodyCell class="py-2 px-1" />
           {/if}
-        {/if}
-        {#each row as cell}
-          <TableBodyCell class="py-2 px-1 text-xs">
-            {cell}
-          </TableBodyCell>
-        {/each}
-      </TableBodyRow>
-    {/each}
-    </TableBody>
+          {#each transaction.row as cell}
+            <TableBodyCell class="py-2 px-1 text-xs">
+              {cell}
+            </TableBodyCell>
+          {/each}
+        </TableBodyRow>
+      {/each}
+    {:else}
+      {#each rows as row, rowIndex (rowIndex)}
+        <TableBodyRow>
+          {#if selectable}
+            <TableBodyCell class="py-2 px-1 text-xs text-center">
+              <Checkbox
+                type="checkbox"
+                aria-label={`Select row ${rowIndex + 1}`}
+                checked={isRowSelected(rowIndex + 1)}
+                onchange={() => handleRowSelect(rowIndex + 1)}
+              />
+            </TableBodyCell>
+          {/if}
+          {#each row as cell}
+            <TableBodyCell class="py-2 px-1 text-xs">
+              {cell}
+            </TableBodyCell>
+          {/each}
+        </TableBodyRow>
+      {/each}
+    {/if}
+  </TableBody>
 </FlowTable>

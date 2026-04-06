@@ -16,8 +16,12 @@
 
   const submitDataToServer = (data: RawTable, importStrategy: string) => {
     importState.isProcessing = true;
+
+    // Convert SvelteMap to a standard Object for JSON serialization via RPC
+    const userDecisionsObj = Object.fromEntries(importState.userDecisions);
+
     serverFunctions
-      .importCSV(data, importStrategy)
+      .importCSV(data, importStrategy, userDecisionsObj)
       .then((response) => {
         if (response.success) {
           importFinished = true;

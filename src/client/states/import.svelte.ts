@@ -1,5 +1,5 @@
-import type { BankOptions, RawTable } from '@/common/types';
-import { SvelteSet } from 'svelte/reactivity';
+import type { BankOptions, RawTable, ImportPreviewReport, TransactionAction } from '@/common/types';
+import { SvelteSet, SvelteMap } from 'svelte/reactivity';
 
 type ImportState = {
   bankOptions: BankOptions;
@@ -8,15 +8,15 @@ type ImportState = {
   rawImportData?: RawTable;
   selectedBank?: string;
   selectedRows: SvelteSet<number>;
-  duplicateRows: SvelteSet<number>;
-  previewData?: RawTable;
+  previewReport?: ImportPreviewReport;
+  userDecisions: SvelteMap<string, TransactionAction>;
 };
 
 export const importState: ImportState = $state({
   bankOptions: {},
   isProcessing: false,
   selectedRows: new SvelteSet(),
-  duplicateRows: new SvelteSet()
+  userDecisions: new SvelteMap()
 });
 
 export const addSelectedRow = (index: number) => {

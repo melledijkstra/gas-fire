@@ -27,6 +27,32 @@ export type BankOptions = Record<string, string>;
  */
 export type RawTable = string[][];
 
+export type TransactionStatus = 'valid' | 'duplicate' | 'removed';
+export type TransactionAction = 'skip' | 'import';
+
+export interface PreviewTransaction {
+  hash: string;
+  row: string[];
+  status: TransactionStatus;
+  statusReason?: string;
+  action: TransactionAction;
+}
+
+export interface ImportPreviewReport {
+  headers: string[];
+  transactions: PreviewTransaction[];
+  newBalance?: number;
+  summary: {
+    totalRows: number;
+    validCount: number;
+    removedCount: number;
+    duplicateCount: number;
+    rulesApplied: number;
+  };
+}
+
+export type UserDecisions = Record<string, TransactionAction>;
+
 type EmptyServerResponse = { success: true; message?: string };
 type ErrorServerResponse = { success: false; error: string; };
 type PayloadServerResponse<T> = { success: true; data: T; message?: string };
