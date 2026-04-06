@@ -111,7 +111,7 @@ function processImportData(inputTable: RawTable, accountConfig: Config): FireTab
  * @param {string} bankAccount - The bank account identifier which is used to lookup configuration
  * @returns {ServerResponse} A response object which contains a message to be displayed to the user
  */
-export function importCSV(
+export function importPipeline(
   inputTable: RawTable,
   bankAccount: string,
   userDecisions?: UserDecisions
@@ -195,7 +195,7 @@ export function importCSV(
   }
 }
 
-export function generatePreview(
+export function previewPipeline(
   table: RawTable,
   bankAccount: string
 ): ServerResponse<ImportPreviewReport> {

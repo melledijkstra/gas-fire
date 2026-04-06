@@ -10,8 +10,8 @@ import { AccountUtils } from '../accounts/account-utils';
 import { raboImportMock } from '@/fixtures/rabobank';
 import { Logger } from '@/common/logger';
 import {
-  generatePreview,
-  importCSV,
+  previewPipeline,
+  importPipeline,
 } from './rpc';
 import { Config } from '../config';
 import bankOfAmericaCSV from '@/fixtures/commonwealth-bank.csv?raw';
@@ -60,7 +60,7 @@ describe('RPC: Import Functions', () => {
     vi.clearAllMocks();
   });
 
-  describe('generatePreview', () => {
+  describe('previewPipeline', () => {
     let getBalanceSpy: ReturnType<typeof vi.spyOn>;
     let fireSheetSpy: ReturnType<typeof vi.spyOn>;
 
@@ -76,7 +76,7 @@ describe('RPC: Import Functions', () => {
 
     test('is able to handle table without any useful data and should return the current balance', () => {
       const table: RawTable = [['TransactionAmount', 'TransactionDate', 'Payee'], ['', '', '']];
-      const response = generatePreview(
+      const response = previewPipeline(
         table,
         BANK_ID
       );
@@ -91,7 +91,7 @@ describe('RPC: Import Functions', () => {
     test('is able to calculate new balance when there is useful data in the amounts column', () => {
       getBalanceSpy.mockReturnValue(305.85);
 
-      const response = generatePreview(
+      const response = previewPipeline(
         structuredClone(fakeTestBankImportData),
         BANK_ID
       );
@@ -104,7 +104,7 @@ describe('RPC: Import Functions', () => {
     });
   });
 
-  describe('importCSV', () => {
+  describe('importPipeline', () => {
     beforeAll(() => {
       Logger.disable()
     })
@@ -120,7 +120,7 @@ describe('RPC: Import Functions', () => {
     });
 
     test('handles empty import', () => {
-      const result = importCSV([], BANK_ID);
+      const result = importPipeline([], BANK_ID);
 
       expect(importDataSpy).not.toHaveBeenCalled();
       expect(result.success).toBe(false);
@@ -130,7 +130,7 @@ describe('RPC: Import Functions', () => {
     })
 
     test('handles empty input data', () => {
-      const result = importCSV([
+      const result = importPipeline([
         // first row is header row, meaning that there are actually no rows to actually import
         ['header1', 'header2', 'header3', 'header4']
       ], BANK_ID);
@@ -146,7 +146,7 @@ describe('RPC: Import Functions', () => {
       removeFilterCriteriaMock.mockReturnValue(true)
       SheetMock.getFilter.mockReturnValue(FilterMock)
 
-      importCSV([], 'TestBank')
+      importPipeline([], 'TestBank')
 
       expect(SheetMock.getFilter).toHaveBeenCalled();
     });
@@ -165,7 +165,7 @@ describe('RPC: Import Functions', () => {
       })
       configSpy.mockReturnValueOnce(fakeN26Config)
 
-      const result = importCSV(N26ImportMock, 'N26');
+      const result = importPipeline(N26ImportMock, 'N26');
 
       expect(importDataSpy).toHaveBeenCalled();
       expect(result.success).toBe(true);
@@ -180,7 +180,7 @@ describe('RPC: Import Functions', () => {
       });
       configSpy.mockReturnValueOnce(fakeRabobankConfig)
 
-      const result = importCSV(raboImportMock, 'rabobank');
+      const result = importPipeline(raboImportMock, 'rabobank');
 
       expect(importDataSpy).toHaveBeenCalled();
       expect(result.success).toBe(true);
@@ -204,7 +204,7 @@ describe('RPC: Import Functions', () => {
       configSpy.mockReturnValue(bankOfAmericaConfig)
 
       const { data } = Papa.parse(bankOfAmericaCSV)
-      const result = importCSV(data as RawTable, 'bank-of-america')
+      const result = importPipeline(data as RawTable, 'bank-of-america')
 
       expect(importDataSpy).toHaveBeenCalled()
       const [fireTable] = importDataSpy.mock.calls[importDataSpy.mock.calls.length - 1]
@@ -228,7 +228,7 @@ describe('RPC: Import Functions', () => {
 
       configSpy.mockReturnValue(testBankConfig);
 
-      importCSV(fakeTestBankImportData, BANK_ID);
+      importPipeline(fakeTestBankImportData, BANK_ID);
 
       expect(importDataSpy).toHaveBeenCalled();
       const [fireTable] = importDataSpy.mock.calls[importDataSpy.mock.calls.length - 1]

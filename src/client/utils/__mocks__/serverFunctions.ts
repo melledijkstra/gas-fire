@@ -2,9 +2,11 @@ import type {
   ServerResponse,
   BankOptions,
   RawTable,
+  ImportPreviewReport,
 } from '@/common/types';
 import { fn } from 'storybook/test'
 import type * as publicServerFunctions from '@/server/index';
+import { FIRE_COLUMNS } from '@/common/constants';
 
 ////////////////////////////////////////////////////////////////
 // This mock is used by storybook, to mimic server functions
@@ -14,8 +16,8 @@ type ServerFunctionsInterface = typeof publicServerFunctions;
 
 type Promisified<T> = {
   [K in keyof T]: T[K] extends (...args: infer A) => infer R
-    ? (...args: A) => Promise<R>
-    : Promise<T[K]>;
+  ? (...args: A) => Promise<R>
+  : Promise<T[K]>;
 };
 
 type PromisifiedServerFunctionsInterface = Promisified<ServerFunctionsInterface>;
@@ -45,11 +47,11 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     console.log('debugImportSettings mock called');
   }
 
-  async importCSV(
+  async importPipeline(
     data: RawTable,
     selectedBank: string
   ): Promise<ServerResponse> {
-    console.log('importCSV mock called with data:', data, 'and selectedBank:', selectedBank);
+    console.log('importPipeline mock called with data:', data, 'and selectedBank:', selectedBank);
     await sleep(5000)
     return {
       success: true,
@@ -57,20 +59,47 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     };
   };
 
-  async generatePreview(
+  async previewPipeline(
     table: RawTable,
     _strategy: string
-  ): Promise<ServerResponse<{
-    result: RawTable;
-    newBalance?: number;
-  }>> {
-    console.log('generatePreview mock called');
+  ): Promise<ServerResponse<ImportPreviewReport>> {
+    console.log('previewPipeline mock called');
     await sleep(2000);
     return {
       success: true,
       data: {
-        result: table,
-        newBalance: 1234,
+        headers: Array.from(FIRE_COLUMNS),
+        summary: {
+          duplicateCount: 2,
+          removedCount: 1,
+          rulesApplied: 3,
+          totalRows: table.length,
+          validCount: table.length - 3, // Assuming duplicates and removed rows are not valid
+        },
+        transactions: [{
+          action: 'import',
+          hash: 'mocked-hash-1',
+          row: table[0],
+          status: 'valid'
+        }, {
+          action: 'import',
+          hash: 'mocked-hash-2',
+          row: table[1],
+          status: 'valid'
+        },
+        {
+          action: 'skip',
+          hash: 'mocked-hash-3',
+          row: table[2],
+          status: 'duplicate'
+        },
+        {
+          action: 'skip',
+          hash: 'mocked-hash-4',
+          row: table[3],
+          status: 'removed'
+        }],
+        newBalance: 1234.56,
       }
     };
   };

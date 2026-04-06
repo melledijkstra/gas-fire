@@ -14,7 +14,7 @@
     return navigator.language;
   };
 
-  const onGeneratePreviewSuccess = (
+  const onPreviewSuccess = (
     response: ServerResponse<ImportPreviewReport>,
   ) => {
     if (!response.success || !response.data) {
@@ -38,7 +38,7 @@
     importState.userDecisions.clear();
   };
 
-  const generatePreview = () => {
+  const triggerPreviewPipeline = () => {
     if (!importState.rawImportData || !importState.selectedBank) {
       return;
     }
@@ -51,8 +51,8 @@
     statusText = "Data is being processed...";
 
     serverFunctions
-      .generatePreview(dataToProcess, importState.selectedBank)
-      .then(onGeneratePreviewSuccess)
+      .previewPipeline(dataToProcess, importState.selectedBank)
+      .then(onPreviewSuccess)
       .catch(
         (error) => (statusText = `Failed to create preview: ${error}`),
       )
@@ -66,7 +66,7 @@
     disabled={!importState.rawImportData ||
       !importState.selectedBank ||
       importState.isProcessing}
-    onclick={generatePreview}
+    onclick={triggerPreviewPipeline}
   >
     {#if importState.isProcessing}
       <Spinner class="me-2" size="4" />
