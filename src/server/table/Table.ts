@@ -42,6 +42,10 @@ export class Table {
     return this.data;
   }
 
+  get headers(): CellValue[] | null {
+    return this.data?.[0] ?? null;
+  }
+
   /**
    * Returns a single row by index, or undefined if out of bounds.
    */
@@ -178,6 +182,14 @@ export class Table {
   map(callback: (row: CellValue[], index: number) => CellValue[]): this {
     this.data = this.data.map((row, index) => callback(row, index));
     return this;
+  }
+
+  /**
+   * Serializes the table to a JSON string.
+   * Useful for debugging or transferring data.
+   */
+  serialize(): string {
+    return JSON.stringify(this.data);
   }
 
   // ──────────────────────────────────────────────

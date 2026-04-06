@@ -39,7 +39,6 @@ export interface PreviewTransaction {
 }
 
 export interface ImportPreviewReport {
-  headers: string[];
   transactions: PreviewTransaction[];
   newBalance?: number;
   summary: {

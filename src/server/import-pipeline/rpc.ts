@@ -6,7 +6,6 @@ import { AccountUtils, isNumeric } from '../accounts/account-utils';
 import { structuredClone } from '@/common/helpers';
 import { Logger } from '@/common/logger';
 import { removeFilterCriteria } from '../utils/spreadsheet';
-import { FIRE_COLUMNS } from '@/common/constants';
 import { FEATURES } from '@/common/settings';
 import { getRowHash } from '../duplicate-finder';
 
@@ -209,7 +208,6 @@ export function previewPipeline(
     // Process the data using the exact same logic as the actual import
     const fireTable = processImportData(table, config);
 
-    const headers = Array.from(FIRE_COLUMNS);
     const compareIndices = FireTable.getCompareIndices();
 
     // We always detect duplicates in preview, even if the feature is toggled off for general import,
@@ -273,7 +271,6 @@ export function previewPipeline(
     return {
       success: true,
       data: {
-        headers,
         transactions,
         newBalance,
         summary

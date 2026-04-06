@@ -17,7 +17,7 @@
 
   const selectedRows = $derived(importState.selectedRows);
   
-  const headers = $derived(report ? report.headers : (table?.[0] ?? []));
+  const headers = $derived(table?.[0] ?? []);
   const rows = $derived(table?.slice(1) ?? []);
 
   const allRowsSelected = $derived(rows.length > 0 && rows.every((_, i) => selectedRows.has(i + 1)));
@@ -43,10 +43,7 @@
   const isRowSelected = (index: number) => selectedRows.has(index);
 </script>
 
-<FlowTable class={[
-  tableClass,
-  'border border-gray-400 mb-2.5 mr-2.5'
-]} striped hoverable>
+{#snippet header()}
   <TableHead>
     {#if selectable}
       <!-- Checkbox column header -->
@@ -75,16 +72,43 @@
       <TableHeadCell class="py-2 px-1 normal-case">{header}</TableHeadCell>
     {/each}
   </TableHead>
+{/snippet}
+
+{#snippet renderRow(row: string[], rowIndex: number)}
+  <TableBodyRow>
+    {#if selectable}
+      <TableBodyCell class="py-2 px-1 text-xs text-center">
+        <Checkbox
+          type="checkbox"
+          aria-label={`Select row ${rowIndex + 1}`}
+          checked={isRowSelected(rowIndex + 1)}
+          onchange={() => handleRowSelect(rowIndex + 1)}
+        />
+      </TableBodyCell>
+    {/if}
+    {#each row as cell}
+      <TableBodyCell class="py-2 px-1 text-xs">
+        {cell}
+      </TableBodyCell>
+    {/each}
+  </TableBodyRow>
+{/snippet}
+
+<FlowTable class={[
+  tableClass,
+  'border border-gray-400 mb-2.5 mr-2.5'
+]} striped hoverable>
+  {@render header()}
   <TableBody>
     {#if isPreview && report}
       {#each report.transactions as transaction, i (`${transaction.hash}-${i}`)}
         <TableBodyRow class={getRowClass(transaction.status)}>
           {#if hasDetectedDuplicates}
-            <TableBodyCell class="py-2 px-1 text-xs text-center">
+            <TableBodyCell class="py-2 px-1 text-xs text-center w-fit">
               {#if transaction.status === 'duplicate'}
                 <Select
                   size="sm"
-                  class="p-1 text-xs"
+                  class="text-xs"
                   value={importState.userDecisions.get(transaction.hash) ?? transaction.action}
                   onchange={((e) => {
                     if (e?.currentTarget?.value) {
@@ -110,24 +134,8 @@
         </TableBodyRow>
       {/each}
     {:else}
-      {#each rows as row, rowIndex (rowIndex)}
-        <TableBodyRow>
-          {#if selectable}
-            <TableBodyCell class="py-2 px-1 text-xs text-center">
-              <Checkbox
-                type="checkbox"
-                aria-label={`Select row ${rowIndex + 1}`}
-                checked={isRowSelected(rowIndex + 1)}
-                onchange={() => handleRowSelect(rowIndex + 1)}
-              />
-            </TableBodyCell>
-          {/if}
-          {#each row as cell}
-            <TableBodyCell class="py-2 px-1 text-xs">
-              {cell}
-            </TableBodyCell>
-          {/each}
-        </TableBodyRow>
+      {#each rows as rowData, rowIndex (rowIndex)}
+        {@render renderRow(rowData, rowIndex)}
       {/each}
     {/if}
   </TableBody>

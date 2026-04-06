@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { ImportPreviewReport, ServerResponse } from "@/common/types";
   import { serverFunctions } from "@/client/utils/serverFunctions";
+  import { getBrowserLocale } from "@/client/utils/web";
   import DataTable from "../components/DataTable.svelte";
   import { excludeRowsFromData } from "../utils/importing";
   import { importState } from "../states/import.svelte";
@@ -8,11 +9,6 @@
   import { InfoCircleSolid } from "flowbite-svelte-icons";
 
   let statusText = $state("");
-
-  const getBrowserLocale = () => {
-    if (navigator.languages != undefined) return navigator.languages[0];
-    return navigator.language;
-  };
 
   const onPreviewSuccess = (
     response: ServerResponse<ImportPreviewReport>,
@@ -92,5 +88,5 @@
 </Alert>
 
 {#if importState.previewReport}
-  <DataTable report={importState.previewReport} />
+  <DataTable table={importState.rawImportData} report={importState.previewReport} />
 {/if}
