@@ -14,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      version_changed: ${{ steps.check_version.outputs.version_changed }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -34,6 +36,7 @@ jobs:
       - name: Run unit tests
         run: pnpm test:coverage
       - name: Check version bump and create tag
+        id: check_version
         # only run this step for pushes to main, not for pull requests
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
@@ -48,6 +51,7 @@ jobs:
           if [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ] && [ -n "$CURRENT_VERSION" ]; then
             TAG_NAME="v$CURRENT_VERSION"
             echo "Version changed from '$PREVIOUS_VERSION' to '$CURRENT_VERSION'. Creating tag $TAG_NAME..."
+            echo "version_changed=true" >> $GITHUB_OUTPUT
 
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -56,6 +60,7 @@ jobs:
             git push origin "$TAG_NAME"
           else
             echo "No version change detected or invalid version."
+            echo "version_changed=false" >> $GITHUB_OUTPUT
           fi
       # Upload the built dist folder so the deploy job can use it
       - name: Upload Build Artifact
@@ -69,8 +74,8 @@ jobs:
   ################
   deployment:
     needs: build # depends on the build job to complete successfully
-    # only run this step for pushes to main, not for pull requests
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # only run when pushing to main and a new version was detected
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.build.outputs.version_changed == 'true'
     runs-on: ubuntu-latest
     environment: production
     permissions:
