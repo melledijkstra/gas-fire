@@ -65,9 +65,9 @@
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.57.1",
-    "vite": "^8.0.3",
+    "vite": "^8.0.4",
     "vite-plugin-singlefile": "^2.3.2",
-    "vite-plugin-static-copy": "^4.0.0",
+    "vite-plugin-static-copy": "^4.0.1",
     "vitest": "^4.1.2"
   },
   "repository": {
