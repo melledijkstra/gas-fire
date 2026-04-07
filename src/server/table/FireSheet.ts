@@ -3,11 +3,14 @@ import { FireTable } from './FireTable';
 import { SheetsRequestBuilder } from '../request-builder';
 import { Logger } from '@/common/logger';
 import { getSourceSheet } from '../globals';
-import { FIRE_COLUMNS } from '@/common/constants';
 
 const MS_IN_DAY = 86400000;
 const DAYS_FROM_JS_EPOCH_TO_SHEETS_EPOCH = 25569;
 const MINUTES_IN_DAY = 1440;
+
+type GetLastImportedTransactionsOptions = {
+  stopOnDifferentImportDate?: boolean;
+}
 
 /**
  * Represents the FIRE source sheet in Google Sheets.
@@ -161,7 +164,9 @@ export class FireSheet {
    *
    * @returns A FireTable containing only the rows from the last import, or an empty FireTable.
    */
-  getLastImportedTransactions(): FireTable {
+  getLastImportedTransactions({
+    stopOnDifferentImportDate = true,
+  }: GetLastImportedTransactionsOptions = {}): FireTable {
     const lastRow = this._sheet.getLastRow();
     if (lastRow <= 1) return new FireTable([]);
 
@@ -173,9 +178,8 @@ export class FireSheet {
     if (values.length <= 1) return new FireTable([]);
 
     const lastImportDate = this.getLastImportDate(values);
-    if (!lastImportDate) return new FireTable([]);
 
-    const importDateCol = FIRE_COLUMNS.indexOf('import_date');
+    const importDateCol = FireTable.getFireColumnIndex('import_date');
     const lastImportedRows: CellValue[][] = [];
 
     // Iterate from row 2 (index 1) onwards, skipping the header
@@ -195,11 +199,15 @@ export class FireSheet {
         rowDateTime = new Date(String(rowDateRaw)).getTime();
       }
 
-      if (rowDateTime === lastImportDate.getTime()) {
-        lastImportedRows.push(row);
-      } else {
-        break; // Stop as soon as the import date changes
+      if (
+        stopOnDifferentImportDate &&
+        rowDateTime !== lastImportDate?.getTime()
+      ) {
+        // stop reading further once we encounter a different import date, since data is sorted newest-first
+        break;
       }
+
+      lastImportedRows.push(row);
     }
 
     return new FireTable(lastImportedRows);
@@ -218,7 +226,7 @@ export class FireSheet {
    * Looks at row index 1 (first data row after header) since data is sorted newest-first.
    */
   private getLastImportDate(data: CellValue[][]): Date | null {
-    const importDateCol = FIRE_COLUMNS.indexOf('import_date');
+    const importDateCol = FireTable.getFireColumnIndex('import_date');
     if (importDateCol === -1) return null;
     if (data.length < 2) return null;
 
@@ -334,7 +342,7 @@ export class FireSheet {
 // Helper: convert CellValue → Sheets API CellData
 // ──────────────────────────────────────────────
 
-function generateCellData(
+export function generateCellData(
   cell: unknown,
 ): GoogleAppsScript.Sheets.Schema.CellData {
   const extendedValue: GoogleAppsScript.Sheets.Schema.ExtendedValue = {};

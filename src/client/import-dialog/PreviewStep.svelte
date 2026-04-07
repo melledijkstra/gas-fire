@@ -8,13 +8,11 @@
   import { InfoCircleSolid } from "flowbite-svelte-icons";
   import PreviewReportSummary from "../components/PreviewReportSummary.svelte";
 
-  let statusText = $state("");
-
   const onPreviewSuccess = (
     response: ServerResponse<ImportPreviewReport>,
   ) => {
     if (!response.success || !response.data) {
-      statusText = `Failed to create preview: ${!response.success ? response.error : "Unknown error"}`;
+      alert(`Failed to create preview: ${!response.success ? response.error : "Unknown error"}`)
       return;
     }
     const report = response.data;
@@ -33,13 +31,12 @@
       importState.rawImportData,
       importState.selectedRows,
     );
-    statusText = "Data is being processed...";
 
     serverFunctions
       .previewPipeline(dataToProcess, importState.selectedBank)
       .then(onPreviewSuccess)
       .catch(
-        (error) => (statusText = `Failed to create preview: ${error}`),
+        (error) => alert(`Failed to create preview: ${error}`),
       )
       .finally(() => (importState.isProcessing = false));
   };
@@ -60,9 +57,6 @@
       Generate Preview
     {/if}
   </Button>
-  {#if statusText}
-    <p class="mt-1">{statusText}</p>
-  {/if}
 </div>
 
 <Alert color="blue" class="my-2">

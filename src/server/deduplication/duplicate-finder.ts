@@ -1,8 +1,8 @@
 import type { RawTable } from "@/common/types";
 import type { FireColumn } from "@/common/constants";
-import { FireTable } from "../table";
+import { FireTable, type CellValue } from "../table";
 
-export function getRowHash(row: unknown[]): string {
+export function getRowHash(row: CellValue[]): string {
   return FireTable.getHashIndices().map(colIndex => {
     const cell = row[colIndex];
     return cell instanceof Date ? cell.toISOString() : String(cell ?? '');
@@ -12,10 +12,10 @@ export function getRowHash(row: unknown[]): string {
 /**
  * Finds duplicate rows in a dataset based on a timespan.
  *
- * @param {Table} table - The array of rows to search for duplicates.
+ * @param {RawTable} table - The array of rows to search for duplicates.
  * @param {number} timespan - The maximum allowed time difference (in milliseconds) between duplicate rows.
  * @param {FireColumn} dateColumn - The name of the column containing the date to compare.
- * @returns {Table} - An array of duplicate rows found within the specified timespan.
+ * @returns {RawTable} - An array of duplicate rows found within the specified timespan.
  *
  * @example
  * const rows = [

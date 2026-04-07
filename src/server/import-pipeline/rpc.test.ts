@@ -209,7 +209,7 @@ describe('RPC: Import Functions', () => {
       expect(importDataSpy).toHaveBeenCalled()
       const [fireTable] = importDataSpy.mock.calls[importDataSpy.mock.calls.length - 1]
       expect(fireTable.getData()).toEqual(expect.arrayContaining([
-        expect.arrayContaining([new Date('2023-09-12'),-100,'Utility Bill Payment']),
+        expect.arrayContaining([new Date(2023, 8, 12), -100, 'Utility Bill Payment']),
       ]))
       expect(result.success).toBe(true);
       if (result.success) {
@@ -233,9 +233,9 @@ describe('RPC: Import Functions', () => {
       expect(importDataSpy).toHaveBeenCalled();
       const [fireTable] = importDataSpy.mock.calls[importDataSpy.mock.calls.length - 1]
       expect(fireTable.getData()).toEqual([
-        expect.arrayContaining([new Date('2016-01-23'), -25.6]),
-        expect.arrayContaining([new Date('2015-05-21'), 58.3]),
-        expect.arrayContaining([new Date('2015-05-20'), 20]),
+        expect.arrayContaining([new Date(2016, 0, 23), -25.6]),
+        expect.arrayContaining([new Date(2015, 4, 21), 58.3]),
+        expect.arrayContaining([new Date(2015, 4, 20), 20]),
       ]);
     });
   });

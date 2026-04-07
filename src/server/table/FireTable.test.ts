@@ -172,7 +172,7 @@ describe('FireTable', () => {
 
       expect(result.getRowCount()).toBe(2);
       expect(data[0][FireTable.getFireColumnIndex('date')]).toStrictEqual(
-        new Date('2024-01-01'),
+        new Date(2024, 0, 1),
       );
       expect(data[0][FireTable.getFireColumnIndex('amount')]).toBe(100);
       expect(data[0][FireTable.getFireColumnIndex('description')]).toBe(
@@ -183,7 +183,7 @@ describe('FireTable', () => {
       );
 
       expect(data[1][FireTable.getFireColumnIndex('date')]).toStrictEqual(
-        new Date('2024-01-02'),
+        new Date(2024, 0, 2),
       );
       expect(data[1][FireTable.getFireColumnIndex('amount')]).toBe(200);
       expect(data[1][FireTable.getFireColumnIndex('description')]).toBe(
@@ -236,7 +236,7 @@ describe('FireTable', () => {
 
       expect(result.getRowCount()).toBe(4);
       expect(data[0][FireTable.getFireColumnIndex('date')]).toStrictEqual(
-        new Date('2023-11-26'),
+        new Date(2023, 10, 26),
       );
       expect(data[0][FireTable.getFireColumnIndex('amount')]).toBe(-11.63);
       expect(data[0][FireTable.getFireColumnIndex('contra_account')]).toBe(

@@ -16,7 +16,9 @@ import { getRowHash } from '../deduplication/duplicate-finder';
 function loadExistingHashes(fireSheet: FireSheet): Set<string> {
   const existingHashes = new Set<string>();
   try {
-    const lastImportedTransactions = fireSheet.getLastImportedTransactions();
+    const lastImportedTransactions = fireSheet.getLastImportedTransactions({
+      stopOnDifferentImportDate: false
+    });
     if (lastImportedTransactions) {
       for (const row of lastImportedTransactions.getData()) {
         existingHashes.add(getRowHash(row));
@@ -227,8 +229,7 @@ export function previewPipeline(
       const hash = getRowHash(row);
       let status: TransactionStatus;
       const action: TransactionAction = 'import';
-
-      Logger.log('duplicate checking row', { row, hash, hit: existingHashes.has(hash) });
+      
       if (existingHashes.has(hash)) {
         status = 'duplicate';
         summary.duplicateCount++;
