@@ -1,6 +1,6 @@
-import type { ServerResponse, RawTable, ImportPreviewReport, UserDecisions, TransactionAction, TransactionStatus } from '@/common/types';
+import type { ServerResponse, RawTable, ImportPreviewReport, UserDecisions, TransactionAction, TransactionStatus, TransactionMeta, ErrorServerResponse } from '@/common/types';
 import { Config } from '../config';
-import { FireTable, FireSheet } from '../table';
+import { FireTable, FireSheet, type CellValue } from '../table';
 import { Table } from '../table/Table';
 import { AccountUtils, isNumeric } from '../accounts/account-utils';
 import { structuredClone } from '@/common/helpers';
@@ -49,9 +49,9 @@ function filterRowsByDecisions(
  * Formats a single cell value to a display string.
  * Dates are formatted as 'yyyy-MM-dd' using the spreadsheet's timezone.
  */
-function formatCellValue(cell: unknown): string {
+function formatCellValue(cell: CellValue): string {
   if (cell instanceof Date) {
-    try {
+    try { 
       const timeZone = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
       return Utilities.formatDate(cell, timeZone, "yyyy-MM-dd");
     } catch {
@@ -59,6 +59,116 @@ function formatCellValue(cell: unknown): string {
     }
   }
   return String(cell ?? '');
+}
+
+/**
+ * Activates the target sheet and removes any active filters.
+ * Filters must be removed before importing to avoid data corruption.
+ */
+function prepareSheetForImport(fireSheet: FireSheet): void {
+  fireSheet.activate();
+
+  const filter = fireSheet.getFilter();
+  if (filter && !removeFilterCriteria(filter, true)) {
+    throw new Error('Filters need to be removed before importing, cancelling import');
+  }
+}
+
+/**
+ * Applies user decisions to the processed fire table, returning a
+ * filtered table containing only the rows the user chose to import.
+ * Returns the original table unchanged when no decisions apply.
+ */
+function applyUserDecisions(
+  fireTable: FireTable,
+  userDecisions?: UserDecisions
+): FireTable {
+  if ((FEATURES.IMPORT_DUPLICATE_DETECTION || userDecisions) && userDecisions) {
+    return new FireTable(filterRowsByDecisions(fireTable.getData(), userDecisions));
+  }
+  return fireTable;
+}
+
+/** Intermediate result from classifying and formatting preview rows. */
+interface PreviewRowsResult {
+  rows: string[][];
+  hashes: string[];
+  transactionMeta: Record<string, TransactionMeta>;
+  validAmounts: number[];
+  duplicateCount: number;
+  validCount: number;
+}
+
+/**
+ * Classifies each transaction row as valid or duplicate, formats the
+ * row for display, and collects the numeric amounts for valid rows.
+ */
+function buildPreviewRows(
+  previewTable: FireTable,
+  existingHashes: Set<string>,
+  autoFillColumns: number[]
+): PreviewRowsResult {
+  const rows: string[][] = [];
+  const hashes: string[] = [];
+  const transactionMeta: Record<string, TransactionMeta> = {};
+  const validAmounts: number[] = [];
+  let duplicateCount = 0;
+  let validCount = 0;
+
+  for (const row of previewTable.getData()) {
+    const hash = getRowHash(row);
+    let status: TransactionStatus;
+    const action: TransactionAction = 'import';
+
+    if (existingHashes.has(hash)) {
+      status = 'duplicate';
+      duplicateCount++;
+    } else {
+      status = 'valid';
+      validCount++;
+      const amount = row[FireTable.getFireColumnIndex('amount')];
+      if (isNumeric(amount)) {
+        validAmounts.push(Number(amount));
+      }
+    }
+
+    const formattedRow = [...row];
+    for (const colIndex of autoFillColumns) {
+      const arrayIndex = colIndex - 1;
+      if (arrayIndex >= 0 && arrayIndex < formattedRow.length) {
+        if (!formattedRow[arrayIndex] || formattedRow[arrayIndex] === '') {
+          formattedRow[arrayIndex] = '(auto-filled)';
+        }
+      }
+    }
+
+    hashes.push(hash);
+    rows.push(formattedRow.map(formatCellValue));
+    transactionMeta[hash] = { status, action };
+  }
+
+  return { rows, hashes, transactionMeta, validAmounts, duplicateCount, validCount };
+}
+
+/**
+ * Wraps a pipeline function with standardised error handling and logging.
+ */
+function withLogger<T>(
+  name: string,
+  fn: () => T
+): T | ErrorServerResponse {
+  try {
+    Logger.time(name);
+    const result = fn();
+    Logger.timeEnd(name);
+    return result;
+  } catch (error) {
+    Logger.error(error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error)
+    };
+  }
 }
 
 /**
@@ -116,28 +226,13 @@ export function importPipeline(
   bankAccount: string,
   userDecisions?: UserDecisions
 ): ServerResponse {
-  try {
-    Logger.time('importPipeline')
+  return withLogger('importPipeline', () => {
+    const fireSheet = new FireSheet();
+    const accountConfig = Config.getAccountConfiguration(bankAccount);
 
-    const fireSheet = new FireSheet()
-    const accountConfig = Config.getAccountConfiguration(bankAccount)
+    Logger.log('account configuration used for import', accountConfig);
 
-    Logger.log('account configuration used for import', accountConfig)
-
-    // make the user visually switch to the primary sheet where data will be imported
-    fireSheet.activate()
-
-    // remove any filters that might be set
-    // importing might go wrong when filters are set
-    const filter = fireSheet.getFilter()
-
-    if (filter) {
-      if (!removeFilterCriteria(filter, true)) {
-        throw new Error(
-          'Filters need to be removed before importing, cancelling import'
-        );
-      }
-    }
+    prepareSheetForImport(fireSheet);
 
     const fireTable = processImportData(inputTable, accountConfig);
 
@@ -147,13 +242,7 @@ export function importPipeline(
       return { success: false, error: msg };
     }
 
-    let finalTable = fireTable;
-
-    if (FEATURES.IMPORT_DUPLICATE_DETECTION || userDecisions) {
-      if (userDecisions) {
-        finalTable = new FireTable(filterRowsByDecisions(fireTable.getData(), userDecisions));
-      }
-    }
+    const finalTable = applyUserDecisions(fireTable, userDecisions);
 
     if (finalTable.isEmpty()) {
       const msg = 'No rows to import after applying rules and user decisions.';
@@ -161,42 +250,24 @@ export function importPipeline(
       return { success: false, error: msg };
     }
 
-    // actual importing of the data into the sheet
-    Logger.time('FireSheet.importData')
-
-    const autoFillColumns = accountConfig.autoFillEnabled ? accountConfig.autoFillColumnIndices : undefined
-    fireSheet.importData(finalTable, autoFillColumns)
-
-    Logger.timeEnd('FireSheet.importData')
+    Logger.time('FireSheet.importData');
+    const autoFillColumns = accountConfig.autoFillEnabled ? accountConfig.autoFillColumnIndices : undefined;
+    fireSheet.importData(finalTable, autoFillColumns);
+    Logger.timeEnd('FireSheet.importData');
 
     const msg = `imported ${finalTable.getRowCount()} rows!`;
-    Logger.log(msg)
+    Logger.log(msg);
 
-    Logger.timeEnd('importPipeline')
-
-    return {
-      success: true,
-      message: msg,
-    };
-  } catch (error) {
-    Logger.error(error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : String(error)
-    }
-  }
+    return { success: true, message: msg };
+  });
 }
 
 export function previewPipeline(
   table: RawTable,
   bankAccount: string
 ): ServerResponse<ImportPreviewReport> {
-  try {
-    Logger.time('previewPipeline')
-
+  return withLogger('previewPipeline', () => {
     const config = Config.getAccountConfiguration(bankAccount);
-
-    // Process the data using the exact same logic as the actual import
     const previewTable = processImportData(table, config);
 
     let existingHashes: Set<string> = new Set();
@@ -208,59 +279,11 @@ export function previewPipeline(
       Logger.log('Existing hashes sample', Array.from(existingHashes).slice(0, 5));
     }
 
-    const summary = {
-      totalRows: previewTable.getRowCount(),
-      validCount: 0,
-      removedCount: 0,
-      duplicateCount: 0,
-      rulesApplied: 0
-    };
-
     const autoFillColumns = config.autoFillEnabled ? config.autoFillColumnIndices : [];
+    const { rows, hashes, transactionMeta, validAmounts, duplicateCount, validCount } =
+      buildPreviewRows(previewTable, existingHashes, autoFillColumns);
 
-    // We only want to include valid and kept items for the new balance calculation
-    const validAmountNumbers: number[] = [];
-
-    const rows: string[][] = [];
-    const hashes: string[] = [];
-    const transactionMeta: ImportPreviewReport['transactionMeta'] = {};
-
-    for (const row of previewTable.getData()) {
-      const hash = getRowHash(row);
-      let status: TransactionStatus;
-      const action: TransactionAction = 'import';
-      
-      if (existingHashes.has(hash)) {
-        status = 'duplicate';
-        summary.duplicateCount++;
-      } else {
-        status = 'valid';
-        summary.validCount++;
-        // extract the amount before formatting the row visually
-        const amount = row[FireTable.getFireColumnIndex('amount')];
-        if (isNumeric(amount)) {
-          validAmountNumbers.push(Number(amount));
-        }
-      }
-
-      const formattedRow = [...row];
-      for (const colIndex of autoFillColumns) {
-        const arrayIndex = colIndex - 1;
-        if (arrayIndex >= 0 && arrayIndex < formattedRow.length) {
-          if (!formattedRow[arrayIndex] || formattedRow[arrayIndex] === '') {
-            formattedRow[arrayIndex] = '(auto-filled)';
-          }
-        }
-      }
-
-      hashes.push(hash);
-      rows.push(formattedRow.map(formatCellValue));
-      transactionMeta[hash] = { status, action };
-    }
-
-    const newBalance = AccountUtils.calculateNewBalance(bankAccount, validAmountNumbers);
-
-    Logger.timeEnd('previewPipeline')
+    const newBalance = AccountUtils.calculateNewBalance(bankAccount, validAmounts);
 
     return {
       success: true,
@@ -269,14 +292,15 @@ export function previewPipeline(
         hashes,
         transactionMeta,
         newBalance,
-        summary
+        summary: {
+          totalRows: previewTable.getRowCount(),
+          validCount,
+          duplicateCount,
+          // PENDING IMPLEMENTATION
+          removedCount: 0,
+          rulesApplied: 0
+        }
       }
     };
-  } catch (error) {
-    Logger.error(error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : String(error),
-    }
-  }
+  });
 }

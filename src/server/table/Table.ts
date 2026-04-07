@@ -200,7 +200,7 @@ export class Table {
   deserialize(serializedData: string): this {
     try {
       const parsed = JSON.parse(serializedData, (_key, value) => {
-        if (value && value.__type === 'Date') {
+        if (value?.__type === 'Date') {
           return new Date(value.value);
         }
         return value;

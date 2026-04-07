@@ -67,7 +67,7 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     console.log('previewPipeline mock called');
     await sleep(2000);
 
-    const rows = fireTableMock.map(row => row.map(cell => String(cell)));
+    const rows = fireTableMock.map(row => row.map(String));
     const hashes = rows.map((_, i) => `mocked-hash-${i + 1}`);
     const metas = ['valid', 'valid', 'duplicate', 'removed', 'valid', 'duplicate'] as const;
     const actions = ['import', 'import', 'skip', 'skip'] as const;

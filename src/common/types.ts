@@ -54,9 +54,9 @@ export interface ImportPreviewReport {
 
 export type UserDecisions = Record<string, TransactionAction>;
 
-type EmptyServerResponse = { success: true; message?: string };
-type ErrorServerResponse = { success: false; error: string; };
-type PayloadServerResponse<T> = { success: true; data: T; message?: string };
+export type EmptyServerResponse = { success: true; message?: string };
+export type ErrorServerResponse = { success: false; error: string; };
+export type PayloadServerResponse<T> = { success: true; data: T; message?: string };
 
 export type ServerResponse<T = void> =
   | (T extends void ? EmptyServerResponse : PayloadServerResponse<T>)
