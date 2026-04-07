@@ -40,7 +40,7 @@ function filterRowsByDecisions(
 ): ReturnType<FireTable['getData']> {
   return rows.filter(row => {
     const hash = getRowHash(row);
-    const action: TransactionAction = userDecisions[hash] ?? 'import';
+    const action: TransactionAction = userDecisions.get(hash) ?? 'import';
     return action === 'import';
   });
 }
@@ -83,7 +83,7 @@ function applyUserDecisions(
   fireTable: FireTable,
   userDecisions?: UserDecisions
 ): FireTable {
-  if ((FEATURES.IMPORT_DUPLICATE_DETECTION || userDecisions) && userDecisions) {
+  if (userDecisions?.size) {
     return new FireTable(filterRowsByDecisions(fireTable.getData(), userDecisions));
   }
   return fireTable;
@@ -112,6 +112,7 @@ function buildPreviewRows(
   const hashes: string[] = [];
   const transactionMeta: Record<string, TransactionMeta> = {};
   const validAmounts: number[] = [];
+  const amountColIndex = FireTable.getFireColumnIndex('amount')
   let duplicateCount = 0;
   let validCount = 0;
 
@@ -126,7 +127,7 @@ function buildPreviewRows(
     } else {
       status = 'valid';
       validCount++;
-      const amount = row[FireTable.getFireColumnIndex('amount')];
+      const amount = row[amountColIndex];
       if (isNumeric(amount)) {
         validAmounts.push(Number(amount));
       }
@@ -224,11 +225,12 @@ function processImportData(inputTable: RawTable, accountConfig: Config): FireTab
 export function importPipeline(
   inputTable: RawTable,
   bankAccount: string,
-  userDecisions?: UserDecisions
+  userDecisions?: Record<string, TransactionAction>
 ): ServerResponse {
   return withLogger('importPipeline', () => {
     const fireSheet = new FireSheet();
     const accountConfig = Config.getAccountConfiguration(bankAccount);
+    const _userDecisions = userDecisions ? new Map(Object.entries(userDecisions)) : undefined;
 
     Logger.log('account configuration used for import', accountConfig);
 
@@ -242,7 +244,7 @@ export function importPipeline(
       return { success: false, error: msg };
     }
 
-    const finalTable = applyUserDecisions(fireTable, userDecisions);
+    const finalTable = applyUserDecisions(fireTable, _userDecisions);
 
     if (finalTable.isEmpty()) {
       const msg = 'No rows to import after applying rules and user decisions.';

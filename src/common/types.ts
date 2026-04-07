@@ -52,7 +52,7 @@ export interface ImportPreviewReport {
   };
 }
 
-export type UserDecisions = Record<string, TransactionAction>;
+export type UserDecisions = Map<string, TransactionAction>;
 
 export type EmptyServerResponse = { success: true; message?: string };
 export type ErrorServerResponse = { success: false; error: string; };
