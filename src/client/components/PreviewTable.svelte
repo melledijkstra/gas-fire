@@ -16,7 +16,7 @@
   const hasDetectedDuplicates = $derived(report.summary.duplicateCount > 0);
 
   const getRowClass = (status: TransactionStatus): string => {
-    if (status === 'removed') return 'opacity-50 line-through';
+    if (status === 'removed') return 'bg-red-100! dark:bg-red-900! line-through';
     if (status === 'duplicate') return 'bg-yellow-100! dark:bg-yellow-900! opacity-75';
     return '';
   };
@@ -37,12 +37,13 @@
       {@const meta = report.transactionMeta[hash]}
       <TableBodyRow class={getRowClass(meta.status)}>
         {#if hasDetectedDuplicates}
-          <TableBodyCell class="py-2 px-1 text-xs text-center w-fit">
+          <TableBodyCell class="py-2 px-1 text-xs text-center">
             {#if meta.status === 'duplicate'}
               <Select
                 size="sm"
-                class="text-xs"
+                selectClass="p-1 w-[70px] wrap-break-word"
                 value={importState.userDecisions.get(hash) ?? meta.action}
+                placeholder="Select action"
                 onchange={(e) => {
                   if (e?.currentTarget?.value) {
                     importState.userDecisions.set(hash, e.currentTarget.value as TransactionAction);
@@ -50,7 +51,7 @@
                 }}
               >
                 <option value="skip">Skip</option>
-                <option value="import">Force Import</option>
+                <option value="import">Import</option>
               </Select>
             {:else if meta.status === 'removed'}
               <span class="text-gray-500">Removed</span>

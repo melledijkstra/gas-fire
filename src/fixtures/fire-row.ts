@@ -8,7 +8,7 @@ import { FIRE_COLUMNS, type FireColumn } from "@/common/constants";
 export const buildFireTableRow = (overrides: Partial<Record<FireColumn, string>> = {}): string[] => {
   const defaults: Record<FireColumn, string> = {
     ref: 'ref-001',
-    iban: 'NL01TEST0000000001',
+    iban: 'TEST01TEST0000000001',
     date: '2023-01-01',
     amount: '0',
     balance: '',

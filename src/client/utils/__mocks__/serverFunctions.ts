@@ -69,7 +69,7 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
 
     const rows = fireTableMock.map(row => row.map(cell => String(cell)));
     const hashes = rows.map((_, i) => `mocked-hash-${i + 1}`);
-    const metas = ['valid', 'valid', 'duplicate', 'removed'] as const;
+    const metas = ['valid', 'valid', 'duplicate', 'removed', 'valid', 'duplicate'] as const;
     const actions = ['import', 'import', 'skip', 'skip'] as const;
 
     const duplicateCount = metas.filter(status => status === 'duplicate').length;

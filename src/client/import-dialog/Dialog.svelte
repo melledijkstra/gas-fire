@@ -27,7 +27,7 @@
     '1. Upload File',
     '2. Generate Preview',
     '3. Import',
-  ]} bind:currentStep clickable={false} class="mb-4" />
+  ]} bind:currentStep clickable={false} class="mb-4" size="sm" />
 
   {#if currentStep === 1}
     <ImportForm onSubmit={nextStep} />
