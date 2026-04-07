@@ -1,4 +1,5 @@
-import { DIALOG_SIZES, NAMED_RANGES } from '@/common/constants';
+import { NAMED_RANGES } from '@/common/constants';
+import { DIALOG_SIZES } from "@/common/settings";
 import { executeAutomaticCategorization } from '../category-detection/rpc';
 import { debugImportSettings, executeFindDuplicates } from '../other/rpc';
 

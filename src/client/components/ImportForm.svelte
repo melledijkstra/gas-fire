@@ -43,7 +43,7 @@
     fileError = null;
     const [newFile] = importState.inputFiles ?? [];
     importState.rawImportData = undefined;
-    importState.previewData = undefined;
+    importState.previewReport = undefined;
     importState.selectedRows.clear();
     if (newFile) {
       if (!isAllowedFile(newFile.type)) {

@@ -17,8 +17,8 @@ const DATE_FORMATS = [
     // ISO format: "yyyy-MM-dd"
     regex: /^\d{4}-\d{2}-\d{2}$/,
     parser: (str: string) => {
-      const parts = str.split("-").map(Number)
-      return new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+      const parts = str.split("-").map(Number);
+      return new Date(parts[0], parts[1] - 1, parts[2]);
     }
   },
   {
@@ -27,7 +27,7 @@ const DATE_FORMATS = [
     regex: /^\d{4}\.\d{2}\.\d{2}$/,
     parser: (str: string) => {
       const parts = str.split(".").map(Number);
-      return new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+      return new Date(parts[0], parts[1] - 1, parts[2]);
     }
   },
   {
@@ -35,9 +35,9 @@ const DATE_FORMATS = [
     // European format: "dd/MM/yyyy"
     regex: /^\d{2}\/\d{2}\/\d{4}$/,
     parser: (str: string, locale?: string) => {
-      const parts = str.split("/").map(Number)
+      const parts = str.split("/").map(Number);
       const { year, month, day } = getDateParts(parts, locale);
-      return new Date(Date.UTC(year, month - 1, day));
+      return new Date(year, month - 1, day);
     }
   },
   {
@@ -48,7 +48,7 @@ const DATE_FORMATS = [
     parser: (str: string, locale?: string) => {
       const parts = str.split(".").map(Number);
       const { year, month, day } = getDateParts(parts, locale);
-      return new Date(Date.UTC(year, month - 1, day));
+      return new Date(year, month - 1, day);
     }
   },
   {
@@ -59,18 +59,18 @@ const DATE_FORMATS = [
     parser: (str: string, locale?: string) => {
       const parts = str.split("/").map(Number);
       // Handle two-digit year
-      const currentYear = new Date().getFullYear()
+      const currentYear = new Date().getFullYear();
       let year = parts[2] + Math.floor(currentYear / 100) * 100;
-      // If the resulting year is more than 20 years in the future,  
-      // assume it belongs to the previous century.  
+      // If the resulting year is more than 20 years in the future,
+      // assume it belongs to the previous century.
       if (year > currentYear + 20) {
         year -= 100;
       }
 
       // Use locale to determine month/day order.
-      const month = locale === 'en_US' ? parts[0] : parts[1];  
+      const month = locale === 'en_US' ? parts[0] : parts[1];
       const day = locale === 'en_US' ? parts[1] : parts[0];
-      return new Date(Date.UTC(year, month - 1, day));
+      return new Date(year, month - 1, day);
     }
   }
 ];
@@ -115,11 +115,11 @@ export function parseDate(value: string): Date {
 
     const date = format.parser(datePart, locale);
     if (date instanceof Date && !Number.isNaN(date.getTime())) {
-      // If a time component is present, apply it to the UTC date
+      // If a time component is present, apply it in local time to match the parsed date
       if (timePart) {
         const time = parseTime(timePart);
         if (time) {
-          date.setUTCHours(time.hours, time.minutes, time.seconds, 0);
+          date.setHours(time.hours, time.minutes, time.seconds, 0);
         }
       }
       return date;

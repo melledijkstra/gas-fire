@@ -2,7 +2,7 @@
   import { defineMeta } from '@storybook/addon-svelte-csf';
   import Dialog from '@/client/about-dialog/Dialog.svelte';
   import DialogDecorator from '../../.storybook/dialog-decorator.svelte';
-  import { DIALOG_SIZES } from '@/common/constants';
+  import { DIALOG_SIZES } from "@/common/settings";
 
   const { Story } = defineMeta({
     title: 'Dialogs/About',

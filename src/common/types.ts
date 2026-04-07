@@ -27,9 +27,36 @@ export type BankOptions = Record<string, string>;
  */
 export type RawTable = string[][];
 
-type EmptyServerResponse = { success: true; message?: string };
-type ErrorServerResponse = { success: false; error: string; };
-type PayloadServerResponse<T> = { success: true; data: T; message?: string };
+export type TransactionStatus = 'valid' | 'duplicate' | 'removed';
+export type TransactionAction = 'skip' | 'import';
+
+export interface TransactionMeta {
+  status: TransactionStatus;
+  action: TransactionAction;
+}
+
+export interface ImportPreviewReport {
+  /** Formatted transaction rows in the same order as `hashes`. Always aligned to FIRE_COLUMNS. */
+  rows: string[][];
+  /** Row hash at index i corresponds to rows[i]; used to key into transactionMeta. */
+  hashes: string[];
+  /** Per-transaction status and default action, keyed by row hash. */
+  transactionMeta: Record<string, TransactionMeta>;
+  newBalance?: number;
+  summary: {
+    totalRows: number;
+    validCount: number;
+    removedCount: number;
+    duplicateCount: number;
+    rulesApplied: number;
+  };
+}
+
+export type UserDecisions = Map<string, TransactionAction>;
+
+export type EmptyServerResponse = { success: true; message?: string };
+export type ErrorServerResponse = { success: false; error: string; };
+export type PayloadServerResponse<T> = { success: true; data: T; message?: string };
 
 export type ServerResponse<T = void> =
   | (T extends void ? EmptyServerResponse : PayloadServerResponse<T>)

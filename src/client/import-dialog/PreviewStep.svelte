@@ -1,48 +1,27 @@
 <script lang="ts">
-  import type { RawTable, ServerResponse } from "@/common/types";
+  import type { ImportPreviewReport, ServerResponse } from "@/common/types";
   import { serverFunctions } from "@/client/utils/serverFunctions";
-  import DataTable from "./DataTable.svelte";
+  import PreviewTable from "../components/PreviewTable.svelte";
   import { excludeRowsFromData } from "../utils/importing";
   import { importState } from "../states/import.svelte";
   import { Alert, Button, Spinner } from "flowbite-svelte";
   import { InfoCircleSolid } from "flowbite-svelte-icons";
+  import PreviewReportSummary from "../components/PreviewReportSummary.svelte";
 
-  let statusText = $state("");
-
-  const getBrowserLocale = () => {
-    if (navigator.languages != undefined) return navigator.languages[0];
-    return navigator.language;
-  };
-
-  const onGeneratePreviewSuccess = (
-    response: ServerResponse<{
-      result: RawTable;
-      newBalance?: number;
-      duplicateIndices?: number[];
-    }>,
+  const onPreviewSuccess = (
+    response: ServerResponse<ImportPreviewReport>,
   ) => {
     if (!response.success || !response.data) {
-      statusText = `Failed to create preview: ${!response.success ? response.error : "Unknown error"}`;
+      alert(`Failed to create preview: ${!response.success ? response.error : "Unknown error"}`)
       return;
     }
-    const { result, newBalance, duplicateIndices } = response.data;
-    const locale = getBrowserLocale();
-    const newBalanceFormatted = newBalance?.toLocaleString(locale, {
-      style: 'currency',
-      currency: 'EUR',
-    })
-    statusText = `Import preview set${newBalanceFormatted ? ` - new balance: ${newBalanceFormatted}` : ''}`
-    importState.previewData = result
+    const report = response.data;
 
-    importState.duplicateRows.clear();
-    if (duplicateIndices) {
-      for (const index of duplicateIndices) {
-        importState.duplicateRows.add(index);
-      }
-    }
+    importState.previewReport = report;
+    importState.userDecisions.clear();
   };
 
-  const generatePreview = () => {
+  const triggerPreviewPipeline = () => {
     if (!importState.rawImportData || !importState.selectedBank) {
       return;
     }
@@ -52,13 +31,12 @@
       importState.rawImportData,
       importState.selectedRows,
     );
-    statusText = "Data is being processed...";
 
     serverFunctions
-      .generatePreview(dataToProcess, importState.selectedBank)
-      .then(onGeneratePreviewSuccess)
+      .previewPipeline(dataToProcess, importState.selectedBank)
+      .then(onPreviewSuccess)
       .catch(
-        (error) => (statusText = `Failed to create preview: ${error}`),
+        (error) => alert(`Failed to create preview: ${error}`),
       )
       .finally(() => (importState.isProcessing = false));
   };
@@ -70,7 +48,7 @@
     disabled={!importState.rawImportData ||
       !importState.selectedBank ||
       importState.isProcessing}
-    onclick={generatePreview}
+    onclick={triggerPreviewPipeline}
   >
     {#if importState.isProcessing}
       <Spinner class="me-2" size="4" />
@@ -79,9 +57,6 @@
       Generate Preview
     {/if}
   </Button>
-  {#if statusText}
-    <p class="mt-1">{statusText}</p>
-  {/if}
 </div>
 
 <Alert color="blue" class="my-2">
@@ -95,6 +70,7 @@
   </p>
 </Alert>
 
-{#if importState.previewData}
-  <DataTable table={importState.previewData} duplicateRows={importState.duplicateRows} />
+{#if importState.previewReport}
+  <PreviewReportSummary report={importState.previewReport} />
+  <PreviewTable report={importState.previewReport} />
 {/if}

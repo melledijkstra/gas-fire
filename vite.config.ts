@@ -153,6 +153,14 @@ const testConfig: UserConfig = {
   test: {
     globals: true,
     setupFiles: ['./test-setup.ts'],
+    // Pin the timezone to UTC so that `new Date(y, m, d)` always produces UTC
+    // midnight regardless of the machine's local timezone. This matches the
+    // behaviour callers rely on: dates constructed by the parser are at
+    // midnight in whichever timezone the process runs in (in production that is
+    // the spreadsheet's timezone; in tests it is UTC).
+    env: {
+      TZ: 'UTC',
+    },
     coverage: {
       exclude: [
         'src/fixtures/**',

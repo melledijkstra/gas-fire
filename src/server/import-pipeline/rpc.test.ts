@@ -5,13 +5,13 @@ import {
 } from '../../../test-setup';
 import type { RawTable } from '@/common/types';
 import { N26ImportMock } from '@/fixtures/n26';
-import { FireSheet } from '../table';
+import { FireSheet, FireTable } from '../table';
 import { AccountUtils } from '../accounts/account-utils';
 import { raboImportMock } from '@/fixtures/rabobank';
 import { Logger } from '@/common/logger';
 import {
-  generatePreview,
-  importCSV,
+  previewPipeline,
+  importPipeline,
 } from './rpc';
 import { Config } from '../config';
 import bankOfAmericaCSV from '@/fixtures/commonwealth-bank.csv?raw';
@@ -60,20 +60,23 @@ describe('RPC: Import Functions', () => {
     vi.clearAllMocks();
   });
 
-  describe('generatePreview', () => {
+  describe('previewPipeline', () => {
     let getBalanceSpy: ReturnType<typeof vi.spyOn>;
+    let fireSheetSpy: ReturnType<typeof vi.spyOn>;
 
     beforeEach(() => {
       getBalanceSpy = vi.spyOn(AccountUtils, 'getBalance').mockReturnValue(302.8);
+      fireSheetSpy = vi.spyOn(FireSheet.prototype, 'getLastImportedTransactions').mockReturnValue(new FireTable([]));
     });
 
     afterEach(() => {
       getBalanceSpy.mockRestore();
+      fireSheetSpy.mockRestore();
     });
 
     test('is able to handle table without any useful data and should return the current balance', () => {
       const table: RawTable = [['TransactionAmount', 'TransactionDate', 'Payee'], ['', '', '']];
-      const response = generatePreview(
+      const response = previewPipeline(
         table,
         BANK_ID
       );
@@ -81,13 +84,14 @@ describe('RPC: Import Functions', () => {
       expect(response.success).toBe(true);
       if (response.success) {
         expect(response.data?.newBalance).toBeCloseTo(302.8, 2);
+        expect(response.data?.summary.validCount).toBe(0);
       }
     });
 
     test('is able to calculate new balance when there is useful data in the amounts column', () => {
       getBalanceSpy.mockReturnValue(305.85);
 
-      const response = generatePreview(
+      const response = previewPipeline(
         structuredClone(fakeTestBankImportData),
         BANK_ID
       );
@@ -95,17 +99,28 @@ describe('RPC: Import Functions', () => {
       expect(response.success).toBe(true);
       if (response.success) {
         expect(response.data?.newBalance).toBeCloseTo(358.55, 2);
+        expect(response.data?.summary.validCount).toBe(3);
       }
     });
   });
 
-  describe('importCSV', () => {
+  describe('importPipeline', () => {
     beforeAll(() => {
       Logger.disable()
     })
 
+    let fireSheetSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      fireSheetSpy = vi.spyOn(FireSheet.prototype, 'getLastImportedTransactions').mockReturnValue(new FireTable([]));
+    });
+
+    afterEach(() => {
+      fireSheetSpy.mockRestore();
+    });
+
     test('handles empty import', () => {
-      const result = importCSV([], BANK_ID);
+      const result = importPipeline([], BANK_ID);
 
       expect(importDataSpy).not.toHaveBeenCalled();
       expect(result.success).toBe(false);
@@ -115,7 +130,7 @@ describe('RPC: Import Functions', () => {
     })
 
     test('handles empty input data', () => {
-      const result = importCSV([
+      const result = importPipeline([
         // first row is header row, meaning that there are actually no rows to actually import
         ['header1', 'header2', 'header3', 'header4']
       ], BANK_ID);
@@ -131,7 +146,7 @@ describe('RPC: Import Functions', () => {
       removeFilterCriteriaMock.mockReturnValue(true)
       SheetMock.getFilter.mockReturnValue(FilterMock)
 
-      importCSV([], 'TestBank')
+      importPipeline([], 'TestBank')
 
       expect(SheetMock.getFilter).toHaveBeenCalled();
     });
@@ -150,7 +165,7 @@ describe('RPC: Import Functions', () => {
       })
       configSpy.mockReturnValueOnce(fakeN26Config)
 
-      const result = importCSV(N26ImportMock, 'N26');
+      const result = importPipeline(N26ImportMock, 'N26');
 
       expect(importDataSpy).toHaveBeenCalled();
       expect(result.success).toBe(true);
@@ -165,7 +180,7 @@ describe('RPC: Import Functions', () => {
       });
       configSpy.mockReturnValueOnce(fakeRabobankConfig)
 
-      const result = importCSV(raboImportMock, 'rabobank');
+      const result = importPipeline(raboImportMock, 'rabobank');
 
       expect(importDataSpy).toHaveBeenCalled();
       expect(result.success).toBe(true);
@@ -189,12 +204,12 @@ describe('RPC: Import Functions', () => {
       configSpy.mockReturnValue(bankOfAmericaConfig)
 
       const { data } = Papa.parse(bankOfAmericaCSV)
-      const result = importCSV(data as RawTable, 'bank-of-america')
+      const result = importPipeline(data as RawTable, 'bank-of-america')
 
       expect(importDataSpy).toHaveBeenCalled()
       const [fireTable] = importDataSpy.mock.calls[importDataSpy.mock.calls.length - 1]
       expect(fireTable.getData()).toEqual(expect.arrayContaining([
-        expect.arrayContaining([new Date('2023-09-12'),-100,'Utility Bill Payment']),
+        expect.arrayContaining([new Date(2023, 8, 12), -100, 'Utility Bill Payment']),
       ]))
       expect(result.success).toBe(true);
       if (result.success) {
@@ -213,14 +228,14 @@ describe('RPC: Import Functions', () => {
 
       configSpy.mockReturnValue(testBankConfig);
 
-      importCSV(fakeTestBankImportData, BANK_ID);
+      importPipeline(fakeTestBankImportData, BANK_ID);
 
       expect(importDataSpy).toHaveBeenCalled();
       const [fireTable] = importDataSpy.mock.calls[importDataSpy.mock.calls.length - 1]
       expect(fireTable.getData()).toEqual([
-        expect.arrayContaining([new Date('2016-01-23'), -25.6]),
-        expect.arrayContaining([new Date('2015-05-21'), 58.3]),
-        expect.arrayContaining([new Date('2015-05-20'), 20]),
+        expect.arrayContaining([new Date(2016, 0, 23), -25.6]),
+        expect.arrayContaining([new Date(2015, 4, 21), 58.3]),
+        expect.arrayContaining([new Date(2015, 4, 20), 20]),
       ]);
     });
   });

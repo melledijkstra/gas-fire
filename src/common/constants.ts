@@ -11,12 +11,6 @@ export enum NAMED_RANGES {
   debug = 'DEBUG'
 }
 
-export const DIALOG_SIZES: Record<keyof typeof DialogType, [number, number]> = {
-  import: [900, 600],
-  settings: [900, 600],
-  about: [300, 200],
-};
-
 /**
  * The columns that represent the FIRE sheet
  * Make sure to keep this in sync with the columns in the FIRE sheet
@@ -44,6 +38,3 @@ export const FIRE_COLUMNS = [
 export type FireColumn = (typeof FIRE_COLUMNS)[number];
 
 export const SOURCE_SHEET_ID = 1093484485;
-
-export const PROP_AUTOMATIC_CATEGORIES_CONFIG =
-  'AUTOMATIC_CATEGORIZATION_CONFIG';

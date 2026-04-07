@@ -2,9 +2,12 @@ import type {
   ServerResponse,
   BankOptions,
   RawTable,
+  ImportPreviewReport,
+  TransactionMeta,
 } from '@/common/types';
 import { fn } from 'storybook/test'
 import type * as publicServerFunctions from '@/server/index';
+import { fireTableMock } from '@/fixtures/fire-table';
 
 ////////////////////////////////////////////////////////////////
 // This mock is used by storybook, to mimic server functions
@@ -14,8 +17,8 @@ type ServerFunctionsInterface = typeof publicServerFunctions;
 
 type Promisified<T> = {
   [K in keyof T]: T[K] extends (...args: infer A) => infer R
-    ? (...args: A) => Promise<R>
-    : Promise<T[K]>;
+  ? (...args: A) => Promise<R>
+  : Promise<T[K]>;
 };
 
 type PromisifiedServerFunctionsInterface = Promisified<ServerFunctionsInterface>;
@@ -45,11 +48,11 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     console.log('debugImportSettings mock called');
   }
 
-  async importCSV(
+  async importPipeline(
     data: RawTable,
     selectedBank: string
   ): Promise<ServerResponse> {
-    console.log('importCSV mock called with data:', data, 'and selectedBank:', selectedBank);
+    console.log('importPipeline mock called with data:', data, 'and selectedBank:', selectedBank);
     await sleep(5000)
     return {
       success: true,
@@ -57,20 +60,39 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     };
   };
 
-  async generatePreview(
-    table: RawTable,
+  async previewPipeline(
+    _table: RawTable,
     _strategy: string
-  ): Promise<ServerResponse<{
-    result: RawTable;
-    newBalance?: number;
-  }>> {
-    console.log('generatePreview mock called');
+  ): Promise<ServerResponse<ImportPreviewReport>> {
+    console.log('previewPipeline mock called');
     await sleep(2000);
+
+    const rows = fireTableMock.map(row => row.map(String));
+    const hashes = rows.map((_, i) => `mocked-hash-${i + 1}`);
+    const metas = ['valid', 'valid', 'duplicate', 'removed', 'valid', 'duplicate'] as const;
+    const actions = ['import', 'import', 'skip', 'skip'] as const;
+
+    const duplicateCount = metas.filter(status => status === 'duplicate').length;
+    const removedCount = metas.filter(status => status === 'removed').length;
+    const validCount = rows.length - duplicateCount - removedCount;
+
     return {
       success: true,
       data: {
-        result: table,
-        newBalance: 1234,
+        summary: {
+          duplicateCount,
+          removedCount,
+          rulesApplied: 3,
+          totalRows: rows.length,
+          validCount,
+        },
+        rows,
+        hashes,
+        transactionMeta: hashes.reduce<Record<string, TransactionMeta>>((acc, hash, i) => {
+          acc[hash] = { status: metas[i] ?? 'valid', action: actions[i] ?? 'import' };
+          return acc;
+        }, {}),
+        newBalance: 1234.56,
       }
     };
   };

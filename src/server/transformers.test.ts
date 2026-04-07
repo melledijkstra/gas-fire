@@ -65,27 +65,27 @@ describe('Transformers', () => {
   });
 
   test('Transformers.transformDate', () => {
-    expect(Transformers.transformDate('2023-10-01')).toEqual(new Date('2023-10-01'));
-    expect(Transformers.transformDate('01/10/2023')).toEqual(new Date('2023-10-01'));
-    expect(Transformers.transformDate('01.10.2023')).toEqual(new Date('2023-10-01'));
-    expect(Transformers.transformDate('2023.10.01')).toEqual(new Date('2023-10-01'));
-    expect(Transformers.transformDate('20/6/24')).toEqual(new Date('2024-06-20'));
-    expect(Transformers.transformDate('1/6/24')).toEqual(new Date('2024-06-01'));
+    expect(Transformers.transformDate('2023-10-01')).toEqual(new Date(2023, 9, 1));
+    expect(Transformers.transformDate('01/10/2023')).toEqual(new Date(2023, 9, 1));
+    expect(Transformers.transformDate('01.10.2023')).toEqual(new Date(2023, 9, 1));
+    expect(Transformers.transformDate('2023.10.01')).toEqual(new Date(2023, 9, 1));
+    expect(Transformers.transformDate('20/6/24')).toEqual(new Date(2024, 5, 20));
+    expect(Transformers.transformDate('1/6/24')).toEqual(new Date(2024, 5, 1));
     
-    // Dates with times — time component is preserved in the returned Date
-    expect(Transformers.transformDate('2023-10-01 12:30:00')).toEqual(new Date(Date.UTC(2023, 9, 1, 12, 30, 0)));
-    expect(Transformers.transformDate('01/10/2023 15:30:00')).toEqual(new Date(Date.UTC(2023, 9, 1, 15, 30, 0)));
-    expect(Transformers.transformDate('2023-10-01T15:30:00Z')).toEqual(new Date(Date.UTC(2023, 9, 1, 15, 30, 0)));
-    expect(Transformers.transformDate('20/6/24 09:15')).toEqual(new Date(Date.UTC(2024, 5, 20, 9, 15, 0)));
+    // Dates with times — time component is interpreted in local (spreadsheet) time
+    expect(Transformers.transformDate('2023-10-01 12:30:00')).toEqual(new Date(2023, 9, 1, 12, 30, 0));
+    expect(Transformers.transformDate('01/10/2023 15:30:00')).toEqual(new Date(2023, 9, 1, 15, 30, 0));
+    expect(Transformers.transformDate('2023-10-01T15:30:00Z')).toEqual(new Date(2023, 9, 1, 15, 30, 0));
+    expect(Transformers.transformDate('20/6/24 09:15')).toEqual(new Date(2024, 5, 20, 9, 15, 0));
 
     // Invalid date inputs
     expect(() => Transformers.transformDate('invalid-date')).toThrowError('Failed to parse date: "invalid-date"');
 
     // US only logic
     getSpreadsheetLocaleMock.mockReturnValue('en_US');
-    expect(Transformers.transformDate('10.01.2023')).toEqual(new Date('2023-10-01'));
-    expect(Transformers.transformDate('10/01/2023')).toEqual(new Date('2023-10-01'));
-    expect(Transformers.transformDate('10/01/23')).toEqual(new Date('2023-10-01'));
+    expect(Transformers.transformDate('10.01.2023')).toEqual(new Date(2023, 9, 1));
+    expect(Transformers.transformDate('10/01/2023')).toEqual(new Date(2023, 9, 1));
+    expect(Transformers.transformDate('10/01/23')).toEqual(new Date(2023, 9, 1));
 
     getSpreadsheetLocaleMock.mockReset();
   });

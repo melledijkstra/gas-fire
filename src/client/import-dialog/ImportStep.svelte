@@ -9,15 +9,19 @@
   } from "../utils/importing";
   import { serverFunctions } from "../utils/serverFunctions";
   import { BadgeCheckSolid } from "flowbite-svelte-icons";
-    import type { RawTable } from "@/common/types";
+  import type { RawTable } from "@/common/types";
 
   let importFinished = $state(false);
   let message = $state("Ready to import your data?");
 
   const submitDataToServer = (data: RawTable, importStrategy: string) => {
     importState.isProcessing = true;
+
+    // Convert SvelteMap to a standard Object for JSON serialization via RPC
+    const userDecisionsObj = Object.fromEntries(importState.userDecisions);
+
     serverFunctions
-      .importCSV(data, importStrategy)
+      .importPipeline(data, importStrategy, userDecisionsObj)
       .then((response) => {
         if (response.success) {
           importFinished = true;

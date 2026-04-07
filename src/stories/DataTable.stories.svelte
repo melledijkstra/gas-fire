@@ -15,5 +15,3 @@
 <Story name="Default" />
 
 <Story name="Selectable" args={{ selectable: true }} />
-
-<Story name="With duplicate rows" args={{ duplicateRows: new Set([1,4,5,7,13]) }} />

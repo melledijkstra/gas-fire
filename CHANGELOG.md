@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.14.0-beta
+
+- **Feature** - Enhanced Import Preview with Transparency & Control.
+  - The preview step now calculates transaction status (e.g. 'valid', 'duplicate', 'removed').
+  - The unified data table visually differentiates status (e.g. duplicate rows are highlighted).
+  - Users can now explicitly override the action for duplicate rows (Skip vs. Force Import) via a new inline dropdown.
+  - The final import execution respects these user decisions during processing.
+  - Extracted the duplicate hash logic into `duplicate-finder.ts` and introduced `ImportPreviewReport` types.
+- **Performance** - Refactored standalone `findDuplicates` from O(N²) to O(N) using Map-based hash grouping, consistent with `FireTable.findDuplicates`.
+
 ## 4.12.0-beta
 
 - **New: `Table` class** - Generic in-memory table abstraction with mutable builder-pattern operations (`transpose()`, `removeEmptyRows()`, `deleteColumns()`, `sortByColumn()`, `clone()`) and static utilities. Replaces scattered `TableUtils` static methods.

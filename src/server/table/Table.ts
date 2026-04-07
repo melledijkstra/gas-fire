@@ -42,6 +42,10 @@ export class Table {
     return this.data;
   }
 
+  get headers(): CellValue[] | null {
+    return this.data?.[0] ?? null;
+  }
+
   /**
    * Returns a single row by index, or undefined if out of bounds.
    */
@@ -177,6 +181,38 @@ export class Table {
    */
   map(callback: (row: CellValue[], index: number) => CellValue[]): this {
     this.data = this.data.map((row, index) => callback(row, index));
+    return this;
+  }
+
+  /**
+   * Serializes the table to a JSON string.
+   * Useful for debugging or transferring data.
+   */
+  serialize(): string {
+    return JSON.stringify(this.data, (_key, value) => {
+      if (value instanceof Date) {
+        return { __type: 'Date', value: value.toISOString() };
+      }
+      return value;
+    });
+  }
+
+  deserialize(serializedData: string): this {
+    try {
+      const parsed = JSON.parse(serializedData, (_key, value) => {
+        if (value?.__type === 'Date') {
+          return new Date(value.value);
+        }
+        return value;
+      });
+      if (Array.isArray(parsed) && parsed.every((row) => Array.isArray(row))) {
+        this.data = parsed;
+      } else {
+        throw new Error('Invalid data format for deserialization');
+      }
+    } catch (error) {
+      console.error('Failed to deserialize data:', error);
+    }
     return this;
   }
 
