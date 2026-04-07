@@ -27,6 +27,9 @@ import { getRowHash } from '../deduplication/duplicate-finder';
  * ```
  */
 export class FireTable extends Table {
+  /** Cached hash column indices — computed once since FIRE_COLUMNS and HASH_COLUMNS are constants. */
+  private static cachedHashIndices: number[] | null = null;
+
   override clone(): FireTable {
     return new FireTable(this.data.map((row) => [...row]));
   }
@@ -275,10 +278,13 @@ export class FireTable extends Table {
 
   /**
    * Returns the column indices used to hash transactions for duplicate detection.
-   * Derived from FIRE_COLUMNS and HASH_COLUMNS.
+   * Derived from FIRE_COLUMNS and HASH_COLUMNS. Cached after first computation.
    */
   static getHashIndices(): number[] {
-    const headers = Array.from(FIRE_COLUMNS);
-    return HASH_COLUMNS.map(col => headers.indexOf(col));
+    if (!FireTable.cachedHashIndices) {
+      const headers = Array.from(FIRE_COLUMNS);
+      FireTable.cachedHashIndices = HASH_COLUMNS.map(col => headers.indexOf(col));
+    }
+    return FireTable.cachedHashIndices;
   }
 }

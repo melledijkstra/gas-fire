@@ -11,64 +11,68 @@ export function getRowHash(row: CellValue[]): string {
 
 /**
  * Finds duplicate rows in a dataset based on a timespan.
+ * Uses an O(N) hash-grouping approach consistent with {@link FireTable.findDuplicates}.
  *
- * @param {RawTable} table - The array of rows to search for duplicates.
+ * @param {RawTable} table - The array of rows to search for duplicates (first row is the header).
  * @param {number} timespan - The maximum allowed time difference (in milliseconds) between duplicate rows.
  * @param {FireColumn} dateColumn - The name of the column containing the date to compare.
- * @returns {RawTable} - An array of duplicate rows found within the specified timespan.
- *
- * @example
- * const rows = [
- *   { id: 1, name: 'Alice', date: '2023-01-01T00:00:00Z' },
- *   { id: 2, name: 'Alice', date: '2023-01-01T00:00:01Z' },
- *   { id: 3, name: 'Bob', date: '2023-01-01T00:00:02Z' }
- * ];
- * const columns = ['name'];
- * const timespan = 1000; // 1 second
- * const duplicates = findDuplicates(rows, columns, timespan);
- * duplicates will contain the first two rows
+ * @returns {RawTable} - An array of duplicate rows found within the specified timespan, preserving original order.
  */
 export function findDuplicates(table: RawTable, timespan: number, dateColumn: FireColumn = 'date'): RawTable {
-  const duplicates: RawTable = [];
-  const seenIndices: Set<number> = new Set();
-
-  // we need at least 1 header row + two data rows to find duplicates
+  // We need at least 1 header row + two data rows to find duplicates
   if (table.length < 2) {
     return [];
   }
 
   const rows = table.slice(1); // Skip the header row
-
   const dateColumnIndex = FireTable.getFireColumnIndex(dateColumn);
 
-  rows.forEach((row, index) => {
+  // O(N): Group rows by hash
+  const groups = new Map<string, { row: string[]; date: Date; originalIndex: number }[]>();
+  for (let index = 0; index < rows.length; index++) {
+    const row = rows[index];
     const key = getRowHash(row);
-    const rowDate = new Date(row[dateColumnIndex]);
+    const entry = { row, date: new Date(row[dateColumnIndex]), originalIndex: index };
+    const group = groups.get(key);
+    if (group) {
+      group.push(entry);
+    } else {
+      groups.set(key, [entry]);
+    }
+  }
 
-    for (let i = index + 1; i < rows.length; i++) {
-      const compareRow = rows[i];
-      const compareKey = getRowHash(compareRow);
-      const compareDate = new Date(compareRow[dateColumnIndex]);
+  // Collect duplicates from groups that have 2+ entries
+  const result: { row: string[]; originalIndex: number }[] = [];
 
-      // Check if the current row and the comparison row have the same key and their dates 
-      // are within the specified timespan
-      if (key === compareKey && Math.abs(rowDate.getTime() - compareDate.getTime()) <= timespan) {
+  for (const group of groups.values()) {
+    if (group.length < 2) continue;
 
-        if (!seenIndices.has(index)) {
-          duplicates.push(row);
-          seenIndices.add(index);
+    // Sort by date within group for efficient sliding-window comparison
+    group.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    const isDuplicate = new Array<boolean>(group.length).fill(false);
+    
+    // O(N) sliding window to mark duplicates within timespan
+    for (let i = 0; i < group.length; i++) {
+      for (let j = i + 1; j < group.length; j++) {
+        if (group[j].date.getTime() - group[i].date.getTime() > timespan) {
+          break
         }
-
-        if (!seenIndices.has(i)) {
-          duplicates.push(compareRow);
-          seenIndices.add(i);
-        }
-
-        // Break the loop as we found a duplicate for the current row
-        break;
+        isDuplicate[i] = true;
+        isDuplicate[j] = true;
       }
     }
-  });
 
-  return duplicates;
+    // Collect marked duplicates, preserving original input order
+    for (let i = 0; i < group.length; i++) {
+      if (isDuplicate[i]) {
+        result.push({ row: group[i].row, originalIndex: group[i].originalIndex });
+      }
+    }
+  }
+
+  // Sort by original index to preserve input row order
+  result.sort((a, b) => a.originalIndex - b.originalIndex);
+
+  return result.map(duplicate => duplicate.row);
 }

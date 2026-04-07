@@ -29,6 +29,7 @@ type GetLastImportedTransactionsOptions = {
  */
 export class FireSheet {
   protected readonly _sheet: GoogleAppsScript.Spreadsheet.Sheet;
+  protected static timeZoneCache: string | null = null;
 
   constructor() {
     const sourceSheet = getSourceSheet();
@@ -335,6 +336,19 @@ export class FireSheet {
     }
     Logger.timeEnd('autoFillColumns (Apps Script API) (slower)');
     Logger.timeEnd('importData (Apps Script API) (slower)');
+  }
+
+  /**
+   * @see https://developers.google.com/apps-script/reference/spreadsheet/spreadsheet#getSpreadsheetTimeZone()
+   */
+  static getTimeZone(): string {
+    if (this.timeZoneCache) {
+      return this.timeZoneCache;
+    }
+
+    this.timeZoneCache = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+
+    return this.timeZoneCache;
   }
 }
 

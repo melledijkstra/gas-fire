@@ -52,7 +52,7 @@ function filterRowsByDecisions(
 function formatCellValue(cell: CellValue): string {
   if (cell instanceof Date) {
     try { 
-      const timeZone = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+      const timeZone = FireSheet.getTimeZone();
       return Utilities.formatDate(cell, timeZone, "yyyy-MM-dd");
     } catch {
       return cell.toISOString().split('T')[0];

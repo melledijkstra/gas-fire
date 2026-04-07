@@ -8,6 +8,7 @@
   - Users can now explicitly override the action for duplicate rows (Skip vs. Force Import) via a new inline dropdown.
   - The final import execution respects these user decisions during processing.
   - Extracted the duplicate hash logic into `duplicate-finder.ts` and introduced `ImportPreviewReport` types.
+- **Performance** - Refactored standalone `findDuplicates` from O(N²) to O(N) using Map-based hash grouping, consistent with `FireTable.findDuplicates`.
 
 ## 4.12.0-beta
 
