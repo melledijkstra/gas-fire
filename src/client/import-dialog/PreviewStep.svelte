@@ -1,12 +1,12 @@
 <script lang="ts">
   import type { ImportPreviewReport, ServerResponse } from "@/common/types";
   import { serverFunctions } from "@/client/utils/serverFunctions";
-  import { getBrowserLocale } from "@/client/utils/web";
-  import DataTable from "../components/DataTable.svelte";
+  import PreviewTable from "../components/PreviewTable.svelte";
   import { excludeRowsFromData } from "../utils/importing";
   import { importState } from "../states/import.svelte";
   import { Alert, Button, Spinner } from "flowbite-svelte";
   import { InfoCircleSolid } from "flowbite-svelte-icons";
+  import PreviewReportSummary from "../components/PreviewReportSummary.svelte";
 
   let statusText = $state("");
 
@@ -18,17 +18,6 @@
       return;
     }
     const report = response.data;
-    const locale = getBrowserLocale();
-    const newBalanceFormatted = report.newBalance?.toLocaleString(locale, {
-      style: 'currency',
-      currency: 'EUR',
-    });
-
-    let summaryText = `Total: ${report.summary.totalRows} | Valid: ${report.summary.validCount}`;
-    if (report.summary.duplicateCount > 0) summaryText += ` | Duplicates: ${report.summary.duplicateCount}`;
-    if (report.summary.removedCount > 0) summaryText += ` | Removed: ${report.summary.removedCount}`;
-
-    statusText = `Preview generated. ${summaryText}${newBalanceFormatted ? ` | New Balance: ${newBalanceFormatted}` : ''}`;
 
     importState.previewReport = report;
     importState.userDecisions.clear();
@@ -88,5 +77,6 @@
 </Alert>
 
 {#if importState.previewReport}
-  <DataTable table={importState.rawImportData} report={importState.previewReport} />
+  <PreviewReportSummary report={importState.previewReport} />
+  <PreviewTable report={importState.previewReport} />
 {/if}

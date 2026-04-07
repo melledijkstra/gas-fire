@@ -30,16 +30,18 @@ export type RawTable = string[][];
 export type TransactionStatus = 'valid' | 'duplicate' | 'removed';
 export type TransactionAction = 'skip' | 'import';
 
-export interface PreviewTransaction {
-  hash: string;
-  row: string[];
+export interface TransactionMeta {
   status: TransactionStatus;
-  statusReason?: string;
   action: TransactionAction;
 }
 
 export interface ImportPreviewReport {
-  transactions: PreviewTransaction[];
+  /** Formatted transaction rows in the same order as `hashes`. Always aligned to FIRE_COLUMNS. */
+  rows: string[][];
+  /** Row hash at index i corresponds to rows[i]; used to key into transactionMeta. */
+  hashes: string[];
+  /** Per-transaction status and default action, keyed by row hash. */
+  transactionMeta: Record<string, TransactionMeta>;
   newBalance?: number;
   summary: {
     totalRows: number;

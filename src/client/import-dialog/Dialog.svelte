@@ -32,7 +32,10 @@
   {#if currentStep === 1}
     <ImportForm onSubmit={nextStep} />
     {#if importState.rawImportData}
-      <DataTable table={importState.rawImportData} tableClass="mt-4" />
+      <DataTable
+        table={importState.rawImportData}
+        tableClass="mt-4"
+      />
     {/if}
   {:else if currentStep === 2}
     <Button disabled={importState.isProcessing} onclick={prevStep}>←</Button>

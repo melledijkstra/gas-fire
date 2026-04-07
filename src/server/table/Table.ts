@@ -189,7 +189,31 @@ export class Table {
    * Useful for debugging or transferring data.
    */
   serialize(): string {
-    return JSON.stringify(this.data);
+    return JSON.stringify(this.data, (_key, value) => {
+      if (value instanceof Date) {
+        return { __type: 'Date', value: value.toISOString() };
+      }
+      return value;
+    });
+  }
+
+  deserialize(serializedData: string): this {
+    try {
+      const parsed = JSON.parse(serializedData, (_key, value) => {
+        if (value && value.__type === 'Date') {
+          return new Date(value.value);
+        }
+        return value;
+      });
+      if (Array.isArray(parsed) && parsed.every((row) => Array.isArray(row))) {
+        this.data = parsed;
+      } else {
+        throw new Error('Invalid data format for deserialization');
+      }
+    } catch (error) {
+      console.error('Failed to deserialize data:', error);
+    }
+    return this;
   }
 
   // ──────────────────────────────────────────────

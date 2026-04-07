@@ -3,10 +3,11 @@ import type {
   BankOptions,
   RawTable,
   ImportPreviewReport,
+  TransactionMeta,
 } from '@/common/types';
 import { fn } from 'storybook/test'
 import type * as publicServerFunctions from '@/server/index';
-import { FIRE_COLUMNS } from '@/common/constants';
+import { fireTableMock } from '@/fixtures/fire-table';
 
 ////////////////////////////////////////////////////////////////
 // This mock is used by storybook, to mimic server functions
@@ -60,45 +61,37 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
   };
 
   async previewPipeline(
-    table: RawTable,
+    _table: RawTable,
     _strategy: string
   ): Promise<ServerResponse<ImportPreviewReport>> {
     console.log('previewPipeline mock called');
     await sleep(2000);
+
+    const rows = fireTableMock.map(row => row.map(cell => String(cell)));
+    const hashes = rows.map((_, i) => `mocked-hash-${i + 1}`);
+    const metas = ['valid', 'valid', 'duplicate', 'removed'] as const;
+    const actions = ['import', 'import', 'skip', 'skip'] as const;
+
+    const duplicateCount = metas.filter(status => status === 'duplicate').length;
+    const removedCount = metas.filter(status => status === 'removed').length;
+    const validCount = rows.length - duplicateCount - removedCount;
+
     return {
       success: true,
       data: {
-        headers: Array.from(FIRE_COLUMNS),
         summary: {
-          duplicateCount: 2,
-          removedCount: 1,
+          duplicateCount,
+          removedCount,
           rulesApplied: 3,
-          totalRows: table.length,
-          validCount: table.length - 3, // Assuming duplicates and removed rows are not valid
+          totalRows: rows.length,
+          validCount,
         },
-        transactions: [{
-          action: 'import',
-          hash: 'mocked-hash-1',
-          row: table[0],
-          status: 'valid'
-        }, {
-          action: 'import',
-          hash: 'mocked-hash-2',
-          row: table[1],
-          status: 'valid'
-        },
-        {
-          action: 'skip',
-          hash: 'mocked-hash-3',
-          row: table[2],
-          status: 'duplicate'
-        },
-        {
-          action: 'skip',
-          hash: 'mocked-hash-4',
-          row: table[3],
-          status: 'removed'
-        }],
+        rows,
+        hashes,
+        transactionMeta: hashes.reduce<Record<string, TransactionMeta>>((acc, hash, i) => {
+          acc[hash] = { status: metas[i] ?? 'valid', action: actions[i] ?? 'import' };
+          return acc;
+        }, {}),
         newBalance: 1234.56,
       }
     };

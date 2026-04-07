@@ -1,4 +1,4 @@
-import type { ServerResponse, RawTable, ImportPreviewReport, UserDecisions, PreviewTransaction, TransactionAction, TransactionStatus } from '@/common/types';
+import type { ServerResponse, RawTable, ImportPreviewReport, UserDecisions, TransactionAction, TransactionStatus } from '@/common/types';
 import { Config } from '../config';
 import { FireTable, FireSheet } from '../table';
 import { Table } from '../table/Table';
@@ -116,7 +116,7 @@ export function importPipeline(
   userDecisions?: UserDecisions
 ): ServerResponse {
   try {
-    Logger.time('importCSV')
+    Logger.time('importPipeline')
 
     const fireSheet = new FireSheet()
     const accountConfig = Config.getAccountConfiguration(bankAccount)
@@ -179,7 +179,7 @@ export function importPipeline(
     const msg = `imported ${finalTable.getRowCount()} rows!`;
     Logger.log(msg)
 
-    Logger.timeEnd('importCSV')
+    Logger.timeEnd('importPipeline')
 
     return {
       success: true,
@@ -228,7 +228,11 @@ export function previewPipeline(
     // We only want to include valid and kept items for the new balance calculation
     const validAmountNumbers: number[] = [];
 
-    const transactions: PreviewTransaction[] = fireTable.getData().map((row) => {
+    const rows: string[][] = [];
+    const hashes: string[] = [];
+    const transactionMeta: ImportPreviewReport['transactionMeta'] = {};
+
+    for (const row of fireTable.getData()) {
       const hash = getRowHash(row, compareIndices);
       let status: TransactionStatus;
       const action: TransactionAction = 'import';
@@ -239,7 +243,7 @@ export function previewPipeline(
       } else {
         status = 'valid';
         summary.validCount++;
-        // we extract the number before formatting the row visually
+        // extract the amount before formatting the row visually
         const amountStr = String(row[fireTable.getFireColumnIndex('amount')] ?? '');
         if (isNumeric(amountStr)) {
           validAmountNumbers.push(Number(amountStr));
@@ -256,22 +260,19 @@ export function previewPipeline(
         }
       }
 
-      const stringRow = formattedRow.map(formatCellValue);
-
-      return {
-        hash,
-        row: stringRow,
-        status,
-        action
-      };
-    });
+      hashes.push(hash);
+      rows.push(formattedRow.map(formatCellValue));
+      transactionMeta[hash] = { status, action };
+    }
 
     const newBalance = AccountUtils.calculateNewBalance(bankAccount, validAmountNumbers);
 
     return {
       success: true,
       data: {
-        transactions,
+        rows,
+        hashes,
+        transactionMeta,
         newBalance,
         summary
       }

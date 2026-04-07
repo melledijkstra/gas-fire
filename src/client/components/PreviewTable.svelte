@@ -1,0 +1,68 @@
+<script lang="ts">
+  import type { ImportPreviewReport, TransactionAction, TransactionStatus } from '@/common/types';
+  import { FIRE_COLUMNS } from '@/common/constants';
+  import { importState } from '../states/import.svelte';
+  import { Table as FlowTable, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell, Select } from 'flowbite-svelte';
+
+  const {
+    report,
+    tableClass,
+  }: {
+    report: ImportPreviewReport;
+    tableClass?: string;
+  } = $props();
+
+  const headers = Array.from(FIRE_COLUMNS);
+  const hasDetectedDuplicates = $derived(report.summary.duplicateCount > 0);
+
+  const getRowClass = (status: TransactionStatus): string => {
+    if (status === 'removed') return 'opacity-50 line-through';
+    if (status === 'duplicate') return 'bg-yellow-100! dark:bg-yellow-900! opacity-75';
+    return '';
+  };
+</script>
+
+<FlowTable class={[tableClass, 'border border-gray-400 mb-2.5 mr-2.5']} striped hoverable>
+  <TableHead>
+    {#if hasDetectedDuplicates}
+      <TableHeadCell class="py-2 px-1 normal-case">Action</TableHeadCell>
+    {/if}
+    {#each headers as header, i (i)}
+      <TableHeadCell class="py-2 px-1 normal-case">{header}</TableHeadCell>
+    {/each}
+  </TableHead>
+  <TableBody>
+    {#each report.rows as row, i (`${report.hashes[i]}-${i}`)}
+      {@const hash = report.hashes[i]}
+      {@const meta = report.transactionMeta[hash]}
+      <TableBodyRow class={getRowClass(meta.status)}>
+        {#if hasDetectedDuplicates}
+          <TableBodyCell class="py-2 px-1 text-xs text-center w-fit">
+            {#if meta.status === 'duplicate'}
+              <Select
+                size="sm"
+                class="text-xs"
+                value={importState.userDecisions.get(hash) ?? meta.action}
+                onchange={(e) => {
+                  if (e?.currentTarget?.value) {
+                    importState.userDecisions.set(hash, e.currentTarget.value as TransactionAction);
+                  }
+                }}
+              >
+                <option value="skip">Skip</option>
+                <option value="import">Force Import</option>
+              </Select>
+            {:else if meta.status === 'removed'}
+              <span class="text-gray-500">Removed</span>
+            {:else}
+              <span class="text-green-600">Import</span>
+            {/if}
+          </TableBodyCell>
+        {/if}
+        {#each row as cell}
+          <TableBodyCell class="py-2 px-1 text-xs">{cell}</TableBodyCell>
+        {/each}
+      </TableBodyRow>
+    {/each}
+  </TableBody>
+</FlowTable>
