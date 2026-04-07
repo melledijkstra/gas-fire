@@ -15,11 +15,6 @@ vi.mock('../globals', () => ({
 vi.mock('../helpers', async (actualImport) => ({
   ...await actualImport<typeof import('../helpers')>(),
   getCategoryNames: vi.fn(() => ['cat1', 'cat2']),
-  getColumnIndexByName: vi.fn(name => {
-    if (name === 'category') return 0;
-    if (name === 'contra_account') return 1;
-    return -1;
-  }),
 }))
 
 const detectCategorySpy = vi.spyOn(

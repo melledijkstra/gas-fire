@@ -169,12 +169,19 @@ export class Config {
     return configs;
   }
 
-  static getAccountConfiguration(accountId: string): Config | undefined {
+  /**
+   * Retrieves the configuration for a specific account.
+   * @throws {Error} if the configuration for the specified account is not found
+   */
+  static getAccountConfiguration(accountId: string): Config {
     const configs = this.getConfigurations();
+    const accountConfig = configs?.[accountId];
 
-    if (configs?.[accountId]) {
-      return configs[accountId];
+    if (!accountConfig) {
+      throw new Error(`Configuration for account ${accountId} not found`);
     }
+
+    return accountConfig;
   }
 
   /**

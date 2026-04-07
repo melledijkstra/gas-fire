@@ -7,12 +7,11 @@ import type { RawTable } from '@/common/types';
 describe('FireTable', () => {
   describe('getFireColumnIndex', () => {
     it('should return correct index for known fire columns', () => {
-      const table = new FireTable([]);
-      expect(table.getFireColumnIndex('ref')).toBe(0);
-      expect(table.getFireColumnIndex('iban')).toBe(1);
-      expect(table.getFireColumnIndex('date')).toBe(2);
-      expect(table.getFireColumnIndex('amount')).toBe(3);
-      expect(table.getFireColumnIndex('category')).toBe(9);
+      expect(FireTable.getFireColumnIndex('ref')).toBe(0);
+      expect(FireTable.getFireColumnIndex('iban')).toBe(1);
+      expect(FireTable.getFireColumnIndex('date')).toBe(2);
+      expect(FireTable.getFireColumnIndex('amount')).toBe(3);
+      expect(FireTable.getFireColumnIndex('category')).toBe(9);
     });
   });
 
@@ -52,11 +51,11 @@ describe('FireTable', () => {
       const table = new FireTable([
         // ref, iban, date, amount, balance, contra_account, ...
         ['1', '', '2023-01-01', '-1.25', '', 'Alice', '', '', '', '', '', '', '', '', '', ''],
-        ['2', '', '2023-01-01', '23', '', 'Alice', '', '', '', '', '', '', '', '', '', ''],
-        ['3', '', '2023-01-01', '-30', '', 'Bob', '', '', '', '', '', '', '', '', '', ''],
+        ['2', '', '2023-01-01', '-1.25', '', 'Alice', '', '', '', '', '', '', '', '', '', ''],
+        ['3', '', '2023-01-01', '-30',   '', 'Bob',   '', '', '', '', '', '', '', '', '', ''],
       ]);
 
-      const duplicates = table.findDuplicates(['contra_account'], 2 * 24 * 60 * 60 * 1000);
+      const duplicates = table.findDuplicates(2 * 24 * 60 * 60 * 1000);
       expect(duplicates.getRowCount()).toBe(2);
       expect(duplicates.getData()[0][0]).toBe('1');
       expect(duplicates.getData()[1][0]).toBe('2');
@@ -64,12 +63,12 @@ describe('FireTable', () => {
 
     it('should not find duplicates if timespan is exceeded', () => {
       const table = new FireTable([
-        ['1', '', '2023-01-01', '', '', 'Alice', '', '', '', '', '', '', '', '', '', ''],
+        ['1', '', '2023-01-01', '-1.25', '', 'Alice', '', '', '', '', '', '', '', '', '', ''],
         ['2', '', '2023-01-03', '', '', 'Alice', '', '', '', '', '', '', '', '', '', ''],
         ['3', '', '2023-01-01', '', '', 'Bob', '', '', '', '', '', '', '', '', '', ''],
       ]);
 
-      const duplicates = table.findDuplicates(['contra_account'], 1 * 24 * 60 * 60 * 1000);
+      const duplicates = table.findDuplicates(1 * 24 * 60 * 60 * 1000);
       expect(duplicates.isEmpty()).toBe(true);
     });
 
@@ -77,7 +76,7 @@ describe('FireTable', () => {
       const table = new FireTable([
         ['1', '', '2023-01-01', '', '', 'Alice', '', '', '', '', '', '', '', '', '', ''],
       ]);
-      const duplicates = table.findDuplicates(['contra_account'], 1);
+      const duplicates = table.findDuplicates(1 * 24 * 60 * 60 * 1000);
       expect(duplicates.isEmpty()).toBe(true);
     });
   });
@@ -143,7 +142,7 @@ describe('FireTable', () => {
 
       const result = FireTable.fromCSV({ headers, rows, config });
 
-      const descriptionIndex = result.getFireColumnIndex('description');
+      const descriptionIndex = FireTable.getFireColumnIndex('description');
       expect(result.getData()[0][descriptionIndex]).toBe(null);
     });
 
@@ -172,25 +171,25 @@ describe('FireTable', () => {
       const data = result.getData();
 
       expect(result.getRowCount()).toBe(2);
-      expect(data[0][result.getFireColumnIndex('date')]).toStrictEqual(
+      expect(data[0][FireTable.getFireColumnIndex('date')]).toStrictEqual(
         new Date('2024-01-01'),
       );
-      expect(data[0][result.getFireColumnIndex('amount')]).toBe(100);
-      expect(data[0][result.getFireColumnIndex('description')]).toBe(
+      expect(data[0][FireTable.getFireColumnIndex('amount')]).toBe(100);
+      expect(data[0][FireTable.getFireColumnIndex('description')]).toBe(
         'Test payment 1',
       );
-      expect(data[0][result.getFireColumnIndex('iban')]).toBe(
+      expect(data[0][FireTable.getFireColumnIndex('iban')]).toBe(
         'NL01BANK0123456789',
       );
 
-      expect(data[1][result.getFireColumnIndex('date')]).toStrictEqual(
+      expect(data[1][FireTable.getFireColumnIndex('date')]).toStrictEqual(
         new Date('2024-01-02'),
       );
-      expect(data[1][result.getFireColumnIndex('amount')]).toBe(200);
-      expect(data[1][result.getFireColumnIndex('description')]).toBe(
+      expect(data[1][FireTable.getFireColumnIndex('amount')]).toBe(200);
+      expect(data[1][FireTable.getFireColumnIndex('description')]).toBe(
         'Test payment 2',
       );
-      expect(data[1][result.getFireColumnIndex('iban')]).toBe(
+      expect(data[1][FireTable.getFireColumnIndex('iban')]).toBe(
         'NL01BANK0123456789',
       );
     });
@@ -236,17 +235,17 @@ describe('FireTable', () => {
       const data = result.getData();
 
       expect(result.getRowCount()).toBe(4);
-      expect(data[0][result.getFireColumnIndex('date')]).toStrictEqual(
+      expect(data[0][FireTable.getFireColumnIndex('date')]).toStrictEqual(
         new Date('2023-11-26'),
       );
-      expect(data[0][result.getFireColumnIndex('amount')]).toBe(-11.63);
-      expect(data[0][result.getFireColumnIndex('contra_account')]).toBe(
+      expect(data[0][FireTable.getFireColumnIndex('amount')]).toBe(-11.63);
+      expect(data[0][FireTable.getFireColumnIndex('contra_account')]).toBe(
         'Supermarket X',
       );
-      expect(data[0][result.getFireColumnIndex('description')]).toBe(
+      expect(data[0][FireTable.getFireColumnIndex('description')]).toBe(
         'Ticket is attached to the email',
       );
-      expect(data[0][result.getFireColumnIndex('iban')]).toBe('ES12345678910');
+      expect(data[0][FireTable.getFireColumnIndex('iban')]).toBe('ES12345678910');
     });
   });
 

@@ -7,19 +7,19 @@ import { structuredClone } from '@/common/helpers';
 import { Logger } from '@/common/logger';
 import { removeFilterCriteria } from '../utils/spreadsheet';
 import { FEATURES } from '@/common/settings';
-import { getRowHash } from '../duplicate-finder';
+import { getRowHash } from '../deduplication/duplicate-finder';
 
 /**
  * Loads hashes of already-imported transactions from the sheet for duplicate detection.
  * Returns an empty set if the data cannot be retrieved.
  */
-function loadExistingHashes(fireSheet: FireSheet, compareIndices: number[]): Set<string> {
+function loadExistingHashes(fireSheet: FireSheet): Set<string> {
   const existingHashes = new Set<string>();
   try {
     const lastImportedTransactions = fireSheet.getLastImportedTransactions();
     if (lastImportedTransactions) {
       for (const row of lastImportedTransactions.getData()) {
-        existingHashes.add(getRowHash(row, compareIndices));
+        existingHashes.add(getRowHash(row));
       }
     }
   } catch (e) {
@@ -34,11 +34,10 @@ function loadExistingHashes(fireSheet: FireSheet, compareIndices: number[]): Set
  */
 function filterRowsByDecisions(
   rows: ReturnType<FireTable['getData']>,
-  compareIndices: number[],
   userDecisions: UserDecisions
 ): ReturnType<FireTable['getData']> {
   return rows.filter(row => {
-    const hash = getRowHash(row, compareIndices);
+    const hash = getRowHash(row);
     const action: TransactionAction = userDecisions[hash] ?? 'import';
     return action === 'import';
   });
@@ -70,7 +69,7 @@ function formatCellValue(cell: unknown): string {
  */
 function processImportData(inputTable: RawTable, accountConfig: Config): FireTable {
   const cloned = structuredClone(inputTable)
-  const rawTable = new Table(cloned);
+  const rawTable = new Table(cloned)
 
   // retrieve the header row and separate from the actual input data
   const headerRow = rawTable.shiftRow() as string[] | undefined;
@@ -123,12 +122,6 @@ export function importPipeline(
 
     Logger.log('account configuration used for import', accountConfig)
 
-    if (!accountConfig) {
-      throw new Error(
-        `Bank with identifier "${bankAccount}" does not have valid configuration!`
-      )
-    }
-
     // make the user visually switch to the primary sheet where data will be imported
     fireSheet.activate()
 
@@ -155,10 +148,8 @@ export function importPipeline(
     let finalTable = fireTable;
 
     if (FEATURES.IMPORT_DUPLICATE_DETECTION || userDecisions) {
-      const compareIndices = FireTable.getCompareIndices();
-
       if (userDecisions) {
-        finalTable = new FireTable(filterRowsByDecisions(fireTable.getData(), compareIndices, userDecisions));
+        finalTable = new FireTable(filterRowsByDecisions(fireTable.getData(), userDecisions));
       }
     }
 
@@ -199,24 +190,24 @@ export function previewPipeline(
   bankAccount: string
 ): ServerResponse<ImportPreviewReport> {
   try {
+    Logger.time('previewPipeline')
+
     const config = Config.getAccountConfiguration(bankAccount);
 
-    if (!config) {
-      throw new Error(`Configuration for account ${bankAccount} not found`);
+    // Process the data using the exact same logic as the actual import
+    const previewTable = processImportData(table, config);
+
+    let existingHashes: Set<string> = new Set();
+
+    if (FEATURES.IMPORT_DUPLICATE_DETECTION) {
+      const fireSheet = new FireSheet();
+      existingHashes = loadExistingHashes(fireSheet);
+      Logger.log(`Loaded ${existingHashes.size} existing transaction hashes for duplicate detection`);
+      Logger.log('Existing hashes sample', Array.from(existingHashes).slice(0, 5));
     }
 
-    // Process the data using the exact same logic as the actual import
-    const fireTable = processImportData(table, config);
-
-    const compareIndices = FireTable.getCompareIndices();
-
-    // We always detect duplicates in preview, even if the feature is toggled off for general import,
-    // so that the user gets transparency and control.
-    const fireSheet = new FireSheet();
-    const existingHashes = loadExistingHashes(fireSheet, compareIndices);
-
     const summary = {
-      totalRows: fireTable.getRowCount(),
+      totalRows: previewTable.getRowCount(),
       validCount: 0,
       removedCount: 0,
       duplicateCount: 0,
@@ -232,11 +223,12 @@ export function previewPipeline(
     const hashes: string[] = [];
     const transactionMeta: ImportPreviewReport['transactionMeta'] = {};
 
-    for (const row of fireTable.getData()) {
-      const hash = getRowHash(row, compareIndices);
+    for (const row of previewTable.getData()) {
+      const hash = getRowHash(row);
       let status: TransactionStatus;
       const action: TransactionAction = 'import';
 
+      Logger.log('duplicate checking row', { row, hash, hit: existingHashes.has(hash) });
       if (existingHashes.has(hash)) {
         status = 'duplicate';
         summary.duplicateCount++;
@@ -244,9 +236,9 @@ export function previewPipeline(
         status = 'valid';
         summary.validCount++;
         // extract the amount before formatting the row visually
-        const amountStr = String(row[fireTable.getFireColumnIndex('amount')] ?? '');
-        if (isNumeric(amountStr)) {
-          validAmountNumbers.push(Number(amountStr));
+        const amount = row[FireTable.getFireColumnIndex('amount')];
+        if (isNumeric(amount)) {
+          validAmountNumbers.push(Number(amount));
         }
       }
 
@@ -266,6 +258,8 @@ export function previewPipeline(
     }
 
     const newBalance = AccountUtils.calculateNewBalance(bankAccount, validAmountNumbers);
+
+    Logger.timeEnd('previewPipeline')
 
     return {
       success: true,

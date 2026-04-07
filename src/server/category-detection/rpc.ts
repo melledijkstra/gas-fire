@@ -1,4 +1,4 @@
-import { FireSheet } from '../table';
+import { FireSheet, FireTable } from '../table';
 import { getCategoryNames } from '../helpers';
 import { Logger } from '@/common/logger';
 import { categorizeTransactions } from '.';
@@ -35,7 +35,7 @@ export const executeAutomaticCategorization = () => {
     }
 
     const fireTable = fireSheet.getData();
-    const categoryColIndex = fireTable.getFireColumnIndex('category')
+    const categoryColIndex = FireTable.getFireColumnIndex('category')
 
     // we set a filter which hides all categories, leaving only rows without category
     // unfortunately there is no better way to do it currently

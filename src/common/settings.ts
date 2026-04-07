@@ -10,5 +10,5 @@ export const FEATURES: Record<string, boolean> = {
   IMPORT_DUPLICATE_DETECTION: false,
 }
 
-export const DUPLICATE_COMPARE_COLS: FireColumn[] = ['date', 'iban', 'amount', 'contra_account', 'description']
-
+// ORDER IS IMPORTANT!
+export const HASH_COLUMNS: FireColumn[] = ['iban', 'date', 'amount', 'contra_account', 'description']

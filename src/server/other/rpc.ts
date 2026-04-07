@@ -60,10 +60,7 @@ export const executeFindDuplicates = () => {
     const fireTable = fireSheet.getData();
     const headers = Array.from(FIRE_COLUMNS);
 
-    const duplicateTable = fireTable.findDuplicates(
-      ['iban', 'amount', 'contra_account', 'description'],
-      duplicateThresholdMs,
-    );
+    const duplicateTable = fireTable.findDuplicates(duplicateThresholdMs);
 
     if (duplicateTable.isEmpty()) {
       ui.alert('No duplicates found!');
