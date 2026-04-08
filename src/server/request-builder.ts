@@ -1,13 +1,13 @@
-import type { CellValue } from './table/types';
+import type { CellValue } from './table/types'
 
 export class SheetsRequestBuilder {
-  public requests: GoogleAppsScript.Sheets.Schema.Request[] = [];
+  public requests: GoogleAppsScript.Sheets.Schema.Request[] = []
 
   insertRows(
     sheetId: number,
     startIndex: number,
     rowCount: number,
-    inheritFromBefore: boolean = false
+    inheritFromBefore: boolean = false,
   ): this {
     const request: GoogleAppsScript.Sheets.Schema.Request = {
       insertDimension: {
@@ -19,11 +19,11 @@ export class SheetsRequestBuilder {
         },
         inheritFromBefore,
       },
-    };
+    }
 
-    this.requests.push(request);
+    this.requests.push(request)
 
-    return this;
+    return this
   }
 
   insertData(
@@ -32,13 +32,13 @@ export class SheetsRequestBuilder {
     startRowIndex: number,
     startColumnIndex: number,
     cellDataGenerator: (cell: unknown) => GoogleAppsScript.Sheets.Schema.CellData,
-    fields: string = 'userEnteredValue'
+    fields: string = 'userEnteredValue',
   ): this {
-    const maxRowLength = data.reduce((max, row) => Math.max(max, row.length), 0);
+    const maxRowLength = data.reduce((max, row) => Math.max(max, row.length), 0)
 
     const request: GoogleAppsScript.Sheets.Schema.Request = {
       updateCells: {
-        rows: data.map((row) => ({
+        rows: data.map(row => ({
           values: row.map(cellDataGenerator),
         })),
         fields,
@@ -50,18 +50,18 @@ export class SheetsRequestBuilder {
           endColumnIndex: startColumnIndex + maxRowLength,
         },
       },
-    };
+    }
 
-    this.requests.push(request);
-    
-    return this;
+    this.requests.push(request)
+
+    return this
   }
 
   autoFill(
     sourceRange: GoogleAppsScript.Sheets.Schema.GridRange,
     fillLength: number,
     dimension: 'ROWS' | 'COLUMNS' = 'ROWS',
-    useAlternateSeries: boolean = false
+    useAlternateSeries: boolean = false,
   ): this {
     const request: GoogleAppsScript.Sheets.Schema.Request = {
       autoFill: {
@@ -72,10 +72,10 @@ export class SheetsRequestBuilder {
           fillLength,
         },
       },
-    };
+    }
 
-    this.requests.push(request);
+    this.requests.push(request)
 
-    return this;
+    return this
   }
 }

@@ -1,11 +1,11 @@
-import type { Preview } from '@storybook/svelte';
+import type { Preview } from '@storybook/svelte'
 import { sb } from 'storybook/test'
-import { google } from './google.mock.ts';
-import '@/client/app.css';
+import { google } from './google.mock.ts'
+import '@/client/app.css'
 
 sb.mock(import('../src/client/utils/serverFunctions.ts'))
 
-window.google = google;
+window.google = google
 
 const preview: Preview = {
   parameters: {
@@ -14,7 +14,7 @@ const preview: Preview = {
         dialog: {
           name: 'dialog',
           value: 'rgba(0, 0, 0, 0.6)',
-        }
+        },
       },
     },
     layout: 'centered',
@@ -25,6 +25,6 @@ const preview: Preview = {
       },
     },
   },
-};
+}
 
-export default preview;
+export default preview

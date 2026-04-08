@@ -1,2 +1,1 @@
-
-export const cleanString = (str: string) => str?.replaceAll('\n', ' ').trim();
+export const cleanString = (str: string) => str?.replaceAll('\n', ' ').trim()

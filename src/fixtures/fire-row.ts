@@ -1,4 +1,4 @@
-import { FIRE_COLUMNS, type FireColumn } from "@/common/constants";
+import { FIRE_COLUMNS, type FireColumn } from '@/common/constants'
 
 /**
  * Builds a FIRE-format string row (`string[]`) suitable for use in a `RawTable`.
@@ -23,7 +23,7 @@ export const buildFireTableRow = (overrides: Partial<Record<FireColumn, string>>
     disabled: '',
     contra_iban: '',
     currency: 'EUR',
-  };
-  const merged = { ...defaults, ...overrides };
-  return FIRE_COLUMNS.map(col => merged[col]);
-};
+  }
+  const merged = { ...defaults, ...overrides }
+  return FIRE_COLUMNS.map(col => merged[col])
+}

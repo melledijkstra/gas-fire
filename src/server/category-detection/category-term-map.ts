@@ -1,4 +1,4 @@
-import type { CategoryDetectionConfigOld } from './types';
+import type { CategoryDetectionConfigOld } from './types'
 
 export const categoriesTermsMap: CategoryDetectionConfigOld = {
   'Food & Groceries': [
@@ -9,7 +9,7 @@ export const categoriesTermsMap: CategoryDetectionConfigOld = {
     /glovo|ubereats|uber eats/,
     /mercadona|superdino|lupa|alcampo|carrefour|la despensa|eroski/,
   ],
-  Salary: [/adidas espana s.a./],
+  'Salary': [/adidas espana s.a./],
   'Bars, Restaurants & Clubs': [
     /restaurant|restaurante/,
     /cafe|cafeteria|cafetaría/,
@@ -23,7 +23,7 @@ export const categoriesTermsMap: CategoryDetectionConfigOld = {
     /tagliatella/,
     /mcdonalds|\bkfc\b|starbucks|burger king|domino's|taco bell|papa john|tim horton/,
   ],
-  Income: [],
+  'Income': [],
   'Household & Utilities': [
     /iberdrola/,
     /hergar rio sl/,
@@ -31,9 +31,9 @@ export const categoriesTermsMap: CategoryDetectionConfigOld = {
     /ikea/,
     /\bdigi\b/,
   ],
-  Debt: [],
-  Subscriptions: [/spotify/, /openai/],
-  Education: [],
+  'Debt': [],
+  'Subscriptions': [/spotify/, /openai/],
+  'Education': [],
   'Leisure & Entertainment': [/climbing/],
   'Personal Care': [
     /\bbarber|kapper|kapsalon|peluqueria|peluquería|peluqueros/,
@@ -50,5 +50,5 @@ export const categoriesTermsMap: CategoryDetectionConfigOld = {
   'Travel & Holidays': [],
   'Savings & Investments': [/\bdegiro\b/],
   'Business expenses': [],
-  Miscellaneous: [],
-};
+  'Miscellaneous': [],
+}

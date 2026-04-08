@@ -1,6 +1,7 @@
-import eslint from '@eslint/js';
-import { defineConfig } from 'eslint/config';
-import tseslint from 'typescript-eslint';
+import eslint from '@eslint/js'
+import stylistic from '@stylistic/eslint-plugin'
+import { defineConfig } from 'eslint/config'
+import tseslint from 'typescript-eslint'
 
 export default defineConfig([
   {
@@ -13,6 +14,7 @@ export default defineConfig([
   },
   eslint.configs.recommended,
   tseslint.configs.recommended,
+  stylistic.configs.recommended,
   {
     files: ['**/*.{js,ts,tsx}'],
     rules: {
@@ -25,8 +27,8 @@ export default defineConfig([
         },
       ],
       // Sonar Cloud recommended rules
-      "complexity": ["error", 15],
+      'complexity': ['error', 15],
       // End Sonar Cloud rules
     },
-  }
-]);
+  },
+])
