@@ -10,7 +10,7 @@
  * }
  * ```
  */
-export type BankOptions = Record<string, string>;
+export type BankOptions = Record<string, string>
 
 /**
  * Raw table definition for client-server data transfer.
@@ -25,42 +25,42 @@ export type BankOptions = Record<string, string>;
  * ]
  * ```
  */
-export type RawTable = string[][];
+export type RawTable = string[][]
 
-export type TransactionStatus = 'valid' | 'duplicate' | 'removed';
-export type TransactionAction = 'skip' | 'import';
+export type TransactionStatus = 'valid' | 'duplicate' | 'removed'
+export type TransactionAction = 'skip' | 'import'
 
 export interface TransactionMeta {
-  status: TransactionStatus;
-  action: TransactionAction;
+  status: TransactionStatus
+  action: TransactionAction
 }
 
 export interface ImportPreviewReport {
   /** Formatted transaction rows in the same order as `hashes`. Always aligned to FIRE_COLUMNS. */
-  rows: string[][];
+  rows: string[][]
   /** Row hash at index i corresponds to rows[i]; used to key into transactionMeta. */
-  hashes: string[];
+  hashes: string[]
   /** Per-transaction status and default action, keyed by row hash. */
-  transactionMeta: Record<string, TransactionMeta>;
-  newBalance?: number;
+  transactionMeta: Record<string, TransactionMeta>
+  newBalance?: number
   summary: {
-    totalRows: number;
-    validCount: number;
-    removedCount: number;
-    duplicateCount: number;
-    rulesApplied: number;
-  };
+    totalRows: number
+    validCount: number
+    removedCount: number
+    duplicateCount: number
+    rulesApplied: number
+  }
 }
 
-export type UserDecisions = Map<string, TransactionAction>;
+export type UserDecisions = Map<string, TransactionAction>
 
-export type EmptyServerResponse = { success: true; message?: string };
-export type ErrorServerResponse = { success: false; error: string; };
-export type PayloadServerResponse<T> = { success: true; data: T; message?: string };
+export type EmptyServerResponse = { success: true, message?: string }
+export type ErrorServerResponse = { success: false, error: string }
+export type PayloadServerResponse<T> = { success: true, data: T, message?: string }
 
-export type ServerResponse<T = void> =
-  | (T extends void ? EmptyServerResponse : PayloadServerResponse<T>)
-  | ErrorServerResponse;
+export type ServerResponse<T = void>
+  = | (T extends void ? EmptyServerResponse : PayloadServerResponse<T>)
+    | ErrorServerResponse
 
 /**
  * Account definition
@@ -72,28 +72,28 @@ export type ServerResponse<T = void> =
  * }
  */
 export type Accounts = {
-  [key: string]: string;
-};
+  [key: string]: string
+}
 
 export type FireTransaction = {
   // an ID for the transaction, can be anything as long as it is unique
-  ref: string;
+  ref: string
   // the IBAN of this transaction, either receiving or executing the payment
   // this is used to link it to an bank account
-  iban: string;
+  iban: string
   // the date of the transaction in format: 11/09/2024 (DD/MM/YYYY)
-  date: string;
-  amount: number;
-  balance: number | '';
-  contra_account: string;
-  description: string;
-  comments: string;
-  icon: string;
-  category: string;
-  label: string;
-  import_date: string;
-  hours: number | '';
-  disabled: boolean | '';
-  contra_iban: string;
-  currency: string;
-};
+  date: string
+  amount: number
+  balance: number | ''
+  contra_account: string
+  description: string
+  comments: string
+  icon: string
+  category: string
+  label: string
+  import_date: string
+  hours: number | ''
+  disabled: boolean | ''
+  contra_iban: string
+  currency: string
+}

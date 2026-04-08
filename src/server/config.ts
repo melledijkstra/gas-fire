@@ -1,33 +1,32 @@
-import { FIRE_COLUMNS } from '@/common/constants';
-import type { FireColumn } from '@/common/constants';
-import { slugify } from '@/common/helpers';
-import { Logger } from '@/common/logger';
-import { FireSpreadsheet } from './globals';
+import { FIRE_COLUMNS } from '@/common/constants'
+import type { FireColumn } from '@/common/constants'
+import { slugify } from '@/common/helpers'
+import { Logger } from '@/common/logger'
+import { FireSpreadsheet } from './globals'
 
 const CONFIG_CACHE_KEY = 'cache.config'
 
 // PENDING: Make this configurable by the user, what if they rename the sheets?
-export const SOURCE_SHEET_NAME = 'source'
 export const CATEGORIES_SHEET_NAME = 'categories'
-export const CONFIG_SHEET_NAME = 'import-settings'
+const CONFIG_SHEET_NAME = 'import-settings'
 
 const parseBoolean = (value: string | boolean) =>
-  String(value).toLowerCase() === 'true' || value === true;
+  String(value).toLowerCase() === 'true' || value === true
 
 type ColumnMap = {
   [key in FireColumn]?: string;
-};
+}
 
 type ConfigParams = {
-  accountId: string;
-  columnMap?: ColumnMap;
-  autoFillColumnIndices?: number[];
-  autoFillEnabled?: boolean;
-  autoCategorizationEnabled?: boolean;
+  accountId: string
+  columnMap?: ColumnMap
+  autoFillColumnIndices?: number[]
+  autoFillEnabled?: boolean
+  autoCategorizationEnabled?: boolean
 }
 
 export class Config {
-  private static configCache: Record<string, Config> | null = null;
+  private static configCache: Record<string, Config> | null = null
   private readonly columnMap: ColumnMap
   public autoFillEnabled: boolean
   public autoCategorizationEnabled: boolean
@@ -49,53 +48,53 @@ export class Config {
   }
 
   getAccountId(): string {
-    return this.accountId;
+    return this.accountId
   }
 
   getColumnIndex(fireColumn: FireColumn, headers: string[]): number | undefined {
-    const importColumn = this.columnMap?.[fireColumn];
+    const importColumn = this.columnMap?.[fireColumn]
     if (importColumn) {
-      return headers.indexOf(importColumn);
+      return headers.indexOf(importColumn)
     }
   }
 
   private static loadColumnMapping(sheet: GoogleAppsScript.Spreadsheet.Sheet) {
-    const columnMapConfig = sheet.getSheetValues(5, 1, sheet.getLastRow(), -1);
+    const columnMapConfig = sheet.getSheetValues(5, 1, sheet.getLastRow(), -1)
 
     // first row contains account identifiers
-    const accountIdentifiers: string[] =
-      (columnMapConfig
+    const accountIdentifiers: string[]
+      = (columnMapConfig
         .shift() // take the first row
         ?.slice(1) // remove the first cell containing "Column Mapping"
         ?.filter(Boolean) ?? []) // remove any empty strings
-        .map(slugify); // slugify the account identifiers
+        .map(slugify) // slugify the account identifiers
 
-    const result: Record<string, ColumnMap> = {};
+    const result: Record<string, ColumnMap> = {}
 
     for (const account of accountIdentifiers) {
-      result[account] = {};
+      result[account] = {}
     }
 
     // filter out any empty rows which do not contain a fire column definition
-    const cleanColumnConfig = columnMapConfig.filter((row) => !!row?.[0]);
+    const cleanColumnConfig = columnMapConfig.filter(row => !!row?.[0])
 
     for (const row of cleanColumnConfig) {
-      const fireColumnName = row[0] as FireColumn; // first column contains the FIRE column name
+      const fireColumnName = row[0] as FireColumn // first column contains the FIRE column name
       if (!FIRE_COLUMNS.includes(fireColumnName)) {
-        continue;
+        continue
       }
       // ignore first row which contains the FIRE column name
       // ensure we only take as many columns as there are accounts
-      const columnValues = row.slice(1, accountIdentifiers.length + 1);
+      const columnValues = row.slice(1, accountIdentifiers.length + 1)
       // iterate over the accounts and map fire column with the import column
       for (let i = 0; i < accountIdentifiers.length; i++) {
         const account = accountIdentifiers[i]
         const value = columnValues[i]
-        result[account][fireColumnName] = value ?? null;
+        result[account][fireColumnName] = value ?? null
       }
     }
 
-    return result;
+    return result
   }
 
   /**
@@ -109,27 +108,27 @@ export class Config {
     }
 
     // retrieves column mappings per account
-    const columnMapping = this.loadColumnMapping(configSheet);
+    const columnMapping = this.loadColumnMapping(configSheet)
 
     // explanation:
     // first row contains configuration labels which we don't need
-    const rawConfigs = configSheet.getSheetValues(1, 2, 4, -1);
-    const configs: Record<string, Config> = {};
+    const rawConfigs = configSheet.getSheetValues(1, 2, 4, -1)
+    const configs: Record<string, Config> = {}
 
     // first row contains account identifiers
-    const accounts: string[] =
-      rawConfigs
+    const accounts: string[]
+      = rawConfigs
         .shift() // take the first row
         ?.filter(Boolean) ?? [] // remove any empty strings
 
     for (let i = 0; i < accounts.length; i++) {
-      const account = slugify(accounts[i]);
+      const account = slugify(accounts[i])
       // first row contains the auto fill column indices
       // second row contains the auto fill enabled flag
       // third row contains the auto categorization enabled flag
-      const autoFillColumnIndices = rawConfigs[0][i].split(',').map(Number);
-      const autoFillEnabled = parseBoolean(rawConfigs[1][i]);
-      const autoCategorizationEnabled = parseBoolean(rawConfigs[2][i]);
+      const autoFillColumnIndices = rawConfigs[0][i].split(',').map(Number)
+      const autoFillEnabled = parseBoolean(rawConfigs[1][i])
+      const autoCategorizationEnabled = parseBoolean(rawConfigs[2][i])
 
       configs[account] = new Config({
         accountId: account,
@@ -137,40 +136,41 @@ export class Config {
         autoFillColumnIndices,
         autoFillEnabled,
         autoCategorizationEnabled,
-      });
+      })
     }
 
-    return configs;
+    return configs
   }
 
   static getConfigurations(): Record<string, Config> {
     if (this.configCache) {
-      return this.configCache;
+      return this.configCache
     }
 
-    const cache = CacheService.getDocumentCache();
-    const cachedConfig = cache.get(CONFIG_CACHE_KEY);
+    const cache = CacheService.getDocumentCache()
+    const cachedConfig = cache.get(CONFIG_CACHE_KEY)
 
     if (cachedConfig) {
       try {
-        const parsed = JSON.parse(cachedConfig) as Record<string, ConfigParams>;
-        const configs: Record<string, Config> = {};
+        const parsed = JSON.parse(cachedConfig) as Record<string, ConfigParams>
+        const configs: Record<string, Config> = {}
         for (const accountId in parsed) {
-          configs[accountId] = new Config(parsed[accountId]);
+          configs[accountId] = new Config(parsed[accountId])
         }
-        this.configCache = configs;
-        return configs;
-      } catch (error) {
-        Logger.error('Failed to parse cached configuration:', error);
+        this.configCache = configs
+        return configs
+      }
+      catch (error) {
+        Logger.error('Failed to parse cached configuration:', error)
       }
     }
 
-    const configs = this.loadConfigurations();
+    const configs = this.loadConfigurations()
 
-    cache.put(CONFIG_CACHE_KEY, JSON.stringify(configs), 30);
+    cache.put(CONFIG_CACHE_KEY, JSON.stringify(configs), 30)
 
-    this.configCache = configs;
-    return configs;
+    this.configCache = configs
+    return configs
   }
 
   /**
@@ -178,14 +178,14 @@ export class Config {
    * @throws {Error} if the configuration for the specified account is not found
    */
   static getAccountConfiguration(accountId: string): Config {
-    const configs = this.getConfigurations();
-    const accountConfig = configs?.[accountId];
+    const configs = this.getConfigurations()
+    const accountConfig = configs?.[accountId]
 
     if (!accountConfig) {
-      throw new Error(`Configuration for account ${accountId} not found`);
+      throw new Error(`Configuration for account ${accountId} not found`)
     }
 
-    return accountConfig;
+    return accountConfig
   }
 
   /**
@@ -195,7 +195,7 @@ export class Config {
    */
   getImportColumnNameByFireColumn(columnName: FireColumn): string | undefined {
     if (this.columnMap?.[columnName]) {
-      return this.columnMap[columnName];
+      return this.columnMap[columnName]
     }
   }
 }
