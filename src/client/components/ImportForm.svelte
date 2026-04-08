@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Button, Fileupload, Helper, Label, Select, Spinner } from 'flowbite-svelte';
+  import { Button, Dropzone, Helper, Label, Select, Spinner } from 'flowbite-svelte';
   import { serverFunctions } from '@/client/utils/serverFunctions';
   import {
     acceptedMimeTypes,
@@ -9,7 +9,6 @@
   import { importState } from '@/client/states/import.svelte';
   import { onMount } from 'svelte';
   import { Logger } from '@/common/logger';
-  import type { ChangeEventHandler } from 'svelte/elements';
   import { onFailure } from '../utils/error-handling';
 
   let { onSubmit } = $props();
@@ -39,7 +38,7 @@
     onFailure(`Parsing error: ${error.message}`);
   };
 
-  const processFile: ChangeEventHandler<HTMLInputElement> = () => {
+  const processFile = () => {
     fileError = null;
     const [newFile] = importState.inputFiles ?? [];
     importState.rawImportData = undefined;
@@ -86,6 +85,14 @@
       .finally(() => isLoadingOptions = false);
   };
 
+  function showFiles(files: FileList | null): string {
+    console.log("showFiles fired.")
+    if (!files || files.length === 0) return "No files selected.";
+    return Array.from(files)
+      .map((file) => file.name)
+      .join(", ")
+  }
+
   onMount(async () => {
     fetchBankOptions();
   });
@@ -95,14 +102,22 @@
   <div class="grid grid-cols-2 gap-4">
     <div>
       <Label class="pb-2" for="file_input">{'Upload CSV'}</Label>
-      <Fileupload
-        id="file_input"
-        class="mb-1"
-        required
-        accept="text/csv"
-        bind:files={importState.inputFiles}
-        onchange={processFile}
-      />
+      <Dropzone id="my-awesome-dropzone" bind:files={importState.inputFiles} onChange={processFile} onDrop={processFile} accept="text/csv">
+        <svg aria-hidden="true" class="mb-3 h-10 w-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+        </svg>
+
+        {#if !importState.inputFiles || importState.inputFiles.length === 0}
+          <p class="mb-2 text-sm text-gray-500 dark:text-gray-400">
+            <span class="font-semibold">Click to upload</span>
+            or drag and drop
+          </p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">CSV Files</p>
+        {:else}
+          <p class="text-sm text-green-700">{showFiles(importState.inputFiles)}</p>
+          <button class="mt-2 text-sm text-red-700 hover:underline" onclick={() => (importState.inputFiles = undefined)}>Clear Files</button>
+        {/if}
+      </Dropzone>
       {#if fileError}
         <Helper color="red">{fileError}</Helper>
       {:else}
@@ -122,6 +137,30 @@
       />
       {#if isLoadingOptions}
         <Helper>Loading banks...</Helper>
+      {/if}
+      {#if importState.selectedBank}
+        <div class="mt-2">
+          <table class="border-separate border-spacing-2 border border-gray-200">
+            <tbody>
+              <tr>
+                <td>Column Mappings:</td>
+                <td><strong>7</strong></td>
+              </tr>
+              <tr>
+                <td>Import Rules Loaded:</td>
+                <td><strong>13</strong></td>
+              </tr>
+              <tr>
+                <td>Autofill columns:</td>
+                <td><strong>5</strong></td>
+              </tr>
+              <tr>
+                <td>Auto categorization:</td>
+                <td><strong>enabled</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       {/if}
     </div>
   </div>
