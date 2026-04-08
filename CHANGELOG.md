@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.14.2-beta
+
+- **Refactor** - Removed unnecessary comments explaining clear code in `importPipeline` RPC file to improve code readability and maintainability.
+
 ## 4.14.1-beta
 
 - **Performance** - Replace redundant `SpreadsheetApp.getActiveSpreadsheet()` with `FireSpreadsheet` in config load to eliminate an unnecessary Google Apps Script RPC call.

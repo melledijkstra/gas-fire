@@ -203,21 +203,15 @@ function processImportData(inputTable: RawTable, accountConfig: Config): FireTab
   //
   // IMPORT RULES
   //
-  const fireTable = FireTable.fromCSV({
+  return FireTable.fromCSV({
     headers: headerRow,
     rows: rawTable.getData(),
     config: accountConfig,
-  })
-  // ^^ result is now in the firesheet structure
-
-  fireTable.sortByDate()
-
-  return fireTable
+  }).sortByDate()
 }
 
 /**
- * This very function might be the core of this spreadsheet and project.
- * It handles incoming CSV (already parsed by the frontend) and processes it in order to be imported
+ * Handles incoming CSV (already parsed by the frontend) and processes it in order to be imported
  * into the spreadsheet.
  *
  * It uses configuration from the user to determine how the CSV should be processed.
