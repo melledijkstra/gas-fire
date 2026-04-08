@@ -8,53 +8,53 @@
  */
 export const removeFilterCriteria = (
   filter: GoogleAppsScript.Spreadsheet.Filter,
-  prompt = false
+  prompt = false,
 ): boolean => {
-  const ui = SpreadsheetApp.getUi();
+  const ui = SpreadsheetApp.getUi()
   // the amount of columns spanning the filter
-  const columns = filter.getRange().getNumColumns();
+  const columns = filter.getRange().getNumColumns()
   // the column index where the filter starts
-  const startColumn = filter.getRange().getColumn();
-  const columnsWithCriteria = [];
+  const startColumn = filter.getRange().getColumn()
+  const columnsWithCriteria = []
   for (let col = 0; col < columns; col++) {
-    const currentColumn = startColumn + col;
-    const currentColumnCriteria = filter.getColumnFilterCriteria(currentColumn);
+    const currentColumn = startColumn + col
+    const currentColumnCriteria = filter.getColumnFilterCriteria(currentColumn)
     if (currentColumnCriteria) {
-      columnsWithCriteria.push(currentColumn);
+      columnsWithCriteria.push(currentColumn)
     }
   }
 
   if (columnsWithCriteria.length === 0) {
     // no columns with criteria, nothing to do
     // return true because there are no criteria set
-    return true;
+    return true
   }
 
-  let shouldRemoveCriterias = true;
+  let shouldRemoveCriterias = true
 
   if (prompt) {
     const response = ui.alert(
       'This action requires active filter criterias to be removed\nRemove them and continue?',
-      ui.ButtonSet.YES_NO
-    );
+      ui.ButtonSet.YES_NO,
+    )
 
-    shouldRemoveCriterias = response === ui.Button.YES;
+    shouldRemoveCriterias = response === ui.Button.YES
   }
 
   if (shouldRemoveCriterias) {
     for (const colIndex of columnsWithCriteria) {
-      filter.removeColumnFilterCriteria(colIndex);
+      filter.removeColumnFilterCriteria(colIndex)
     }
     // make sure operations are executed and finished before continuing
     // otherwise the filter might not be removed on time
-    SpreadsheetApp.flush();
-    return true;
+    SpreadsheetApp.flush()
+    return true
   }
 
   // return false, because there are still criterias set
   // and the user decided not to remove them
-  return false;
-};
+  return false
+}
 
 export const activateSpreadsheet = (sheet?: GoogleAppsScript.Spreadsheet.Sheet) => {
   sheet?.activate()
@@ -67,9 +67,10 @@ export const activateSpreadsheet = (sheet?: GoogleAppsScript.Spreadsheet.Sheet) 
  */
 export const getSpreadsheetLocale = (): string | undefined => {
   try {
-    const locale = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetLocale();
-    return locale.replace('-', '_'); // make sure to always use underscore
-  } catch(error) {
+    const locale = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetLocale()
+    return locale.replace('-', '_') // make sure to always use underscore
+  }
+  catch (error) {
     console.warn('Could not retrieve spreadsheet locale: ', error)
   }
 }

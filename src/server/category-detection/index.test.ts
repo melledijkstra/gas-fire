@@ -1,6 +1,5 @@
-import { categorizeTransactions } from './index';
-import { FireTable } from '../table';
-
+import { categorizeTransactions } from './index'
+import { FireTable } from '../table'
 
 describe('categorizeTransactions', () => {
   test('should categorize transactions correctly', () => {
@@ -10,16 +9,16 @@ describe('categorizeTransactions', () => {
       ['1', 'NL91ABNA0417164300', '2023-01-01', '-50', '', 'supermercado', 'Grocery Store', '', '', '', '', '', '', '', '', ''],
       ['2', 'NL91ABNA0417164300', '2023-01-02', '2000', '', 'adidas espana s.a.', 'Salary Payment', '', '', '', '', '', '', '', '', ''],
       ['3', 'NL91ABNA0417164300', '2023-01-03', '-30', '', 'restaurant', 'Restaurant Bill', '', '', '', '', '', '', '', '', ''],
-    ]);
+    ])
 
-    const { categoryUpdates, rowsCategorized } = categorizeTransactions(fireTable);
+    const { categoryUpdates, rowsCategorized } = categorizeTransactions(fireTable)
 
     expect(categoryUpdates).toEqual([
       ['Food & Groceries'],
       ['Salary'],
       ['Bars, Restaurants & Clubs'],
-    ]);
+    ])
 
-    expect(rowsCategorized).toBe(3);
-  });
-});
+    expect(rowsCategorized).toBe(3)
+  })
+})

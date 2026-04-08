@@ -1,23 +1,23 @@
-import { describe, expect, it, beforeEach } from 'vitest';
-import { SheetsRequestBuilder } from './request-builder';
-import type { CellValue } from './table/types';
+import { describe, expect, it, beforeEach } from 'vitest'
+import { SheetsRequestBuilder } from './request-builder'
+import type { CellValue } from './table/types'
 
 describe('SheetsRequestBuilder', () => {
-  let builder: SheetsRequestBuilder;
+  let builder: SheetsRequestBuilder
 
   beforeEach(() => {
-    builder = new SheetsRequestBuilder();
-  });
+    builder = new SheetsRequestBuilder()
+  })
 
   it('should initialize with an empty requests array', () => {
-    expect(builder.requests).toEqual([]);
-  });
+    expect(builder.requests).toEqual([])
+  })
 
   describe('insertRows', () => {
     it('should build a request to insert rows with default inheritance', () => {
-      builder.insertRows(123, 5, 10);
+      builder.insertRows(123, 5, 10)
 
-      expect(builder.requests).toHaveLength(1);
+      expect(builder.requests).toHaveLength(1)
       expect(builder.requests[0]).toEqual({
         insertDimension: {
           range: {
@@ -28,13 +28,13 @@ describe('SheetsRequestBuilder', () => {
           },
           inheritFromBefore: false,
         },
-      });
-    });
+      })
+    })
 
     it('should build a request to insert rows with inheritFromBefore = true', () => {
-      builder.insertRows(123, 5, 10, true);
+      builder.insertRows(123, 5, 10, true)
 
-      expect(builder.requests).toHaveLength(1);
+      expect(builder.requests).toHaveLength(1)
       expect(builder.requests[0]).toEqual({
         insertDimension: {
           range: {
@@ -45,18 +45,18 @@ describe('SheetsRequestBuilder', () => {
           },
           inheritFromBefore: true,
         },
-      });
-    });
+      })
+    })
 
     it('should handle data arrays with empty rows correctly', () => {
-      const data: CellValue[][] = [[]];
+      const data: CellValue[][] = [[]]
       const generator = (cell: unknown): GoogleAppsScript.Sheets.Schema.CellData => ({
         userEnteredValue: { stringValue: String(cell) },
-      });
+      })
 
-      builder.insertData(123, data, 10, 5, generator);
+      builder.insertData(123, data, 10, 5, generator)
 
-      expect(builder.requests).toHaveLength(1);
+      expect(builder.requests).toHaveLength(1)
       expect(builder.requests[0]).toEqual({
         updateCells: {
           rows: [{ values: [] }],
@@ -69,62 +69,62 @@ describe('SheetsRequestBuilder', () => {
             endColumnIndex: 5,
           },
         },
-      });
-    });
+      })
+    })
 
     it('should handle data arrays with uneven row lengths safely based on the longest row', () => {
       const data: CellValue[][] = [
         ['A1'],
         ['A2', 'B2', 'C2'],
         ['A3', 'B3'],
-      ];
+      ]
 
       const generator = (cell: unknown): GoogleAppsScript.Sheets.Schema.CellData => ({
         userEnteredValue: { stringValue: String(cell) },
-      });
+      })
 
-      builder.insertData(123, data, 10, 5, generator);
+      builder.insertData(123, data, 10, 5, generator)
 
-      expect(builder.requests).toHaveLength(1);
-      expect(builder.requests[0]?.updateCells?.range?.endColumnIndex).toBe(8); // 5 + 3 (max row length is 3)
-    });
+      expect(builder.requests).toHaveLength(1)
+      expect(builder.requests[0]?.updateCells?.range?.endColumnIndex).toBe(8) // 5 + 3 (max row length is 3)
+    })
 
     it('should handle data where the first row is empty but subsequent rows are not', () => {
       const data: CellValue[][] = [
         [],
         ['A2', 'B2'],
-      ];
+      ]
 
       const generator = (cell: unknown): GoogleAppsScript.Sheets.Schema.CellData => ({
         userEnteredValue: { stringValue: String(cell) },
-      });
+      })
 
-      builder.insertData(123, data, 10, 5, generator);
+      builder.insertData(123, data, 10, 5, generator)
 
-      expect(builder.requests).toHaveLength(1);
-      expect(builder.requests[0]?.updateCells?.range?.endColumnIndex).toBe(7); // 5 + 2
-    });
+      expect(builder.requests).toHaveLength(1)
+      expect(builder.requests[0]?.updateCells?.range?.endColumnIndex).toBe(7) // 5 + 2
+    })
 
     it('should return this to allow chaining', () => {
-      const result = builder.insertRows(123, 5, 10);
-      expect(result).toBe(builder);
-    });
-  });
+      const result = builder.insertRows(123, 5, 10)
+      expect(result).toBe(builder)
+    })
+  })
 
   describe('insertData', () => {
     it('should build an updateCells request with given data and cell generator', () => {
       const data = [
         ['A1', 'B1'],
         ['A2', 'B2'],
-      ];
+      ]
 
       const generator = (cell: unknown): GoogleAppsScript.Sheets.Schema.CellData => ({
         userEnteredValue: { stringValue: String(cell) },
-      });
+      })
 
-      builder.insertData(123, data, 10, 5, generator);
+      builder.insertData(123, data, 10, 5, generator)
 
-      expect(builder.requests).toHaveLength(1);
+      expect(builder.requests).toHaveLength(1)
       expect(builder.requests[0]).toEqual({
         updateCells: {
           rows: [
@@ -140,30 +140,30 @@ describe('SheetsRequestBuilder', () => {
             endColumnIndex: 7,
           },
         },
-      });
-    });
+      })
+    })
 
     it('should build an updateCells request with custom fields', () => {
-      const data = [['A1']];
+      const data = [['A1']]
       const generator = (cell: unknown): GoogleAppsScript.Sheets.Schema.CellData => ({
         userEnteredValue: { stringValue: String(cell) },
-      });
+      })
 
-      builder.insertData(123, data, 10, 5, generator, 'userEnteredValue,userEnteredFormat');
+      builder.insertData(123, data, 10, 5, generator, 'userEnteredValue,userEnteredFormat')
 
-      expect(builder.requests).toHaveLength(1);
-      expect(builder.requests[0]?.updateCells?.fields).toBe('userEnteredValue,userEnteredFormat');
-    });
+      expect(builder.requests).toHaveLength(1)
+      expect(builder.requests[0]?.updateCells?.fields).toBe('userEnteredValue,userEnteredFormat')
+    })
 
     it('should handle an empty data array correctly', () => {
-      const data: CellValue[][] = [];
+      const data: CellValue[][] = []
       const generator = (cell: unknown): GoogleAppsScript.Sheets.Schema.CellData => ({
         userEnteredValue: { stringValue: String(cell) },
-      });
+      })
 
-      builder.insertData(123, data, 10, 5, generator);
+      builder.insertData(123, data, 10, 5, generator)
 
-      expect(builder.requests).toHaveLength(1);
+      expect(builder.requests).toHaveLength(1)
       expect(builder.requests[0]).toEqual({
         updateCells: {
           rows: [],
@@ -176,15 +176,15 @@ describe('SheetsRequestBuilder', () => {
             endColumnIndex: 5,
           },
         },
-      });
-    });
+      })
+    })
 
     it('should return this to allow chaining', () => {
-      const data = [['A1']];
-      const result = builder.insertData(123, data, 10, 5, (_c) => ({}));
-      expect(result).toBe(builder);
-    });
-  });
+      const data = [['A1']]
+      const result = builder.insertData(123, data, 10, 5, _c => ({}))
+      expect(result).toBe(builder)
+    })
+  })
 
   describe('autoFill', () => {
     it('should build an autoFill request with default dimension and alternate series flag', () => {
@@ -194,11 +194,11 @@ describe('SheetsRequestBuilder', () => {
         endRowIndex: 2,
         startColumnIndex: 1,
         endColumnIndex: 2,
-      };
+      }
 
-      builder.autoFill(sourceRange, 5);
+      builder.autoFill(sourceRange, 5)
 
-      expect(builder.requests).toHaveLength(1);
+      expect(builder.requests).toHaveLength(1)
       expect(builder.requests[0]).toEqual({
         autoFill: {
           useAlternateSeries: false,
@@ -208,8 +208,8 @@ describe('SheetsRequestBuilder', () => {
             fillLength: 5,
           },
         },
-      });
-    });
+      })
+    })
 
     it('should build an autoFill request with custom dimension and alternate series flag', () => {
       const sourceRange = {
@@ -218,11 +218,11 @@ describe('SheetsRequestBuilder', () => {
         endRowIndex: 2,
         startColumnIndex: 1,
         endColumnIndex: 2,
-      };
+      }
 
-      builder.autoFill(sourceRange, 5, 'COLUMNS', true);
+      builder.autoFill(sourceRange, 5, 'COLUMNS', true)
 
-      expect(builder.requests).toHaveLength(1);
+      expect(builder.requests).toHaveLength(1)
       expect(builder.requests[0]).toEqual({
         autoFill: {
           useAlternateSeries: true,
@@ -232,8 +232,8 @@ describe('SheetsRequestBuilder', () => {
             fillLength: 5,
           },
         },
-      });
-    });
+      })
+    })
 
     it('should return this to allow chaining', () => {
       const sourceRange = {
@@ -242,22 +242,22 @@ describe('SheetsRequestBuilder', () => {
         endRowIndex: 2,
         startColumnIndex: 1,
         endColumnIndex: 2,
-      };
+      }
 
-      const result = builder.autoFill(sourceRange, 5);
-      expect(result).toBe(builder);
-    });
-  });
+      const result = builder.autoFill(sourceRange, 5)
+      expect(result).toBe(builder)
+    })
+  })
 
   describe('chaining', () => {
     it('should support chaining multiple methods', () => {
       builder
         .insertRows(123, 5, 10)
-        .autoFill({ sheetId: 123 }, 5);
+        .autoFill({ sheetId: 123 }, 5)
 
-      expect(builder.requests).toHaveLength(2);
-      expect(builder.requests[0]).toHaveProperty('insertDimension');
-      expect(builder.requests[1]).toHaveProperty('autoFill');
-    });
-  });
-});
+      expect(builder.requests).toHaveLength(2)
+      expect(builder.requests[0]).toHaveProperty('insertDimension')
+      expect(builder.requests[1]).toHaveProperty('autoFill')
+    })
+  })
+})

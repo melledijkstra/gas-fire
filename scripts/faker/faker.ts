@@ -1,20 +1,20 @@
-import type { Accounts, FireTransaction, RawTable } from '../../src/common/types';
-import { faker } from '@faker-js/faker';
-import fs from 'fs';
-import { convertFireTransactionToBankDefinition } from './commonwealth-bank';
+import type { Accounts, FireTransaction, RawTable } from '../../src/common/types'
+import { faker } from '@faker-js/faker'
+import fs from 'fs'
+import { convertFireTransactionToBankDefinition } from './commonwealth-bank'
 
 const fakeBankAccountsConfig: Accounts = {
   'Commonwealth Bank': 'US1234567890',
   'Barklays': 'GB13BUKB60161331926819',
   'Zantander': 'ES7921000813610123456789',
   'Revolet': 'RS123456789013487',
-  TestBank: 'TEST123456789'
-} as const;
+  'TestBank': 'TEST123456789',
+} as const
 
-type TransactionTransformer = (transaction: FireTransaction) => Record<string, unknown>;
+type TransactionTransformer = (transaction: FireTransaction) => Record<string, unknown>
 
 const bankTransformersMap: Record<string, TransactionTransformer> = {
-  'Commonwealth Bank': convertFireTransactionToBankDefinition
+  'Commonwealth Bank': convertFireTransactionToBankDefinition,
 }
 
 const outDir = 'transactions/'
@@ -40,28 +40,28 @@ const categories = [
   'Savings & Investments',
   'Business expenses',
   'Miscellaneous',
-] as const;
+] as const
 
 function randomNumber(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1) ) + min;
+  return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
 function getDaysInMonth(monthIndex: number, year: number = new Date().getFullYear()): number {
-  return new Date(year, monthIndex, 0).getDate();
+  return new Date(year, monthIndex, 0).getDate()
 }
 
 function formatDate(date: Date, divider = '/') {
   // Get the day and pad it with a leading zero if necessary
-  const day = String(date.getDate()).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0')
 
   // Get the month (which is 0-indexed), add 1, and pad it
-  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0')
 
   // Get the full year
-  const year = date.getFullYear();
+  const year = date.getFullYear()
 
   // Combine the parts into the desired format
-  return `${day}${divider}${month}${divider}${year}`;
+  return `${day}${divider}${month}${divider}${year}`
 }
 
 function generateAmount(): number {
@@ -69,27 +69,27 @@ function generateAmount(): number {
     { value: 10, weight: 5 },
     { value: 100, weight: 4 },
     { value: 1000, weight: 1 },
-  ]);
+  ])
   // this multiplier makes transactions either an income or an expense
   const multiplier = faker.helpers.weightedArrayElement([
     { value: 1, weight: 5 },
     { value: -1, weight: 95 }, // more often we have expenses than income
-  ]);
+  ])
   const isExpense = multiplier === -1
-  const isIncome = !isExpense;
+  const isIncome = !isExpense
   return Number.parseFloat(
     faker.finance.amount({
       min: isIncome ? 100 : 0,
       max: isIncome ? 3000 : expenseAmountRange,
       autoFormat: false,
-    })
-  ) * multiplier;
+    }),
+  ) * multiplier
 }
 
 function createTransaction(
-  overrides?: Partial<FireTransaction>
+  overrides?: Partial<FireTransaction>,
 ): FireTransaction {
-  const date = faker.date.between({ from: '2010-01-01', to: '2024-10-30' });
+  const date = faker.date.between({ from: '2010-01-01', to: '2024-10-30' })
 
   return {
     ref: faker.string.uuid(),
@@ -109,23 +109,23 @@ function createTransaction(
     contra_iban: faker.finance.iban(),
     currency: faker.finance.currencyCode(),
     ...overrides,
-  };
+  }
 }
 
 function jsonToTable(input: Record<string, unknown>[]): RawTable {
-  const output: RawTable = [];
+  const output: RawTable = []
 
-  const headers = Object.keys(input[0]);
-  const rows = input.slice(1);
+  const headers = Object.keys(input[0])
+  const rows = input.slice(1)
 
   // Add headers as the first row
-  output.push(headers);
+  output.push(headers)
   // Add rows as the subsequent rows
   for (const row of rows) {
-    output.push(Object.values(row as unknown as string[]));
+    output.push(Object.values(row as unknown as string[]))
   }
 
-  return output;
+  return output
 }
 
 type GenerateOptions = {
@@ -139,7 +139,7 @@ function generateYearlyTransactions({
   overrides,
   generateIncome = true,
 }: GenerateOptions): Array<FireTransaction> {
-  const transactions: Array<FireTransaction> = [];
+  const transactions: Array<FireTransaction> = []
 
   const thisYear = new Date().getFullYear()
   // we start with the past years
@@ -149,14 +149,14 @@ function generateYearlyTransactions({
   // this generates transactions for the amount of years indicated up until current year
   for (let loopYear = startYear; loopYear <= thisYear; loopYear++) {
     // keep count of how many transactions we generate for each year
-    let yearlyTransactionCount = 0;
+    let yearlyTransactionCount = 0
 
     // loop over 12 months (starting at 0 until 11)
     for (let month = 0; month < 12; month++) {
       const daysInMonth = getDaysInMonth(month, loopYear)
 
       // generate random amount of transaction for each month
-      const transactionsAmount = randomNumber(5, 40);
+      const transactionsAmount = randomNumber(5, 40)
 
       if (generateIncome) {
         // simulate an income transaction every month
@@ -164,66 +164,65 @@ function generateYearlyTransactions({
           ...overrides,
           date: formatDate(new Date(loopYear, month, 25)),
           amount: 2320,
-          category: categories[2]
+          category: categories[2],
         }))
-        yearlyTransactionCount++;
+        yearlyTransactionCount++
       }
 
       // amount of transactions per month
       for (let i = 0; i <= transactionsAmount; i++) {
-        const randomDay = randomNumber(1, daysInMonth);
+        const randomDay = randomNumber(1, daysInMonth)
         transactions.push(createTransaction({
           ...overrides,
           date: formatDate(new Date(loopYear, month, randomDay)),
         }))
       }
-      yearlyTransactionCount += transactionsAmount;
+      yearlyTransactionCount += transactionsAmount
     }
 
     console.log(`generated ${yearlyTransactionCount} transactions in year ${loopYear}`)
   }
 
-  return transactions;
+  return transactions
 }
 
 function tableToCSV(
   transactions: RawTable,
-  delimiter = ';'
+  delimiter = ';',
 ): string {
-  const header = transactions[0].join(delimiter);
-  const rows = transactions.slice(1).map((transaction) =>
-    transaction.join(delimiter)
-  );
-  return [header, ...rows].join('\n');
+  const header = transactions[0].join(delimiter)
+  const rows = transactions.slice(1).map(transaction =>
+    transaction.join(delimiter),
+  )
+  return [header, ...rows].join('\n')
 }
 
 const generationSettings = {
   // Whether to convert transactions to bank-specific format
   // otherwise keep them in the generic FireTransaction format
-  convertTransactions: true
+  convertTransactions: true,
 }
 
 if (import.meta.url.endsWith(process.argv[1])) {
-  console.log('RUNNING FAKER SCRIPT 🥸');
+  console.log('RUNNING FAKER SCRIPT 🥸')
 
   if (!fs.existsSync(outDir)) {
-    fs.mkdirSync(outDir);
+    fs.mkdirSync(outDir)
   }
 
-  
   for (const [name, iban] of Object.entries(fakeBankAccountsConfig)) {
     console.log(`generating transactions for "${name}" (${iban})`)
-    
+
     try {
-      const transactions: Record<string, unknown>[] = [];
+      const transactions: Record<string, unknown>[] = []
 
       const bankTransactions = generateYearlyTransactions({
         years: 5,
         overrides: { iban },
         // receive income only on one bank account
-        generateIncome: name === 'Zantander'
+        generateIncome: name === 'Zantander',
       })
-  
+
       if (generationSettings.convertTransactions) {
         const bankTransformer = bankTransformersMap[name]
         if (!bankTransformer) {
@@ -231,20 +230,22 @@ if (import.meta.url.endsWith(process.argv[1])) {
         }
         const convertedTransactions = bankTransactions.map(bankTransformer)
         transactions.push(...convertedTransactions)
-      } else {
+      }
+      else {
         transactions.push(...bankTransactions)
       }
-      
-      const tableData = jsonToTable(transactions);
-      const csvData = tableToCSV(tableData);
+
+      const tableData = jsonToTable(transactions)
+      const csvData = tableToCSV(tableData)
       const fileName = `${name.toLowerCase().replaceAll(' ', '_')}.csv`
       const filePath = `${outDir}/${fileName}`
-  
-      console.log(`Writing transactions to file 📝 (${fileName})`);
-      fs.writeFileSync(filePath, csvData);
-    } catch (error) {
+
+      console.log(`Writing transactions to file 📝 (${fileName})`)
+      fs.writeFileSync(filePath, csvData)
+    }
+    catch (error) {
       if (error instanceof Error) {
-        console.error(`⛔️ Error generating transactions for "${name}":`, error.message);
+        console.error(`⛔️ Error generating transactions for "${name}":`, error.message)
       }
     }
   }
@@ -252,5 +253,5 @@ if (import.meta.url.endsWith(process.argv[1])) {
   // const csvData = transactionsToCsv(transactions)
   // fs.writeFileSync('transactions.csv', csvData)
 
-  console.log('Done 🎉');
+  console.log('Done 🎉')
 }

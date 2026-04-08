@@ -1,6 +1,6 @@
-import type { CellValue } from './types';
+import type { CellValue } from './types'
 
-const EMPTY = '';
+const EMPTY = ''
 
 /**
  * An in-memory table abstraction that holds data as a 2D array of CellValues.
@@ -18,17 +18,17 @@ const EMPTY = '';
  * ```
  */
 export class Table {
-  protected data: CellValue[][];
+  protected data: CellValue[][]
 
   constructor(data: CellValue[][] = []) {
-    this.data = data;
+    this.data = data
   }
 
   /**
    * Creates a shallow clone of the table (each row is shallow-copied).
    */
   clone(): Table {
-    return new Table(this.data.map((row) => [...row]));
+    return new Table(this.data.map(row => [...row]))
   }
 
   // ──────────────────────────────────────────────
@@ -39,30 +39,30 @@ export class Table {
    * Returns the underlying 2D data array.
    */
   getData(): CellValue[][] {
-    return this.data;
+    return this.data
   }
 
   get headers(): CellValue[] | null {
-    return this.data?.[0] ?? null;
+    return this.data?.[0] ?? null
   }
 
   /**
    * Returns a single row by index, or undefined if out of bounds.
    */
   getRow(index: number): CellValue[] | undefined {
-    return this.data?.[index];
+    return this.data?.[index]
   }
 
   getRowCount(): number {
-    return this.data.length;
+    return this.data.length
   }
 
   getColumnCount(): number {
-    return this.data.reduce((max, row) => Math.max(max, row?.length ?? 0), 0);
+    return this.data.reduce((max, row) => Math.max(max, row?.length ?? 0), 0)
   }
 
   isEmpty(): boolean {
-    return this.data.length === 0;
+    return this.data.length === 0
   }
 
   /**
@@ -70,7 +70,7 @@ export class Table {
    * Missing values default to null.
    */
   retrieveColumn(columnIndex: number): CellValue[] {
-    return this.data.map((row) => row?.[columnIndex] ?? null);
+    return this.data.map(row => row?.[columnIndex] ?? null)
   }
 
   // ──────────────────────────────────────────────
@@ -81,33 +81,33 @@ export class Table {
    * Transposes the table: rows become columns and columns become rows.
    */
   transpose(): this {
-    this.data = Table.transpose(this.data);
-    return this;
+    this.data = Table.transpose(this.data)
+    return this
   }
 
   /**
    * Removes rows where every cell is empty (empty string, null, or undefined).
    */
   removeEmptyRows(): this {
-    this.data = this.data.filter((row) =>
-      row.some((cell) => cell !== EMPTY && cell !== null && cell !== undefined),
-    );
-    return this;
+    this.data = this.data.filter(row =>
+      row.some(cell => cell !== EMPTY && cell !== null && cell !== undefined),
+    )
+    return this
   }
 
   /**
    * Removes the first row of the table and returns it.
    */
   shiftRow(): CellValue[] | undefined {
-    return this.data.shift();
+    return this.data.shift()
   }
 
   /**
    * Removes the last row of the table.
    */
   deleteLastRow(): this {
-    this.data.pop();
-    return this;
+    this.data.pop()
+    return this
   }
 
   /**
@@ -119,12 +119,12 @@ export class Table {
     comparator?: (a: CellValue, b: CellValue) => number,
   ): this {
     this.data = this.data.toSorted((row1, row2) => {
-      if (comparator) return comparator(row1[columnIndex], row2[columnIndex]);
+      if (comparator) return comparator(row1[columnIndex], row2[columnIndex])
       return String(row1[columnIndex]).localeCompare(
         String(row2[columnIndex]),
-      );
-    });
-    return this;
+      )
+    })
+    return this
   }
 
   /**
@@ -132,8 +132,8 @@ export class Table {
    * Mutates the current table.
    */
   deleteRow(index: number): this {
-    this.data.splice(index, 1);
-    return this;
+    this.data.splice(index, 1)
+    return this
   }
 
   /**
@@ -141,13 +141,13 @@ export class Table {
    * Indices are 0-based.
    */
   deleteRows(rowIndices: number[]): this {
-    const sortedIndices = [...rowIndices].sort((a, b) => b - a);
+    const sortedIndices = [...rowIndices].sort((a, b) => b - a)
     for (const delIndex of sortedIndices) {
       if (this.data[delIndex] !== undefined) {
-        this.data.splice(delIndex, 1);
+        this.data.splice(delIndex, 1)
       }
     }
-    return this;
+    return this
   }
 
   /**
@@ -155,15 +155,15 @@ export class Table {
    * Indices are 0-based.
    */
   deleteColumns(colIndices: number[]): this {
-    const sortedIndices = [...colIndices].sort((a, b) => b - a);
-    this.transpose();
+    const sortedIndices = [...colIndices].sort((a, b) => b - a)
+    this.transpose()
     for (const delIndex of sortedIndices) {
       if (this.data[delIndex] !== undefined) {
-        this.data.splice(delIndex, 1);
+        this.data.splice(delIndex, 1)
       }
     }
-    this.transpose();
-    return this;
+    this.transpose()
+    return this
   }
 
   /**
@@ -171,8 +171,8 @@ export class Table {
    * Mutates the current table.
    */
   filter(predicate: (row: CellValue[], index: number) => boolean): this {
-    this.data = this.data.filter((row, index) => predicate(row, index));
-    return this;
+    this.data = this.data.filter((row, index) => predicate(row, index))
+    return this
   }
 
   /**
@@ -180,8 +180,8 @@ export class Table {
    * Mutates the current table.
    */
   map(callback: (row: CellValue[], index: number) => CellValue[]): this {
-    this.data = this.data.map((row, index) => callback(row, index));
-    return this;
+    this.data = this.data.map((row, index) => callback(row, index))
+    return this
   }
 
   /**
@@ -191,29 +191,31 @@ export class Table {
   serialize(): string {
     return JSON.stringify(this.data, (_key, value) => {
       if (value instanceof Date) {
-        return { __type: 'Date', value: value.toISOString() };
+        return { __type: 'Date', value: value.toISOString() }
       }
-      return value;
-    });
+      return value
+    })
   }
 
   deserialize(serializedData: string): this {
     try {
       const parsed = JSON.parse(serializedData, (_key, value) => {
         if (value?.__type === 'Date') {
-          return new Date(value.value);
+          return new Date(value.value)
         }
-        return value;
-      });
-      if (Array.isArray(parsed) && parsed.every((row) => Array.isArray(row))) {
-        this.data = parsed;
-      } else {
-        throw new Error('Invalid data format for deserialization');
+        return value
+      })
+      if (Array.isArray(parsed) && parsed.every(row => Array.isArray(row))) {
+        this.data = parsed
       }
-    } catch (error) {
-      console.error('Failed to deserialize data:', error);
+      else {
+        throw new Error('Invalid data format for deserialization')
+      }
     }
-    return this;
+    catch (error) {
+      console.error('Failed to deserialize data:', error)
+    }
+    return this
   }
 
   // ──────────────────────────────────────────────
@@ -224,7 +226,7 @@ export class Table {
    * Factory method to create a Table from a 2D array.
    */
   static from(data: CellValue[][]): Table {
-    return new Table(data);
+    return new Table(data)
   }
 
   /**
@@ -232,9 +234,9 @@ export class Table {
    */
   static ensureLength<T>(arr: (T | null)[], length: number): (T | null)[] {
     if (arr.length < length) {
-      return [...arr, ...new Array<T | null>(length - arr.length).fill(null)];
+      return [...arr, ...new Array<T | null>(length - arr.length).fill(null)]
     }
-    return arr.slice(0, length);
+    return arr.slice(0, length)
   }
 
   /**
@@ -242,20 +244,20 @@ export class Table {
    * @see https://github.com/ramda/ramda/blob/v0.27.0/source/transpose.js
    */
   static transpose<T>(outerlist: T[][]): T[][] {
-    let i = 0;
-    const result: T[][] = [];
+    let i = 0
+    const result: T[][] = []
     while (i < outerlist.length) {
-      const innerlist = outerlist[i];
-      let j = 0;
+      const innerlist = outerlist[i]
+      let j = 0
       while (j < innerlist.length) {
         if (typeof result[j] === 'undefined') {
-          result[j] = [];
+          result[j] = []
         }
-        result[j].push(innerlist[j]);
-        j += 1;
+        result[j].push(innerlist[j])
+        j += 1
       }
-      i += 1;
+      i += 1
     }
-    return result;
+    return result
   }
 }
