@@ -229,7 +229,7 @@ export class FireTable extends Table {
       const columnIndex = config.getColumnIndex(fireColumn, headers)
       if (typeof columnIndex === 'number' && cols[columnIndex] !== undefined) {
         return cols[columnIndex].map((val) => {
-          if (val === '' || val === null || typeof val === 'undefined') return null
+          if (val === '' || val === null || val === undefined) return null
           return transformer ? transformer(String(val)) : (val as unknown as T)
         })
       }

@@ -121,7 +121,7 @@ export class AccountUtils {
       throw new Error(`Could not retrieve balance of ${accountIdentifier}`)
     }
 
-    return parseFloat(account?.[2]) // balance is at the second index, retrieve it
+    return Number.parseFloat(account?.[2]) // balance is at the second index, retrieve it
   }
 
   static getAccountIdentifiers(): string[] {

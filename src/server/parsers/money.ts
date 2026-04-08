@@ -1,6 +1,18 @@
 import { getSpreadsheetLocale } from '../utils/spreadsheet'
 import { Logger } from '@/common/logger'
 
+let cachedNumberFormatter: Intl.NumberFormat
+
+function getNumberFormatter() {
+  if (!cachedNumberFormatter) {
+    const locale = getSpreadsheetLocale() ?? 'en_US'
+    const normalizedLocale = locale.replace('_', '-')
+    cachedNumberFormatter = new Intl.NumberFormat(normalizedLocale)
+  }
+
+  return cachedNumberFormatter
+}
+
 function detectDecimalSeparator(value: string): string | null {
   const lastComma = value.lastIndexOf(',')
   const lastDot = value.lastIndexOf('.')
@@ -17,9 +29,8 @@ function detectDecimalSeparator(value: string): string | null {
   else {
     // If neither comma nor dot found, or they are at the same position (-1)
     try {
-      const locale = getSpreadsheetLocale() ?? 'en_US'
-      const normalizedLocale = locale.replace('_', '-')
-      const parts = new Intl.NumberFormat(normalizedLocale).formatToParts(1234.5)
+      const formatter = getNumberFormatter()
+      const parts = formatter.formatToParts(1234.5)
       const localeDecimal = parts.find(p => p.type === 'decimal')?.value
 
       if (localeDecimal && value.includes(localeDecimal)) {

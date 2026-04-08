@@ -1,3 +1,5 @@
+let cachedLocale: string | undefined
+
 /**
  * Removes all filter criterias present on the given filter
  * Can optionally prompt the user before removing the criterias
@@ -66,9 +68,12 @@ export const activateSpreadsheet = (sheet?: GoogleAppsScript.Spreadsheet.Sheet) 
  * If the locale cannot be retrieved, returns undefined.
  */
 export const getSpreadsheetLocale = (): string | undefined => {
+  if (cachedLocale) return cachedLocale
+
   try {
     const locale = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetLocale()
-    return locale.replace('-', '_') // make sure to always use underscore
+    cachedLocale = locale.replace('-', '_') // make sure to always use underscore
+    return cachedLocale
   }
   catch (error) {
     console.warn('Could not retrieve spreadsheet locale: ', error)
