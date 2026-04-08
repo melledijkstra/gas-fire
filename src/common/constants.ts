@@ -1,9 +1,3 @@
-export enum DialogType {
-  import,
-  settings,
-  about,
-}
-
 export enum NAMED_RANGES {
   netWorth = 'netWorth',
   accounts = 'accounts',

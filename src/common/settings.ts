@@ -1,6 +1,6 @@
-import type { DialogType, FireColumn } from "./constants"
+import type { FireColumn } from "./constants"
 
-export const DIALOG_SIZES: Record<keyof typeof DialogType, [number, number]> = {
+export const DIALOG_SIZES: Record<'import' | 'settings' | 'about', [number, number]> = {
   import: [900, 600],
   settings: [900, 600],
   about: [300, 200],
