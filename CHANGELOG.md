@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.14.1-beta
+
+- **Performance** - Replace redundant `SpreadsheetApp.getActiveSpreadsheet()` with `FireSpreadsheet` in config load to eliminate an unnecessary Google Apps Script RPC call.
+
 ## 4.14.0-beta
 
 - **Feature** - Enhanced Import Preview with Transparency & Control.
