@@ -1,6 +1,6 @@
 {
   "name": "gas-fire",
-  "version": "4.14.0-beta",
+  "version": "4.14.1-beta",
   "author": "Melle Dijkstra",
   "description": "Google App Script utilities to automate the FIRE google sheet",
   "license": "MIT",
@@ -46,6 +46,7 @@
     "@storybook/addon-links": "^10.3.4",
     "@storybook/addon-svelte-csf": "^5.1.2",
     "@storybook/svelte-vite": "^10.3.4",
+    "@stylistic/eslint-plugin": "^5.10.0",
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
     "@tailwindcss/vite": "^4.2.2",
     "@types/google-apps-script": "^2.0.8",
