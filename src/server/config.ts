@@ -6,9 +6,8 @@ import { Logger } from '@/common/logger';
 const CONFIG_CACHE_KEY = 'cache.config'
 
 // PENDING: Make this configurable by the user, what if they rename the sheets?
-export const SOURCE_SHEET_NAME = 'source'
 export const CATEGORIES_SHEET_NAME = 'categories'
-export const CONFIG_SHEET_NAME = 'import-settings'
+const CONFIG_SHEET_NAME = 'import-settings'
 
 const parseBoolean = (value: string | boolean) =>
   String(value).toLowerCase() === 'true' || value === true;
