@@ -4,22 +4,22 @@ import {
   ServerOptions,
   UserConfig,
   defineConfig,
-} from 'vite';
-import { resolve } from 'path';
-import { existsSync, readFileSync } from 'fs';
-import { svelte } from '@sveltejs/vite-plugin-svelte';
-import tailwind from '@tailwindcss/vite';
-import { viteStaticCopy } from 'vite-plugin-static-copy';
-import { viteSingleFile } from 'vite-plugin-singlefile';
-import packageInfo from './package.json';
-import { buildFrontendBundlesPlugin, type DialogEntry } from './src/plugins/frontendBundlesPlugin';
+} from 'vite'
+import { resolve } from 'path'
+import { existsSync, readFileSync } from 'fs'
+import { svelte } from '@sveltejs/vite-plugin-svelte'
+import tailwind from '@tailwindcss/vite'
+import { viteStaticCopy } from 'vite-plugin-static-copy'
+import { viteSingleFile } from 'vite-plugin-singlefile'
+import packageInfo from './package.json'
+import { buildFrontendBundlesPlugin, type DialogEntry } from './src/plugins/frontendBundlesPlugin'
 
-const PORT = 3000;
-export const clientRoot = './src/client';
-const outDir = './dist';
-const serverEntry = './src/server/index.ts';
-const copyAppscriptEntry = './appsscript.json';
-const devServerWrapper = './dev/dev-server-wrapper.html';
+const PORT = 3000
+export const clientRoot = './src/client'
+const outDir = './dist'
+const serverEntry = './src/server/index.ts'
+const copyAppscriptEntry = './appsscript.json'
+const devServerWrapper = './dev/dev-server-wrapper.html'
 
 export const clientEntrypoints: Array<DialogEntry> = [
   {
@@ -31,8 +31,8 @@ export const clientEntrypoints: Array<DialogEntry> = [
     name: 'CLIENT:import',
     filename: 'import-dialog',
     template: 'import-dialog/index.html',
-  }
-];
+  },
+]
 
 const sharedConfig = defineConfig({
   define: {
@@ -43,21 +43,21 @@ const sharedConfig = defineConfig({
       '@': resolve(__dirname, './src'),
     },
   },
-});
+})
 
-const keyPath = resolve(__dirname, './certs/key.pem');
-const certPath = resolve(__dirname, './certs/cert.pem');
+const keyPath = resolve(__dirname, './certs/key.pem')
+const certPath = resolve(__dirname, './certs/cert.pem')
 
 const devServerOptions: ServerOptions = {
   port: PORT,
-};
+}
 
 // use key and cert settings only if they are found
 if (existsSync(keyPath) && existsSync(certPath)) {
   devServerOptions.https = {
     key: readFileSync(resolve(__dirname, './certs/key.pem')),
     cert: readFileSync(resolve(__dirname, './certs/cert.pem')),
-  };
+  }
 }
 
 const clientServeConfig: UserConfig = {
@@ -65,7 +65,7 @@ const clientServeConfig: UserConfig = {
   plugins: [svelte(), tailwind()],
   server: devServerOptions,
   root: clientRoot,
-};
+}
 
 const clientBuildConfig = ({ filename, template }: DialogEntry) =>
   defineConfig({
@@ -82,7 +82,7 @@ const clientBuildConfig = ({ filename, template }: DialogEntry) =>
         input: resolve(__dirname, clientRoot, template),
       },
     },
-  });
+  })
 
 const serverBuildOptions: BuildOptions = {
   // this is to make sure the v8 engine of the GAS environment can run the code
@@ -101,13 +101,13 @@ const serverBuildOptions: BuildOptions = {
     output: {
       entryFileNames: 'server.js',
       extend: true,
-      footer: (chunk) =>
+      footer: chunk =>
         chunk.exports
-          .map((exportedFunction) => `function ${exportedFunction}() {};`)
+          .map(exportedFunction => `function ${exportedFunction}() {};`)
           .join('\n'),
     },
   },
-};
+}
 
 const buildIFrame = (entrypoint: DialogEntry) => ({
   src: devServerWrapper,
@@ -118,13 +118,13 @@ const buildIFrame = (entrypoint: DialogEntry) => ({
       .toString()
       .replace(/__PORT__/g, String(PORT))
       .replace(/__FILE_NAME__/g, entrypoint.template),
-});
+})
 
 const buildConfig = defineConfig(({ mode }) => {
-  const targets = [{ src: copyAppscriptEntry, dest: './' }];
+  const targets = [{ src: copyAppscriptEntry, dest: './' }]
 
   if (mode === 'development') {
-    targets.push(...clientEntrypoints.map(buildIFrame));
+    targets.push(...clientEntrypoints.map(buildIFrame))
   }
 
   return {
@@ -145,8 +145,8 @@ const buildConfig = defineConfig(({ mode }) => {
       target: serverBuildOptions.target || 'es2019',
       keepNames: true,
     },
-  };
-});
+  }
+})
 
 const testConfig: UserConfig = {
   ...sharedConfig,
@@ -165,24 +165,26 @@ const testConfig: UserConfig = {
       exclude: [
         'src/fixtures/**',
         'src/plugins/**',
-        'src/stories/**'
+        'src/stories/**',
       ],
       reporter: ['text', 'json', 'html', 'lcov'],
       provider: 'v8',
-    }
+    },
   },
-};
+}
 
 // https://vitejs.dev/config/
 export default defineConfig(async ({ command, mode }) => {
   if (mode === 'test' || mode === 'benchmark') {
-    return testConfig;
-  } else if (command === 'serve') {
-    // for 'serve' mode, we only want to serve the client bundle locally
-    return clientServeConfig;
-  } else if (command === 'build') {
-    // for 'build' mode, we have two paths: build assets for local development, and build for production
-    return buildConfig({ command, mode });
+    return testConfig
   }
-  return {};
-});
+  else if (command === 'serve') {
+    // for 'serve' mode, we only want to serve the client bundle locally
+    return clientServeConfig
+  }
+  else if (command === 'build') {
+    // for 'build' mode, we have two paths: build assets for local development, and build for production
+    return buildConfig({ command, mode })
+  }
+  return {}
+})

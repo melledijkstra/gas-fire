@@ -1,18 +1,18 @@
-import { FireTable } from '../table';
-import { Logger } from '@/common/logger';
+import { FireTable } from '../table'
+import { Logger } from '@/common/logger'
 
 export function categorizeTransactions(fireTable: FireTable): {
-  categoryUpdates: string[][];
-  rowsCategorized: number;
+  categoryUpdates: string[][]
+  rowsCategorized: number
 } {
-  Logger.time('categorizeTransactions');
+  Logger.time('categorizeTransactions')
 
-  const { categoryUpdates, rowsCategorized } = fireTable.categorize();
+  const { categoryUpdates, rowsCategorized } = fireTable.categorize()
 
-  Logger.timeEnd('categorizeTransactions');
+  Logger.timeEnd('categorizeTransactions')
 
   return {
     categoryUpdates,
     rowsCategorized,
-  };
+  }
 }

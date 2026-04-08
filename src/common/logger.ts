@@ -1,34 +1,34 @@
 export class Logger {
-  private static isEnabled: boolean = import.meta.env.DEV;
+  private static isEnabled: boolean = import.meta.env.DEV
 
   static log(message?: unknown, ...optionalParams: unknown[]): void {
     if (this.isEnabled) {
-      console.log(`[FIRE]:`, message, ...optionalParams);
+      console.log(`[FIRE]:`, message, ...optionalParams)
     }
   }
 
   static warn(message?: unknown, ...optionalParams: unknown[]): void {
     if (this.isEnabled) {
-      console.warn(`[FIRE ⚠️]:`, message, ...optionalParams);
+      console.warn(`[FIRE ⚠️]:`, message, ...optionalParams)
     }
   }
 
   static error(message?: unknown, ...optionalParams: unknown[]): void {
     if (this.isEnabled) {
-      console.error(`[FIRE ❌]:`, message, ...optionalParams);
+      console.error(`[FIRE ❌]:`, message, ...optionalParams)
     }
   }
 
   static enable(): void {
-    this.isEnabled = true;
+    this.isEnabled = true
   }
 
   static disable(): void {
-    this.isEnabled = false;
+    this.isEnabled = false
   }
 
   static reset(): void {
-    this.isEnabled = import.meta.env.DEV;
+    this.isEnabled = import.meta.env.DEV
   }
 
   static time(label: string): void {

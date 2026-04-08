@@ -8,7 +8,7 @@ export enum NAMED_RANGES {
   netWorth = 'netWorth',
   accounts = 'accounts',
   accountNames = 'accountNames',
-  debug = 'DEBUG'
+  debug = 'DEBUG',
 }
 
 /**
@@ -33,8 +33,8 @@ export const FIRE_COLUMNS = [
   'disabled',
   'contra_iban',
   'currency',
-] as const;
+] as const
 
-export type FireColumn = (typeof FIRE_COLUMNS)[number];
+export type FireColumn = (typeof FIRE_COLUMNS)[number]
 
-export const SOURCE_SHEET_ID = 1093484485;
+export const SOURCE_SHEET_ID = 1093484485

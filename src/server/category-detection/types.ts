@@ -1,1 +1,1 @@
-export type CategoryDetectionConfigOld = Record<string, Array<RegExp>>;
+export type CategoryDetectionConfigOld = Record<string, Array<RegExp>>
