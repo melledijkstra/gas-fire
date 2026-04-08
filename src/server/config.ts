@@ -160,7 +160,7 @@ export class Config {
           if (!isRecord(parsed[accountId])) {
             throw new Error(`Parsed config for account ${accountId} is not a valid Record`);
           }
-          configs[accountId] = new Config(parsed[accountId] as ConfigParams);
+configs[accountId] = new Config(parsed[accountId]);
         }
         this.configCache = configs;
         return configs;
