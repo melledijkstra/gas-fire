@@ -319,12 +319,30 @@ export class FireSheet {
 
     Logger.time('autoFillColumns (Apps Script API) (slower)');
     if (autoFillColumns && autoFillColumns.length > 0) {
-      for (const column of autoFillColumns) {
-        const sourceRange = this._sheet.getRange(2 + rowCount, column);
+      // Group contiguous columns to avoid N+1 .getRange API calls
+      const sortedCols = [...autoFillColumns].sort((a, b) => a - b);
+      const groups: { start: number; count: number }[] = [];
+      let currentStart = sortedCols[0];
+      let currentCount = 1;
+
+      for (let i = 1; i < sortedCols.length; i++) {
+        if (sortedCols[i] === sortedCols[i - 1] + 1) {
+          currentCount++;
+        } else {
+          groups.push({ start: currentStart, count: currentCount });
+          currentStart = sortedCols[i];
+          currentCount = 1;
+        }
+      }
+      groups.push({ start: currentStart, count: currentCount });
+
+      for (const group of groups) {
+        const sourceRange = this._sheet.getRange(2 + rowCount, group.start, 1, group.count);
         const destinationRange = this._sheet.getRange(
           2,
-          column,
+          group.start,
           rowCount + 1,
+          group.count,
         );
         if (destinationRange) {
           sourceRange.autoFill(

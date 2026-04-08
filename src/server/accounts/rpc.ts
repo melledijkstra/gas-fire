@@ -21,7 +21,7 @@ import { Logger } from '@/common/logger';
  */
 export function getBankAccounts(): ServerResponse<Record<string, string>> {
   try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = FireSpreadsheet;
     // retrieve account names and ibans
     // the ranges should only have one column so we use .flat()
     const accountNames = sheet
