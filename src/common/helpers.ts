@@ -5,7 +5,7 @@ export const slugify = (text: string): string =>
     .replaceAll(/\s+/g, '-') // replace spaces with hyphens
     .replaceAll(/-+/g, '-'); // remove consecutive hyphens
 
-export const isRecord = (value: unknown): value is Record<string, unknown> =>
+const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value);
 
 export function structuredCloneFallback<T>(input: T): T {
