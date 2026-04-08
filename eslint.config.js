@@ -18,8 +18,6 @@ export default defineConfig([
   {
     files: ['**/*.{js,ts,tsx}'],
     rules: {
-      '@stylistic/semi': ['error', 'never'],
-      '@stylistic/indent': ['error', 2],
       // Error on unused variables, but allow variables and arguments starting with "_"
       '@typescript-eslint/no-unused-vars': [
         'error',
