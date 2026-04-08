@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.14.1-beta
+
+- **Security** - Added schema validation when parsing cached configuration data from `CacheService`. This prevents a potential security vulnerability where improperly formed JSON could be unsafely cast as `Record<string, ConfigParams>`. The `isRecord` utility function is now used to ensure the parsed cached config matches the expected shape before returning. If validation fails, it correctly falls back to loading live configurations.
+
 ## 4.14.0-beta
 
 - **Feature** - Enhanced Import Preview with Transparency & Control.

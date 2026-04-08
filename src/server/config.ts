@@ -1,6 +1,6 @@
 import { FIRE_COLUMNS } from '@/common/constants';
 import type { FireColumn } from '@/common/constants';
-import { slugify } from '@/common/helpers';
+import { isRecord, slugify } from '@/common/helpers';
 import { Logger } from '@/common/logger';
 
 const CONFIG_CACHE_KEY = 'cache.config'
@@ -149,10 +149,18 @@ export class Config {
 
     if (cachedConfig) {
       try {
-        const parsed = JSON.parse(cachedConfig) as Record<string, ConfigParams>;
+        const parsed = JSON.parse(cachedConfig);
+
+        if (!isRecord(parsed)) {
+          throw new Error('Parsed cached config is not a valid Record');
+        }
+
         const configs: Record<string, Config> = {};
         for (const accountId in parsed) {
-          configs[accountId] = new Config(parsed[accountId]);
+          if (!isRecord(parsed[accountId])) {
+            throw new Error(`Parsed config for account ${accountId} is not a valid Record`);
+          }
+          configs[accountId] = new Config(parsed[accountId] as ConfigParams);
         }
         this.configCache = configs;
         return configs;
