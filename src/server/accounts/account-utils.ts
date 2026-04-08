@@ -42,17 +42,13 @@ export class AccountUtils {
     }
 
     // this range contains the ibans only
-    const ibans = FireSpreadsheet.getRangeByName(NAMED_RANGES.accounts)
+    const ibansRange = FireSpreadsheet.getRangeByName(NAMED_RANGES.accounts)
     // we also need to include the labels and balances
-    const accounts = ibans
-      ?.offset(0, -1, ibans.getNumRows(), 3)
+    const accounts = ibansRange
+      ?.offset(0, -1, ibansRange.getNumRows(), 3)
       .getValues()
       // make sure not to include empty rows
       .filter(row => row.some((cell: unknown) => cell !== '' && cell !== null))
-
-    if (!accounts?.length) {
-      return {} // return empty list of bank accounts if none setup
-    }
 
     const result: Record<string, AccountInfo> = {}
 

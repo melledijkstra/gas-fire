@@ -126,13 +126,14 @@ export class FireTable extends Table {
     return { categoryUpdates, rowsCategorized }
   }
 
-  /** Groups rows by a hash key, pairing each with its parsed date. */
-  private groupRowsByHash(dateColumnIndex: number): Map<string, { row: CellValue[], date: Date }[]> {
-    const groups = new Map<string, { row: CellValue[], date: Date }[]>()
+  /** Groups rows by a hash key, pairing each with its parsed date and original index. */
+  private groupRowsByHash(dateColumnIndex: number): Map<string, { row: CellValue[], date: Date, originalIndex: number }[]> {
+    const groups = new Map<string, { row: CellValue[], date: Date, originalIndex: number }[]>()
 
-    for (const row of this.data) {
+    for (let index = 0; index < this.data.length; index++) {
+      const row = this.data[index]
       const key = getRowHash(row)
-      const entry = { row, date: new Date(String(row[dateColumnIndex])) }
+      const entry = { row, date: new Date(String(row[dateColumnIndex])), originalIndex: index }
       const group = groups.get(key)
       if (group) {
         group.push(entry)
@@ -145,12 +146,12 @@ export class FireTable extends Table {
     return groups
   }
 
-  /** Collects duplicate rows from hash groups using a time-window comparison. */
+  /** Collects duplicate rows from hash groups using a time-window comparison, preserving original order. */
   private collectDuplicatesFromGroups(
-    hashGroups: Map<string, { row: CellValue[], date: Date }[]>,
+    hashGroups: Map<string, { row: CellValue[], date: Date, originalIndex: number }[]>,
     timespanMs: number,
   ): CellValue[][] {
-    const duplicates: CellValue[][] = []
+    const duplicatesWithIndex: { row: CellValue[], originalIndex: number }[] = []
 
     for (const group of hashGroups.values()) {
       if (group.length < 2) continue
@@ -161,11 +162,14 @@ export class FireTable extends Table {
       const isDuplicate = this.markDuplicatesInGroup(group, timespanMs)
 
       for (let i = 0; i < group.length; i++) {
-        if (isDuplicate[i]) duplicates.push(group[i].row)
+        if (isDuplicate[i]) duplicatesWithIndex.push({ row: group[i].row, originalIndex: group[i].originalIndex })
       }
     }
 
-    return duplicates
+    // Sort by original index to preserve input row order
+    duplicatesWithIndex.sort((a, b) => a.originalIndex - b.originalIndex)
+
+    return duplicatesWithIndex.map(d => d.row)
   }
 
   /** Marks which entries in a date-sorted group are duplicates within the timespan. */
