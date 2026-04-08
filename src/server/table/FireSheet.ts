@@ -320,7 +320,7 @@ export class FireSheet {
     Logger.time('autoFillColumns (Apps Script API) (slower)');
     if (autoFillColumns && autoFillColumns.length > 0) {
       // Group contiguous columns to avoid N+1 .getRange API calls
-      const sortedCols = [...autoFillColumns].sort((a, b) => a - b);
+      const sortedCols = [...new Set(autoFillColumns)].sort((a, b) => a - b);
       const groups: { start: number; count: number }[] = [];
       let currentStart = sortedCols[0];
       let currentCount = 1;
