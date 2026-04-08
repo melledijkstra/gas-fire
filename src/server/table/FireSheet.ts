@@ -3,6 +3,7 @@ import { FireTable } from './FireTable';
 import { SheetsRequestBuilder } from '../request-builder';
 import { Logger } from '@/common/logger';
 import { getSourceSheet } from '../globals';
+import { columnToLetter } from '../utils/spreadsheet';
 
 const MS_IN_DAY = 86400000;
 const DAYS_FROM_JS_EPOCH_TO_SHEETS_EPOCH = 25569;
@@ -319,14 +320,22 @@ export class FireSheet {
 
     Logger.time('autoFillColumns (Apps Script API) (slower)');
     if (autoFillColumns && autoFillColumns.length > 0) {
+      const sourceA1s: string[] = [];
+      const destA1s: string[] = [];
+
       for (const column of autoFillColumns) {
-        const sourceRange = this._sheet.getRange(2 + rowCount, column);
-        const destinationRange = this._sheet.getRange(
-          2,
-          column,
-          rowCount + 1,
-        );
-        if (destinationRange) {
+        const letter = columnToLetter(column);
+        sourceA1s.push(`${letter}${2 + rowCount}`);
+        destA1s.push(`${letter}2:${letter}${2 + rowCount}`);
+      }
+
+      const sourceRanges = this._sheet.getRangeList(sourceA1s).getRanges();
+      const destRanges = this._sheet.getRangeList(destA1s).getRanges();
+
+      for (let i = 0; i < autoFillColumns.length; i++) {
+        const sourceRange = sourceRanges[i];
+        const destinationRange = destRanges[i];
+        if (sourceRange && destinationRange) {
           sourceRange.autoFill(
             destinationRange,
             SpreadsheetApp.AutoFillSeries.DEFAULT_SERIES,

@@ -73,3 +73,16 @@ export const getSpreadsheetLocale = (): string | undefined => {
     console.warn('Could not retrieve spreadsheet locale: ', error)
   }
 }
+
+/**
+ * Converts a 1-based column index to its corresponding letter(s) (e.g., 1 -> 'A', 27 -> 'AA').
+ */
+export const columnToLetter = (column: number): string => {
+  let temp, letter = '';
+  while (column > 0) {
+    temp = (column - 1) % 26;
+    letter = String.fromCharCode(temp + 65) + letter;
+    column = (column - temp - 1) / 26;
+  }
+  return letter;
+};
