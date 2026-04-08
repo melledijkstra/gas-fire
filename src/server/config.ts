@@ -2,6 +2,7 @@ import { FIRE_COLUMNS } from '@/common/constants';
 import type { FireColumn } from '@/common/constants';
 import { slugify } from '@/common/helpers';
 import { Logger } from '@/common/logger';
+import { FireSpreadsheet } from './globals';
 
 const CONFIG_CACHE_KEY = 'cache.config'
 
@@ -101,8 +102,11 @@ export class Config {
    * Function that loads the configuration from the CONFIG_SHEET_NAME sheet.
    */
   private static loadConfigurations(): Record<string, Config> {
-    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet()
-    const configSheet = spreadsheet.getSheetByName(CONFIG_SHEET_NAME)
+    const configSheet = FireSpreadsheet.getSheetByName(CONFIG_SHEET_NAME)
+
+    if (!configSheet) {
+      throw new Error(`Sheet ${CONFIG_SHEET_NAME} not found`)
+    }
 
     // retrieves column mappings per account
     const columnMapping = this.loadColumnMapping(configSheet);
