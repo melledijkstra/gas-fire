@@ -157,23 +157,28 @@ function buildPreviewRows(
 /**
  * Wraps a pipeline function with standardised error handling and logging.
  */
-function withLogger<T>(
-  name: string,
-  fn: () => T,
-): T | ErrorServerResponse {
-  try {
-    Logger.time(name)
-    const result = fn()
-    Logger.timeEnd(name)
-    return result
-  }
-  catch (error) {
-    Logger.error(error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : String(error),
+function withLogger(
+  _target: unknown,
+  propertyKey: string,
+  descriptor: PropertyDescriptor,
+) {
+  const originalMethod = descriptor.value
+  descriptor.value = function (this: unknown, ...args: unknown[]) {
+    try {
+      Logger.time(propertyKey)
+      const result = originalMethod.apply(this, args)
+      Logger.timeEnd(propertyKey)
+      return result
+    }
+    catch (error) {
+      Logger.error(error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      } as ErrorServerResponse
     }
   }
+  return descriptor
 }
 
 /**
@@ -220,12 +225,13 @@ function processImportData(inputTable: RawTable, accountConfig: Config): FireTab
  * @param {string} bankAccount - The bank account identifier which is used to lookup configuration
  * @returns {ServerResponse} A response object which contains a message to be displayed to the user
  */
-export function importPipeline(
-  inputTable: RawTable,
-  bankAccount: string,
-  userDecisions?: Record<string, TransactionAction>,
-): ServerResponse {
-  return withLogger('importPipeline', () => {
+class PipelineRPC {
+  @withLogger
+  static importPipeline(
+    inputTable: RawTable,
+    bankAccount: string,
+    userDecisions?: Record<string, TransactionAction>,
+  ): ServerResponse {
     const fireSheet = new FireSheet()
     const accountConfig = Config.getAccountConfiguration(bankAccount)
     const _userDecisions = userDecisions ? new Map(Object.entries(userDecisions)) : undefined
@@ -259,14 +265,13 @@ export function importPipeline(
     Logger.log(msg)
 
     return { success: true, message: msg }
-  })
-}
+  }
 
-export function previewPipeline(
-  table: RawTable,
-  bankAccount: string,
-): ServerResponse<ImportPreviewReport> {
-  return withLogger('previewPipeline', () => {
+  @withLogger
+  static previewPipeline(
+    table: RawTable,
+    bankAccount: string,
+  ): ServerResponse<ImportPreviewReport> {
     const config = Config.getAccountConfiguration(bankAccount)
     const previewTable = processImportData(table, config)
 
@@ -302,5 +307,8 @@ export function previewPipeline(
         },
       },
     }
-  })
+  }
 }
+
+export const importPipeline = PipelineRPC.importPipeline.bind(PipelineRPC)
+export const previewPipeline = PipelineRPC.previewPipeline.bind(PipelineRPC)
