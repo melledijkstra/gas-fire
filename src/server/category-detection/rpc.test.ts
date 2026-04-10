@@ -9,7 +9,7 @@ import { executeAutomaticCategorization } from '../category-detection/rpc'
 import { FireSheet } from '../spreadsheet/FireSheet'
 
 vi.mock('../globals', () => ({
-  FireSpreadsheet: SpreadsheetMock,
+  getFireSpreadsheet: vi.fn(() => SpreadsheetMock),
   getSourceSheet: vi.fn(() => SheetMock),
 }))
 

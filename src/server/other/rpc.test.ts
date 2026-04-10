@@ -10,7 +10,7 @@ import { executeFindDuplicates, mailNetWorth } from '../other/rpc'
 import { FireSheet } from '../spreadsheet/FireSheet'
 
 vi.mock('../globals', () => ({
-  FireSpreadsheet: SpreadsheetMock,
+  getFireSpreadsheet: vi.fn(() => SpreadsheetMock),
   getSourceSheet: vi.fn(() => SheetMock),
 }))
 

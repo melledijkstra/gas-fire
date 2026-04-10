@@ -1,19 +1,18 @@
-import { IMPORT_RULES_SHEET_NAME, SOURCE_SHEET_ID } from '@/common/constants'
+import { IMPORT_RULES_SHEET_NAME, SOURCE_SHEET_NAME } from '@/common/constants'
 
-export const FireSpreadsheet = SpreadsheetApp.getActiveSpreadsheet()
-const sheets = FireSpreadsheet.getSheets()
+let cachedSpreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet | undefined
 
-export function getSheetById(id: number) {
-  return sheets.find(sheet => sheet.getSheetId() === id)
-}
+export const getFireSpreadsheet = () => (
+  cachedSpreadsheet ??= SpreadsheetApp.getActiveSpreadsheet()
+)
 
 let sourceSheet: GoogleAppsScript.Spreadsheet.Sheet | undefined
 
 export const getSourceSheet = (): GoogleAppsScript.Spreadsheet.Sheet | undefined => {
-  sourceSheet ??= sheets.find(sheet => sheet.getSheetId() === SOURCE_SHEET_ID)
+  sourceSheet ??= getFireSpreadsheet().getSheetByName(SOURCE_SHEET_NAME) ?? undefined
   return sourceSheet
 }
 
 export const getImportRulesSheet = (): GoogleAppsScript.Spreadsheet.Sheet | undefined => {
-  return sheets.find(sheet => sheet.getName() === IMPORT_RULES_SHEET_NAME)
+  return getFireSpreadsheet().getSheetByName(IMPORT_RULES_SHEET_NAME) ?? undefined
 }

@@ -1,6 +1,4 @@
-import { SOURCE_SHEET_ID } from '@/common/constants'
-import { RangeMock, SheetMock } from '../../../test-setup'
-import { FireSpreadsheet, getSheetById } from '../globals'
+import { RangeMock, SpreadsheetMock } from '../../../test-setup'
 import { AccountUtils, isNumeric } from './account-utils'
 
 describe('Utility tests', () => {
@@ -24,12 +22,6 @@ describe('Utility tests', () => {
     })
   })
 
-  test('getSheetById', () => {
-    SheetMock.getSheetId.mockReturnValueOnce(SOURCE_SHEET_ID)
-
-    expect(getSheetById(SOURCE_SHEET_ID)).toBe(SheetMock)
-  })
-
   test('retrieve the balance of a specific bank', () => {
     RangeMock.getValues.mockReturnValueOnce([
       ['N26', 'DB123456789', '302.80'],
@@ -51,7 +43,7 @@ describe('Utility tests', () => {
   })
 
   test('getBalance should call getRangeByName every time (Baseline)', () => {
-    const getRangeByNameSpy = vi.spyOn(FireSpreadsheet, 'getRangeByName')
+    const getRangeByNameSpy = vi.spyOn(SpreadsheetMock, 'getRangeByName')
 
     // Mock the spreadsheet response
     RangeMock.getValues.mockReturnValue([
@@ -69,7 +61,7 @@ describe('Utility tests', () => {
   })
 
   test('getBankAccounts and getBalance should both trigger range lookups independently', () => {
-    const getRangeByNameSpy = vi.spyOn(FireSpreadsheet, 'getRangeByName')
+    const getRangeByNameSpy = vi.spyOn(SpreadsheetMock, 'getRangeByName')
 
     RangeMock.getValues.mockReturnValue([
       ['N26', 'DB123456789', '302.80'],
