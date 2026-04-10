@@ -1,7 +1,5 @@
 import { AccountUtils, isNumeric } from './account-utils'
-import { getSheetById } from '../globals'
-import { RangeMock, SheetMock } from '../../../test-setup'
-import { SOURCE_SHEET_ID } from '@/common/constants'
+import { RangeMock } from '../../../test-setup'
 
 describe('Utility tests', () => {
   test('getBankAccounts', () => {
@@ -17,12 +15,6 @@ describe('Utility tests', () => {
       'n26': 'BANK123456789',
       'banco-de-espaa': 'BANK124463534',
     })
-  })
-
-  test('getSheetById', () => {
-    SheetMock.getSheetId.mockReturnValueOnce(SOURCE_SHEET_ID)
-
-    expect(getSheetById(SOURCE_SHEET_ID)).toBe(SheetMock)
   })
 
   test('retrieve the balance of a specific bank', () => {

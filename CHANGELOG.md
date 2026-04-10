@@ -118,3 +118,15 @@
 ## 1.0.0
 
 - Initial release, no history... sorry
+
+## [4.15.0-beta] - 2024-XX-XX
+### Added
+- Created `validateSpreadsheetTemplate` initialization RPC to verify workspace is properly set up with all required sheets and named ranges for the Add-on.
+- `onInstall` hook added to initialize add-on menu upon installation.
+
+### Changed
+- Migrated script architecture from a container-bound script to a fully distributed Google Workspace Editor Add-on.
+- The top-level `FireSpreadsheet` constant was converted into a lazy-evaluated `getFireSpreadsheet()` getter function. This resolves authentication issues during the `AuthMode.NONE` lifecycle phase of Workspace Add-ons.
+- Dynamic source sheet resolution: Instead of a hardcoded sheet ID, the primary source sheet is now looked up by its `SOURCE_SHEET_NAME` ('source').
+- The `appsscript.json` manifest was updated to declare `addOns` and explicit `oauthScopes`.
+- `onOpen` was updated to properly use `createAddonMenu` and handles `AuthMode.NONE` to avoid API permission errors on document load.

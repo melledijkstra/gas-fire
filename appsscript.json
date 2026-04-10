@@ -10,5 +10,18 @@
     ]
   },
   "exceptionLogging": "STACKDRIVER",
-  "runtimeVersion": "V8"
+  "runtimeVersion": "V8",
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/spreadsheets.currentonly",
+    "https://www.googleapis.com/auth/script.container.ui",
+    "https://www.googleapis.com/auth/script.external_request",
+    "https://www.googleapis.com/auth/script.send_mail"
+  ],
+  "addOns": {
+    "common": {
+      "name": "FIRE",
+      "logoUrl": "https://www.gstatic.com/images/branding/product/1x/sheets_2020q4_48dp.png"
+    },
+    "sheets": {}
+  }
 }

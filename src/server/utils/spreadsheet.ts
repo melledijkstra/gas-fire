@@ -1,3 +1,4 @@
+import { getFireSpreadsheet } from '../globals'
 let cachedLocale: string | undefined
 
 /**
@@ -58,11 +59,6 @@ export const removeFilterCriteria = (
   return false
 }
 
-export const activateSpreadsheet = (sheet?: GoogleAppsScript.Spreadsheet.Sheet) => {
-  sheet?.activate()
-  sheet?.showSheet()
-}
-
 /**
  * Returns the locale of the active spreadsheet, formatted with an underscore (e.g. "en_US").
  * If the locale cannot be retrieved, returns undefined.
@@ -71,7 +67,7 @@ export const getSpreadsheetLocale = (): string | undefined => {
   if (cachedLocale) return cachedLocale
 
   try {
-    const locale = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetLocale()
+    const locale = getFireSpreadsheet().getSpreadsheetLocale()
     cachedLocale = locale.replace('-', '_') // make sure to always use underscore
     return cachedLocale
   }

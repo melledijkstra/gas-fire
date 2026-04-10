@@ -1,15 +1,9 @@
-import { SOURCE_SHEET_ID } from '@/common/constants'
-
-export const FireSpreadsheet = SpreadsheetApp.getActiveSpreadsheet()
-const sheets = FireSpreadsheet.getSheets()
-
-export function getSheetById(id: number) {
-  return sheets.find(sheet => sheet.getSheetId() === id)
-}
+import { SOURCE_SHEET_NAME } from '@/common/constants'
+export const getFireSpreadsheet = () => SpreadsheetApp.getActiveSpreadsheet()
 
 let sourceSheet: GoogleAppsScript.Spreadsheet.Sheet | undefined
 
 export const getSourceSheet = (): GoogleAppsScript.Spreadsheet.Sheet | undefined => {
-  sourceSheet ??= sheets.find(sheet => sheet.getSheetId() === SOURCE_SHEET_ID)
+  sourceSheet ??= getFireSpreadsheet().getSheetByName(SOURCE_SHEET_NAME) ?? undefined
   return sourceSheet
 }

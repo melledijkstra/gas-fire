@@ -1,7 +1,7 @@
 import { FireSheet } from '../table'
 import { FIRE_COLUMNS } from '@/common/constants'
-import { Config } from '../config'
-import { NAMED_RANGES } from '../../common/constants'
+import { Config, CATEGORIES_SHEET_NAME, CONFIG_SHEET_NAME } from '../config'
+import { NAMED_RANGES, SOURCE_SHEET_NAME } from '../../common/constants'
 import { Logger } from '@/common/logger'
 
 export const mailNetWorth = () => {
@@ -105,4 +105,43 @@ export const debugImportSettings = () => {
 
 export function GET_PROJECT_VERSION() {
   return __APP_VERSION__
+}
+
+export const validateSpreadsheetTemplate = () => {
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet()
+  const ui = SpreadsheetApp.getUi()
+
+  const requiredSheets = [SOURCE_SHEET_NAME, CATEGORIES_SHEET_NAME, CONFIG_SHEET_NAME]
+  const missingSheets: string[] = []
+
+  for (const sheetName of requiredSheets) {
+    if (!spreadsheet.getSheetByName(sheetName)) {
+      missingSheets.push(sheetName)
+    }
+  }
+
+  const requiredNamedRanges = Object.values(NAMED_RANGES)
+  const missingRanges: string[] = []
+
+  for (const rangeName of requiredNamedRanges) {
+    if (rangeName !== NAMED_RANGES.debug && !spreadsheet.getRangeByName(rangeName)) {
+      missingRanges.push(rangeName)
+    }
+  }
+
+  if (missingSheets.length > 0 || missingRanges.length > 0) {
+    let message = 'Your spreadsheet is missing some required setup for the FIRE Add-on:\n\n'
+    if (missingSheets.length > 0) {
+      message += `Missing Sheets:\n- ${missingSheets.join('\n- ')}\n\n`
+    }
+    if (missingRanges.length > 0) {
+      message += `Missing Named Ranges:\n- ${missingRanges.join('\n- ')}\n\n`
+    }
+    message += 'Please copy the official template to get started with the FIRE Add-on.'
+
+    ui.alert('Setup Required', message, ui.ButtonSet.OK)
+  }
+  else {
+    ui.alert('Setup Complete', 'Your spreadsheet is fully configured for the FIRE Add-on!', ui.ButtonSet.OK)
+  }
 }

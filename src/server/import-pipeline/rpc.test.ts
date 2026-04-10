@@ -21,7 +21,7 @@ import { getSpreadsheetLocale, removeFilterCriteria } from '../utils/spreadsheet
 import { slugify } from '@/common/helpers'
 
 vi.mock('../globals', () => ({
-  FireSpreadsheet: SpreadsheetMock,
+  getFireSpreadsheet: vi.fn(() => SpreadsheetMock),
   getSourceSheet: vi.fn(() => SheetMock),
 }))
 

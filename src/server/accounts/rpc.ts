@@ -1,4 +1,4 @@
-import { FireSpreadsheet } from '../globals'
+import { getFireSpreadsheet } from '../globals'
 import type { BankOptions, ServerResponse } from '@/common/types'
 import { slugify } from '@/common/helpers'
 import { NAMED_RANGES } from '../../common/constants'
@@ -61,7 +61,7 @@ export function getBankAccounts(): ServerResponse<Record<string, string>> {
  */
 export function getBankAccountOptions(): ServerResponse<BankOptions> {
   try {
-    const accountNames = FireSpreadsheet.getRangeByName(NAMED_RANGES.accountNames)
+    const accountNames = getFireSpreadsheet().getRangeByName(NAMED_RANGES.accountNames)
 
     if (!accountNames) {
       return { success: true, data: {} }
