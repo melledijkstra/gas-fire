@@ -10,7 +10,7 @@ export type DialogEntry = {
   template: string
 }
 
-export interface BuildFrontendBundlesPluginOptions {
+interface BuildFrontendBundlesPluginOptions {
   clientEntrypoints: Array<DialogEntry>
   clientBuildConfig: (entry: DialogEntry) => InlineConfig
   outDir: string

@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.14.5-beta
+
+- **Refactor** - Removed unused export of `BuildFrontendBundlesPluginOptions` in `frontendBundlesPlugin.ts` to simplify the module interface and improve code maintainability.
+
 ## 4.14.4-beta
 
 - Improved the AGENTS.md with more detailed information for the agents
