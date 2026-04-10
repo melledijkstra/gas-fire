@@ -1,4 +1,4 @@
-import { FireSpreadsheet } from '../globals'
+import { getFireSpreadsheet } from '../globals'
 import { NAMED_RANGES } from '@/common/constants'
 import { getBankAccountOptionsCached } from '../accounts/rpc'
 import { slugify } from '@/common/helpers'
@@ -60,7 +60,7 @@ export class AccountUtils {
     }
 
     // this range contains the ibans only
-    const ibans = FireSpreadsheet.getRangeByName(NAMED_RANGES.accounts)
+    const ibans = getFireSpreadsheet().getRangeByName(NAMED_RANGES.accounts)
     // we also need to include the labels
     const accounts = ibans
       ?.offset(0, -1, ibans.getLastRow(), 2)
@@ -95,7 +95,7 @@ export class AccountUtils {
 
   static getBalance(accountIdentifier: string): number {
     // this range contains the ibans only
-    const ibans = FireSpreadsheet.getRangeByName(NAMED_RANGES.accounts)
+    const ibans = getFireSpreadsheet().getRangeByName(NAMED_RANGES.accounts)
     // we also need to include the labels and balances
     const accounts = ibans
       ?.offset(0, -1, ibans.getLastRow(), 3)

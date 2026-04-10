@@ -2,13 +2,13 @@ import { FIRE_COLUMNS } from '@/common/constants'
 import type { FireColumn } from '@/common/constants'
 import { slugify } from '@/common/helpers'
 import { Logger } from '@/common/logger'
-import { FireSpreadsheet } from './globals'
+import { getFireSpreadsheet } from './globals'
 
 const CONFIG_CACHE_KEY = 'cache.config'
 
 // PENDING: Make this configurable by the user, what if they rename the sheets?
 export const CATEGORIES_SHEET_NAME = 'categories'
-const CONFIG_SHEET_NAME = 'import-settings'
+export const CONFIG_SHEET_NAME = 'import-settings'
 
 const parseBoolean = (value: string | boolean) =>
   String(value).toLowerCase() === 'true' || value === true
@@ -101,7 +101,7 @@ export class Config {
    * Function that loads the configuration from the CONFIG_SHEET_NAME sheet.
    */
   private static loadConfigurations(): Record<string, Config> {
-    const configSheet = FireSpreadsheet.getSheetByName(CONFIG_SHEET_NAME)
+    const configSheet = getFireSpreadsheet().getSheetByName(CONFIG_SHEET_NAME)
 
     if (!configSheet) {
       throw new Error(`Sheet ${CONFIG_SHEET_NAME} not found`)

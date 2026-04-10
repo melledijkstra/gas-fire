@@ -107,3 +107,13 @@ vi.stubGlobal('Spreadsheet', Spreadsheet)
 vi.stubGlobal('UI', UI)
 vi.stubGlobal('MailApp', MailApp)
 vi.stubGlobal('CacheService', CacheService)
+
+class ScriptApp {
+  static readonly AuthMode = {
+    NONE: 'NONE',
+    CUSTOM_FUNCTION: 'CUSTOM_FUNCTION',
+    LIMITED: 'LIMITED',
+    FULL: 'FULL',
+  } as const
+}
+vi.stubGlobal('ScriptApp', ScriptApp)

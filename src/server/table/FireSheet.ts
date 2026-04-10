@@ -2,7 +2,7 @@ import type { CellValue } from './types'
 import { FireTable } from './FireTable'
 import { SheetsRequestBuilder } from '../request-builder'
 import { Logger } from '@/common/logger'
-import { getSourceSheet } from '../globals'
+import { getFireSpreadsheet, getSourceSheet } from '../globals'
 
 const MS_IN_DAY = 86400000
 const DAYS_FROM_JS_EPOCH_TO_SHEETS_EPOCH = 25569
@@ -349,7 +349,7 @@ export class FireSheet {
       return this.timeZoneCache
     }
 
-    this.timeZoneCache = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone()
+    this.timeZoneCache = getFireSpreadsheet().getSpreadsheetTimeZone()
 
     return this.timeZoneCache
   }
