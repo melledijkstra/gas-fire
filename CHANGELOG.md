@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.14.7-beta
+
+- **Performance** - Optimized account data retrieval and balance checking.
+  - Implemented consolidated account data fetching, retrieving Label, IBAN, and Balance in a single spreadsheet lookup.
+  - Added two-tier caching (in-memory static property and `CacheService`) for account data.
+  - Reduced spreadsheet RPC calls in `getBalance` and `getBankAccounts` from N+1 (one per call) to 1 (or 0 if cached) per execution.
+
 ## 4.14.6-beta
 
 - **Testing** - Added missing unit tests for `getBrowserLocale` utility function in `src/client/utils/web.ts`, improving code coverage and reliability.

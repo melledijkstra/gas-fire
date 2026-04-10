@@ -4,6 +4,10 @@ import { RangeMock, SheetMock } from '../../../test-setup'
 import { SOURCE_SHEET_ID } from '@/common/constants'
 
 describe('Utility tests', () => {
+  beforeEach(() => {
+    AccountUtils.resetStaticCache()
+  })
+
   test('getBankAccounts', () => {
     RangeMock.getValues.mockReturnValueOnce([
       ['Deutsche Bank', 'DB123456789'],
