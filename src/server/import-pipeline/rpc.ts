@@ -1,4 +1,4 @@
-import type { ServerResponse, RawTable, ImportPreviewReport, UserDecisions, TransactionAction, TransactionStatus, TransactionMeta, ErrorServerResponse } from '@/common/types'
+import type { ServerResponse, RawTable, ImportPreviewReport, UserDecisions, TransactionAction, TransactionStatus, TransactionMeta } from '@/common/types'
 import { Config } from '../config'
 import { FireTable, FireSheet, type CellValue } from '../table'
 import { Table } from '../table/Table'
@@ -161,13 +161,12 @@ function withLogger(
   _target: unknown,
   propertyKey: string,
   descriptor: PropertyDescriptor,
-) {
+): PropertyDescriptor {
   const originalMethod = descriptor.value
   descriptor.value = function (this: unknown, ...args: unknown[]) {
     try {
       Logger.time(propertyKey)
       const result = originalMethod.apply(this, args)
-      Logger.timeEnd(propertyKey)
       return result
     }
     catch (error) {
@@ -175,7 +174,10 @@ function withLogger(
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
-      } as ErrorServerResponse
+      }
+    }
+    finally {
+      Logger.timeEnd(propertyKey)
     }
   }
   return descriptor
@@ -215,17 +217,17 @@ function processImportData(inputTable: RawTable, accountConfig: Config): FireTab
   }).sortByDate()
 }
 
-/**
- * Handles incoming CSV (already parsed by the frontend) and processes it in order to be imported
- * into the spreadsheet.
- *
- * It uses configuration from the user to determine how the CSV should be processed.
- *
- * @param {RawTable} inputTable - The table object which contains the CSV data
- * @param {string} bankAccount - The bank account identifier which is used to lookup configuration
- * @returns {ServerResponse} A response object which contains a message to be displayed to the user
- */
 class PipelineRPC {
+  /**
+   * Handles incoming CSV (already parsed by the frontend) and processes it in order to be imported
+   * into the spreadsheet.
+   *
+   * It uses configuration from the user to determine how the CSV should be processed.
+   *
+   * @param {RawTable} inputTable - The table object which contains the CSV data
+   * @param {string} bankAccount - The bank account identifier which is used to lookup configuration
+   * @returns {ServerResponse} A response object which contains a message to be displayed to the user
+   */
   @withLogger
   static importPipeline(
     inputTable: RawTable,
