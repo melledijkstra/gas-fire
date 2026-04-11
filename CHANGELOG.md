@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.14.6-beta
+
+- **Testing** - Added missing unit tests for `getBrowserLocale` utility function in `src/client/utils/web.ts`, improving code coverage and reliability.
+
 ## 4.14.5-beta
 
 - **Refactor** - Resolved all knip issues.
