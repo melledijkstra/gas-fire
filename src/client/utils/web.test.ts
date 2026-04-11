@@ -24,12 +24,12 @@ describe('getBrowserLocale', () => {
     expect(getBrowserLocale()).toBe('nl-NL')
   })
 
-  it('should return the first language from navigator.languages if it is not empty', () => {
+  it('should return navigator.language if navigator.languages is an empty array', () => {
     vi.stubGlobal('navigator', {
-      languages: ['fr-FR'],
+      languages: [],
       language: 'en-US',
     })
 
-    expect(getBrowserLocale()).toBe('fr-FR')
+    expect(getBrowserLocale()).toBe('en-US')
   })
 })
