@@ -11,6 +11,7 @@ Logger.disable() // disable logging during tests to keep the output clean
 
 class Range {
   static readonly getLastRow = vi.fn(() => this).bind(this)
+  static readonly getNumRows = vi.fn(() => this).bind(this)
   static readonly offset = vi.fn(() => this).bind(this)
   static readonly getValues: Mock = vi.fn(() => [])
   static readonly getValue: Mock = vi.fn(() => '')
