@@ -2,7 +2,7 @@
   import type { ImportPreviewReport, TransactionAction, TransactionStatus } from '@/common/types';
   import { FIRE_COLUMNS } from '@/common/constants';
   import { importState } from '../states/import.svelte';
-  import { Table as FlowTable, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell, Select } from 'flowbite-svelte';
+  import { Table as FlowTable, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell, Select, Tooltip } from 'flowbite-svelte';
 
   const {
     report,
@@ -13,7 +13,7 @@
   } = $props();
 
   const headers = Array.from(FIRE_COLUMNS);
-  const hasDetectedDuplicates = $derived(report.summary.duplicateCount > 0);
+  const showActionColumn = $derived(report.summary.duplicateCount > 0 || report.summary.removedCount > 0);
 
   const getRowClass = (status: TransactionStatus): string => {
     if (status === 'removed') return 'bg-red-100! dark:bg-red-900! line-through';
@@ -24,7 +24,7 @@
 
 <FlowTable class={[tableClass, 'border border-gray-400 mb-2.5 mr-2.5']} striped hoverable>
   <TableHead>
-    {#if hasDetectedDuplicates}
+    {#if showActionColumn}
       <TableHeadCell class="py-2 px-1 normal-case">Action</TableHeadCell>
     {/if}
     {#each headers as header, i (i)}
@@ -36,7 +36,7 @@
       {@const hash = report.hashes[i]}
       {@const meta = report.transactionMeta[hash]}
       <TableBodyRow class={getRowClass(meta.status)}>
-        {#if hasDetectedDuplicates}
+        {#if showActionColumn}
           <TableBodyCell class="py-2 px-1 text-xs text-center">
             {#if meta.status === 'duplicate'}
               <Select
@@ -54,7 +54,10 @@
                 <option value="import">Import</option>
               </Select>
             {:else if meta.status === 'removed'}
-              <span class="text-gray-500">Removed</span>
+              <span id={`removed-span-${i}`} class="text-gray-500 font-medium border-b border-dotted border-gray-500 cursor-help">Removed</span>
+              {#if meta.ruleName}
+                <Tooltip triggeredBy={`#removed-span-${i}`} color="dark">Excluded by rule: {meta.ruleName}</Tooltip>
+              {/if}
             {:else}
               <span class="text-green-600">Import</span>
             {/if}

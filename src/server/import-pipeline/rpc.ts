@@ -11,6 +11,9 @@ import { Config } from '../config'
 import { FireTable } from '../table/FireTable'
 import type { CellValue } from '../table/types'
 import { FireSheet } from '../spreadsheet/FireSheet'
+import { RuleSheet } from '../spreadsheet/RuleSheet'
+import { parseRules, applyPreTransformRules, applyPostTransformRules } from '../rule-engine'
+import type { RuleWarning } from '../rule-engine'
 import { Table } from '../table/Table'
 import { AccountUtils, isNumeric } from '../accounts/account-utils'
 import { structuredClone } from '@/common/helpers'
@@ -109,6 +112,7 @@ interface PreviewRowsResult {
   validAmounts: number[]
   duplicateCount: number
   validCount: number
+  removedCount: number
 }
 
 /**
@@ -119,6 +123,8 @@ function buildPreviewRows(
   previewTable: FireTable,
   existingHashes: Set<string>,
   autoFillColumns: number[],
+  excludedHashes: Set<string>,
+  excludedByRule: Map<string, string>,
 ): PreviewRowsResult {
   const rows: string[][] = []
   const hashes: string[] = []
@@ -127,13 +133,21 @@ function buildPreviewRows(
   const amountColIndex = FireTable.getFireColumnIndex('amount')
   let duplicateCount = 0
   let validCount = 0
+  let removedCount = 0
 
   for (const row of previewTable.getData()) {
     const hash = getRowHash(row)
     let status: TransactionStatus
-    const action: TransactionAction = 'import'
+    let action: TransactionAction = 'import'
+    let ruleName: string | undefined
 
-    if (existingHashes.has(hash)) {
+    if (excludedHashes.has(hash)) {
+      status = 'removed'
+      action = 'skip'
+      ruleName = excludedByRule.get(hash)
+      removedCount++
+    }
+    else if (existingHashes.has(hash)) {
       status = 'duplicate'
       duplicateCount++
     }
@@ -158,10 +172,10 @@ function buildPreviewRows(
 
     hashes.push(hash)
     rows.push(formattedRow.map(formatCellValue))
-    transactionMeta[hash] = { status, action }
+    transactionMeta[hash] = { status, action, ruleName }
   }
 
-  return { rows, hashes, transactionMeta, validAmounts, duplicateCount, validCount }
+  return { rows, hashes, transactionMeta, validAmounts, duplicateCount, validCount, removedCount }
 }
 
 /**
@@ -193,15 +207,30 @@ function withLogger(
   return descriptor
 }
 
+interface ProcessResult {
+  fireTable: FireTable
+  excludedHashes: Set<string>
+  excludedByRule: Map<string, string>
+  rulesAppliedCount: number
+  warnings: RuleWarning[]
+}
+
 /**
  * Processes raw input data into the structured Firesheet format,
- * applying filtering and sorting rules.
+ * applying filtering, sorting, and rule engine logic.
  *
  * @param {RawTable} inputTable - The raw input data
  * @param {Config} accountConfig - The configuration for the account
- * @returns {FireTable} The processed data, ready for import
+ * @param {string} bankAccount - The bank account name for filtering rules
+ * @param {boolean} isPreview - If true, EXCLUDE rules won't drop the row physically
+ * @returns {ProcessResult} The processed data and rule metadata
  */
-function processImportData(inputTable: RawTable, accountConfig: Config): FireTable {
+function processImportData(
+  inputTable: RawTable,
+  accountConfig: Config,
+  bankAccount: string,
+  isPreview: boolean,
+): ProcessResult {
   const cloned = structuredClone(inputTable)
   const rawTable = new Table(cloned)
 
@@ -212,19 +241,53 @@ function processImportData(inputTable: RawTable, accountConfig: Config): FireTab
     throw new Error('No header row detected in import data!')
   }
 
-  //
-  // BEFORE IMPORT RULES
-  //
   rawTable.removeEmptyRows()
 
-  //
-  // IMPORT RULES
-  //
-  return FireTable.fromCSV({
+  // Fetch and parse rules
+  const rawRulesData = RuleSheet.getRulesData()
+  const { rules, warnings: parserWarnings } = parseRules(rawRulesData)
+
+  // PRE_TRANSFORM
+  const preTransformResult = applyPreTransformRules(rawTable, headerRow, rules, bankAccount)
+
+  // Transform to FireTable
+  let fireTable = FireTable.fromCSV({
     headers: headerRow,
     rows: rawTable.getData(),
     config: accountConfig,
-  }).sortByDate()
+  })
+
+  // POST_TRANSFORM
+  const postTransformResult = applyPostTransformRules(fireTable, rules, bankAccount)
+
+  const warnings = [...parserWarnings, ...preTransformResult.warnings, ...postTransformResult.warnings]
+  const rulesAppliedCount = (preTransformResult.rulesAppliedCount || 0) + (postTransformResult.rulesAppliedCount || 0)
+
+  // Map excluded indices to hashes before sorting alters row order
+  const excludedHashes = new Set<string>()
+  const excludedByRule = new Map<string, string>()
+  const data = fireTable.getData()
+
+  for (const index of preTransformResult.excludedIndices) {
+    const hash = getRowHash(data[index])
+    excludedHashes.add(hash)
+    excludedByRule.set(hash, preTransformResult.excludedByRule.get(index)!)
+  }
+  for (const index of postTransformResult.excludedIndices) {
+    const hash = getRowHash(data[index])
+    excludedHashes.add(hash)
+    excludedByRule.set(hash, postTransformResult.excludedByRule.get(index)!)
+  }
+
+  // Remove rows permanently if this is an actual import (not preview)
+  if (!isPreview && excludedHashes.size > 0) {
+    const filteredData = data.filter(row => !excludedHashes.has(getRowHash(row)))
+    fireTable = new FireTable(filteredData)
+  }
+
+  fireTable.sortByDate()
+
+  return { fireTable, excludedHashes, excludedByRule, rulesAppliedCount, warnings }
 }
 
 class PipelineRPC {
@@ -243,7 +306,7 @@ class PipelineRPC {
     inputTable: RawTable,
     bankAccount: string,
     userDecisions?: Record<string, TransactionAction>,
-  ): ServerResponse {
+  ): ServerResponse<{ message: string, rulesAppliedCount: number, ruleWarnings: RuleWarning[] }> {
     const fireSheet = new FireSheet()
     const accountConfig = Config.getAccountConfiguration(bankAccount)
     const _userDecisions = userDecisions ? new Map(Object.entries(userDecisions)) : undefined
@@ -252,10 +315,10 @@ class PipelineRPC {
 
     prepareSheetForImport(fireSheet)
 
-    const fireTable = processImportData(inputTable, accountConfig)
+    const { fireTable, rulesAppliedCount, warnings } = processImportData(inputTable, accountConfig, bankAccount, false)
 
     if (fireTable.isEmpty()) {
-      const msg = 'No rows to import, check your import data or configuration!'
+      const msg = 'No rows to import, check your import data, rules, or configuration!'
       Logger.log(msg)
       return { success: false, error: msg }
     }
@@ -263,7 +326,7 @@ class PipelineRPC {
     const finalTable = applyUserDecisions(fireTable, _userDecisions)
 
     if (finalTable.isEmpty()) {
-      const msg = 'No rows to import after applying rules and user decisions.'
+      const msg = 'No rows to import after applying user decisions.'
       Logger.log(msg)
       return { success: false, error: msg }
     }
@@ -273,10 +336,18 @@ class PipelineRPC {
     fireSheet.importData(finalTable, autoFillColumns)
     Logger.timeEnd('FireSheet.importData')
 
-    const msg = `imported ${finalTable.getRowCount()} rows!`
+    const rulesMsg = rulesAppliedCount > 0 ? ` (Applied ${rulesAppliedCount} rules)` : ''
+    const msg = `imported ${finalTable.getRowCount()} rows!${rulesMsg}`
     Logger.log(msg)
 
-    return { success: true, message: msg }
+    return {
+      success: true,
+      data: {
+        message: msg,
+        rulesAppliedCount,
+        ruleWarnings: warnings,
+      },
+    }
   }
 
   @withLogger
@@ -285,7 +356,14 @@ class PipelineRPC {
     bankAccount: string,
   ): ServerResponse<ImportPreviewReport> {
     const config = Config.getAccountConfiguration(bankAccount)
-    const previewTable = processImportData(table, config)
+
+    const {
+      fireTable: previewTable,
+      excludedHashes,
+      excludedByRule,
+      rulesAppliedCount,
+      warnings,
+    } = processImportData(table, config, bankAccount, true)
 
     let existingHashes: Set<string> = new Set()
 
@@ -297,8 +375,8 @@ class PipelineRPC {
     }
 
     const autoFillColumns = config.autoFillEnabled ? config.autoFillColumnIndices : []
-    const { rows, hashes, transactionMeta, validAmounts, duplicateCount, validCount }
-      = buildPreviewRows(previewTable, existingHashes, autoFillColumns)
+    const { rows, hashes, transactionMeta, validAmounts, duplicateCount, validCount, removedCount }
+      = buildPreviewRows(previewTable, existingHashes, autoFillColumns, excludedHashes, excludedByRule)
 
     const newBalance = AccountUtils.calculateNewBalance(bankAccount, validAmounts)
 
@@ -313,10 +391,10 @@ class PipelineRPC {
           totalRows: previewTable.getRowCount(),
           validCount,
           duplicateCount,
-          // PENDING IMPLEMENTATION
-          removedCount: 0,
-          rulesApplied: 0,
+          removedCount,
+          rulesApplied: rulesAppliedCount,
         },
+        ruleWarnings: warnings,
       },
     }
   }

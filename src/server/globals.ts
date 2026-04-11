@@ -13,3 +13,7 @@ export const getSourceSheet = (): GoogleAppsScript.Spreadsheet.Sheet | undefined
   sourceSheet ??= sheets.find(sheet => sheet.getSheetId() === SOURCE_SHEET_ID)
   return sourceSheet
 }
+
+export const getImportRulesSheet = (): GoogleAppsScript.Spreadsheet.Sheet | undefined => {
+  return sheets.find(sheet => sheet.getName() === 'import-rules')
+}

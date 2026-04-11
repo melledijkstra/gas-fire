@@ -33,6 +33,7 @@ export type TransactionAction = 'skip' | 'import'
 export interface TransactionMeta {
   status: TransactionStatus
   action: TransactionAction
+  ruleName?: string
 }
 
 export interface ImportPreviewReport {
@@ -50,6 +51,7 @@ export interface ImportPreviewReport {
     duplicateCount: number
     rulesApplied: number
   }
+  ruleWarnings?: { ruleName: string, message: string }[]
 }
 
 export type UserDecisions = Map<string, TransactionAction>
