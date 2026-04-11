@@ -4,6 +4,7 @@ import { slugify } from '@/common/helpers'
 import { Logger } from '@/common/logger'
 import { FireSpreadsheet } from './globals'
 import { Table } from './table/Table'
+import type { CellValue } from './table/types'
 
 const CONFIG_CACHE_KEY = 'cache.config'
 
@@ -60,8 +61,8 @@ export class Config {
   }
 
   private static loadColumnMapping(sheet: GoogleAppsScript.Spreadsheet.Sheet) {
-    const columnMapValues = sheet.getSheetValues(5, 1, sheet.getLastRow(), -1)
-    const table = Table.from(columnMapValues as (string | null)[][])
+    const columnMapValues = sheet.getSheetValues(5, 1, sheet.getLastRow(), -1) as CellValue[][]
+    const table = Table.from(columnMapValues)
 
     // first row contains account identifiers
     const headerRow = table.shiftRow() ?? []
@@ -114,13 +115,13 @@ export class Config {
 
     // explanation:
     // first row contains configuration labels which we don't need
-    const rawConfigsValues = configSheet.getSheetValues(1, 2, 4, -1)
-    const configsTable = Table.from(rawConfigsValues as string[][])
+    const rawConfigsValues = configSheet.getSheetValues(1, 2, 4, -1) as CellValue[][]
+    const configsTable = Table.from(rawConfigsValues)
 
     // first row contains account identifiers
     const accountsHeader = configsTable.shiftRow() ?? []
 
-    const accounts: string[] = accountsHeader
+    const accounts = accountsHeader
       .filter(Boolean) // remove any empty strings
       .map(String)
 
@@ -128,7 +129,7 @@ export class Config {
     const configData = configsTable.getData()
 
     for (let i = 0; i < accounts.length; i++) {
-      const account = slugify(accounts[i])
+      const accountId = slugify(accounts[i])
       // first row contains the auto fill column indices
       // second row contains the auto fill enabled flag
       // third row contains the auto categorization enabled flag
@@ -137,9 +138,9 @@ export class Config {
       const autoFillEnabled = parseBoolean(String(configData[1]?.[i] ?? false))
       const autoCategorizationEnabled = parseBoolean(String(configData[2]?.[i] ?? false))
 
-      configs[account] = new Config({
-        accountId: account,
-        columnMap: columnMapping[account],
+      configs[accountId] = new Config({
+        accountId,
+        columnMap: columnMapping[accountId],
         autoFillColumnIndices,
         autoFillEnabled,
         autoCategorizationEnabled,

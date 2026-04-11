@@ -50,6 +50,10 @@ export class AccountUtils {
       // make sure not to include empty rows
       .filter(row => row.some((cell: unknown) => cell !== '' && cell !== null))
 
+    if (!accounts?.length) {
+      return {} // return empty list of bank accounts if none setup
+    }
+
     const result: Record<string, AccountInfo> = {}
 
     for (const account of accounts) {

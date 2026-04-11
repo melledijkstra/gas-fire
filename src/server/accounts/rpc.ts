@@ -4,6 +4,7 @@ import { slugify } from '@/common/helpers'
 import { NAMED_RANGES } from '../../common/constants'
 import { cleanString } from '../utils'
 import { Logger } from '@/common/logger'
+import { Table } from '../table/Table'
 
 /**
  * This retrieves the bank accounts set by the user.
@@ -19,8 +20,6 @@ import { Logger } from '@/common/logger'
  *
  * @returns An object where the key is the label of the bank and the value the IBAN
  */
-import { Table } from '../table/Table'
-
 export function getBankAccounts(): ServerResponse<Record<string, string>> {
   try {
     const sheet = SpreadsheetApp.getActiveSpreadsheet()
@@ -37,8 +36,8 @@ export function getBankAccounts(): ServerResponse<Record<string, string>> {
     const bankAccounts: Record<string, string> = {}
 
     for (const [index, iban] of ibans.entries()) {
-      const label = cleanString(accountNames[index] as string)
-      const cleanIban = cleanString(iban as string)
+      const label = cleanString(String(accountNames[index]))
+      const cleanIban = cleanString(String(iban))
 
       if (cleanIban) {
         // this sets the label as the key and the iban as the value
