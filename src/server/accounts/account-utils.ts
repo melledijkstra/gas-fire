@@ -48,7 +48,7 @@ export class AccountUtils {
       ?.offset(0, -1, ibans.getLastRow(), 3)
       .getValues()
       // make sure not to include empty rows
-      .filter(row => row.some((cell: string) => cell !== '' && cell !== null))
+      .filter(row => row.some((cell: unknown) => cell !== '' && cell !== null))
 
     if (!accounts?.length) {
       return {} // return empty list of bank accounts if none setup
