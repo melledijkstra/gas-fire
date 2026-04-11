@@ -1,4 +1,4 @@
-import type { ServerResponse, RawTable, ImportPreviewReport, UserDecisions, TransactionAction, TransactionStatus, TransactionMeta, ErrorServerResponse } from '@/common/types'
+import type { ServerResponse, RawTable, ImportPreviewReport, UserDecisions, TransactionAction, TransactionStatus, TransactionMeta } from '@/common/types'
 import { Config } from '../config'
 import { FireTable, FireSheet, type CellValue } from '../table'
 import { Table } from '../table/Table'
@@ -157,23 +157,30 @@ function buildPreviewRows(
 /**
  * Wraps a pipeline function with standardised error handling and logging.
  */
-function withLogger<T>(
-  name: string,
-  fn: () => T,
-): T | ErrorServerResponse {
-  try {
-    Logger.time(name)
-    const result = fn()
-    Logger.timeEnd(name)
-    return result
-  }
-  catch (error) {
-    Logger.error(error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : String(error),
+function withLogger(
+  _target: unknown,
+  propertyKey: string,
+  descriptor: PropertyDescriptor,
+): PropertyDescriptor {
+  const originalMethod = descriptor.value
+  descriptor.value = function (this: unknown, ...args: unknown[]) {
+    try {
+      Logger.time(propertyKey)
+      const result = originalMethod.apply(this, args)
+      return result
+    }
+    catch (error) {
+      Logger.error(error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      }
+    }
+    finally {
+      Logger.timeEnd(propertyKey)
     }
   }
+  return descriptor
 }
 
 /**
@@ -210,22 +217,23 @@ function processImportData(inputTable: RawTable, accountConfig: Config): FireTab
   }).sortByDate()
 }
 
-/**
- * Handles incoming CSV (already parsed by the frontend) and processes it in order to be imported
- * into the spreadsheet.
- *
- * It uses configuration from the user to determine how the CSV should be processed.
- *
- * @param {RawTable} inputTable - The table object which contains the CSV data
- * @param {string} bankAccount - The bank account identifier which is used to lookup configuration
- * @returns {ServerResponse} A response object which contains a message to be displayed to the user
- */
-export function importPipeline(
-  inputTable: RawTable,
-  bankAccount: string,
-  userDecisions?: Record<string, TransactionAction>,
-): ServerResponse {
-  return withLogger('importPipeline', () => {
+class PipelineRPC {
+  /**
+   * Handles incoming CSV (already parsed by the frontend) and processes it in order to be imported
+   * into the spreadsheet.
+   *
+   * It uses configuration from the user to determine how the CSV should be processed.
+   *
+   * @param {RawTable} inputTable - The table object which contains the CSV data
+   * @param {string} bankAccount - The bank account identifier which is used to lookup configuration
+   * @returns {ServerResponse} A response object which contains a message to be displayed to the user
+   */
+  @withLogger
+  static importPipeline(
+    inputTable: RawTable,
+    bankAccount: string,
+    userDecisions?: Record<string, TransactionAction>,
+  ): ServerResponse {
     const fireSheet = new FireSheet()
     const accountConfig = Config.getAccountConfiguration(bankAccount)
     const _userDecisions = userDecisions ? new Map(Object.entries(userDecisions)) : undefined
@@ -259,14 +267,13 @@ export function importPipeline(
     Logger.log(msg)
 
     return { success: true, message: msg }
-  })
-}
+  }
 
-export function previewPipeline(
-  table: RawTable,
-  bankAccount: string,
-): ServerResponse<ImportPreviewReport> {
-  return withLogger('previewPipeline', () => {
+  @withLogger
+  static previewPipeline(
+    table: RawTable,
+    bankAccount: string,
+  ): ServerResponse<ImportPreviewReport> {
     const config = Config.getAccountConfiguration(bankAccount)
     const previewTable = processImportData(table, config)
 
@@ -302,5 +309,8 @@ export function previewPipeline(
         },
       },
     }
-  })
+  }
 }
+
+export const importPipeline = PipelineRPC.importPipeline.bind(PipelineRPC)
+export const previewPipeline = PipelineRPC.previewPipeline.bind(PipelineRPC)

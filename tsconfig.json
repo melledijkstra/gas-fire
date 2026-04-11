@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "experimentalDecorators": true,
     // because we use vite compiler we don't let TS emit any files
     // we just want to use it as a type checker
     "noEmit": true,
