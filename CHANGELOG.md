@@ -1,9 +1,17 @@
 # Changelog
 
+## 4.14.5-beta
+
+- **Refactor** - Resolved all knip issues.
+
 ## 4.14.4-beta
 
 - Improved the AGENTS.md with more detailed information for the agents
 - Added local project skill for google sheets to use for the agents and interact with the gws CLI tool. This will allow the agents to read data from google sheets.
+
+## 4.14.3-beta
+
+- **Feature** - Introduction of ECMAScript decorators for enhanced code readability and maintainability. Decorators are now used in the pipeline RPC functions.
 
 ## 4.14.2-beta
 
