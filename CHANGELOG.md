@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.14.4-beta
+
+- Improved the AGENTS.md with more detailed information for the agents
+- Added local project skill for google sheets to use for the agents and interact with the gws CLI tool. This will allow the agents to read data from google sheets.
+
 ## 4.14.2-beta
 
 - **Refactor** - Removed unnecessary comments explaining clear code in `importPipeline` RPC file to improve code readability and maintainability.
