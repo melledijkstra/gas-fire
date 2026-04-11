@@ -1,3 +1,5 @@
+import type { RuleEngineResult } from '@/server/rule-engine'
+
 /**
  * Represents a single cell value in a table.
  * Tables can contain various types of data, not just strings.
@@ -36,7 +38,7 @@ export type RawTable<T = string> = T[][]
 export type TransactionAction = 'skip' | 'import'
 
 export interface TransactionMeta {
-  action: TransactionAction
+  appliedRule?: string
 }
 
 export interface ImportPreviewResult {
@@ -44,6 +46,7 @@ export interface ImportPreviewResult {
   newBalance: number
   duplicateHashes: string[] // Set<string> converted to array for serialization
   removedHashes: string[] // Set<string> converted to array for serialization
+  ruleEngine?: RuleEngineResult
 }
 
 export type UserDecisions = Map<string, TransactionAction>

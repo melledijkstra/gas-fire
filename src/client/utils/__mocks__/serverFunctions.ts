@@ -3,10 +3,12 @@ import type {
   AccountOptions,
   RawTable,
   ImportPreviewResult,
+  TransactionAction,
 } from '@/common/types'
 import type * as publicServerFunctions from '@/server/index'
 import { fireTableMock } from '@/fixtures/fire-table'
 import { getRowHash } from '@/common/helpers'
+import type { RuleEngineResult } from '@/server/rule-engine'
 
 ////////////////////////////////////////////////////////////////
 // This mock is used by storybook, to mimic server functions
@@ -36,14 +38,22 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
   }
 
   async importPipeline(
-    data: RawTable,
-    selectedAccount: string,
-  ): Promise<ServerResponse> {
-    console.log('importPipeline mock called with data:', data, 'and selectedAccount:', selectedAccount)
-    await sleep(5000)
+    rawTable: RawTable,
+    bankAccount: string,
+    _userDecisions?: Record<string, TransactionAction>,
+  ): Promise<ServerResponse<{
+    message: string
+    ruleEngine?: RuleEngineResult
+  }>> {
+    console.log('importPipeline mock called with data:', rawTable, 'and selectedAccount:', bankAccount)
+    await sleep(2000)
+    const msg = `Successfully imported ${rawTable.length} rows!`
     return {
       success: true,
-      message: `Successfully imported ${data.length} rows!`,
+      message: msg,
+      data: {
+        message: msg,
+      },
     }
   };
 
@@ -56,8 +66,8 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
 
     const rows = fireTableMock.map(row => row.map(String))
 
-    const duplicateHashes = new Set([getRowHash(rows[3]), getRowHash(rows[5])])
-    const removedHashes = new Set([getRowHash(rows[1]), getRowHash(rows[4])])
+    const duplicateHashes = [getRowHash(rows[3]), getRowHash(rows[5])]
+    const removedHashes = [getRowHash(rows[1]), getRowHash(rows[4])]
 
     return {
       success: true,

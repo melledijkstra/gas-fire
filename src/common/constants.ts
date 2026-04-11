@@ -38,3 +38,5 @@ export const FIRE_COLUMNS = [
 export type FireColumn = (typeof FIRE_COLUMNS)[number]
 
 export const SOURCE_SHEET_ID = 1093484485
+
+export const IMPORT_RULES_SHEET_NAME = 'import-rules'

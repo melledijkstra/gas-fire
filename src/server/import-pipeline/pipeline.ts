@@ -5,9 +5,11 @@ import { Table } from '../table/Table'
 import { FireTable } from '../table/FireTable'
 import { FireSheet } from '../spreadsheet/FireSheet'
 import { getRowHash } from '@/common/helpers'
+import type { RuleEngineResult } from '../rule-engine/types'
 
 export interface PipelineContext {
   config: Config
+  ruleEngine?: RuleEngineResult
 }
 
 export interface ImportPipelineContext extends PipelineContext {

@@ -17,6 +17,7 @@ import {
 import type { ImportPipelineContext, PreviewPipelineContext } from './pipeline'
 import { Config } from '../config'
 import { FireSheet } from '../spreadsheet/FireSheet'
+import { parseRules, type RuleEngineResult } from '../rule-engine'
 import { Table } from '../table/Table'
 import { getRowHash, structuredClone } from '@/common/helpers'
 import { Logger } from '@/common/logger'
@@ -24,6 +25,8 @@ import { removeFilterCriteria } from '../spreadsheet/spreadsheet'
 import { FEATURES } from '@/common/settings'
 import { AccountUtils, isNumeric } from '../accounts/account-utils'
 import { FireTable } from '../table/FireTable'
+import { applyPreTransformRulesStage, postTransformRulesStage } from '../rule-engine/pipeline'
+import { RuleSheet } from '../spreadsheet/RuleSheet'
 
 /**
  * Activates the target sheet and removes any active filters.
@@ -105,7 +108,10 @@ class PipelineRPC {
     rawTable: RawTable,
     bankAccount: string,
     userDecisions?: Record<string, TransactionAction>,
-  ): ServerResponse {
+  ): ServerResponse<{
+    message: string
+    ruleEngine?: RuleEngineResult
+  }> {
     const fireSheet = new FireSheet()
     const accountConfig = Config.getAccountConfiguration(bankAccount)
     const userDecisionsMap = userDecisions ? new Map(Object.entries(userDecisions)) : undefined
@@ -120,13 +126,32 @@ class PipelineRPC {
     }
     const inputTable = Table.from(structuredClone(rawTable))
 
-    const importPipeline = Pipeline.create<Table, ImportPipelineContext>()
+    let pipeline = Pipeline.create<Table, ImportPipelineContext>()
       .addStage(removeEmptyRowsStage)
-      .addStage(transformToFireTableStage)
+
+    const rawRulesData = RuleSheet.getRulesData()
+    const { rules, warnings } = parseRules(rawRulesData)
+
+    if (FEATURES.RULE_ENGINE_ENABLED) {
+      context.ruleEngine = {
+        warnings: warnings,
+        appliedRules: [],
+        rowExcludedRule: {},
+      }
+
+      pipeline = pipeline.addStage(input => applyPreTransformRulesStage(input, context, rules))
+    }
+
+    let fireTablePipeline = pipeline.addStage(transformToFireTableStage)
+
+    if (FEATURES.RULE_ENGINE_ENABLED) {
+      fireTablePipeline = fireTablePipeline.addStage(input => postTransformRulesStage(input, context, rules))
+    }
+
+    const fireTable = fireTablePipeline
       .addStage(applyUserDecisionsStage)
       .addStage(sortByDateStage)
-
-    const fireTable = importPipeline.execute(inputTable, context)
+      .execute(inputTable, context)
 
     if (fireTable.isEmpty()) {
       const msg = 'No rows to import, check your import data, rules, row decisions or configuration!'
@@ -137,10 +162,19 @@ class PipelineRPC {
     const autoFillColumns = accountConfig.autoFillEnabled ? accountConfig.autoFillColumnIndices : undefined
     fireSheet.importData(fireTable, autoFillColumns)
 
-    const msg = `imported ${fireTable.getRowCount()} rows!`
+    const appliedRules = context?.ruleEngine?.appliedRules || []
+
+    const rulesMsg = appliedRules.length > 0 ? ` (Applied ${appliedRules.length} rules)` : ''
+    const msg = `imported ${fireTable.getRowCount()} rows!${rulesMsg}`
     Logger.log(msg)
 
-    return { success: true, message: msg }
+    return {
+      success: true,
+      data: {
+        message: msg,
+        ruleEngine: context.ruleEngine,
+      },
+    }
   }
 
   @withPipelineLogger
@@ -183,6 +217,7 @@ class PipelineRPC {
         newBalance: newBalance,
         duplicateHashes: Array.from(context.duplicateHashes),
         removedHashes: Array.from(context.removedHashes),
+        ruleEngine: context.ruleEngine,
       },
     }
   }

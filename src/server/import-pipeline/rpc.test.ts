@@ -23,6 +23,7 @@ import { slugify } from '@/common/helpers'
 vi.mock('../globals', () => ({
   FireSpreadsheet: SpreadsheetMock,
   getSourceSheet: vi.fn(() => SheetMock),
+  getImportRulesSheet: vi.fn(() => undefined),
 }))
 
 vi.mock('../spreadsheet/FireSheet')
@@ -170,7 +171,7 @@ describe('RPC: Import Functions', () => {
       expect(importDataSpy).toHaveBeenCalled()
       expect(result.success).toBe(true)
       if (result.success) {
-        expect(result.message).toBe('imported 4 rows!')
+        expect(result.data?.message).toBe('imported 4 rows!')
       }
     })
 
@@ -185,7 +186,7 @@ describe('RPC: Import Functions', () => {
       expect(importDataSpy).toHaveBeenCalled()
       expect(result.success).toBe(true)
       if (result.success) {
-        expect(result.message).toBe('imported 1 rows!')
+        expect(result.data?.message).toBe('imported 1 rows!')
       }
     })
 
@@ -213,7 +214,7 @@ describe('RPC: Import Functions', () => {
       ]))
       expect(result.success).toBe(true)
       if (result.success) {
-        expect(result.message).toBe('imported 5 rows!')
+        expect(result.data?.message).toBe('imported 5 rows!')
       }
     })
 
