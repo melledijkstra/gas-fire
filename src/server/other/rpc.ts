@@ -1,4 +1,4 @@
-import { FireSheet } from '../table'
+import { FireSheet } from '../spreadsheet/FireSheet'
 import { FIRE_COLUMNS } from '@/common/constants'
 import { Config } from '../config'
 import { NAMED_RANGES } from '../../common/constants'
@@ -6,7 +6,8 @@ import { Logger } from '@/common/logger'
 
 export const mailNetWorth = () => {
   const spreadsheet = SpreadsheetApp.getActiveSpreadsheet()
-  const locale = spreadsheet.getSpreadsheetLocale().replace('_', '-')
+  const locale = FireSheet.getLocale()
+  const intlLocale = locale.replace('_', '-')
   const userEmail = spreadsheet.getOwner().getEmail()
 
   const netWorthRange = spreadsheet.getRangeByName(NAMED_RANGES.netWorth)
@@ -17,9 +18,9 @@ export const mailNetWorth = () => {
   }
 
   const netWorth = Number(netWorthRange.getValue())
-  const currentMonth = new Date().toLocaleString(locale, { month: 'long' })
+  const currentMonth = new Date().toLocaleString(intlLocale, { month: 'long' })
 
-  const formattedNetWorth = netWorth.toLocaleString(locale, {
+  const formattedNetWorth = netWorth.toLocaleString(intlLocale, {
     style: 'currency',
     currency: 'EUR',
   })

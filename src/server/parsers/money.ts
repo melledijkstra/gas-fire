@@ -1,11 +1,11 @@
-import { getSpreadsheetLocale } from '../utils/spreadsheet'
+import { FireSheet } from '../spreadsheet/FireSheet'
 import { Logger } from '@/common/logger'
 
 let cachedNumberFormatter: Intl.NumberFormat
 
 function getNumberFormatter() {
   if (!cachedNumberFormatter) {
-    const locale = getSpreadsheetLocale() ?? 'en_US'
+    const locale = FireSheet.getLocale()
     const normalizedLocale = locale.replace('_', '-')
     cachedNumberFormatter = new Intl.NumberFormat(normalizedLocale)
   }

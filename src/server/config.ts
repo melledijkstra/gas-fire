@@ -66,11 +66,9 @@ export class Config {
     // first row contains account identifiers
     const headerRow = table.shiftRow() ?? []
 
-    // table.shiftRow() modified the table, so now table data contains only the data rows
-
     const accountIdentifiers: string[] = headerRow
       .slice(1) // remove the first cell containing "Column Mapping"
-      .filter((v): v is string => Boolean(v)) // remove any empty strings
+      .filter(Boolean) // remove any empty strings
       .map(v => slugify(String(v))) // slugify the account identifiers
 
     const result: Record<string, ColumnMap> = {}
@@ -94,7 +92,7 @@ export class Config {
       for (let i = 0; i < accountIdentifiers.length; i++) {
         const account = accountIdentifiers[i]
         const value = columnValues[i]
-        result[account][fireColumnName] = value ?? null
+        result[account][fireColumnName] = value ? String(value) : undefined
       }
     }
 
@@ -123,7 +121,7 @@ export class Config {
     const accountsHeader = configsTable.shiftRow() ?? []
 
     const accounts: string[] = accountsHeader
-      .filter((v): v is string => Boolean(v))
+      .filter(Boolean) // remove any empty strings
       .map(String)
 
     const configs: Record<string, Config> = {}

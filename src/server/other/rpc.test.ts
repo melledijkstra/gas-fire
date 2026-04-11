@@ -5,7 +5,8 @@ import {
   SpreadsheetMock,
   UIMock,
 } from '../../../test-setup'
-import { FireTable, FireSheet } from '../table'
+import { FireSheet } from '../spreadsheet/FireSheet'
+import { FireTable } from '../table/FireTable'
 import { executeFindDuplicates, mailNetWorth } from '../other/rpc'
 
 vi.mock('../globals', () => ({

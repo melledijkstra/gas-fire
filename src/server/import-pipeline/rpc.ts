@@ -1,11 +1,21 @@
-import type { ServerResponse, RawTable, ImportPreviewReport, UserDecisions, TransactionAction, TransactionStatus, TransactionMeta } from '@/common/types'
+import type {
+  ServerResponse,
+  RawTable,
+  ImportPreviewReport,
+  UserDecisions,
+  TransactionAction,
+  TransactionStatus,
+  TransactionMeta,
+} from '@/common/types'
 import { Config } from '../config'
-import { FireTable, FireSheet, type CellValue } from '../table'
+import { FireTable } from '../table/FireTable'
+import type { CellValue } from '../table/types'
+import { FireSheet } from '../spreadsheet/FireSheet'
 import { Table } from '../table/Table'
 import { AccountUtils, isNumeric } from '../accounts/account-utils'
 import { structuredClone } from '@/common/helpers'
 import { Logger } from '@/common/logger'
-import { removeFilterCriteria } from '../utils/spreadsheet'
+import { removeFilterCriteria } from '../spreadsheet/spreadsheet'
 import { FEATURES } from '@/common/settings'
 import { getRowHash } from '../deduplication/duplicate-finder'
 

@@ -1,6 +1,7 @@
 import type { RawTable } from '@/common/types'
 import type { FireColumn } from '@/common/constants'
-import { FireTable, type CellValue } from '../table'
+import { FireTable } from '../table/FireTable'
+import type { CellValue } from '../table/types'
 
 export function getRowHash(row: CellValue[]): string {
   return FireTable.getHashIndices().map((colIndex) => {

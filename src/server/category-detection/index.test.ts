@@ -1,5 +1,5 @@
 import { categorizeTransactions } from './index'
-import { FireTable } from '../table'
+import { FireTable } from '../table/FireTable'
 
 describe('categorizeTransactions', () => {
   test('should categorize transactions correctly', () => {
