@@ -14,6 +14,7 @@
 
   const headers = Array.from(FIRE_COLUMNS);
   const hasDetectedDuplicates = $derived(report.summary.duplicateCount > 0);
+  const hasActionColumn = $derived(hasDetectedDuplicates || report.summary.removedCount > 0);
 
   const getRowClass = (status: TransactionStatus): string => {
     if (status === 'removed') return 'bg-red-100! dark:bg-red-900! line-through';
@@ -24,7 +25,7 @@
 
 <FlowTable class={[tableClass, 'border border-gray-400 mb-2.5 mr-2.5']} striped hoverable>
   <TableHead>
-    {#if hasDetectedDuplicates}
+    {#if hasActionColumn}
       <TableHeadCell class="py-2 px-1 normal-case">Action</TableHeadCell>
     {/if}
     {#each headers as header, i (i)}
@@ -35,8 +36,9 @@
     {#each report.rows as row, i (`${report.hashes[i]}-${i}`)}
       {@const hash = report.hashes[i]}
       {@const meta = report.transactionMeta[hash]}
+      {@const rowRuleInfo = report.ruleInfo?.[hash]}
       <TableBodyRow class={getRowClass(meta.status)}>
-        {#if hasDetectedDuplicates}
+        {#if hasActionColumn}
           <TableBodyCell class="py-2 px-1 text-xs text-center">
             {#if meta.status === 'duplicate'}
               <Select
@@ -54,7 +56,12 @@
                 <option value="import">Import</option>
               </Select>
             {:else if meta.status === 'removed'}
-              <span class="text-gray-500">Removed</span>
+              <span
+                class="text-gray-500"
+                title={rowRuleInfo?.excludedByRule ? `Excluded by rule: ${rowRuleInfo.excludedByRule}` : undefined}
+              >
+                Excluded
+              </span>
             {:else}
               <span class="text-green-600">Import</span>
             {/if}

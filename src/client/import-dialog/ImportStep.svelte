@@ -25,8 +25,7 @@
       .then((response) => {
         if (response.success) {
           importFinished = true;
-          message = response.message ?? "Import successful! This dialog will close shortly.";
-          setTimeout(google.script.host.close, 3000);
+          message = response.message ?? "Import successful!";
         } else {
           onFailure(response);
         }
@@ -70,5 +69,6 @@
     </Button>
   {:else}
     <BadgeCheckSolid class="w-40 h-40" color="green" />
+    <Button color="light" onclick={() => google.script.host.close()}>Close</Button>
   {/if}
 </div>

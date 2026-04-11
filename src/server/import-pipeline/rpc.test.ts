@@ -19,6 +19,18 @@ import { fakeTestBankImportData } from '@/fixtures/test-bank'
 import { removeFilterCriteria } from '../spreadsheet/spreadsheet'
 import { FireSheet } from '../spreadsheet/FireSheet'
 import { slugify } from '@/common/helpers'
+import { loadImportRules } from '../rule-engine'
+import type { ImportRule } from '../rule-engine'
+
+vi.mock('../rule-engine', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../rule-engine')>()
+  return {
+    ...actual,
+    loadImportRules: vi.fn(() => ({ rules: [], warnings: [] })),
+  }
+})
+
+const loadImportRulesMock = vi.mocked(loadImportRules)
 
 vi.mock('../globals', () => ({
   FireSpreadsheet: SpreadsheetMock,
@@ -237,6 +249,237 @@ describe('RPC: Import Functions', () => {
         expect.arrayContaining([new Date(2015, 4, 21), 58.3]),
         expect.arrayContaining([new Date(2015, 4, 20), 20]),
       ])
+    })
+  })
+
+  describe('rule engine integration', () => {
+    const testBankConfig = new Config({
+      accountId: BANK_ID,
+      columnMap: {
+        amount: 'TransactionAmount',
+        date: 'TransactionDate',
+        description: 'Description',
+      },
+    })
+
+    const testData: RawTable = [
+      ['TransactionAmount', 'TransactionDate', 'Description'],
+      ['50', '2024-01-15', 'Grocery Store'],
+      ['-100', '2024-01-16', 'Internal Transfer'],
+      ['30', '2024-01-17', 'Coffee Shop'],
+    ]
+
+    beforeAll(() => {
+      Logger.disable()
+    })
+
+    beforeEach(() => {
+      configSpy.mockReturnValue(testBankConfig)
+    })
+
+    describe('previewPipeline with rules', () => {
+      let getBalanceSpy: ReturnType<typeof vi.spyOn>
+      let fireSheetSpy: ReturnType<typeof vi.spyOn>
+
+      beforeEach(() => {
+        getBalanceSpy = vi.spyOn(AccountUtils, 'getBalance').mockReturnValue(1000)
+        fireSheetSpy = vi.spyOn(FireSheet.prototype, 'getLastImportedTransactions').mockReturnValue(new FireTable([]))
+      })
+
+      afterEach(() => {
+        getBalanceSpy.mockRestore()
+        fireSheetSpy.mockRestore()
+      })
+
+      test('excluded rows appear with removed status', () => {
+        const excludeRule: ImportRule = {
+          ruleName: 'Exclude Internal',
+          banks: ['all'],
+          conditionColumn: 'description',
+          condition: 'CONTAINS',
+          conditionValue: 'Internal',
+          action: 'EXCLUDE',
+          actionColumn: 'description',
+          stopProcessing: true,
+          rulePhase: 'POST_TRANSFORM',
+          rowIndex: 2,
+        }
+        loadImportRulesMock.mockReturnValue({ rules: [excludeRule], warnings: [] })
+
+        const response = previewPipeline(structuredClone(testData), BANK_ID)
+
+        expect(response.success).toBe(true)
+        if (response.success && response.data) {
+          expect(response.data.summary.removedCount).toBe(1)
+          expect(response.data.summary.validCount).toBe(2)
+          expect(response.data.summary.rulesApplied).toBe(1)
+          expect(response.data.summary.rulesLoaded).toBe(1)
+
+          // Find the excluded row by checking transactionMeta
+          const removedHashes = Object.entries(response.data.transactionMeta)
+            .filter(([_, meta]) => meta.status === 'removed')
+            .map(([hash]) => hash)
+          expect(removedHashes).toHaveLength(1)
+
+          // ruleInfo should contain the exclusion details
+          expect(response.data.ruleInfo).toBeDefined()
+          const info = response.data.ruleInfo![removedHashes[0]]
+          expect(info.excludedByRule).toBe('Exclude Internal')
+        }
+      })
+
+      test('rule warnings are included in report', () => {
+        loadImportRulesMock.mockReturnValue({
+          rules: [],
+          warnings: [{ ruleName: 'Bad Rule', rowIndex: 3, message: 'Invalid condition' }],
+        })
+
+        const response = previewPipeline(structuredClone(testData), BANK_ID)
+
+        expect(response.success).toBe(true)
+        if (response.success && response.data) {
+          expect(response.data.ruleWarnings).toHaveLength(1)
+          expect(response.data.ruleWarnings![0].ruleName).toBe('Bad Rule')
+        }
+      })
+
+      test('excluded rows do not count toward new balance', () => {
+        getBalanceSpy.mockReturnValue(1000)
+        const excludeRule: ImportRule = {
+          ruleName: 'Exclude Internal',
+          banks: ['all'],
+          conditionColumn: 'description',
+          condition: 'CONTAINS',
+          conditionValue: 'Internal',
+          action: 'EXCLUDE',
+          actionColumn: 'description',
+          stopProcessing: true,
+          rulePhase: 'POST_TRANSFORM',
+          rowIndex: 2,
+        }
+        loadImportRulesMock.mockReturnValue({ rules: [excludeRule], warnings: [] })
+
+        const response = previewPipeline(structuredClone(testData), BANK_ID)
+
+        if (response.success && response.data) {
+          // Only Grocery Store (50) and Coffee Shop (30) should count = 80
+          // -100 Internal Transfer is excluded
+          expect(response.data.newBalance).toBeCloseTo(1080, 0)
+        }
+      })
+    })
+
+    describe('importPipeline with rules', () => {
+      let fireSheetSpy: ReturnType<typeof vi.spyOn>
+
+      beforeEach(() => {
+        fireSheetSpy = vi.spyOn(FireSheet.prototype, 'getLastImportedTransactions').mockReturnValue(new FireTable([]))
+      })
+
+      afterEach(() => {
+        fireSheetSpy.mockRestore()
+      })
+
+      test('excluded rows are not imported', () => {
+        const excludeRule: ImportRule = {
+          ruleName: 'Exclude Internal',
+          banks: ['all'],
+          conditionColumn: 'description',
+          condition: 'CONTAINS',
+          conditionValue: 'Internal',
+          action: 'EXCLUDE',
+          actionColumn: 'description',
+          stopProcessing: true,
+          rulePhase: 'POST_TRANSFORM',
+          rowIndex: 2,
+        }
+        loadImportRulesMock.mockReturnValue({ rules: [excludeRule], warnings: [] })
+
+        const result = importPipeline(structuredClone(testData), BANK_ID)
+
+        expect(result.success).toBe(true)
+        expect(importDataSpy).toHaveBeenCalled()
+        const [fireTable] = importDataSpy.mock.calls[importDataSpy.mock.calls.length - 1]
+        // Should only have 2 rows (Grocery Store + Coffee Shop)
+        expect(fireTable.getRowCount()).toBe(2)
+        // The Internal Transfer row should not be present
+        const descriptions = fireTable.getFireColumn('description')
+        expect(descriptions).not.toContainEqual('Internal Transfer')
+      })
+
+      test('SET rules modify data before import', () => {
+        const setRule: ImportRule = {
+          ruleName: 'Categorize Coffee',
+          banks: ['all'],
+          conditionColumn: 'description',
+          condition: 'CONTAINS',
+          conditionValue: 'Coffee',
+          action: 'SET',
+          actionColumn: 'category',
+          actionValue: 'Eating Out',
+          stopProcessing: false,
+          rulePhase: 'POST_TRANSFORM',
+          rowIndex: 2,
+        }
+        loadImportRulesMock.mockReturnValue({ rules: [setRule], warnings: [] })
+
+        const result = importPipeline(structuredClone(testData), BANK_ID)
+
+        expect(result.success).toBe(true)
+        expect(importDataSpy).toHaveBeenCalled()
+        const [fireTable] = importDataSpy.mock.calls[importDataSpy.mock.calls.length - 1]
+        const categories = fireTable.getFireColumn('category')
+        // One of the rows should have 'Eating Out' category
+        expect(categories).toContainEqual('Eating Out')
+      })
+
+      test('PRE_TRANSFORM rules run on raw CSV column names', () => {
+        const preRule: ImportRule = {
+          ruleName: 'Exclude by raw column',
+          banks: ['all'],
+          conditionColumn: 'Description',
+          condition: 'CONTAINS',
+          conditionValue: 'Internal',
+          action: 'EXCLUDE',
+          actionColumn: 'Description',
+          stopProcessing: true,
+          rulePhase: 'PRE_TRANSFORM',
+          rowIndex: 2,
+        }
+        loadImportRulesMock.mockReturnValue({ rules: [preRule], warnings: [] })
+
+        const result = importPipeline(structuredClone(testData), BANK_ID)
+
+        expect(result.success).toBe(true)
+        expect(importDataSpy).toHaveBeenCalled()
+        const [fireTable] = importDataSpy.mock.calls[importDataSpy.mock.calls.length - 1]
+        expect(fireTable.getRowCount()).toBe(2)
+      })
+
+      test('import message includes rule stats', () => {
+        const excludeRule: ImportRule = {
+          ruleName: 'Exclude Internal',
+          banks: ['all'],
+          conditionColumn: 'description',
+          condition: 'CONTAINS',
+          conditionValue: 'Internal',
+          action: 'EXCLUDE',
+          actionColumn: 'description',
+          stopProcessing: true,
+          rulePhase: 'POST_TRANSFORM',
+          rowIndex: 2,
+        }
+        loadImportRulesMock.mockReturnValue({ rules: [excludeRule], warnings: [] })
+
+        const result = importPipeline(structuredClone(testData), BANK_ID)
+
+        expect(result.success).toBe(true)
+        if (result.success) {
+          expect(result.message).toContain('imported 2 rows!')
+          expect(result.message).toContain('1 rule(s) applied')
+          expect(result.message).toContain('1 row(s) excluded by rules')
+        }
+      })
     })
   })
 })

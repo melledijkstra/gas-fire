@@ -35,6 +35,17 @@ export interface TransactionMeta {
   action: TransactionAction
 }
 
+export interface RuleWarningInfo {
+  ruleName: string
+  rowIndex: number
+  message: string
+}
+
+export interface RowRuleInfo {
+  excludedByRule?: string
+  modifications?: Record<string, string>
+}
+
 export interface ImportPreviewReport {
   /** Formatted transaction rows in the same order as `hashes`. Always aligned to FIRE_COLUMNS. */
   rows: string[][]
@@ -49,7 +60,12 @@ export interface ImportPreviewReport {
     removedCount: number
     duplicateCount: number
     rulesApplied: number
+    rulesLoaded: number
   }
+  /** Per-hash rule info for UI tooltips, keyed by row hash. */
+  ruleInfo?: Record<string, RowRuleInfo>
+  /** Warnings from rule loading/processing for display in UI. */
+  ruleWarnings?: RuleWarningInfo[]
 }
 
 export type UserDecisions = Map<string, TransactionAction>
