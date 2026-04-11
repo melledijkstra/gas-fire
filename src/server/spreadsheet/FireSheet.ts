@@ -3,7 +3,6 @@ import { FireTable } from '../table/FireTable'
 import { SheetsRequestBuilder } from '../request-builder'
 import { Logger } from '@/common/logger'
 import { getSourceSheet } from '../globals'
-import { DEFAULT_LOCALE } from '@/common/settings'
 
 const MS_IN_DAY = 86400000
 const DAYS_FROM_JS_EPOCH_TO_SHEETS_EPOCH = 25569
@@ -363,16 +362,9 @@ export class FireSheet {
   static getLocale = (): string => {
     if (this.cachedLocale) return this.cachedLocale
 
-    try {
-      const locale = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetLocale()
-      this.cachedLocale = locale.replace('-', '_') // make sure to always use underscore
-      return this.cachedLocale
-    }
-    catch (error) {
-      console.warn('Could not retrieve spreadsheet locale: ', error)
-    }
-
-    return DEFAULT_LOCALE
+    const locale = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetLocale()
+    this.cachedLocale = locale.replace('-', '_') // make sure to always use underscore
+    return this.cachedLocale
   }
 }
 
