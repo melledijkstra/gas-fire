@@ -1,4 +1,5 @@
-import { FireSheet, FireTable } from '../table'
+import { FireTable } from '../table/FireTable'
+import { FireSheet } from '../spreadsheet/FireSheet'
 import { getCategoryNames } from '../helpers'
 import { Logger } from '@/common/logger'
 import { categorizeTransactions } from '.'

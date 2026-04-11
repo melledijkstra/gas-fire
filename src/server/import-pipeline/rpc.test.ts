@@ -1,11 +1,10 @@
 import {
   SheetMock,
   SpreadsheetMock,
-  FilterMock,
 } from '../../../test-setup'
 import type { RawTable } from '@/common/types'
 import { N26ImportMock } from '@/fixtures/n26'
-import { FireSheet, FireTable } from '../table'
+import { FireTable } from '../table/FireTable'
 import { AccountUtils } from '../accounts/account-utils'
 import { raboImportMock } from '@/fixtures/rabobank'
 import { Logger } from '@/common/logger'
@@ -17,7 +16,8 @@ import { Config } from '../config'
 import bankOfAmericaCSV from '@/fixtures/commonwealth-bank.csv?raw'
 import Papa from 'papaparse'
 import { fakeTestBankImportData } from '@/fixtures/test-bank'
-import { getSpreadsheetLocale, removeFilterCriteria } from '../utils/spreadsheet'
+import { removeFilterCriteria } from '../spreadsheet/spreadsheet'
+import { FireSheet } from '../spreadsheet/FireSheet'
 import { slugify } from '@/common/helpers'
 
 vi.mock('../globals', () => ({
@@ -25,7 +25,8 @@ vi.mock('../globals', () => ({
   getSourceSheet: vi.fn(() => SheetMock),
 }))
 
-vi.mock('../utils/spreadsheet')
+vi.mock('../spreadsheet/FireSheet')
+vi.mock('../spreadsheet/spreadsheet')
 
 vi.mock('../accounts/rpc', () => ({
   getBankAccountOptionsCached: vi.fn(() => ({
@@ -37,7 +38,7 @@ vi.mock('../accounts/rpc', () => ({
   })),
 }))
 
-const getSpreadsheetLocaleMock = vi.mocked(getSpreadsheetLocale)
+const getLocaleMock = vi.mocked(FireSheet.getLocale)
 const removeFilterCriteriaMock = vi.mocked(removeFilterCriteria)
 removeFilterCriteriaMock.mockReturnValue(true)
 
@@ -144,11 +145,10 @@ describe('RPC: Import Functions', () => {
 
     test('removes filters if any are set', () => {
       removeFilterCriteriaMock.mockReturnValue(true)
-      SheetMock.getFilter.mockReturnValue(FilterMock)
 
       importPipeline([], 'TestBank')
 
-      expect(SheetMock.getFilter).toHaveBeenCalled()
+      expect(FireSheet.prototype.getFilter).toHaveBeenCalled()
     })
 
     test('is able to handle N26 import', () => {
@@ -190,7 +190,7 @@ describe('RPC: Import Functions', () => {
     })
 
     test('is able to handle bank of america', () => {
-      getSpreadsheetLocaleMock.mockReturnValueOnce('en_US')
+      getLocaleMock.mockReturnValueOnce('en_US')
 
       const bankOfAmericaConfig = new Config({
         accountId: 'bank-of-america',

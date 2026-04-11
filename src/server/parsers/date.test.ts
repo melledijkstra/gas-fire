@@ -1,9 +1,9 @@
-import { getSpreadsheetLocale } from '../utils/spreadsheet'
+import { FireSheet } from '../spreadsheet/FireSheet'
 import { parseDate } from './date'
 
-vi.mock('../utils/spreadsheet')
+vi.mock('../spreadsheet/FireSheet')
 
-const mockedGetSpreadsheetLocale = vi.mocked(getSpreadsheetLocale)
+const mockedGetSpreadsheetLocale = vi.mocked(FireSheet.getLocale)
 mockedGetSpreadsheetLocale.mockReturnValue('en_US')
 
 describe('parseDate', () => {

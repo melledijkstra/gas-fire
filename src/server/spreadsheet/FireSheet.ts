@@ -1,5 +1,5 @@
-import type { CellValue } from './types'
-import { FireTable } from './FireTable'
+import type { CellValue } from '../table/types'
+import { FireTable } from '../table/FireTable'
 import { SheetsRequestBuilder } from '../request-builder'
 import { Logger } from '@/common/logger'
 import { getSourceSheet } from '../globals'
@@ -29,7 +29,8 @@ type GetLastImportedTransactionsOptions = {
  */
 export class FireSheet {
   protected readonly _sheet: GoogleAppsScript.Spreadsheet.Sheet
-  protected static timeZoneCache: string | null = null
+  protected static cachedLocale: string | undefined
+  protected static timeZoneCache: string | undefined
 
   constructor() {
     const sourceSheet = getSourceSheet()
@@ -352,6 +353,18 @@ export class FireSheet {
     this.timeZoneCache = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone()
 
     return this.timeZoneCache
+  }
+
+  /**
+   * Returns the locale of the active spreadsheet, formatted with an underscore (e.g. "en_US").
+   * If the locale cannot be retrieved, returns a default value of "en_US".
+   */
+  static getLocale = (): string => {
+    if (this.cachedLocale) return this.cachedLocale
+
+    const locale = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetLocale()
+    this.cachedLocale = locale.replace('-', '_') // make sure to always use underscore
+    return this.cachedLocale
   }
 }
 

@@ -1,8 +1,10 @@
 import { bench, describe, vi } from 'vitest'
 import { Transformers } from './transformers'
 
-vi.mock('./utils/spreadsheet', () => ({
-  getSpreadsheetLocale: vi.fn().mockReturnValue('en_GB'),
+vi.mock('./spreadsheet/FireSheet', () => ({
+  FireSheet: {
+    getLocale: vi.fn().mockReturnValue('en_GB'),
+  },
 }))
 
 describe('Transformers.transformDate', () => {

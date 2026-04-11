@@ -1,11 +1,13 @@
 import { Transformers } from './transformers'
-import { getSpreadsheetLocale } from './utils/spreadsheet'
+import { FireSheet } from './spreadsheet/FireSheet'
 
-vi.mock('./utils/spreadsheet', () => ({
-  getSpreadsheetLocale: vi.fn(),
+vi.mock('./spreadsheet/FireSheet', () => ({
+  FireSheet: {
+    getLocale: vi.fn().mockReturnValue('en_GB'),
+  },
 }))
 
-const getSpreadsheetLocaleMock = vi.mocked(getSpreadsheetLocale)
+const getLocaleMock = vi.mocked(FireSheet.getLocale)
 
 describe('Transformers', () => {
   test('Transformers.transformMoney', () => {
@@ -82,11 +84,11 @@ describe('Transformers', () => {
     expect(() => Transformers.transformDate('invalid-date')).toThrowError('Failed to parse date: "invalid-date"')
 
     // US only logic
-    getSpreadsheetLocaleMock.mockReturnValue('en_US')
+    getLocaleMock.mockReturnValue('en_US')
     expect(Transformers.transformDate('10.01.2023')).toEqual(new Date(2023, 9, 1))
     expect(Transformers.transformDate('10/01/2023')).toEqual(new Date(2023, 9, 1))
     expect(Transformers.transformDate('10/01/23')).toEqual(new Date(2023, 9, 1))
 
-    getSpreadsheetLocaleMock.mockReset()
+    getLocaleMock.mockReset()
   })
 })

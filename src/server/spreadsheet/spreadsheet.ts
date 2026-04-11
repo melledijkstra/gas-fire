@@ -1,5 +1,3 @@
-let cachedLocale: string | undefined
-
 /**
  * Removes all filter criterias present on the given filter
  * Can optionally prompt the user before removing the criterias
@@ -56,21 +54,4 @@ export const removeFilterCriteria = (
   // return false, because there are still criterias set
   // and the user decided not to remove them
   return false
-}
-
-/**
- * Returns the locale of the active spreadsheet, formatted with an underscore (e.g. "en_US").
- * If the locale cannot be retrieved, returns undefined.
- */
-export const getSpreadsheetLocale = (): string | undefined => {
-  if (cachedLocale) return cachedLocale
-
-  try {
-    const locale = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetLocale()
-    cachedLocale = locale.replace('-', '_') // make sure to always use underscore
-    return cachedLocale
-  }
-  catch (error) {
-    console.warn('Could not retrieve spreadsheet locale: ', error)
-  }
 }

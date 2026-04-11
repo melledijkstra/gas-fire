@@ -70,7 +70,9 @@ export class Table {
    * Missing values default to null.
    */
   retrieveColumn(columnIndex: number): CellValue[] {
-    return this.data.map(row => row?.[columnIndex] ?? null)
+    const column = this.data.map(row => row?.[columnIndex] ?? null)
+    // if the column index is out of bounds for all rows, return an empty array
+    return column.every(cell => cell === null) ? [] : column
   }
 
   // ──────────────────────────────────────────────

@@ -3,6 +3,8 @@ import type { FireColumn } from '@/common/constants'
 import { slugify } from '@/common/helpers'
 import { Logger } from '@/common/logger'
 import { FireSpreadsheet } from './globals'
+import { Table } from './table/Table'
+import type { CellValue } from './table/types'
 
 const CONFIG_CACHE_KEY = 'cache.config'
 
@@ -59,15 +61,16 @@ export class Config {
   }
 
   private static loadColumnMapping(sheet: GoogleAppsScript.Spreadsheet.Sheet) {
-    const columnMapConfig = sheet.getSheetValues(5, 1, sheet.getLastRow(), -1)
+    const columnMapValues = sheet.getSheetValues(5, 1, sheet.getLastRow(), -1) as CellValue[][]
+    const table = Table.from(columnMapValues)
 
     // first row contains account identifiers
-    const accountIdentifiers: string[]
-      = (columnMapConfig
-        .shift() // take the first row
-        ?.slice(1) // remove the first cell containing "Column Mapping"
-        ?.filter(Boolean) ?? []) // remove any empty strings
-        .map(slugify) // slugify the account identifiers
+    const headerRow = table.shiftRow() ?? []
+
+    const accountIdentifiers: string[] = headerRow
+      .slice(1) // remove the first cell containing "Column Mapping"
+      .filter(Boolean) // remove any empty strings
+      .map(v => slugify(String(v))) // slugify the account identifiers
 
     const result: Record<string, ColumnMap> = {}
 
@@ -76,9 +79,9 @@ export class Config {
     }
 
     // filter out any empty rows which do not contain a fire column definition
-    const cleanColumnConfig = columnMapConfig.filter(row => !!row?.[0])
+    const filteredTable = table.filter(row => !!row?.[0])
 
-    for (const row of cleanColumnConfig) {
+    for (const row of filteredTable.getData()) {
       const fireColumnName = row[0] as FireColumn // first column contains the FIRE column name
       if (!FIRE_COLUMNS.includes(fireColumnName)) {
         continue
@@ -90,7 +93,7 @@ export class Config {
       for (let i = 0; i < accountIdentifiers.length; i++) {
         const account = accountIdentifiers[i]
         const value = columnValues[i]
-        result[account][fireColumnName] = value ?? null
+        result[account][fireColumnName] = value ? String(value) : undefined
       }
     }
 
@@ -112,27 +115,32 @@ export class Config {
 
     // explanation:
     // first row contains configuration labels which we don't need
-    const rawConfigs = configSheet.getSheetValues(1, 2, 4, -1)
-    const configs: Record<string, Config> = {}
+    const rawConfigsValues = configSheet.getSheetValues(1, 2, 4, -1) as CellValue[][]
+    const configsTable = Table.from(rawConfigsValues)
 
     // first row contains account identifiers
-    const accounts: string[]
-      = rawConfigs
-        .shift() // take the first row
-        ?.filter(Boolean) ?? [] // remove any empty strings
+    const accountsHeader = configsTable.shiftRow() ?? []
+
+    const accounts = accountsHeader
+      .filter(Boolean) // remove any empty strings
+      .map(String)
+
+    const configs: Record<string, Config> = {}
+    const configData = configsTable.getData()
 
     for (let i = 0; i < accounts.length; i++) {
-      const account = slugify(accounts[i])
+      const accountId = slugify(accounts[i])
       // first row contains the auto fill column indices
       // second row contains the auto fill enabled flag
       // third row contains the auto categorization enabled flag
-      const autoFillColumnIndices = rawConfigs[0][i].split(',').map(Number)
-      const autoFillEnabled = parseBoolean(rawConfigs[1][i])
-      const autoCategorizationEnabled = parseBoolean(rawConfigs[2][i])
+      const autoFillStr = String(configData[0]?.[i] ?? '')
+      const autoFillColumnIndices = autoFillStr ? autoFillStr.split(',').map(Number) : []
+      const autoFillEnabled = parseBoolean(String(configData[1]?.[i] ?? false))
+      const autoCategorizationEnabled = parseBoolean(String(configData[2]?.[i] ?? false))
 
-      configs[account] = new Config({
-        accountId: account,
-        columnMap: columnMapping[account],
+      configs[accountId] = new Config({
+        accountId,
+        columnMap: columnMapping[accountId],
         autoFillColumnIndices,
         autoFillEnabled,
         autoCategorizationEnabled,

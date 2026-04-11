@@ -1,7 +1,7 @@
 import { describe, expect } from 'vitest'
 import { findDuplicates, getRowHash } from './duplicate-finder'
 import type { RawTable } from '@/common/types'
-import type { CellValue } from '../table'
+import type { CellValue } from '../table/types'
 import { buildFireTableRow } from '@/fixtures/fire-row'
 import { FIRE_COLUMNS } from '@/common/constants'
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.14.8-beta
+
+- **Refactor** - Utilized `Table` and `FireTable` classes extensively in `duplicate-finder.ts`, `account-utils.ts`, `rpc.ts`, and `config.ts` to keep things DRY and SOLID.
+
 ## 4.14.7-beta
 
 - **Performance** - Optimized account data retrieval and balance checking.

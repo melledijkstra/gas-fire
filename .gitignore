@@ -24,3 +24,7 @@ storybook-static/
 
 # generated faker transactions
 transactions/
+
+# worktrees for AI agents
+.gemini/worktrees/
+.claude/worktrees/

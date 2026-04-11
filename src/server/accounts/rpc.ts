@@ -4,6 +4,7 @@ import { slugify } from '@/common/helpers'
 import { NAMED_RANGES } from '../../common/constants'
 import { cleanString } from '../utils'
 import { Logger } from '@/common/logger'
+import { Table } from '../table/Table'
 
 /**
  * This retrieves the bank accounts set by the user.
@@ -23,21 +24,20 @@ export function getBankAccounts(): ServerResponse<Record<string, string>> {
   try {
     const sheet = SpreadsheetApp.getActiveSpreadsheet()
     // retrieve account names and ibans
-    // the ranges should only have one column so we use .flat()
-    const accountNames = sheet
-      .getRangeByName(NAMED_RANGES.accountNames)
-      ?.getValues()
-      ?.flat() as Array<string>
-    const ibans = sheet
-      .getRangeByName(NAMED_RANGES.accounts)
-      ?.getValues()
-      ?.flat() as Array<string>
+    const accountNamesRange = sheet.getRangeByName(NAMED_RANGES.accountNames)
+    const ibansRange = sheet.getRangeByName(NAMED_RANGES.accounts)
+
+    const accountNamesTable = Table.from(accountNamesRange?.getValues() ?? [])
+    const ibansTable = Table.from(ibansRange?.getValues() ?? [])
+
+    const accountNames = accountNamesTable.retrieveColumn(0)
+    const ibans = ibansTable.retrieveColumn(0)
 
     const bankAccounts: Record<string, string> = {}
 
-    for (const [index, iban] of ibans?.entries() ?? []) {
-      const label = cleanString(accountNames?.[index])
-      const cleanIban = cleanString(iban)
+    for (const [index, iban] of ibans.entries()) {
+      const label = cleanString(String(accountNames[index]))
+      const cleanIban = cleanString(String(iban))
 
       if (cleanIban) {
         // this sets the label as the key and the iban as the value
@@ -61,18 +61,16 @@ export function getBankAccounts(): ServerResponse<Record<string, string>> {
  */
 export function getBankAccountOptions(): ServerResponse<BankOptions> {
   try {
-    const accountNames = FireSpreadsheet.getRangeByName(NAMED_RANGES.accountNames)
+    const accountNamesRange = FireSpreadsheet.getRangeByName(NAMED_RANGES.accountNames)
 
-    if (!accountNames) {
+    if (!accountNamesRange) {
       return { success: true, data: {} }
     }
 
-    const accounts = accountNames
-      .getValues()
-      // make sure not to include empty rows
-      .filter(row => row.some((cell: string) => cell !== '' && cell !== null))
-      // flatten out the array so it is 1 dimensional with account names
-      .flat()
+    const accountNamesTable = Table.from(accountNamesRange.getValues())
+      .removeEmptyRows()
+
+    const accounts = accountNamesTable.retrieveColumn(0).map(String)
 
     // we convert the account names to slugs and return them as an object
     const result = accounts.reduce<Record<string, string>>((obj: Record<string, string>, account: string) => {

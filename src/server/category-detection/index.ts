@@ -1,4 +1,4 @@
-import { FireTable } from '../table'
+import { FireTable } from '../table/FireTable'
 import { Logger } from '@/common/logger'
 
 export function categorizeTransactions(fireTable: FireTable): {
