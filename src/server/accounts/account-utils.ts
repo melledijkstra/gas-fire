@@ -45,7 +45,7 @@ export class AccountUtils {
     const ibans = FireSpreadsheet.getRangeByName(NAMED_RANGES.accounts)
     // we also need to include the labels and balances
     const accounts = ibans
-      ?.offset(0, -1, ibans.getLastRow(), 3)
+      ?.offset(0, -1, ibans.getNumRows(), 3)
       .getValues()
       // make sure not to include empty rows
       .filter(row => row.some((cell: unknown) => cell !== '' && cell !== null))
