@@ -11,6 +11,11 @@ const entries = clientEntrypoints.map((entry) => {
 export default {
   entry: entries,
   project: ['src/**/*.{ts,svelte}'],
+  ignoreBinaries: [
+    // used in the dev server to create a secure tunnel with a real domain
+    // PENDING: double check if this is a built-in binary on the OS or not
+    'mkcert',
+  ],
   ignoreDependencies: [
     // is actually used in vite.config.ts for the coverage engine
     '@vitest/coverage-v8',
@@ -19,16 +24,11 @@ export default {
     // from the core package we never directly import
     // instead from 'flowbite-svelte'
     'flowbite',
+    // only used to get a type, and the package is already installed because of svelte storybook dependencies
+    '@storybook/svelte',
   ],
   ignore: [
-    // basically exports the exposed functions, we can ignore that also
-    'src/server/index.ts',
-    // ignore exposed function which are never imported in the src code, but available
-    // to the user in the google sheets environment
-    'src/server/exposed_functions.ts',
-    // remote calls made from the frontend, they won't be imported in the src code
-    'src/server/remote-calls.ts',
-    // functions that execute when google sheets UI loads
-    'src/server/ui.ts',
+    // plugin that generates the frontend bundles, but is not imported in the src code
+    'src/plugins/frontendBundlesPlugin.ts',
   ],
 } satisfies KnipConfig
