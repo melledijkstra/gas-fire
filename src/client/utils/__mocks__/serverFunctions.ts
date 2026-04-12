@@ -82,6 +82,7 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
           duplicateCount,
           removedCount,
           rulesApplied: 3,
+          rulesLoaded: 5,
           totalRows: rows.length,
           validCount,
         },

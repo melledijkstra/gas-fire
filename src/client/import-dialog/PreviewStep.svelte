@@ -4,8 +4,8 @@
   import PreviewTable from "../components/PreviewTable.svelte";
   import { excludeRowsFromData } from "../utils/importing";
   import { importState } from "../states/import.svelte";
-  import { Alert, Button, Spinner } from "flowbite-svelte";
-  import { InfoCircleSolid } from "flowbite-svelte-icons";
+  import { Accordion, AccordionItem, Alert, Button, Spinner } from "flowbite-svelte";
+  import { ExclamationCircleSolid, InfoCircleSolid } from "flowbite-svelte-icons";
   import PreviewReportSummary from "../components/PreviewReportSummary.svelte";
 
   const onPreviewSuccess = (
@@ -72,5 +72,26 @@
 
 {#if importState.previewReport}
   <PreviewReportSummary report={importState.previewReport} />
+
+  {#if importState.previewReport.ruleWarnings?.length}
+    <Accordion class="mb-2">
+      <AccordionItem>
+        {#snippet header()}
+          <span class="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+            <ExclamationCircleSolid class="w-4 h-4" />
+            Rule Warnings ({importState.previewReport.ruleWarnings.length})
+          </span>
+        {/snippet}
+        <ul class="list-disc pl-4 text-sm">
+          {#each importState.previewReport.ruleWarnings as warning}
+            <li>
+              <strong>{warning.ruleName}</strong> (row {warning.rowIndex}): {warning.message}
+            </li>
+          {/each}
+        </ul>
+      </AccordionItem>
+    </Accordion>
+  {/if}
+
   <PreviewTable report={importState.previewReport} />
 {/if}
