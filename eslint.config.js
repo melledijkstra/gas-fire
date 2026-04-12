@@ -10,6 +10,7 @@ export default defineConfig([
       'dist/',
       'coverage/',
       'storybook-static/',
+      'worktrees/',
     ],
   },
   eslint.configs.recommended,
@@ -17,6 +18,13 @@ export default defineConfig([
   stylistic.configs.recommended,
   {
     files: ['**/*.{js,ts,tsx}'],
+    languageOptions: {
+      parserOptions: {
+        // Point to the tsconfig.json file for TypeScript parsing
+        // This is necessary when working with worktrees to ensure ESLint can find the correct TypeScript configuration
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
     rules: {
       // Error on unused variables, but allow variables and arguments starting with "_"
       '@typescript-eslint/no-unused-vars': [
