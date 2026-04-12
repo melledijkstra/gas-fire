@@ -3,32 +3,28 @@ import type { CellValue } from './types'
 const EMPTY = ''
 
 /**
- * An in-memory table abstraction that holds data as a 2D array of CellValues.
+ * An in-memory table abstraction that holds headers and data as a 2D array of CellValues.
  *
  * Supports mutable operations that return `this` for method chaining (builder pattern).
- * Use `.clone()` to create a copy before mutating when immutability is needed.
  *
  * @example
  * ```ts
- * const table = new Table(data);
- * table.removeEmptyRows().sortByColumn(1);
+ * const table = new Table(
+ *  ['Column A', 'Column B'], [
+ *  ['Row 1A', 'Row 1B'],
+ *  ['Row 2A', 'Row 2B']
+ * ]);
  *
- * // Immutable usage:
- * const sorted = table.clone().sortByColumn(1);
+ * table.removeEmptyRows().sortByColumn(1);
  * ```
  */
-export class Table {
-  protected data: CellValue[][]
+export class Table<T = CellValue> {
+  protected _data: T[][]
+  protected _headers: string[]
 
-  constructor(data: CellValue[][] = []) {
-    this.data = data
-  }
-
-  /**
-   * Creates a shallow clone of the table (each row is shallow-copied).
-   */
-  clone(): Table {
-    return new Table(this.data.map(row => [...row]))
+  constructor(headers: string[] = [], data: T[][] = []) {
+    this._headers = headers
+    this._data = data
   }
 
   // ──────────────────────────────────────────────
@@ -38,41 +34,48 @@ export class Table {
   /**
    * Returns the underlying 2D data array.
    */
-  getData(): CellValue[][] {
-    return this.data
+  get data(): T[][] {
+    return this._data
   }
 
-  get headers(): CellValue[] | null {
-    return this.data?.[0] ?? null
+  get headers(): string[] {
+    return this._headers
   }
 
   /**
    * Returns a single row by index, or undefined if out of bounds.
    */
-  getRow(index: number): CellValue[] | undefined {
-    return this.data?.[index]
+  getRow(index: number): T[] | undefined {
+    return this._data?.[index]
   }
 
   getRowCount(): number {
-    return this.data.length
+    return this._data.length
   }
 
   getColumnCount(): number {
-    return this.data.reduce((max, row) => Math.max(max, row?.length ?? 0), 0)
+    return this._data.reduce((max, row) => Math.max(max, row?.length ?? 0), 0)
   }
 
   isEmpty(): boolean {
-    return this.data.length === 0
+    return this._data.length === 0
   }
 
   /**
    * Returns all values in the given column index.
    * Missing values default to null.
    */
-  retrieveColumn(columnIndex: number): CellValue[] {
-    const column = this.data.map(row => row?.[columnIndex] ?? null)
-    // if the column index is out of bounds for all rows, return an empty array
-    return column.every(cell => cell === null) ? [] : column
+  retrieveColumn(columnIndex: number): (T | null)[] {
+    return Table.retrieveColumn(this._data, columnIndex)
+  }
+
+  /**
+   * Returns all values in the given column name.
+   */
+  getColumn(headerName: string): (T | null)[] {
+    const index = this._headers.indexOf(headerName)
+    if (index === -1) return []
+    return this.retrieveColumn(index)
   }
 
   // ──────────────────────────────────────────────
@@ -80,35 +83,18 @@ export class Table {
   // ──────────────────────────────────────────────
 
   /**
-   * Transposes the table: rows become columns and columns become rows.
-   */
-  transpose(): this {
-    this.data = Table.transpose(this.data)
-    return this
-  }
-
-  /**
    * Removes rows where every cell is empty (empty string, null, or undefined).
    */
   removeEmptyRows(): this {
-    this.data = this.data.filter(row =>
-      row.some(cell => cell !== EMPTY && cell !== null && cell !== undefined),
-    )
+    this._data = Table.removeEmptyRows(this._data)
     return this
-  }
-
-  /**
-   * Removes the first row of the table and returns it.
-   */
-  shiftRow(): CellValue[] | undefined {
-    return this.data.shift()
   }
 
   /**
    * Removes the last row of the table.
    */
   deleteLastRow(): this {
-    this.data.pop()
+    this._data.pop()
     return this
   }
 
@@ -118,9 +104,9 @@ export class Table {
    */
   sortByColumn(
     columnIndex: number,
-    comparator?: (a: CellValue, b: CellValue) => number,
+    comparator?: (a: T, b: T) => number,
   ): this {
-    this.data = this.data.toSorted((row1, row2) => {
+    this._data = this._data.toSorted((row1, row2) => {
       if (comparator) return comparator(row1[columnIndex], row2[columnIndex])
       return String(row1[columnIndex]).localeCompare(
         String(row2[columnIndex]),
@@ -134,7 +120,7 @@ export class Table {
    * Mutates the current table.
    */
   deleteRow(index: number): this {
-    this.data.splice(index, 1)
+    this._data.splice(index, 1)
     return this
   }
 
@@ -145,26 +131,10 @@ export class Table {
   deleteRows(rowIndices: number[]): this {
     const sortedIndices = [...rowIndices].sort((a, b) => b - a)
     for (const delIndex of sortedIndices) {
-      if (this.data[delIndex] !== undefined) {
-        this.data.splice(delIndex, 1)
+      if (this._data[delIndex] !== undefined) {
+        this._data.splice(delIndex, 1)
       }
     }
-    return this
-  }
-
-  /**
-   * Deletes columns at the specified indices.
-   * Indices are 0-based.
-   */
-  deleteColumns(colIndices: number[]): this {
-    const sortedIndices = [...colIndices].sort((a, b) => b - a)
-    this.transpose()
-    for (const delIndex of sortedIndices) {
-      if (this.data[delIndex] !== undefined) {
-        this.data.splice(delIndex, 1)
-      }
-    }
-    this.transpose()
     return this
   }
 
@@ -172,8 +142,8 @@ export class Table {
    * Filters rows based on a predicate.
    * Mutates the current table.
    */
-  filter(predicate: (row: CellValue[], index: number) => boolean): this {
-    this.data = this.data.filter((row, index) => predicate(row, index))
+  filter(predicate: (row: T[], index: number) => boolean): this {
+    this._data = this._data.filter((row, index) => predicate(row, index))
     return this
   }
 
@@ -181,8 +151,8 @@ export class Table {
    * Maps each row to a new format.
    * Mutates the current table.
    */
-  map(callback: (row: CellValue[], index: number) => CellValue[]): this {
-    this.data = this.data.map((row, index) => callback(row, index))
+  map(callback: (row: T[], index: number) => T[]): this {
+    this._data = this._data.map((row, index) => callback(row, index))
     return this
   }
 
@@ -191,7 +161,7 @@ export class Table {
    * Useful for debugging or transferring data.
    */
   serialize(): string {
-    return JSON.stringify(this.data, (_key, value) => {
+    return JSON.stringify({ headers: this._headers, data: this._data }, (_key, value) => {
       if (value instanceof Date) {
         return { __type: 'Date', value: value.toISOString() }
       }
@@ -207,8 +177,9 @@ export class Table {
         }
         return value
       })
-      if (Array.isArray(parsed) && parsed.every(row => Array.isArray(row))) {
-        this.data = parsed
+      if (parsed && Array.isArray(parsed.data)) {
+        this._data = parsed.data
+        this._headers = Array.isArray(parsed.headers) ? parsed.headers : []
       }
       else {
         throw new Error('Invalid data format for deserialization')
@@ -225,10 +196,18 @@ export class Table {
   // ──────────────────────────────────────────────
 
   /**
-   * Factory method to create a Table from a 2D array.
+   * Factory method to create a Table from a 2D array, assuming the first row contains headers.
    */
-  static from(data: CellValue[][]): Table {
-    return new Table(data)
+  static from<T = CellValue>(data: T[][]): Table<T> {
+    const headers = data[0] as string[]
+    const rows = data.slice(1)
+    if (!headers || headers.length === 0) {
+      throw new Error('No header row specified in input data!')
+    }
+    if (rows.some(row => !Array.isArray(row))) {
+      throw new Error('All rows must be arrays when creating a Table with Table.from')
+    }
+    return new Table(headers ?? [], rows)
   }
 
   /**
@@ -261,5 +240,17 @@ export class Table {
       i += 1
     }
     return result
+  }
+
+  static retrieveColumn<T>(data: T[][], columnIndex: number): (T | null)[] {
+    const column = data.map(row => row?.[columnIndex] ?? null)
+    // if the column index is out of bounds for all rows, return an empty array
+    return column.every(cell => cell === null) ? [] : column
+  }
+
+  static removeEmptyRows<T>(data: T[][]): T[][] {
+    return data.filter(row =>
+      row.some(cell => cell !== EMPTY && cell !== null && cell !== undefined),
+    )
   }
 }

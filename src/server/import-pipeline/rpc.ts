@@ -7,6 +7,13 @@ import type {
   TransactionStatus,
   TransactionMeta,
 } from '@/common/types'
+import {
+  Pipeline,
+  removeEmptyRowsStage,
+  transformToFireTableStage,
+  sortByDateStage,
+} from './pipeline'
+import type { PipelineContext } from './pipeline'
 import { Config } from '../config'
 import { FireTable } from '../table/FireTable'
 import type { CellValue } from '../table/types'
@@ -30,7 +37,7 @@ function loadExistingHashes(fireSheet: FireSheet): Set<string> {
       stopOnDifferentImportDate: false,
     })
     if (lastImportedTransactions) {
-      for (const row of lastImportedTransactions.getData()) {
+      for (const row of lastImportedTransactions.data) {
         existingHashes.add(getRowHash(row))
       }
     }
@@ -46,9 +53,9 @@ function loadExistingHashes(fireSheet: FireSheet): Set<string> {
  * Rows default to 'import' unless the user has explicitly decided otherwise.
  */
 function filterRowsByDecisions(
-  rows: ReturnType<FireTable['getData']>,
+  rows: CellValue[][],
   userDecisions: UserDecisions,
-): ReturnType<FireTable['getData']> {
+): CellValue[][] {
   return rows.filter((row) => {
     const hash = getRowHash(row)
     const action: TransactionAction = userDecisions.get(hash) ?? 'import'
@@ -96,7 +103,7 @@ function applyUserDecisions(
   userDecisions?: UserDecisions,
 ): FireTable {
   if (userDecisions?.size) {
-    return new FireTable(filterRowsByDecisions(fireTable.getData(), userDecisions))
+    return new FireTable(filterRowsByDecisions(fireTable.data, userDecisions))
   }
   return fireTable
 }
@@ -128,7 +135,7 @@ function buildPreviewRows(
   let duplicateCount = 0
   let validCount = 0
 
-  for (const row of previewTable.getData()) {
+  for (const row of previewTable.data) {
     const hash = getRowHash(row)
     let status: TransactionStatus
     const action: TransactionAction = 'import'
@@ -167,7 +174,7 @@ function buildPreviewRows(
 /**
  * Wraps a pipeline function with standardised error handling and logging.
  */
-function withLogger(
+function withPipelineLogger(
   _target: unknown,
   propertyKey: string,
   descriptor: PropertyDescriptor,
@@ -193,40 +200,6 @@ function withLogger(
   return descriptor
 }
 
-/**
- * Processes raw input data into the structured Firesheet format,
- * applying filtering and sorting rules.
- *
- * @param {RawTable} inputTable - The raw input data
- * @param {Config} accountConfig - The configuration for the account
- * @returns {FireTable} The processed data, ready for import
- */
-function processImportData(inputTable: RawTable, accountConfig: Config): FireTable {
-  const cloned = structuredClone(inputTable)
-  const rawTable = new Table(cloned)
-
-  // retrieve the header row and separate from the actual input data
-  const headerRow = rawTable.shiftRow() as string[] | undefined
-
-  if (!headerRow || headerRow.length === 0) {
-    throw new Error('No header row detected in import data!')
-  }
-
-  //
-  // BEFORE IMPORT RULES
-  //
-  rawTable.removeEmptyRows()
-
-  //
-  // IMPORT RULES
-  //
-  return FireTable.fromCSV({
-    headers: headerRow,
-    rows: rawTable.getData(),
-    config: accountConfig,
-  }).sortByDate()
-}
-
 class PipelineRPC {
   /**
    * Handles incoming CSV (already parsed by the frontend) and processes it in order to be imported
@@ -234,13 +207,13 @@ class PipelineRPC {
    *
    * It uses configuration from the user to determine how the CSV should be processed.
    *
-   * @param {RawTable} inputTable - The table object which contains the CSV data
+   * @param {RawTable} rawTable - The table object which contains the CSV data
    * @param {string} bankAccount - The bank account identifier which is used to lookup configuration
    * @returns {ServerResponse} A response object which contains a message to be displayed to the user
    */
-  @withLogger
+  @withPipelineLogger
   static importPipeline(
-    inputTable: RawTable,
+    rawTable: RawTable,
     bankAccount: string,
     userDecisions?: Record<string, TransactionAction>,
   ): ServerResponse {
@@ -252,7 +225,14 @@ class PipelineRPC {
 
     prepareSheetForImport(fireSheet)
 
-    const fireTable = processImportData(inputTable, accountConfig)
+    const context: PipelineContext = { config: accountConfig }
+    const inputTable = Table.from(structuredClone(rawTable))
+
+    const fireTable = Pipeline.create<Table>()
+      .addStage(removeEmptyRowsStage)
+      .addStage(transformToFireTableStage)
+      .addStage(sortByDateStage)
+      .execute(inputTable, context)
 
     if (fireTable.isEmpty()) {
       const msg = 'No rows to import, check your import data or configuration!'
@@ -268,10 +248,8 @@ class PipelineRPC {
       return { success: false, error: msg }
     }
 
-    Logger.time('FireSheet.importData')
     const autoFillColumns = accountConfig.autoFillEnabled ? accountConfig.autoFillColumnIndices : undefined
     fireSheet.importData(finalTable, autoFillColumns)
-    Logger.timeEnd('FireSheet.importData')
 
     const msg = `imported ${finalTable.getRowCount()} rows!`
     Logger.log(msg)
@@ -279,13 +257,20 @@ class PipelineRPC {
     return { success: true, message: msg }
   }
 
-  @withLogger
+  @withPipelineLogger
   static previewPipeline(
     table: RawTable,
     bankAccount: string,
   ): ServerResponse<ImportPreviewReport> {
     const config = Config.getAccountConfiguration(bankAccount)
-    const previewTable = processImportData(table, config)
+    const rawTable = Table.from(structuredClone(table))
+
+    const context: PipelineContext = { config }
+    const previewTable = Pipeline.create<Table>()
+      .addStage(removeEmptyRowsStage)
+      .addStage(transformToFireTableStage)
+      .addStage(sortByDateStage)
+      .execute(rawTable, context)
 
     let existingHashes: Set<string> = new Set()
 

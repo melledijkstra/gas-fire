@@ -57,8 +57,8 @@ describe('FireTable', () => {
 
       const duplicates = table.findDuplicates(2 * 24 * 60 * 60 * 1000)
       expect(duplicates.getRowCount()).toBe(2)
-      expect(duplicates.getData()[0][0]).toBe('1')
-      expect(duplicates.getData()[1][0]).toBe('2')
+      expect(duplicates.data[0][0]).toBe('1')
+      expect(duplicates.data[1][0]).toBe('2')
     })
 
     it('should not find duplicates if timespan is exceeded', () => {
@@ -91,11 +91,31 @@ describe('FireTable', () => {
       const { rowsCategorized } = table.categorize()
       expect(rowsCategorized).toBe(0)
     })
+
+    test('should categorize transactions correctly', () => {
+    // FireTable data rows (no header row — FireTable uses FIRE_COLUMNS for structure)
+    // FIRE_COLUMNS order: ref, iban, date, amount, balance, contra_account, description, comments, icon, category, label, import_date, hours, disabled, contra_iban, currency
+      const fireTable = new FireTable([
+        ['1', 'NL91ABNA0417164300', '2023-01-01', '-50', '', 'supermercado', 'Grocery Store', '', '', '', '', '', '', '', '', ''],
+        ['2', 'NL91ABNA0417164300', '2023-01-02', '2000', '', 'adidas espana s.a.', 'Salary Payment', '', '', '', '', '', '', '', '', ''],
+        ['3', 'NL91ABNA0417164300', '2023-01-03', '-30', '', 'restaurant', 'Restaurant Bill', '', '', '', '', '', '', '', '', ''],
+      ])
+
+      const { categoryUpdates, rowsCategorized } = fireTable.categorize()
+
+      expect(categoryUpdates).toEqual([
+        ['Food & Groceries'],
+        ['Salary'],
+        ['Bars, Restaurants & Clubs'],
+      ])
+
+      expect(rowsCategorized).toBe(3)
+    })
   })
 
   describe('fromCSV', () => {
     it('should return empty result if no rows are provided neither columnMap', () => {
-      const result = FireTable.fromCSV({
+      const result = FireTable.fromAccountSpecification({
         headers: [],
         rows: [],
         config: new Config({
@@ -116,7 +136,7 @@ describe('FireTable', () => {
         accountId: 'TestBank',
       })
 
-      const result = FireTable.fromCSV({
+      const result = FireTable.fromAccountSpecification({
         headers: ['date', 'amount', 'accountName', 'iban', 'currency'],
         rows,
         config,
@@ -140,10 +160,10 @@ describe('FireTable', () => {
         },
       })
 
-      const result = FireTable.fromCSV({ headers, rows, config })
+      const result = FireTable.fromAccountSpecification({ headers, rows, config })
 
       const descriptionIndex = FireTable.getFireColumnIndex('description')
-      expect(result.getData()[0][descriptionIndex]).toBe(null)
+      expect(result.data[0][descriptionIndex]).toBe(null)
     })
 
     it('should correctly import mapped data from input table when column map is provided', () => {
@@ -167,8 +187,8 @@ describe('FireTable', () => {
         },
       })
 
-      const result = FireTable.fromCSV({ headers, rows, config })
-      const data = result.getData()
+      const result = FireTable.fromAccountSpecification({ headers, rows, config })
+      const data = result.data
 
       expect(result.getRowCount()).toBe(2)
       expect(data[0][FireTable.getFireColumnIndex('date')]).toStrictEqual(
@@ -227,12 +247,12 @@ describe('FireTable', () => {
       const headers = N26ImportMock[0]
       const rows: RawTable = N26ImportMock.slice(1)
 
-      const result = FireTable.fromCSV({
+      const result = FireTable.fromAccountSpecification({
         config: n26Config,
         headers,
         rows,
       })
-      const data = result.getData()
+      const data = result.data
 
       expect(result.getRowCount()).toBe(4)
       expect(data[0][FireTable.getFireColumnIndex('date')]).toStrictEqual(
@@ -246,22 +266,6 @@ describe('FireTable', () => {
         'Ticket is attached to the email',
       )
       expect(data[0][FireTable.getFireColumnIndex('iban')]).toBe('ES12345678910')
-    })
-  })
-
-  describe('clone', () => {
-    it('should return a FireTable instance', () => {
-      const table = new FireTable([['a']])
-      const cloned = table.clone()
-      expect(cloned).toBeInstanceOf(FireTable)
-    })
-
-    it('should create an independent copy', () => {
-      const table = new FireTable([['a'], ['b']])
-      const cloned = table.clone()
-      cloned.deleteLastRow()
-      expect(table.getRowCount()).toBe(2)
-      expect(cloned.getRowCount()).toBe(1)
     })
   })
 })

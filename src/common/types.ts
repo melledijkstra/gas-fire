@@ -25,7 +25,7 @@ export type BankOptions = Record<string, string>
  * ]
  * ```
  */
-export type RawTable = string[][]
+export type RawTable<T = string> = T[][]
 
 export type TransactionStatus = 'valid' | 'duplicate' | 'removed'
 export type TransactionAction = 'skip' | 'import'

@@ -3,6 +3,7 @@ import { FireTable } from '../table/FireTable'
 import { SheetsRequestBuilder } from '../request-builder'
 import { Logger } from '@/common/logger'
 import { getSourceSheet } from '../globals'
+import { withLogger } from '@/common/decorators'
 
 const MS_IN_DAY = 86400000
 const DAYS_FROM_JS_EPOCH_TO_SHEETS_EPOCH = 25569
@@ -22,15 +23,16 @@ type GetLastImportedTransactionsOptions = {
  * @example
  * ```ts
  * const sheet = new FireSheet();
- * const fireTable = sheet.getData();
+ * const fireTable = sheet.data;
  *
  * sheet.importData(processedTable, [1, 5, 9]);
  * ```
  */
 export class FireSheet {
   protected readonly _sheet: GoogleAppsScript.Spreadsheet.Sheet
-  protected static cachedLocale: string | undefined
-  protected static timeZoneCache: string | undefined
+  protected static _cachedLocale: string | undefined
+  protected static _cachedDataTable: FireTable | null = null
+  protected static _cachedTimeZone: string | undefined
 
   constructor() {
     const sourceSheet = getSourceSheet()
@@ -67,11 +69,16 @@ export class FireSheet {
    * The header row (row 1) is excluded from the data.
    * Careful with large sheets, as this reads all data into memory. Use `getRawData()` for more control.
    */
-  getData(): FireTable {
+  getDataTable(): FireTable {
+    if (FireSheet._cachedDataTable) {
+      return FireSheet._cachedDataTable
+    }
+
     const allValues = this._sheet.getDataRange().getValues()
     // first row is headers, omit it — FireTable knows its columns via FIRE_COLUMNS
     const data = allValues.slice(1) as CellValue[][]
-    return new FireTable(data)
+    FireSheet._cachedDataTable = new FireTable(data)
+    return FireSheet._cachedDataTable
   }
 
   /**
@@ -95,6 +102,7 @@ export class FireSheet {
    * @param fireTable - The data to import
    * @param autoFillColumns - Optional 1-based column indices to autofill after import
    */
+  @withLogger
   importData(fireTable: FireTable, autoFillColumns?: number[]): void {
     if (fireTable.isEmpty()) {
       throw new Error('No data to import.')
@@ -258,18 +266,17 @@ export class FireSheet {
   // Private import strategies
   // ──────────────────────────────────────────────
 
+  @withLogger
   private importWithSheetsAPI(
     fireTable: FireTable,
     autoFillColumns?: number[],
   ): void {
-    const data = fireTable.getData()
+    const data = fireTable.data
     const rowCount = fireTable.getRowCount()
     const colCount = fireTable.getColumnCount()
     const requestBuilder = new SheetsRequestBuilder()
     const spreadsheetId = this.getSpreadsheetId()
     const sheetId = this.getSheetId()
-
-    Logger.time('importData (Sheets API)')
 
     requestBuilder
       .insertRows(sheetId, 1, rowCount)
@@ -302,18 +309,17 @@ export class FireSheet {
       { requests: requestBuilder.requests },
       spreadsheetId,
     )
-    Logger.timeEnd('importData (Sheets API)')
   }
 
+  @withLogger
   private importWithAppsScriptAPI(
     fireTable: FireTable,
     autoFillColumns?: number[],
   ): void {
-    const data = fireTable.getData()
+    const data = fireTable.data
     const rowCount = fireTable.getRowCount()
     const colCount = fireTable.getColumnCount()
 
-    Logger.time('importData (Apps Script API) (slower)')
     Logger.warn(
       'Sheets API not available, using native insertion of rows (slower)',
     )
@@ -339,20 +345,19 @@ export class FireSheet {
       }
     }
     Logger.timeEnd('autoFillColumns (Apps Script API) (slower)')
-    Logger.timeEnd('importData (Apps Script API) (slower)')
   }
 
   /**
    * @see https://developers.google.com/apps-script/reference/spreadsheet/spreadsheet#getSpreadsheetTimeZone()
    */
   static getTimeZone(): string {
-    if (this.timeZoneCache) {
-      return this.timeZoneCache
+    if (this._cachedTimeZone) {
+      return this._cachedTimeZone
     }
 
-    this.timeZoneCache = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone()
+    this._cachedTimeZone = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone()
 
-    return this.timeZoneCache
+    return this._cachedTimeZone
   }
 
   /**
@@ -360,11 +365,17 @@ export class FireSheet {
    * If the locale cannot be retrieved, returns a default value of "en_US".
    */
   static getLocale = (): string => {
-    if (this.cachedLocale) return this.cachedLocale
+    if (this._cachedLocale) return this._cachedLocale
 
     const locale = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetLocale()
-    this.cachedLocale = locale.replace('-', '_') // make sure to always use underscore
-    return this.cachedLocale
+    this._cachedLocale = locale.replace('-', '_') // make sure to always use underscore
+    return this._cachedLocale
+  }
+
+  static resetCache(): void {
+    FireSheet._cachedDataTable = null
+    FireSheet._cachedLocale = undefined
+    FireSheet._cachedTimeZone = undefined
   }
 }
 

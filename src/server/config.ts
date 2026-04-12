@@ -3,7 +3,6 @@ import type { FireColumn } from '@/common/constants'
 import { slugify } from '@/common/helpers'
 import { Logger } from '@/common/logger'
 import { FireSpreadsheet } from './globals'
-import { Table } from './table/Table'
 import type { CellValue } from './table/types'
 
 const CONFIG_CACHE_KEY = 'cache.config'
@@ -62,10 +61,9 @@ export class Config {
 
   private static loadColumnMapping(sheet: GoogleAppsScript.Spreadsheet.Sheet) {
     const columnMapValues = sheet.getSheetValues(5, 1, sheet.getLastRow(), -1) as CellValue[][]
-    const table = Table.from(columnMapValues)
 
     // first row contains account identifiers
-    const headerRow = table.shiftRow() ?? []
+    const headerRow = columnMapValues.shift() ?? []
 
     const accountIdentifiers: string[] = headerRow
       .slice(1) // remove the first cell containing "Column Mapping"
@@ -79,9 +77,9 @@ export class Config {
     }
 
     // filter out any empty rows which do not contain a fire column definition
-    const filteredTable = table.filter(row => !!row?.[0])
+    const filteredTable = columnMapValues.filter(row => !!row?.[0])
 
-    for (const row of filteredTable.getData()) {
+    for (const row of filteredTable) {
       const fireColumnName = row[0] as FireColumn // first column contains the FIRE column name
       if (!FIRE_COLUMNS.includes(fireColumnName)) {
         continue
@@ -115,28 +113,26 @@ export class Config {
 
     // explanation:
     // first row contains configuration labels which we don't need
-    const rawConfigsValues = configSheet.getSheetValues(1, 2, 4, -1) as CellValue[][]
-    const configsTable = Table.from(rawConfigsValues)
+    const configsValues = configSheet.getSheetValues(1, 2, 4, -1) as CellValue[][]
 
     // first row contains account identifiers
-    const accountsHeader = configsTable.shiftRow() ?? []
+    const accountsHeader = configsValues.shift() ?? []
 
     const accounts = accountsHeader
       .filter(Boolean) // remove any empty strings
       .map(String)
 
     const configs: Record<string, Config> = {}
-    const configData = configsTable.getData()
 
     for (let i = 0; i < accounts.length; i++) {
       const accountId = slugify(accounts[i])
       // first row contains the auto fill column indices
       // second row contains the auto fill enabled flag
       // third row contains the auto categorization enabled flag
-      const autoFillStr = String(configData[0]?.[i] ?? '')
+      const autoFillStr = String(configsValues[0]?.[i] ?? '')
       const autoFillColumnIndices = autoFillStr ? autoFillStr.split(',').map(Number) : []
-      const autoFillEnabled = parseBoolean(String(configData[1]?.[i] ?? false))
-      const autoCategorizationEnabled = parseBoolean(String(configData[2]?.[i] ?? false))
+      const autoFillEnabled = parseBoolean(String(configsValues[1]?.[i] ?? false))
+      const autoCategorizationEnabled = parseBoolean(String(configsValues[2]?.[i] ?? false))
 
       configs[accountId] = new Config({
         accountId,

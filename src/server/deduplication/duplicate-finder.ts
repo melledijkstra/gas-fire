@@ -36,5 +36,5 @@ export function findDuplicates(table: RawTable, timespan: number, dateColumn: Fi
   // the exact original sorting if it was relying on something outside of the duplicate logic,
   // however for the purposes of identifying duplicates the returned output is equivalent.
   // We return the raw data matching the original RawTable format (without headers).
-  return duplicateTable.getData() as RawTable
+  return duplicateTable.data as RawTable
 }
