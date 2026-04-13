@@ -3,7 +3,7 @@ import type { FireColumn } from '@/common/constants'
 import { slugify } from '@/common/helpers'
 import { Logger } from '@/common/logger'
 import { FireSpreadsheet } from './globals'
-import type { CellValue } from './table/types'
+import type { CellValue } from '@/common/types'
 
 const CONFIG_CACHE_KEY = 'cache.config'
 

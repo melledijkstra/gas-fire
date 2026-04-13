@@ -7,7 +7,7 @@
     acceptedMimeTypes,
     excludeRowsFromData,
   } from "../utils/importing";
-  import { serverFunctions } from "../utils/serverFunctions";
+  import { serverFunctions } from "@/client/utils/serverFunctions";
   import { BadgeCheckSolid } from "flowbite-svelte-icons";
   import type { RawTable } from "@/common/types";
 

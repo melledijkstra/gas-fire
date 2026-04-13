@@ -1,4 +1,5 @@
-import type { CellValue } from './types'
+import { Logger } from '@/common/logger'
+import type { CellValue } from '@/common/types'
 
 const EMPTY = ''
 
@@ -169,7 +170,7 @@ export class Table<T = CellValue> {
     })
   }
 
-  deserialize(serializedData: string): this {
+  static deserialize<T = CellValue>(serializedData: string): Table<T> {
     try {
       const parsed = JSON.parse(serializedData, (_key, value) => {
         if (value?.__type === 'Date') {
@@ -177,18 +178,17 @@ export class Table<T = CellValue> {
         }
         return value
       })
-      if (parsed && Array.isArray(parsed.data)) {
-        this._data = parsed.data
-        this._headers = Array.isArray(parsed.headers) ? parsed.headers : []
+      if (parsed && Array.isArray(parsed?.headers) && Array.isArray(parsed?.data)) {
+        return new Table<T>(parsed.headers, parsed.data)
       }
       else {
         throw new Error('Invalid data format for deserialization')
       }
     }
     catch (error) {
-      console.error('Failed to deserialize data:', error)
+      Logger.error(`Failed to deserialize data: ${error}`)
+      throw error
     }
-    return this
   }
 
   // ──────────────────────────────────────────────

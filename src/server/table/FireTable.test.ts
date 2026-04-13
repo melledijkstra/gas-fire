@@ -3,6 +3,9 @@ import { AccountUtils } from '../accounts/account-utils'
 import { Config } from '../config'
 import { FireTable } from './FireTable'
 import type { RawTable } from '@/common/types'
+import { buildFireTableRow } from '@/fixtures/fire-row'
+
+const days = (days: number) => days * 24 * 60 * 60 * 1000
 
 describe('FireTable', () => {
   describe('getFireColumnIndex', () => {
@@ -55,7 +58,7 @@ describe('FireTable', () => {
         ['3', '', '2023-01-01', '-30', '', 'Bob', '', '', '', '', '', '', '', '', '', ''],
       ])
 
-      const duplicates = table.findDuplicates(2 * 24 * 60 * 60 * 1000)
+      const duplicates = table.findDuplicates(days(2))
       expect(duplicates.getRowCount()).toBe(2)
       expect(duplicates.data[0][0]).toBe('1')
       expect(duplicates.data[1][0]).toBe('2')
@@ -76,8 +79,52 @@ describe('FireTable', () => {
       const table = new FireTable([
         ['1', '', '2023-01-01', '', '', 'Alice', '', '', '', '', '', '', '', '', '', ''],
       ])
-      const duplicates = table.findDuplicates(1 * 24 * 60 * 60 * 1000)
+      const duplicates = table.findDuplicates(days(1))
       expect(duplicates.isEmpty()).toBe(true)
+    })
+
+    it('should handle an empty table', () => {
+      const table = new FireTable([])
+      const duplicates = table.findDuplicates(days(1))
+      expect(duplicates.data).toEqual([])
+    })
+
+    it('should find multiple sets of duplicates', () => {
+      // alice1+alice2 are duplicates; bob1+bob2 are duplicates; john rows have different dates
+      const alice1 = buildFireTableRow({ ref: '1', iban: 'ALICE-IBAN', date: '2023-01-01', amount: '-1.25' })
+      const alice2 = buildFireTableRow({ ref: '2', iban: 'ALICE-IBAN', date: '2023-01-01', amount: '-1.25' })
+      const john1 = buildFireTableRow({ ref: '3', iban: 'JOHN-IBAN', date: '2023-01-01', amount: '-5' })
+      const bob1 = buildFireTableRow({ ref: '4', iban: 'BOB-IBAN', date: '2023-01-01', amount: '100' })
+      const bob2 = buildFireTableRow({ ref: '5', iban: 'BOB-IBAN', date: '2023-01-01', amount: '100' })
+      const john2 = buildFireTableRow({ ref: '6', iban: 'JOHN-IBAN', date: '2023-01-05', amount: '-5' })
+      const bob3 = buildFireTableRow({ ref: '7', iban: 'BOB-IBAN', date: '2023-01-07', amount: '100' })
+
+      const table = new FireTable([alice1, alice2, john1, bob1, bob2, john2, bob3])
+      const duplicates = table.findDuplicates(days(1))
+      expect(duplicates.data).toEqual([alice1, alice2, bob1, bob2])
+    })
+
+    test('should return unique rows when 3 duplicates exist', () => {
+      const base = { iban: 'ALICE-IBAN', date: '2023-01-01', amount: '-1.25' }
+      const row1 = buildFireTableRow({ ref: '1', ...base })
+      const row2 = buildFireTableRow({ ref: '2', ...base })
+      const row3 = buildFireTableRow({ ref: '3', ...base })
+
+      const table = new FireTable([row1, row2, row3])
+      const duplicates = table.findDuplicates(days(1))
+
+      expect(duplicates.data.length).toBe(3)
+      const refs = duplicates.data.map(r => r[0])
+      expect(new Set(refs).size).toBe(3)
+    })
+
+    test('should return unique rows when 3 duplicates exist (identical content)', () => {
+      const idRow = buildFireTableRow({ ref: '1', iban: 'ALICE-IBAN', date: '2023-01-01', amount: '-1.25' })
+
+      const table = new FireTable([idRow, idRow, idRow])
+      const duplicates = table.findDuplicates(days(1))
+
+      expect(duplicates.data.length).toBe(3)
     })
   })
 

@@ -1,4 +1,4 @@
-import type { CellValue } from './table/types'
+import type { CellValue } from '@/common/types'
 
 export class SheetsRequestBuilder {
   public requests: GoogleAppsScript.Sheets.Schema.Request[] = []

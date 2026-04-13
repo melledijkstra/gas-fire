@@ -2,12 +2,12 @@ import type {
   ServerResponse,
   BankOptions,
   RawTable,
-  ImportPreviewReport,
-  TransactionMeta,
+  ImportPreviewResult,
 } from '@/common/types'
 import { fn } from 'storybook/test'
 import type * as publicServerFunctions from '@/server/index'
 import { fireTableMock } from '@/fixtures/fire-table'
+import { getRowHash } from '@/common/helpers'
 
 ////////////////////////////////////////////////////////////////
 // This mock is used by storybook, to mimic server functions
@@ -62,35 +62,21 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
   async previewPipeline(
     _table: RawTable,
     _strategy: string,
-  ): Promise<ServerResponse<ImportPreviewReport>> {
+  ): Promise<ServerResponse<ImportPreviewResult>> {
     console.log('previewPipeline mock called')
     await sleep(2000)
 
     const rows = fireTableMock.map(row => row.map(String))
-    const hashes = rows.map((_, i) => `mocked-hash-${i + 1}`)
-    const metas = ['valid', 'valid', 'duplicate', 'removed', 'valid', 'duplicate'] as const
-    const actions = ['import', 'import', 'skip', 'skip'] as const
 
-    const duplicateCount = metas.filter(status => status === 'duplicate').length
-    const removedCount = metas.filter(status => status === 'removed').length
-    const validCount = rows.length - duplicateCount - removedCount
+    const duplicateHashes = new Set([getRowHash(rows[3]), getRowHash(rows[5])])
+    const removedHashes = new Set([getRowHash(rows[1]), getRowHash(rows[4])])
 
     return {
       success: true,
       data: {
-        summary: {
-          duplicateCount,
-          removedCount,
-          rulesApplied: 3,
-          totalRows: rows.length,
-          validCount,
-        },
+        duplicateHashes,
+        removedHashes,
         rows,
-        hashes,
-        transactionMeta: hashes.reduce<Record<string, TransactionMeta>>((acc, hash, i) => {
-          acc[hash] = { status: metas[i] ?? 'valid', action: actions[i] ?? 'import' }
-          return acc
-        }, {}),
         newBalance: 1234.56,
       },
     }

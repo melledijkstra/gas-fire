@@ -1,4 +1,4 @@
-import type { CellValue } from '../table/types'
+import type { CellValue } from '@/common/types'
 import { FireTable } from '../table/FireTable'
 import { SheetsRequestBuilder } from '../request-builder'
 import { Logger } from '@/common/logger'
@@ -224,6 +224,26 @@ export class FireSheet {
     }
 
     return new FireTable(lastImportedRows)
+  }
+
+  /**
+   * Loads hashes of already-imported transactions from the sheet for duplicate detection.
+   * Returns an empty set if the data cannot be retrieved.
+   */
+  loadExistingHashes(): Set<string> {
+    let existingHashes = new Set<string>()
+    try {
+      const lastImportedTransactions = this.getLastImportedTransactions({
+        stopOnDifferentImportDate: false,
+      })
+      if (lastImportedTransactions) {
+        existingHashes = lastImportedTransactions.getHashes(true)
+      }
+    }
+    catch (e) {
+      Logger.warn('Could not retrieve last imported transactions for duplicate detection', e)
+    }
+    return existingHashes
   }
 
   private handleError(error: unknown): void {

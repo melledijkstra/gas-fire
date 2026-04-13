@@ -1,5 +1,5 @@
 import { Table } from './Table'
-import type { CellValue } from './types'
+import type { CellValue } from '@/common/types'
 
 describe('Table', () => {
   describe('sortByColumn', () => {

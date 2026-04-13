@@ -1,84 +1,28 @@
 import type {
   ServerResponse,
   RawTable,
-  ImportPreviewReport,
-  UserDecisions,
+  ImportPreviewResult,
   TransactionAction,
-  TransactionStatus,
-  TransactionMeta,
 } from '@/common/types'
 import {
   Pipeline,
   removeEmptyRowsStage,
   transformToFireTableStage,
   sortByDateStage,
+  duplicateDetectionStage,
+  autoFillPreviewStage,
+  applyUserDecisionsStage,
 } from './pipeline'
-import type { PipelineContext } from './pipeline'
+import type { ImportPipelineContext, PreviewPipelineContext } from './pipeline'
 import { Config } from '../config'
-import { FireTable } from '../table/FireTable'
-import type { CellValue } from '../table/types'
 import { FireSheet } from '../spreadsheet/FireSheet'
 import { Table } from '../table/Table'
-import { AccountUtils, isNumeric } from '../accounts/account-utils'
-import { structuredClone } from '@/common/helpers'
+import { getRowHash, structuredClone } from '@/common/helpers'
 import { Logger } from '@/common/logger'
 import { removeFilterCriteria } from '../spreadsheet/spreadsheet'
 import { FEATURES } from '@/common/settings'
-import { getRowHash } from '../deduplication/duplicate-finder'
-
-/**
- * Loads hashes of already-imported transactions from the sheet for duplicate detection.
- * Returns an empty set if the data cannot be retrieved.
- */
-function loadExistingHashes(fireSheet: FireSheet): Set<string> {
-  const existingHashes = new Set<string>()
-  try {
-    const lastImportedTransactions = fireSheet.getLastImportedTransactions({
-      stopOnDifferentImportDate: false,
-    })
-    if (lastImportedTransactions) {
-      for (const row of lastImportedTransactions.data) {
-        existingHashes.add(getRowHash(row))
-      }
-    }
-  }
-  catch (e) {
-    Logger.warn('Could not retrieve last imported transactions for duplicate detection', e)
-  }
-  return existingHashes
-}
-
-/**
- * Filters rows based on explicit user decisions.
- * Rows default to 'import' unless the user has explicitly decided otherwise.
- */
-function filterRowsByDecisions(
-  rows: CellValue[][],
-  userDecisions: UserDecisions,
-): CellValue[][] {
-  return rows.filter((row) => {
-    const hash = getRowHash(row)
-    const action: TransactionAction = userDecisions.get(hash) ?? 'import'
-    return action === 'import'
-  })
-}
-
-/**
- * Formats a single cell value to a display string.
- * Dates are formatted as 'yyyy-MM-dd' using the spreadsheet's timezone.
- */
-function formatCellValue(cell: CellValue): string {
-  if (cell instanceof Date) {
-    try {
-      const timeZone = FireSheet.getTimeZone()
-      return Utilities.formatDate(cell, timeZone, 'yyyy-MM-dd')
-    }
-    catch {
-      return cell.toISOString().split('T')[0]
-    }
-  }
-  return String(cell ?? '')
-}
+import { AccountUtils, isNumeric } from '../accounts/account-utils'
+import { FireTable } from '../table/FireTable'
 
 /**
  * Activates the target sheet and removes any active filters.
@@ -93,82 +37,26 @@ function prepareSheetForImport(fireSheet: FireSheet): void {
   }
 }
 
-/**
- * Applies user decisions to the processed fire table, returning a
- * filtered table containing only the rows the user chose to import.
- * Returns the original table unchanged when no decisions apply.
- */
-function applyUserDecisions(
-  fireTable: FireTable,
-  userDecisions?: UserDecisions,
-): FireTable {
-  if (userDecisions?.size) {
-    return new FireTable(filterRowsByDecisions(fireTable.data, userDecisions))
-  }
-  return fireTable
-}
+function calculateNewBalance(fireTable: FireTable, previewContext: PreviewPipelineContext): number {
+  const excludedHashes = new Set<string>([
+    ...previewContext?.duplicateHashes ?? [],
+    ...previewContext?.removedHashes ?? [],
+  ])
 
-/** Intermediate result from classifying and formatting preview rows. */
-interface PreviewRowsResult {
-  rows: string[][]
-  hashes: string[]
-  transactionMeta: Record<string, TransactionMeta>
-  validAmounts: number[]
-  duplicateCount: number
-  validCount: number
-}
-
-/**
- * Classifies each transaction row as valid or duplicate, formats the
- * row for display, and collects the numeric amounts for valid rows.
- */
-function buildPreviewRows(
-  previewTable: FireTable,
-  existingHashes: Set<string>,
-  autoFillColumns: number[],
-): PreviewRowsResult {
-  const rows: string[][] = []
-  const hashes: string[] = []
-  const transactionMeta: Record<string, TransactionMeta> = {}
-  const validAmounts: number[] = []
   const amountColIndex = FireTable.getFireColumnIndex('amount')
-  let duplicateCount = 0
-  let validCount = 0
+  const validAmounts: number[] = []
 
-  for (const row of previewTable.data) {
+  for (const row of fireTable.data) {
     const hash = getRowHash(row)
-    let status: TransactionStatus
-    const action: TransactionAction = 'import'
-
-    if (existingHashes.has(hash)) {
-      status = 'duplicate'
-      duplicateCount++
-    }
-    else {
-      status = 'valid'
-      validCount++
+    if (!excludedHashes.has(hash)) {
       const amount = row[amountColIndex]
       if (isNumeric(amount)) {
         validAmounts.push(Number(amount))
       }
     }
-
-    const formattedRow = [...row]
-    for (const colIndex of autoFillColumns) {
-      const arrayIndex = colIndex - 1
-      if (arrayIndex >= 0 && arrayIndex < formattedRow.length) {
-        if (!formattedRow[arrayIndex] || formattedRow[arrayIndex] === '') {
-          formattedRow[arrayIndex] = '(auto-filled)'
-        }
-      }
-    }
-
-    hashes.push(hash)
-    rows.push(formattedRow.map(formatCellValue))
-    transactionMeta[hash] = { status, action }
   }
 
-  return { rows, hashes, transactionMeta, validAmounts, duplicateCount, validCount }
+  return AccountUtils.calculateNewBalance(previewContext.config.getAccountId(), validAmounts)
 }
 
 /**
@@ -219,39 +107,36 @@ class PipelineRPC {
   ): ServerResponse {
     const fireSheet = new FireSheet()
     const accountConfig = Config.getAccountConfiguration(bankAccount)
-    const _userDecisions = userDecisions ? new Map(Object.entries(userDecisions)) : undefined
+    const userDecisionsMap = userDecisions ? new Map(Object.entries(userDecisions)) : undefined
 
     Logger.log('account configuration used for import', accountConfig)
 
     prepareSheetForImport(fireSheet)
 
-    const context: PipelineContext = { config: accountConfig }
+    const context: ImportPipelineContext = {
+      config: accountConfig,
+      userDecisions: userDecisionsMap,
+    }
     const inputTable = Table.from(structuredClone(rawTable))
 
-    const fireTable = Pipeline.create<Table>()
+    const importPipeline = Pipeline.create<Table, ImportPipelineContext>()
       .addStage(removeEmptyRowsStage)
       .addStage(transformToFireTableStage)
+      .addStage(applyUserDecisionsStage)
       .addStage(sortByDateStage)
-      .execute(inputTable, context)
+
+    const fireTable = importPipeline.execute(inputTable, context)
 
     if (fireTable.isEmpty()) {
-      const msg = 'No rows to import, check your import data or configuration!'
-      Logger.log(msg)
-      return { success: false, error: msg }
-    }
-
-    const finalTable = applyUserDecisions(fireTable, _userDecisions)
-
-    if (finalTable.isEmpty()) {
-      const msg = 'No rows to import after applying rules and user decisions.'
+      const msg = 'No rows to import, check your import data, rules, row decisions or configuration!'
       Logger.log(msg)
       return { success: false, error: msg }
     }
 
     const autoFillColumns = accountConfig.autoFillEnabled ? accountConfig.autoFillColumnIndices : undefined
-    fireSheet.importData(finalTable, autoFillColumns)
+    fireSheet.importData(fireTable, autoFillColumns)
 
-    const msg = `imported ${finalTable.getRowCount()} rows!`
+    const msg = `imported ${fireTable.getRowCount()} rows!`
     Logger.log(msg)
 
     return { success: true, message: msg }
@@ -261,47 +146,39 @@ class PipelineRPC {
   static previewPipeline(
     table: RawTable,
     bankAccount: string,
-  ): ServerResponse<ImportPreviewReport> {
+  ): ServerResponse<ImportPreviewResult> {
     const config = Config.getAccountConfiguration(bankAccount)
     const rawTable = Table.from(structuredClone(table))
 
-    const context: PipelineContext = { config }
-    const previewTable = Pipeline.create<Table>()
+    const context: PreviewPipelineContext = {
+      config,
+      duplicateHashes: new Set(),
+      removedHashes: new Set(),
+    }
+
+    let previewPipeline = Pipeline.create<Table, PreviewPipelineContext>()
       .addStage(removeEmptyRowsStage)
       .addStage(transformToFireTableStage)
       .addStage(sortByDateStage)
-      .execute(rawTable, context)
-
-    let existingHashes: Set<string> = new Set()
 
     if (FEATURES.IMPORT_DUPLICATE_DETECTION) {
-      const fireSheet = new FireSheet()
-      existingHashes = loadExistingHashes(fireSheet)
-      Logger.log(`Loaded ${existingHashes.size} existing transaction hashes for duplicate detection`)
-      Logger.log('Existing hashes sample', Array.from(existingHashes).slice(0, 5))
+      previewPipeline = previewPipeline.addStage(duplicateDetectionStage)
     }
 
-    const autoFillColumns = config.autoFillEnabled ? config.autoFillColumnIndices : []
-    const { rows, hashes, transactionMeta, validAmounts, duplicateCount, validCount }
-      = buildPreviewRows(previewTable, existingHashes, autoFillColumns)
+    previewPipeline = previewPipeline
+      .addStage(autoFillPreviewStage)
 
-    const newBalance = AccountUtils.calculateNewBalance(bankAccount, validAmounts)
+    const previewTable = previewPipeline.execute(rawTable, context)
+
+    const newBalance = calculateNewBalance(previewTable, context)
 
     return {
       success: true,
       data: {
-        rows,
-        hashes,
-        transactionMeta,
-        newBalance,
-        summary: {
-          totalRows: previewTable.getRowCount(),
-          validCount,
-          duplicateCount,
-          // PENDING IMPLEMENTATION
-          removedCount: 0,
-          rulesApplied: 0,
-        },
+        rows: previewTable.data,
+        newBalance: newBalance,
+        duplicateHashes: context.duplicateHashes,
+        removedHashes: context.removedHashes,
       },
     }
   }

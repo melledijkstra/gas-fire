@@ -85,7 +85,8 @@ describe('RPC: Import Functions', () => {
       expect(response.success).toBe(true)
       if (response.success) {
         expect(response.data?.newBalance).toBeCloseTo(302.8, 2)
-        expect(response.data?.summary.validCount).toBe(0)
+        expect(response.data?.duplicateHashes?.size).toBe(0)
+        expect(response.data?.removedHashes?.size).toBe(0)
       }
     })
 
@@ -100,7 +101,6 @@ describe('RPC: Import Functions', () => {
       expect(response.success).toBe(true)
       if (response.success) {
         expect(response.data?.newBalance).toBeCloseTo(358.55, 2)
-        expect(response.data?.summary.validCount).toBe(3)
       }
     })
   })
@@ -139,7 +139,7 @@ describe('RPC: Import Functions', () => {
       expect(importDataSpy).not.toHaveBeenCalled()
       expect(result.success).toBe(false)
       if (!result.success) {
-        expect(result.error).toBe('No rows to import, check your import data or configuration!')
+        expect(result.error).toBe('No rows to import, check your import data, rules, row decisions or configuration!')
       }
     })
 

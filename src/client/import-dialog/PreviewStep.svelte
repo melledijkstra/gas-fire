@@ -1,15 +1,15 @@
 <script lang="ts">
-  import type { ImportPreviewReport, ServerResponse } from "@/common/types";
-  import { serverFunctions } from "@/client/utils/serverFunctions";
+  import type { ImportPreviewResult, ServerResponse } from "@/common/types";
   import PreviewTable from "../components/PreviewTable.svelte";
   import { excludeRowsFromData } from "../utils/importing";
   import { importState } from "../states/import.svelte";
   import { Alert, Button, Spinner } from "flowbite-svelte";
   import { InfoCircleSolid } from "flowbite-svelte-icons";
   import PreviewReportSummary from "../components/PreviewReportSummary.svelte";
+  import { serverFunctions } from "@/client/utils/serverFunctions";
 
   const onPreviewSuccess = (
-    response: ServerResponse<ImportPreviewReport>,
+    response: ServerResponse<ImportPreviewResult>,
   ) => {
     if (!response.success || !response.data) {
       alert(`Failed to create preview: ${!response.success ? response.error : "Unknown error"}`)

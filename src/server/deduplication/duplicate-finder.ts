@@ -1,14 +1,6 @@
 import type { RawTable } from '@/common/types'
 import type { FireColumn } from '@/common/constants'
 import { FireTable } from '../table/FireTable'
-import type { CellValue } from '../table/types'
-
-export function getRowHash(row: CellValue[]): string {
-  return FireTable.getHashIndices().map((colIndex) => {
-    const cell = row[colIndex]
-    return cell instanceof Date ? cell.toISOString() : String(cell ?? '')
-  }).join('|')
-}
 
 /**
  * Finds duplicate rows in a dataset based on a timespan.
