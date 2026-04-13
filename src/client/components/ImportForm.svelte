@@ -17,10 +17,10 @@
   let isLoadingOptions = $state(true);
   let fileError = $state<string | null>(null);
   let selectOptions = $derived.by(() =>
-    Object.keys(importState.bankOptions ?? {})?.map((key) => {
+    Object.keys(importState.accountOptions ?? {})?.map((key) => {
       return {
         value: key,
-        name: importState.bankOptions?.[key] ?? ''
+        name: importState.accountOptions?.[key] ?? ''
       };
     })
   );
@@ -29,7 +29,7 @@
   let canProceed = $derived(
     importState.inputFiles &&
     importState.inputFiles.length > 0 && // file was uploaded
-    importState.selectedBank && // bank was selected
+    importState.selectedAccount && // bank was selected
     !importState.isProcessing && // not currently processing
     !isLoadingOptions // not currently loading options
   );
@@ -65,19 +65,19 @@
     }
   }
 
-  const fetchBankOptions = async () => {
-    if (Object.keys(importState.bankOptions).length > 0) {
+  const fetchAccountOptions = async () => {
+    if (Object.keys(importState.accountOptions).length > 0) {
       // options are already cached, no need to fetch
       isLoadingOptions = false;
       return;
     }
-    // retrieve import bank options when mounted
+    // retrieve import account options when mounted
     isLoadingOptions = true;
     serverFunctions
-      .getBankAccountOptionsCached()
+      .getAccountOptions()
       .then((response) => {
         if (response.success && response.data) {
-          importState.bankOptions = response.data;
+          importState.accountOptions = response.data;
         } else {
           onFailure(response);
         }
@@ -87,7 +87,7 @@
   };
 
   onMount(async () => {
-    fetchBankOptions();
+    fetchAccountOptions();
   });
 </script>
 
@@ -110,14 +110,14 @@
       {/if}
     </div>
     <div>
-      <Label class="pb-2" for="import-bank">
-        Select Bank
+      <Label class="pb-2" for="import-account">
+        Select Account
       </Label>
       <Select
-        id="import-bank"
+        id="import-account"
         required
         items={selectOptions}
-        bind:value={importState.selectedBank}
+        bind:value={importState.selectedAccount}
         disabled={isLoadingOptions}
       />
       {#if isLoadingOptions}

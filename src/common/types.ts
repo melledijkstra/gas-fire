@@ -5,7 +5,7 @@
 export type CellValue = string | number | Date | boolean | null
 
 /**
- * The import bank options, basically a list of different bank accounts the user has defined
+ * The import account options, basically a list of different bank accounts the user has defined
  * e.g.
  * ```
  * {
@@ -16,7 +16,7 @@ export type CellValue = string | number | Date | boolean | null
  * }
  * ```
  */
-export type BankOptions = Record<string, string>
+export type AccountOptions = Record<string, string>
 
 /**
  * Raw table definition for client-server data transfer.
@@ -40,10 +40,10 @@ export interface TransactionMeta {
 }
 
 export interface ImportPreviewResult {
-  rows: CellValue[][]
+  rows: RawTable // FireTable serialized as RawTable for transport
   newBalance: number
-  duplicateHashes: Set<string>
-  removedHashes: Set<string>
+  duplicateHashes: string[] // Set<string> converted to array for serialization
+  removedHashes: string[] // Set<string> converted to array for serialization
 }
 
 export type UserDecisions = Map<string, TransactionAction>

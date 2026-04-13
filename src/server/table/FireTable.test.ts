@@ -214,7 +214,7 @@ describe('FireTable', () => {
     })
 
     it('should correctly import mapped data from input table when column map is provided', () => {
-      vi.spyOn(AccountUtils, 'getBankIban').mockReturnValueOnce(
+      vi.spyOn(AccountUtils, 'getAccountIban').mockReturnValueOnce(
         'NL01BANK0123456789',
       )
 
@@ -262,7 +262,7 @@ describe('FireTable', () => {
     })
 
     it('should correctly import when simulating actual bank import', () => {
-      vi.spyOn(AccountUtils, 'getBankIban').mockReturnValueOnce(
+      vi.spyOn(AccountUtils, 'getAccountIban').mockReturnValueOnce(
         'ES12345678910',
       )
 

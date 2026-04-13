@@ -259,7 +259,7 @@ export class FireTable extends Table<CellValue> {
     // prettier-ignore
     const columnImportRules: FireColumnRules = {
       ref: null,
-      iban: () => new Array(rowCount).fill(AccountUtils.getBankIban(config.getAccountId())),
+      iban: () => new Array(rowCount).fill(AccountUtils.getAccountIban(config.getAccountId())),
       date: () => buildColumn('date', Transformers.transformDate),
       amount: () => buildColumn('amount', Transformers.transformMoney),
       category: () => buildColumn('category'),

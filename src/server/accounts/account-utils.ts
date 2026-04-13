@@ -1,7 +1,8 @@
 import { FireSpreadsheet } from '../globals'
 import { NAMED_RANGES } from '@/common/constants'
-import { getBankAccountOptionsCached } from '../accounts/rpc'
 import { slugify } from '@/common/helpers'
+import { Table } from '../table/Table'
+import { cleanString } from '../utils'
 
 const BANK_ACCOUNTS_CACHE_KEY = 'bank_accounts_v2'
 
@@ -43,27 +44,36 @@ export class AccountUtils {
 
     // this range contains the ibans only
     const ibansRange = FireSpreadsheet.getRangeByName(NAMED_RANGES.accounts)
-    // we also need to include the labels and balances
-    const accounts = ibansRange
-      ?.offset(0, -1, ibansRange.getNumRows(), 3)
-      .getValues()
-      // make sure not to include empty rows
-      .filter(row => row.some((cell: unknown) => cell !== '' && cell !== null))
+    if (!ibansRange) {
+      return {}
+    }
 
-    if (!accounts?.length) {
+    // we also need to include the labels and balances
+    // Assumptions: [Account Name, IBAN, Balance] are adjacent columns
+    const accounts = ibansRange
+      .offset(0, -1, ibansRange.getNumRows(), 3)
+      .getValues()
+
+    const cleanedAccounts = Table.removeEmptyRows(accounts)
+
+    if (!cleanedAccounts.length) {
       return {} // return empty list of bank accounts if none setup
     }
 
     const result: Record<string, AccountInfo> = {}
 
-    for (const account of accounts) {
-      const [label, iban, balance] = account
+    for (const account of cleanedAccounts) {
+      const [labelRaw, ibanRaw, balance] = account
+      const label = cleanString(String(labelRaw))
+      const iban = cleanString(String(ibanRaw))
       const slugifiedId = slugify(label)
 
-      result[slugifiedId] = {
-        label,
-        iban,
-        balance: isNumeric(balance) ? Number.parseFloat(balance) : null,
+      if (iban) {
+        result[slugifiedId] = {
+          label,
+          iban,
+          balance: isNumeric(balance) ? Number.parseFloat(String(balance)) : null,
+        }
       }
     }
 
@@ -73,6 +83,9 @@ export class AccountUtils {
     return result
   }
 
+  /**
+   * Returns a record of bank accounts where the key is the slugified label and the value is the IBAN.
+   */
   static getBankAccounts(): Record<string, string> {
     const data = this.fetchAccountsData()
     const result: Record<string, string> = {}
@@ -84,32 +97,61 @@ export class AccountUtils {
     return result
   }
 
-  static getBankIban(bankId: string): string {
-    const bankAccounts = AccountUtils.getBankAccounts()
-    return bankAccounts?.[bankId] ?? ''
+  /**
+   * Returns a record of bank accounts where the key is the label and the value is the IBAN.
+   * Primarily used for the legacy RPC getBankAccounts.
+   */
+  static getBankAccountsByLabel(): Record<string, string> {
+    const data = this.fetchAccountsData()
+    const result: Record<string, string> = {}
+
+    for (const info of Object.values(data)) {
+      result[info.label] = info.iban
+    }
+
+    return result
   }
 
-  static getBalance(accountIdentifier: string): number {
+  /**
+   * Returns account options where the key is the slugified label and the value is the label.
+   */
+  static getAccountOptions(): Record<string, string> {
     const data = this.fetchAccountsData()
-    const account = data[accountIdentifier]
+    const result: Record<string, string> = {}
+
+    for (const [slug, info] of Object.entries(data)) {
+      result[slug] = info.label
+    }
+
+    return result
+  }
+
+  static getAccountIban(accountId: string): string {
+    const data = this.fetchAccountsData()
+    return data[accountId]?.iban ?? ''
+  }
+
+  static getBalance(accountId: string): number {
+    const data = this.fetchAccountsData()
+    const account = data[accountId]
 
     if (!account) {
-      throw new Error(`Account '${accountIdentifier}' not found`)
+      throw new Error(`Account '${accountId}' not found`)
     }
 
     if (account.balance === null) {
-      throw new Error(`Could not retrieve balance of ${accountIdentifier}`)
+      throw new Error(`Could not retrieve balance of ${accountId}`)
     }
 
     return account.balance
   }
 
   static getAccountIdentifiers(): string[] {
-    return Object.keys(getBankAccountOptionsCached())
+    return Object.keys(this.fetchAccountsData())
   }
 
-  static calculateNewBalance(bankAccount: string, values: number[]) {
-    let balance = this.getBalance(bankAccount)
+  static calculateNewBalance(accountId: string, values: number[]) {
+    let balance = this.getBalance(accountId)
 
     for (const amount of values) {
       balance += amount

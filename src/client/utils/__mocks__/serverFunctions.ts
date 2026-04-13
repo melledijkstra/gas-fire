@@ -1,10 +1,9 @@
 import type {
   ServerResponse,
-  BankOptions,
+  AccountOptions,
   RawTable,
   ImportPreviewResult,
 } from '@/common/types'
-import { fn } from 'storybook/test'
 import type * as publicServerFunctions from '@/server/index'
 import { fireTableMock } from '@/fixtures/fire-table'
 import { getRowHash } from '@/common/helpers'
@@ -32,26 +31,15 @@ const StrategyOptions = {
 }
 
 class ServerFunctions implements PromisifiedServerFunctionsInterface {
-  async getBankAccounts(): Promise<ServerResponse<Record<string, string>>> {
-    console.log('getBankAccounts mock called')
-    return {
-      success: true,
-      data: {
-        n26: 'N26',
-        rabobank: 'Rabobank',
-      },
-    }
-  };
-
   async debugImportSettings() {
     console.log('debugImportSettings mock called')
   }
 
   async importPipeline(
     data: RawTable,
-    selectedBank: string,
+    selectedAccount: string,
   ): Promise<ServerResponse> {
-    console.log('importPipeline mock called with data:', data, 'and selectedBank:', selectedBank)
+    console.log('importPipeline mock called with data:', data, 'and selectedAccount:', selectedAccount)
     await sleep(5000)
     return {
       success: true,
@@ -120,16 +108,10 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     console.log('executeFindDuplicates mock called')
   };
 
-  async getBankAccountOptions(): Promise<ServerResponse<BankOptions>> {
-    console.log('getBankAccountOptions mock called')
+  async getAccountOptions(): Promise<ServerResponse<AccountOptions>> {
+    console.log('getAccountOptions mock called')
     return { success: true, data: StrategyOptions }
-  };
-
-  getBankAccountOptionsCached = fn(async (): Promise<ServerResponse<BankOptions>> => {
-    await sleep(1000)
-    console.log('getBankAccountOptionsCached mock called')
-    return { success: true, data: StrategyOptions }
-  })
+  }
 }
 
 export const serverFunctions = new ServerFunctions()

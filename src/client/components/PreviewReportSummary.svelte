@@ -6,9 +6,9 @@
   const { report }: { report: ImportPreviewResult } = $props();
   const locale = getBrowserLocale();
 
-  const validCount = $derived.by(() => report.rows.length - report.duplicateHashes.size - report.removedHashes.size);
-  const removedCount = $derived(report.removedHashes.size);
-  const duplicateCount = $derived(report.duplicateHashes.size);
+  const validCount = $derived.by(() => report.rows.length - report.duplicateHashes.length - report.removedHashes.length);
+  const removedCount = $derived(report.removedHashes.length);
+  const duplicateCount = $derived(report.duplicateHashes.length);
 </script>
 
 <div class="mb-4">

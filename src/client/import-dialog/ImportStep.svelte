@@ -40,7 +40,7 @@
       !importState.rawImportData ||
       !importState.inputFiles ||
       !isAllowedFile(importState.inputFiles[0].type) ||
-      !importState.selectedBank
+      !importState.selectedAccount
     ) {
       message = `No file or bank selected, or you selected a file type that is not supported (only: ${acceptedMimeTypes.join(
         ", ",
@@ -53,7 +53,7 @@
       importState.selectedRows,
     );
 
-    submitDataToServer(rowsToImport, importState.selectedBank);
+    submitDataToServer(rowsToImport, importState.selectedAccount);
   };
 </script>
 

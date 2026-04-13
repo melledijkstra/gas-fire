@@ -16,7 +16,7 @@
   type RowStatus = 'import' | 'removed' | 'duplicate'
 
   const headers = Array.from(FIRE_COLUMNS)
-  const hasDetectedDuplicates = $derived(report.duplicateHashes?.size > 0)
+  const hasDetectedDuplicates = $derived(report.duplicateHashes?.length > 0)
 
   const getRowClass = (status: RowStatus): string => {
     if (status === 'removed') return 'bg-red-100! dark:bg-red-900! line-through'
@@ -25,8 +25,8 @@
   };
 
   const getRowStatus = (hash: string): RowStatus => {
-    if (report.removedHashes?.has(hash)) return 'removed'
-    if (report.duplicateHashes?.has(hash)) return 'duplicate'
+    if (report.removedHashes?.includes(hash)) return 'removed'
+    if (report.duplicateHashes?.includes(hash)) return 'duplicate'
     return 'import'
   };
 </script>

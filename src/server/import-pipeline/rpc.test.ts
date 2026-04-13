@@ -85,8 +85,8 @@ describe('RPC: Import Functions', () => {
       expect(response.success).toBe(true)
       if (response.success) {
         expect(response.data?.newBalance).toBeCloseTo(302.8, 2)
-        expect(response.data?.duplicateHashes?.size).toBe(0)
-        expect(response.data?.removedHashes?.size).toBe(0)
+        expect(response.data?.duplicateHashes?.length).toBe(0)
+        expect(response.data?.removedHashes?.length).toBe(0)
       }
     })
 

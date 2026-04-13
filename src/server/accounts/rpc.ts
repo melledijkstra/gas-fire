@@ -1,112 +1,24 @@
-import { FireSpreadsheet } from '../globals'
-import type { BankOptions, ServerResponse } from '@/common/types'
-import { slugify } from '@/common/helpers'
-import { NAMED_RANGES } from '../../common/constants'
-import { cleanString } from '../utils'
+import type { AccountOptions, ServerResponse } from '@/common/types'
 import { Logger } from '@/common/logger'
-import { Table } from '../table/Table'
-import type { CellValue } from 'flowbite-svelte'
-
-/**
- * This retrieves the bank accounts set by the user.
- * It uses 2 named ranges to combine them together as a usable object
- *
- * example:
- * ```
- * {
- *   "Bank of America": "US1234567890",
- *   "Revolut": "GB1234567890"
- * }
- * ```
- *
- * @returns An object where the key is the label of the bank and the value the IBAN
- */
-export function getBankAccounts(): ServerResponse<Record<string, string>> {
-  try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet()
-    // retrieve account names and ibans
-    const accountNamesRange = sheet.getRangeByName(NAMED_RANGES.accountNames)
-    const ibansRange = sheet.getRangeByName(NAMED_RANGES.accounts)
-
-    const accountNamesTable = accountNamesRange?.getValues() as CellValue[][]
-    const ibansTable = ibansRange?.getValues() as CellValue[][]
-
-    const accountNames = Table.retrieveColumn(accountNamesTable, 0)
-    const ibans = Table.retrieveColumn(ibansTable, 0)
-
-    const bankAccounts: Record<string, string> = {}
-
-    for (const [index, iban] of ibans.entries()) {
-      const label = cleanString(String(accountNames[index]))
-      const cleanIban = cleanString(String(iban))
-
-      if (cleanIban) {
-        // this sets the label as the key and the iban as the value
-        bankAccounts[label] = cleanIban
-      }
-    }
-
-    return { success: true, data: bankAccounts }
-  }
-  catch (error) {
-    Logger.error(error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : String(error),
-    }
-  }
-}
+import { AccountUtils } from './account-utils'
 
 /**
  * This function returns the available bank account options to the client side
+ *
+ * @example
+ * ```
+ * {
+ *    bank_of_america: 'Bank of America',
+ *    commerzbank: 'Commerzbank',
+ *    ing: 'ING',
+ *    revolut: 'Revolut'
+ * }
+ * ```
  */
-export function getBankAccountOptions(): ServerResponse<BankOptions> {
+export function getAccountOptions(): ServerResponse<AccountOptions> {
   try {
-    const accountNamesRange = FireSpreadsheet.getRangeByName(NAMED_RANGES.accountNames)
-
-    if (!accountNamesRange) {
-      return { success: true, data: {} }
-    }
-
-    const accountNamesTable = accountNamesRange.getValues() as CellValue[][]
-
-    Table.removeEmptyRows(accountNamesTable)
-
-    const accounts = Table.retrieveColumn(accountNamesTable, 0).map(String)
-
-    // we convert the account names to slugs and return them as an object
-    const result = accounts.reduce<Record<string, string>>((obj: Record<string, string>, account: string) => {
-      const slug = slugify(account)
-      obj[slug] = account
-      return obj
-    }, {})
-
-    return { success: true, data: result }
-  }
-  catch (error) {
-    Logger.error(error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : String(error),
-    }
-  }
-}
-
-export function getBankAccountOptionsCached(): ServerResponse<BankOptions> {
-  try {
-    const cache = CacheService.getDocumentCache()
-    const accountsCached = cache.get('accounts')
-
-    if (accountsCached) {
-      return { success: true, data: JSON.parse(accountsCached) }
-    }
-
-    const accountsResponse = getBankAccountOptions()
-    if (accountsResponse.success && accountsResponse.data) {
-      cache.put('accounts', JSON.stringify(accountsResponse.data), 600)
-    }
-
-    return accountsResponse
+    const options = AccountUtils.getAccountOptions()
+    return { success: true, data: options }
   }
   catch (error) {
     Logger.error(error)

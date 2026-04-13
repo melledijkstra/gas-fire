@@ -1,24 +1,31 @@
 import { RangeMock } from '../../../test-setup'
-import { getBankAccounts } from './rpc'
+import { getAccountOptions } from './rpc'
+import { AccountUtils } from './account-utils'
 
 describe('RPC: Account Functions', () => {
-  describe('getBankAccounts', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    AccountUtils.resetStaticCache()
+  })
+
+  describe('getAccountOptions', () => {
     test('in case there are no accounts, it should return an empty object', () => {
-      RangeMock.getValues.mockReturnValue([[], []])
-      const result = getBankAccounts()
+      RangeMock.getValues.mockReturnValue([])
+      const result = getAccountOptions()
       expect(result).toEqual({ success: true, data: {} })
     })
 
-    test('should return a list of bank accounts', () => {
-      RangeMock.getValues
-        .mockReturnValueOnce([['n26'], ['Openbank']])
-        .mockReturnValueOnce([['DB123456789'], ['BANK123456789']])
-      const result = getBankAccounts()
+    test('should return a list of accounts', () => {
+      RangeMock.getValues.mockReturnValue([
+        ['n26', 'DB123456789', '100'],
+        ['Openbank', 'BANK123456789', '200'],
+      ])
+      const result = getAccountOptions()
       expect(result).toEqual({
         success: true,
         data: {
-          n26: 'DB123456789',
-          Openbank: 'BANK123456789',
+          n26: 'n26',
+          openbank: 'Openbank',
         },
       })
     })

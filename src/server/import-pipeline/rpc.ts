@@ -12,6 +12,7 @@ import {
   duplicateDetectionStage,
   autoFillPreviewStage,
   applyUserDecisionsStage,
+  formatCellValue,
 } from './pipeline'
 import type { ImportPipelineContext, PreviewPipelineContext } from './pipeline'
 import { Config } from '../config'
@@ -175,14 +176,18 @@ class PipelineRPC {
     return {
       success: true,
       data: {
-        rows: previewTable.data,
+        // PENDING: works for now, but we need proper transport types for tables
+        // having Date objects or other complex types will break this
+        // we should ideally have a proper serialization/deserialization step in the FireTable class
+        rows: previewTable.data.map(row => row.map(formatCellValue)),
         newBalance: newBalance,
-        duplicateHashes: context.duplicateHashes,
-        removedHashes: context.removedHashes,
+        duplicateHashes: Array.from(context.duplicateHashes),
+        removedHashes: Array.from(context.removedHashes),
       },
     }
   }
 }
 
+// exported pipeline functions which can be called by the frontend
 export const importPipeline = PipelineRPC.importPipeline.bind(PipelineRPC)
 export const previewPipeline = PipelineRPC.previewPipeline.bind(PipelineRPC)

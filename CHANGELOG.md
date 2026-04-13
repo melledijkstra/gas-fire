@@ -3,6 +3,9 @@
 ## 4.14.10-beta
 
 - **Refactor** - Refactored `Table` to contain headers now + added a `Pipeline` class which can be used to pipe different stages during import and preview pipelines.
+  - Removed duplicate account RPC functions reducing unnecessary complexity
+  - Removed references to "Banks" instead we see these as "Financial Accounts"
+  - Fixed preview data transport between server and client (still need proper solution)
 
 ## 4.14.9-beta
 
