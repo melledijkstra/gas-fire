@@ -11,9 +11,12 @@ export function withLogger(
   const originalMethod = descriptor.value
   descriptor.value = function (this: unknown, ...args: unknown[]) {
     Logger.time(propertyKey)
-    const result = originalMethod.apply(this, args)
-    Logger.timeEnd(propertyKey)
-    return result
+    try {
+      return originalMethod.apply(this, args)
+    }
+    finally {
+      Logger.timeEnd(propertyKey)
+    }
   }
   return descriptor
 }

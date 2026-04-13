@@ -1,10 +1,9 @@
-import type { UserDecisions, TransactionAction } from '@/common/types'
+import type { UserDecisions, TransactionAction, CellValue } from '@/common/types'
 import { Logger } from '@/common/logger'
 import { Config } from '../config'
 import { Table } from '../table/Table'
 import { FireTable } from '../table/FireTable'
 import { FireSheet } from '../spreadsheet/FireSheet'
-import type { CellValue } from '@/common/types'
 import { getRowHash } from '@/common/helpers'
 
 export interface PipelineContext {

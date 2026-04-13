@@ -135,6 +135,11 @@ export class FireTable extends Table<CellValue> {
     return { categoryUpdates, rowsCategorized }
   }
 
+  clone(): FireTable {
+    const clonedData = this._data.map(row => [...row])
+    return new FireTable(clonedData)
+  }
+
   /** Groups rows by a hash key, pairing each with its parsed date and original index. */
   private groupRowsByHash(dateColumnIndex: number): Map<string, { row: CellValue[], date: Date, originalIndex: number }[]> {
     const groups = new Map<string, { row: CellValue[], date: Date, originalIndex: number }[]>()

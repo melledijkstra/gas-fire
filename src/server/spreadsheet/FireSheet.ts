@@ -71,14 +71,14 @@ export class FireSheet {
    */
   getDataTable(): FireTable {
     if (FireSheet._cachedDataTable) {
-      return FireSheet._cachedDataTable
+      return FireSheet._cachedDataTable.clone()
     }
 
     const allValues = this._sheet.getDataRange().getValues()
     // first row is headers, omit it — FireTable knows its columns via FIRE_COLUMNS
     const data = allValues.slice(1) as CellValue[][]
     FireSheet._cachedDataTable = new FireTable(data)
-    return FireSheet._cachedDataTable
+    return FireSheet._cachedDataTable.clone()
   }
 
   /**
@@ -118,6 +118,8 @@ export class FireSheet {
       else {
         this.importWithAppsScriptAPI(fireTable, autoFillColumns)
       }
+      // clear cached data since sheet has changed
+      FireSheet.resetCache()
     }
     catch (error) {
       this.handleError(error)
