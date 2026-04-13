@@ -24,10 +24,10 @@ import { Logger } from '@/common/logger'
 import { removeFilterCriteria } from '../spreadsheet/spreadsheet'
 import { FEATURES } from '@/common/settings'
 import { AccountUtils, isNumeric } from '../accounts/account-utils'
-import { FireTable } from '../table/FireTable'
 import { applyPreTransformRulesStage, postTransformRulesStage } from '../rule-engine/pipeline'
 import { RuleSheet } from '../spreadsheet/RuleSheet'
 import { RuleProcessor } from '../rule-engine/rule-processor'
+import { FireTable } from '@/common/table/FireTable'
 
 /**
  * Activates the target sheet and removes any active filters.

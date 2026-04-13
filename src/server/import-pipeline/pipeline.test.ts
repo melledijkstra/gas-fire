@@ -1,5 +1,5 @@
 import { Table } from '@/common/table/Table'
-import { FireTable } from '../table/FireTable'
+import { FireTable } from '@/common/table/FireTable'
 import { Config } from '../config'
 import {
   removeEmptyRowsStage,

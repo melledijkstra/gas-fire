@@ -4,7 +4,7 @@ import {
 } from '../../../test-setup'
 import type { RawTable } from '@/common/types'
 import { N26ImportMock } from '@/fixtures/n26'
-import { FireTable } from '../table/FireTable'
+import { FireTable } from '@/common/table/FireTable'
 import { AccountUtils } from '../accounts/account-utils'
 import { raboImportMock } from '@/fixtures/rabobank'
 import { Logger } from '@/common/logger'

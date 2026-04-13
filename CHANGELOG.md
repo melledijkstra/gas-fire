@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.15.4-beta
+
+- **Refactor** - Decoupled server dependencies from `FireTable` and moved `Table` and `FireTable` to `src/common/table/`. Extracted category detection logic and fromAccountSpecification logic into their own functions (`categorizeFireTable` and `FireTableFactory`).
+
 ## 4.15.3-beta
 
 - **Fix** - Migrated to Vite 8 / Rolldown and addressed build/typecheck issues.
