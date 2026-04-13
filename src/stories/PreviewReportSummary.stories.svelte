@@ -1,20 +1,13 @@
 <script module lang="ts">
   import { defineMeta } from '@storybook/addon-svelte-csf';
   import PreviewReportSummary from '../client/components/PreviewReportSummary.svelte';
-  import type { ImportPreviewReport } from '@/common/types';
+  import type { ImportPreviewResult } from '@/common/types';
 
-  const report: ImportPreviewReport = {
-    summary: {
-      totalRows: 100,
-      validCount: 80,
-      duplicateCount: 15,
-      rulesApplied: 3,
-      removedCount: 5,
-    },
+  const report: ImportPreviewResult = {
     newBalance: 12345.67,
-    hashes: [],
     rows: [],
-    transactionMeta: {}
+    duplicateHashes: new Set(['hash1', 'hash2']),
+    removedHashes: new Set(['hash3']),
   }
   
   const { Story } = defineMeta({

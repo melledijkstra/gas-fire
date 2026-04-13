@@ -1,28 +1,33 @@
 <script lang="ts">
-  import type { ImportPreviewReport, ServerResponse } from "@/common/types";
-  import { serverFunctions } from "@/client/utils/serverFunctions";
+  import type { ImportPreviewResult, ServerResponse } from "@/common/types";
   import PreviewTable from "../components/PreviewTable.svelte";
   import { excludeRowsFromData } from "../utils/importing";
   import { importState } from "../states/import.svelte";
   import { Alert, Button, Spinner } from "flowbite-svelte";
   import { InfoCircleSolid } from "flowbite-svelte-icons";
   import PreviewReportSummary from "../components/PreviewReportSummary.svelte";
+  import { serverFunctions } from "@/client/utils/serverFunctions";
 
-  const onPreviewSuccess = (
-    response: ServerResponse<ImportPreviewReport>,
-  ) => {
-    if (!response.success || !response.data) {
+  const isErrorResponse = (response: ServerResponse<any>): boolean => {
+    return !response?.success;
+  };
+
+  const onPreviewSuccess = (response: ServerResponse<ImportPreviewResult>) => {
+    console.log("Preview response:", response);
+    if (!response)  {
+      alert("Failed to create preview: No response from server")
+      return;
+    } else if (isErrorResponse(response)) {
       alert(`Failed to create preview: ${!response.success ? response.error : "Unknown error"}`)
       return;
+    } else if (response.success === true) {
+      importState.previewReport = response.data;
+      importState.userDecisions.clear();
     }
-    const report = response.data;
-
-    importState.previewReport = report;
-    importState.userDecisions.clear();
   };
 
   const triggerPreviewPipeline = () => {
-    if (!importState.rawImportData || !importState.selectedBank) {
+    if (!importState.rawImportData || !importState.selectedAccount) {
       return;
     }
 
@@ -33,10 +38,10 @@
     );
 
     serverFunctions
-      .previewPipeline(dataToProcess, importState.selectedBank)
+      .previewPipeline(dataToProcess, importState.selectedAccount)
       .then(onPreviewSuccess)
       .catch(
-        (error) => alert(`Failed to create preview: ${error}`),
+        (error) => alert(`Server Error: ${error}`),
       )
       .finally(() => (importState.isProcessing = false));
   };
@@ -46,7 +51,7 @@
   <Button
     color="green"
     disabled={!importState.rawImportData ||
-      !importState.selectedBank ||
+      !importState.selectedAccount ||
       importState.isProcessing}
     onclick={triggerPreviewPipeline}
   >

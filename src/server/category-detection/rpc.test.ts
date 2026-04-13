@@ -6,6 +6,7 @@ import {
 } from '../../../test-setup'
 import * as categoryDetection from '../category-detection/detection'
 import { executeAutomaticCategorization } from '../category-detection/rpc'
+import { FireSheet } from '../spreadsheet/FireSheet'
 
 vi.mock('../globals', () => ({
   FireSpreadsheet: SpreadsheetMock,
@@ -25,6 +26,7 @@ const detectCategorySpy = vi.spyOn(
 describe('RPC: Automatic Categorization', () => {
   afterEach(() => {
     vi.clearAllMocks()
+    FireSheet.resetCache()
   })
 
   describe('executeAutomaticCategorization', () => {
@@ -48,7 +50,7 @@ describe('RPC: Automatic Categorization', () => {
     test('should categorize rows', () => {
       UIMock.alert.mockReturnValueOnce(UIMock.Button.YES)
       RangeMock.getValues.mockReturnValue([
-        ['ref', 'date', 'amount', 'description', 'category', 'contra_account', '', '', '', 'category'],
+        ['ref', 'iban', 'date', 'amount', 'balance', 'contra_account', 'description', 'comments', 'icon', 'category', 'label', 'import_date', 'hours', 'disabled', 'contra_iban', 'currency'],
         ['', '', '', '', '', 'account1', '', '', '', ''],
         ['', '', '', '', '', 'account2', '', '', '', ''],
       ])

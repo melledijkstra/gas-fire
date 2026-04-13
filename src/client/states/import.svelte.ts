@@ -1,19 +1,19 @@
-import type { BankOptions, RawTable, ImportPreviewReport, TransactionAction } from '@/common/types'
+import type { AccountOptions, RawTable, ImportPreviewResult, TransactionAction } from '@/common/types'
 import { SvelteSet, SvelteMap } from 'svelte/reactivity'
 
 type ImportState = {
-  bankOptions: BankOptions
+  accountOptions: AccountOptions
   isProcessing: boolean
   inputFiles?: FileList
   rawImportData?: RawTable
-  selectedBank?: string
+  selectedAccount?: string
   selectedRows: SvelteSet<number>
-  previewReport?: ImportPreviewReport
+  previewReport?: ImportPreviewResult
   userDecisions: SvelteMap<string, TransactionAction>
 }
 
 export const importState: ImportState = $state({
-  bankOptions: {},
+  accountOptions: {},
   isProcessing: false,
   selectedRows: new SvelteSet(),
   userDecisions: new SvelteMap(),

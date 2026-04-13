@@ -58,7 +58,7 @@ export const executeFindDuplicates = () => {
     const spreadSheet = SpreadsheetApp.getActiveSpreadsheet()
     const fireSheet = new FireSheet()
 
-    const fireTable = fireSheet.getData()
+    const fireTable = fireSheet.getDataTable()
     const headers = Array.from(FIRE_COLUMNS)
 
     const duplicateTable = fireTable.findDuplicates(duplicateThresholdMs)
@@ -68,7 +68,7 @@ export const executeFindDuplicates = () => {
       return
     }
 
-    const duplicateRows = duplicateTable.getData()
+    const duplicateRows = duplicateTable.data
 
     const duplicateSheet
       = spreadSheet.getSheetByName('duplicate-rows')
