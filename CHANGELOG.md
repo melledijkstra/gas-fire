@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.14.10-beta
+
+- **Refactor** - Refactored `Table` to contain headers now + added a `Pipeline` class which can be used to pipe different stages during import and preview pipelines.
+
+## 4.14.9-beta
+
+- **Feature** - Support for git worktrees
+
 ## 4.14.8-beta
 
 - **Refactor** - Utilized `Table` and `FireTable` classes extensively in `duplicate-finder.ts`, `account-utils.ts`, `rpc.ts`, and `config.ts` to keep things DRY and SOLID.

@@ -1,44 +1,7 @@
 import { Table } from './Table'
-import type { CellValue } from './types'
+import type { CellValue } from '@/common/types'
 
 describe('Table', () => {
-  describe('transpose', () => {
-    it('should transpose a table correctly', () => {
-      const input: CellValue[][] = [
-        ['a', 'b', 'c'],
-        ['d', 'e', 'f'],
-      ]
-      const expected: CellValue[][] = [
-        ['a', 'd'],
-        ['b', 'e'],
-        ['c', 'f'],
-      ]
-      const table = new Table(input)
-      table.transpose()
-      expect(table.getData()).toEqual(expected)
-    })
-
-    it('should handle empty table', () => {
-      const table = new Table([])
-      table.transpose()
-      expect(table.getData()).toEqual([])
-    })
-  })
-
-  describe('static transpose', () => {
-    it('should transpose a raw 2D array', () => {
-      const input = [
-        ['a', 'b', 'c'],
-        ['d', 'e', 'f'],
-      ]
-      expect(Table.transpose(input)).toEqual([
-        ['a', 'd'],
-        ['b', 'e'],
-        ['c', 'f'],
-      ])
-    })
-  })
-
   describe('sortByColumn', () => {
     const sampleData: CellValue[][] = [
       ['Transaction 1', '2024-03-15', '100'],
@@ -48,13 +11,13 @@ describe('Table', () => {
     ]
 
     it('should sort dates using custom comparator', () => {
-      const table = new Table(sampleData)
+      const table = new Table([], sampleData)
       const dateColumnIndex = 1
       table.sortByColumn(dateColumnIndex, (a, b) => {
         return new Date(String(b)).getTime() - new Date(String(a)).getTime()
       })
 
-      const result = table.getData()
+      const result = table.data
       expect(result[0][1]).toBe('2024-03-15 14:30:00')
       expect(result[1][1]).toBe('2024-03-15 09:00:00')
       expect(result[2][1]).toBe('2024-03-15')
@@ -68,41 +31,15 @@ describe('Table', () => {
         ['Payment 3', '2024-03-15 09:00:00', '300'],
       ]
 
-      const table = new Table(data)
+      const table = new Table([], data)
       table.sortByColumn(1, (a, b) => {
         return new Date(String(b)).getTime() - new Date(String(a)).getTime()
       })
 
-      const result = table.getData()
+      const result = table.data
       expect(result[0][1]).toBe('2024-03-15 09:30:00')
       expect(result[1][1]).toBe('2024-03-15 09:00:00')
       expect(result[2][1]).toBe('2024-03-15 08:00:00')
-    })
-  })
-
-  describe('deleteColumns', () => {
-    it('should delete specified columns', () => {
-      const input: CellValue[][] = [
-        ['a', 'b', 'c', 'd'],
-        ['e', 'f', 'g', 'h'],
-      ]
-      const expected: CellValue[][] = [
-        ['a', 'd'],
-        ['e', 'h'],
-      ]
-      const table = new Table(input)
-      table.deleteColumns([1, 2])
-      expect(table.getData()).toEqual(expected)
-    })
-
-    it('should handle non-existent column indices', () => {
-      const input: CellValue[][] = [
-        ['a', 'b'],
-        ['c', 'd'],
-      ]
-      const table = new Table(input)
-      table.deleteColumns([5])
-      expect(table.getData()).toEqual(input)
     })
   })
 
@@ -131,7 +68,7 @@ describe('Table', () => {
         ['a', 'b', 'c'],
         ['d', 'e', 'f'],
       ]
-      const table = new Table(input)
+      const table = new Table([], input)
       expect(table.retrieveColumn(1)).toEqual(['b', 'e'])
     })
 
@@ -140,7 +77,7 @@ describe('Table', () => {
         ['a', '', 'c'],
         ['d', '', 'f'],
       ]
-      const table = new Table(input)
+      const table = new Table([], input)
       expect(table.retrieveColumn(1)).toEqual(['', ''])
     })
   })
@@ -153,81 +90,86 @@ describe('Table', () => {
         ['c', 'd'],
         ['', null],
       ]
-      const table = new Table(input)
+      const table = new Table([], input)
       table.removeEmptyRows()
-      expect(table.getData()).toEqual([
+      expect(table.data).toEqual([
         ['a', 'b'],
         ['c', 'd'],
       ])
     })
   })
 
-  describe('shiftRow', () => {
-    it('should remove and return the first row', () => {
-      const table = new Table([['a', 'b'], ['c', 'd']])
-      const first = table.shiftRow()
-      expect(first).toEqual(['a', 'b'])
-      expect(table.getData()).toEqual([['c', 'd']])
-    })
-
-    it('should return undefined for empty table', () => {
-      const table = new Table([])
-      expect(table.shiftRow()).toBeUndefined()
-    })
-  })
-
-  describe('clone', () => {
-    it('should create an independent copy', () => {
-      const table = new Table([['a', 'b'], ['c', 'd']])
-      const cloned = table.clone()
-      cloned.deleteLastRow()
-      expect(table.getRowCount()).toBe(2)
-      expect(cloned.getRowCount()).toBe(1)
-    })
-  })
-
   describe('accessors', () => {
     it('getRowCount returns correct count', () => {
-      expect(new Table([['a'], ['b']]).getRowCount()).toBe(2)
+      expect(new Table([], [['a'], ['b']]).getRowCount()).toBe(2)
     })
 
     it('getColumnCount returns correct count', () => {
-      expect(new Table([['a', 'b', 'c']]).getColumnCount()).toBe(3)
+      expect(new Table([], [['a', 'b', 'c']]).getColumnCount()).toBe(3)
     })
 
     it('isEmpty returns true for empty table', () => {
-      expect(new Table([]).isEmpty()).toBe(true)
+      expect(new Table([], []).isEmpty()).toBe(true)
     })
 
     it('isEmpty returns false for non-empty table', () => {
-      expect(new Table([['a']]).isEmpty()).toBe(false)
+      expect(new Table([], [['a']]).isEmpty()).toBe(false)
     })
 
     it('getRow returns correct row', () => {
-      const table = new Table([['a', 'b'], ['c', 'd']])
+      const table = new Table([], [['a', 'b'], ['c', 'd']])
       expect(table.getRow(1)).toEqual(['c', 'd'])
     })
 
     it('getRow returns undefined for out-of-bounds', () => {
-      const table = new Table([['a']])
+      const table = new Table([], [['a']])
       expect(table.getRow(5)).toBeUndefined()
     })
   })
 
   describe('method chaining', () => {
     it('supports chaining multiple operations', () => {
-      const table = new Table([
+      const table = new Table([], [
         ['a', 'b', 'c'],
         ['', '', ''],
         ['d', 'e', 'f'],
       ])
 
-      table.removeEmptyRows().deleteColumns([1])
+      table.removeEmptyRows().deleteLastRow()
 
-      expect(table.getData()).toEqual([
-        ['a', 'c'],
-        ['d', 'f'],
+      expect(table.data).toEqual([
+        ['a', 'b', 'c'],
       ])
+    })
+  })
+
+  describe('static transpose', () => {
+    it('should transpose a raw 2D array', () => {
+      const input = [
+        ['a', 'b', 'c'],
+        ['d', 'e', 'f'],
+      ]
+      expect(Table.transpose(input)).toEqual([
+        ['a', 'd'],
+        ['b', 'e'],
+        ['c', 'f'],
+      ])
+    })
+  })
+
+  describe('static from', () => {
+    it('should extract headers from first row', () => {
+      const input = [
+        ['Header1', 'Header2'],
+        ['v1', 'v2'],
+      ]
+      const table = Table.from(input)
+      expect(table.headers).toEqual(['Header1', 'Header2'])
+      expect(table.data).toEqual([['v1', 'v2']])
+    })
+
+    it('should throw with empty input', () => {
+      expect(() => Table.from([])).toThrow('No header row specified in input data!')
     })
   })
 })

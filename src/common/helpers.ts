@@ -1,3 +1,9 @@
+import type { CellValue } from './types'
+import { FIRE_COLUMNS } from './constants'
+import { HASH_COLUMNS } from './settings'
+
+const hashColumns = HASH_COLUMNS.map(col => Array.from(FIRE_COLUMNS).indexOf(col))
+
 export const slugify = (text: string): string =>
   text.trim() // trim leading/trailing white space
     .toLowerCase() // convert string to lowercase
@@ -60,4 +66,11 @@ export function structuredClone<T>(input: T): T {
   }
 
   return structuredCloneFallback(input)
+}
+
+export function getRowHash(row: CellValue[]): string {
+  return hashColumns.map((colIndex) => {
+    const cell = row[colIndex]
+    return cell instanceof Date ? cell.toISOString() : String(cell ?? '')
+  }).join('|')
 }

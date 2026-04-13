@@ -1,4 +1,10 @@
 /**
+ * Represents a single cell value in a table.
+ * Tables can contain various types of data, not just strings.
+ */
+export type CellValue = string | number | Date | boolean | null
+
+/**
  * The import bank options, basically a list of different bank accounts the user has defined
  * e.g.
  * ```
@@ -25,31 +31,19 @@ export type BankOptions = Record<string, string>
  * ]
  * ```
  */
-export type RawTable = string[][]
+export type RawTable<T = string> = T[][]
 
-export type TransactionStatus = 'valid' | 'duplicate' | 'removed'
 export type TransactionAction = 'skip' | 'import'
 
 export interface TransactionMeta {
-  status: TransactionStatus
   action: TransactionAction
 }
 
-export interface ImportPreviewReport {
-  /** Formatted transaction rows in the same order as `hashes`. Always aligned to FIRE_COLUMNS. */
-  rows: string[][]
-  /** Row hash at index i corresponds to rows[i]; used to key into transactionMeta. */
-  hashes: string[]
-  /** Per-transaction status and default action, keyed by row hash. */
-  transactionMeta: Record<string, TransactionMeta>
-  newBalance?: number
-  summary: {
-    totalRows: number
-    validCount: number
-    removedCount: number
-    duplicateCount: number
-    rulesApplied: number
-  }
+export interface ImportPreviewResult {
+  rows: CellValue[][]
+  newBalance: number
+  duplicateHashes: Set<string>
+  removedHashes: Set<string>
 }
 
 export type UserDecisions = Map<string, TransactionAction>

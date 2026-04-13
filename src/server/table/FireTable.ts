@@ -1,15 +1,15 @@
 import type { FireColumn } from '@/common/constants'
 import { FIRE_COLUMNS } from '@/common/constants'
-import type { FireColumnRules } from '../types'
-import type { CellValue } from './types'
+import type { FireColumnRules } from '@/server/types'
+import type { CellValue } from '@/common/types'
 import { Table } from './Table'
 import { Config } from '../config'
 import { AccountUtils } from '../accounts/account-utils'
 import { Transformers } from '../transformers'
 import { detectCategoryByTextAnalysis } from '../category-detection/detection'
 import { Logger } from '@/common/logger'
-import { HASH_COLUMNS } from '@/common/settings'
-import { getRowHash } from '../deduplication/duplicate-finder'
+import { withLogger } from '@/common/decorators'
+import { getRowHash } from '@/common/helpers'
 
 /**
  * A table with knowledge of the FIRE column structure.
@@ -26,12 +26,19 @@ import { getRowHash } from '../deduplication/duplicate-finder'
  * const categories = fireTable.getFireColumn('category');
  * ```
  */
-export class FireTable extends Table {
-  /** Cached hash column indices — computed once since FIRE_COLUMNS and HASH_COLUMNS are constants. */
-  private static cachedHashIndices: number[] | null = null
+export class FireTable extends Table<CellValue> {
+  protected cachedHashes: Set<string> | null = null
 
-  override clone(): FireTable {
-    return new FireTable(this.data.map(row => [...row]))
+  constructor(data: CellValue[][] = []) {
+    super([...FIRE_COLUMNS], data)
+  }
+
+  getHashes(force = false): Set<string> {
+    return this.calculateHashes(force)
+  }
+
+  invalidateHashes(): void {
+    this.cachedHashes = null
   }
 
   // ──────────────────────────────────────────────
@@ -57,11 +64,12 @@ export class FireTable extends Table {
   sortByDate(): this {
     const dateColumn = FireTable.getFireColumnIndex('date')
     if (dateColumn !== -1) {
-      this.data = this.data.toSorted(
+      this._data = this._data.toSorted(
         (row1, row2) =>
           new Date(String(row2[dateColumn])).getTime()
             - new Date(String(row1[dateColumn])).getTime(),
       )
+      this.invalidateHashes() // Invalidate cached hashes since row order changed
     }
     return this
   }
@@ -78,7 +86,7 @@ export class FireTable extends Table {
     timespanMs: number,
     dateColumn: FireColumn = 'date',
   ): FireTable {
-    if (this.data.length < 2) {
+    if (this._data.length < 2) {
       return new FireTable([])
     }
 
@@ -96,6 +104,7 @@ export class FireTable extends Table {
    *
    * @returns An object with category update values (one per row) and a count of categorized rows.
    */
+  @withLogger
   categorize(): {
     categoryUpdates: string[][]
     rowsCategorized: number
@@ -106,7 +115,7 @@ export class FireTable extends Table {
     let rowsCategorized = 0
     const categoryUpdates: string[][] = []
 
-    for (const row of this.data) {
+    for (const row of this._data) {
       const category = String(row[categoryColIndex] ?? '')
       const contraAccount = String(row[contraAccountIndex] ?? '')
 
@@ -130,8 +139,8 @@ export class FireTable extends Table {
   private groupRowsByHash(dateColumnIndex: number): Map<string, { row: CellValue[], date: Date, originalIndex: number }[]> {
     const groups = new Map<string, { row: CellValue[], date: Date, originalIndex: number }[]>()
 
-    for (let index = 0; index < this.data.length; index++) {
-      const row = this.data[index]
+    for (let index = 0; index < this._data.length; index++) {
+      const row = this._data[index]
       const key = getRowHash(row)
       const entry = { row, date: new Date(String(row[dateColumnIndex])), originalIndex: index }
       const group = groups.get(key)
@@ -190,6 +199,13 @@ export class FireTable extends Table {
     return isDuplicate
   }
 
+  private calculateHashes(force = false): Set<string> {
+    if (force || this._data.length !== this.cachedHashes?.size) {
+      this.cachedHashes = new Set(this._data.map(row => getRowHash(row)))
+    }
+    return this.cachedHashes
+  }
+
   // ──────────────────────────────────────────────
   // Factory: Build a FireTable from CSV import data
   // ──────────────────────────────────────────────
@@ -213,7 +229,7 @@ export class FireTable extends Table {
    * @param config - The account configuration with column mappings
    * @returns A FireTable with data structured according to FIRE_COLUMNS
    */
-  static fromCSV({
+  static fromAccountSpecification({
     headers,
     rows,
     config,
@@ -280,17 +296,5 @@ export class FireTable extends Table {
     // output is currently column-oriented, transpose to row-oriented
     const transposed = Table.transpose(output)
     return new FireTable(transposed)
-  }
-
-  /**
-   * Returns the column indices used to hash transactions for duplicate detection.
-   * Derived from FIRE_COLUMNS and HASH_COLUMNS. Cached after first computation.
-   */
-  static getHashIndices(): number[] {
-    if (!FireTable.cachedHashIndices) {
-      const headers = Array.from(FIRE_COLUMNS)
-      FireTable.cachedHashIndices = HASH_COLUMNS.map(col => headers.indexOf(col))
-    }
-    return FireTable.cachedHashIndices
   }
 }

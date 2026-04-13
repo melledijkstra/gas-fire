@@ -1,4 +1,4 @@
-import type { CellValue } from '@/server/table/types'
+import type { CellValue } from '@/common/types'
 
 export const fireTableMock: CellValue[][] = [
   // data follows FIRE_COLUMNS format

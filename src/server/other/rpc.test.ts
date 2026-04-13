@@ -15,7 +15,7 @@ vi.mock('../globals', () => ({
 }))
 
 const findDuplicatesSpy = vi.spyOn(FireTable.prototype, 'findDuplicates')
-const getDataSpy = vi.spyOn(FireSheet.prototype, 'getData')
+const getDataSpy = vi.spyOn(FireSheet.prototype, 'getDataTable')
 
 describe('RPC: Miscellaneous Functions', () => {
   describe('executeFindDuplicates', () => {

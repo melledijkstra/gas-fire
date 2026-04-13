@@ -1,4 +1,4 @@
-import type { BankOptions, RawTable, ImportPreviewReport, TransactionAction } from '@/common/types'
+import type { BankOptions, RawTable, ImportPreviewResult, TransactionAction } from '@/common/types'
 import { SvelteSet, SvelteMap } from 'svelte/reactivity'
 
 type ImportState = {
@@ -8,7 +8,7 @@ type ImportState = {
   rawImportData?: RawTable
   selectedBank?: string
   selectedRows: SvelteSet<number>
-  previewReport?: ImportPreviewReport
+  previewReport?: ImportPreviewResult
   userDecisions: SvelteMap<string, TransactionAction>
 }
 

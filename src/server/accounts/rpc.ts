@@ -5,6 +5,7 @@ import { NAMED_RANGES } from '../../common/constants'
 import { cleanString } from '../utils'
 import { Logger } from '@/common/logger'
 import { Table } from '../table/Table'
+import type { CellValue } from 'flowbite-svelte'
 
 /**
  * This retrieves the bank accounts set by the user.
@@ -27,11 +28,11 @@ export function getBankAccounts(): ServerResponse<Record<string, string>> {
     const accountNamesRange = sheet.getRangeByName(NAMED_RANGES.accountNames)
     const ibansRange = sheet.getRangeByName(NAMED_RANGES.accounts)
 
-    const accountNamesTable = Table.from(accountNamesRange?.getValues() ?? [])
-    const ibansTable = Table.from(ibansRange?.getValues() ?? [])
+    const accountNamesTable = accountNamesRange?.getValues() as CellValue[][]
+    const ibansTable = ibansRange?.getValues() as CellValue[][]
 
-    const accountNames = accountNamesTable.retrieveColumn(0)
-    const ibans = ibansTable.retrieveColumn(0)
+    const accountNames = Table.retrieveColumn(accountNamesTable, 0)
+    const ibans = Table.retrieveColumn(ibansTable, 0)
 
     const bankAccounts: Record<string, string> = {}
 
@@ -67,10 +68,11 @@ export function getBankAccountOptions(): ServerResponse<BankOptions> {
       return { success: true, data: {} }
     }
 
-    const accountNamesTable = Table.from(accountNamesRange.getValues())
-      .removeEmptyRows()
+    const accountNamesTable = accountNamesRange.getValues() as CellValue[][]
 
-    const accounts = accountNamesTable.retrieveColumn(0).map(String)
+    Table.removeEmptyRows(accountNamesTable)
+
+    const accounts = Table.retrieveColumn(accountNamesTable, 0).map(String)
 
     // we convert the account names to slugs and return them as an object
     const result = accounts.reduce<Record<string, string>>((obj: Record<string, string>, account: string) => {

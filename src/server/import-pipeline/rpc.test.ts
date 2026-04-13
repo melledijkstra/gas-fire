@@ -85,7 +85,8 @@ describe('RPC: Import Functions', () => {
       expect(response.success).toBe(true)
       if (response.success) {
         expect(response.data?.newBalance).toBeCloseTo(302.8, 2)
-        expect(response.data?.summary.validCount).toBe(0)
+        expect(response.data?.duplicateHashes?.size).toBe(0)
+        expect(response.data?.removedHashes?.size).toBe(0)
       }
     })
 
@@ -100,7 +101,6 @@ describe('RPC: Import Functions', () => {
       expect(response.success).toBe(true)
       if (response.success) {
         expect(response.data?.newBalance).toBeCloseTo(358.55, 2)
-        expect(response.data?.summary.validCount).toBe(3)
       }
     })
   })
@@ -126,7 +126,7 @@ describe('RPC: Import Functions', () => {
       expect(importDataSpy).not.toHaveBeenCalled()
       expect(result.success).toBe(false)
       if (!result.success) {
-        expect(result.error).toBe('No header row detected in import data!')
+        expect(result.error).toBe('No header row specified in input data!')
       }
     })
 
@@ -139,7 +139,7 @@ describe('RPC: Import Functions', () => {
       expect(importDataSpy).not.toHaveBeenCalled()
       expect(result.success).toBe(false)
       if (!result.success) {
-        expect(result.error).toBe('No rows to import, check your import data or configuration!')
+        expect(result.error).toBe('No rows to import, check your import data, rules, row decisions or configuration!')
       }
     })
 
@@ -208,7 +208,7 @@ describe('RPC: Import Functions', () => {
 
       expect(importDataSpy).toHaveBeenCalled()
       const [fireTable] = importDataSpy.mock.calls[importDataSpy.mock.calls.length - 1]
-      expect(fireTable.getData()).toEqual(expect.arrayContaining([
+      expect(fireTable.data).toEqual(expect.arrayContaining([
         expect.arrayContaining([new Date(2023, 8, 12), -100, 'Utility Bill Payment']),
       ]))
       expect(result.success).toBe(true)
@@ -232,7 +232,7 @@ describe('RPC: Import Functions', () => {
 
       expect(importDataSpy).toHaveBeenCalled()
       const [fireTable] = importDataSpy.mock.calls[importDataSpy.mock.calls.length - 1]
-      expect(fireTable.getData()).toEqual([
+      expect(fireTable.data).toEqual([
         expect.arrayContaining([new Date(2016, 0, 23), -25.6]),
         expect.arrayContaining([new Date(2015, 4, 21), 58.3]),
         expect.arrayContaining([new Date(2015, 4, 20), 20]),
