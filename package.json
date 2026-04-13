@@ -52,7 +52,7 @@
     "@types/google-apps-script": "^2.0.8",
     "@types/node": "^25.5.2",
     "@types/papaparse": "^5.5.2",
-    "@vitest/coverage-v8": "^4.1.2",
+    "@vitest/coverage-v8": "^4.1.4",
     "dotenv": "^17.4.1",
     "eslint": "^10.1.0",
     "flowbite": "^4.0.1",
@@ -66,10 +66,10 @@
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.57.1",
-    "vite": "^8.0.5",
+    "vite": "^8.0.8",
     "vite-plugin-singlefile": "^2.3.2",
     "vite-plugin-static-copy": "^4.0.1",
-    "vitest": "^4.1.2"
+    "vitest": "^4.1.4"
   },
   "repository": {
     "type": "git",
