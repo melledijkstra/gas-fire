@@ -64,6 +64,7 @@
     "husky": "^9.1.7",
     "knip": "^6.1.0",
     "storybook": "^10.3.5",
+    "rolldown": "1.0.0-rc.18",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.59.0",
