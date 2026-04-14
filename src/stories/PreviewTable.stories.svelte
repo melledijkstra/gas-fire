@@ -3,7 +3,7 @@
   import PreviewTable from '../client/components/PreviewTable.svelte';
   import type { ImportPreviewResult } from '@/common/types';
   import { buildFireTableRow } from '@/fixtures/fire-row';
-    import { getRowHash } from '@/server/deduplication/duplicate-finder';
+  import { getRowHash } from '@/common/helpers';
   
   const rows = [
     buildFireTableRow({ ref: 'ref-001', description: 'Transaction 1' }),
@@ -19,8 +19,8 @@
 
   const report: ImportPreviewResult = {
     rows: rows,
-    duplicateHashes: new Set([getRowHash(rows[1]), getRowHash(rows[2]), getRowHash(rows[3]), getRowHash(rows[5])]),
-    removedHashes: new Set([getRowHash(rows[4]), getRowHash(rows[6]), getRowHash(rows[7]), getRowHash(rows[8])]),
+    duplicateHashes: [getRowHash(rows[1]), getRowHash(rows[2]), getRowHash(rows[3]), getRowHash(rows[5])],
+    removedHashes: [getRowHash(rows[4]), getRowHash(rows[6]), getRowHash(rows[7])],
     newBalance: 1234.53
   };
 

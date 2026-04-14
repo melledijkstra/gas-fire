@@ -8,7 +8,7 @@ import type {
 import type * as publicServerFunctions from '@/server/index'
 import { fireTableMock } from '@/fixtures/fire-table'
 import { getRowHash } from '@/common/helpers'
-import type { RuleEngineResult } from '@/server/rule-engine'
+import type { ImportRule, RuleEngineResult } from '@/server/rule-engine'
 
 ////////////////////////////////////////////////////////////////
 // This mock is used by storybook, to mimic server functions
@@ -64,10 +64,34 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     console.log('previewPipeline mock called')
     await sleep(2000)
 
-    const rows = fireTableMock.map(row => row.map(String))
+    const appliedRules: ImportRule[] = [
+      {
+        action: 'EXCLUDE',
+        ruleName: 'Test Rule',
+        banks: ['All'],
+        conditionColumn: 'test_column',
+        condition: 'REGEX',
+        actionTarget: 'action_column',
+        stopProcessing: false,
+        rulePhase: 'POST_TRANSFORM',
+      },
+      {
+        action: 'EXCLUDE',
+        ruleName: 'Another Rule',
+        banks: ['All'],
+        conditionColumn: 'test_column',
+        condition: 'REGEX',
+        actionTarget: 'action_column',
+        stopProcessing: false,
+        rulePhase: 'PRE_TRANSFORM',
+      },
+    ]
 
-    const duplicateHashes = [getRowHash(rows[3]), getRowHash(rows[5])]
-    const removedHashes = [getRowHash(rows[1]), getRowHash(rows[4])]
+    const rows = fireTableMock.map(row => row.map(String))
+    const hashes = rows.map(getRowHash)
+
+    const duplicateHashes = [hashes[3], hashes[5]]
+    const removedHashes = [hashes[2], hashes[4]]
 
     return {
       success: true,
@@ -76,6 +100,14 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
         removedHashes,
         rows,
         newBalance: 1234.56,
+        ruleEngine: {
+          appliedRules,
+          warnings: [],
+          rowExcludedRule: {
+            [hashes[2]]: appliedRules[0].ruleName,
+            [hashes[4]]: appliedRules[1].ruleName,
+          },
+        },
       },
     }
   };
