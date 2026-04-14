@@ -47,6 +47,8 @@ export class FireTableFactory {
       return new Array<T | null>(rowCount).fill(null)
     }
 
+    const importDate = new Date()
+
     // prettier-ignore
     const columnImportRules: FireColumnRules = {
       ref: null,
@@ -56,7 +58,7 @@ export class FireTableFactory {
       category: () => buildColumn('category'),
       contra_account: () => buildColumn('contra_account'),
       label: () => buildColumn('label'),
-      import_date: () => Array.from({ length: rowCount }, () => new Date()),
+      import_date: () => Array.from({ length: rowCount }, () => importDate),
       description: () => buildColumn('description'),
       contra_iban: () => buildColumn('contra_iban'),
       currency: () => buildColumn('currency'),
