@@ -5,7 +5,7 @@ import { Table } from '@/common/table/Table'
 import { FireTable } from '@/common/table/FireTable'
 import { AccountUtils } from '../accounts/account-utils'
 import { Transformers } from '../transformers'
-import type { FireColumnRules } from '../types'
+import type { FireColumnParsers } from '../types'
 import { Logger } from '@/common/logger'
 
 export class FireTableFactory {
@@ -50,7 +50,7 @@ export class FireTableFactory {
     const importDate = new Date()
 
     // prettier-ignore
-    const columnImportRules: FireColumnRules = {
+    const columnImportParsers: FireColumnParsers = {
       ref: null,
       iban: () => new Array(rowCount).fill(AccountUtils.getAccountIban(config.getAccountId())),
       date: () => buildColumn('date', Transformers.transformDate),
@@ -65,17 +65,17 @@ export class FireTableFactory {
     }
 
     for (const columnName of FIRE_COLUMNS) {
-      const colRule = columnImportRules[columnName as keyof FireColumnRules]
+      const colParser = columnImportParsers[columnName as keyof FireColumnParsers]
 
-      // If no rule defined for this column, fill with nulls
-      if (!colRule) {
+      // If no parser defined for this column, fill with nulls
+      if (!colParser) {
         output.push(new Array(rowCount).fill(null))
         continue
       }
 
       let column: CellValue[]
       try {
-        column = colRule()
+        column = colParser()
         column = Table.ensureLength(column, rowCount)
       }
       catch (e) {
