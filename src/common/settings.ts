@@ -6,8 +6,9 @@ export const DIALOG_SIZES: Record<keyof typeof DialogType, [number, number]> = {
   about: [300, 200],
 }
 
-export const FEATURES: Record<string, boolean> = {
-  IMPORT_DUPLICATE_DETECTION: false,
+export const FEATURES = {
+  IMPORT_DUPLICATE_DETECTION: true,
+  RULE_ENGINE_ENABLED: true,
 } as const
 
 // These are the columns that are used to calculate the hash of a FireTable row

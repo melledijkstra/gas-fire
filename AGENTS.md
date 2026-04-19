@@ -1,5 +1,16 @@
 # Agent Onboarding Guide: gas-fire
 
+## General Instructions
+
+- Always use pnpm instead of npm for this project.
+- Start comments in lowercase.
+
+## Memory
+
+- **Nullish Coalescing Assignment:** Prefer `??=` over simple `if (!x) x = ...` for cleaner initialization.
+- **Standard Number Methods:** Prefer `Number.parseFloat()` and `Number.isNaN()` over the global `parseFloat()` and `isNaN()` for more robust and modern JS.
+- **Cognitive Complexity:** Keep functions small and focused. If a function's cognitive complexity exceeds 15, extract inner loops or complex conditional blocks into smaller, well-named helper functions.
+
 ## Role & Purpose
 
 `gas-fire` automates a **Financial Independence, Retire Early (FIRE) Google Sheet**. It provides:

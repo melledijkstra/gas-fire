@@ -17,7 +17,7 @@ import {
 import type { ImportPipelineContext, PreviewPipelineContext } from './pipeline'
 import { Config } from '../config'
 import { FireSheet } from '../spreadsheet/FireSheet'
-import { parseRules, type RuleEngineResult } from '../rule-engine'
+import { parseRulesByAccount, type SRuleEngineResult } from '../rule-engine'
 import { Table } from '../table/Table'
 import { getRowHash, structuredClone } from '@/common/helpers'
 import { Logger } from '@/common/logger'
@@ -44,7 +44,7 @@ function prepareSheetForImport(fireSheet: FireSheet): void {
 function calculateNewBalance(fireTable: FireTable, previewContext: PreviewPipelineContext): number {
   const excludedHashes = new Set<string>([
     ...previewContext?.duplicateHashes ?? [],
-    ...previewContext?.removedHashes ?? [],
+    ...previewContext?.ruleEngine?.removedHashes ?? [],
   ])
 
   const amountColIndex = FireTable.getFireColumnIndex('amount')
@@ -109,8 +109,7 @@ class PipelineRPC {
     bankAccount: string,
     userDecisions?: Record<string, TransactionAction>,
   ): ServerResponse<{
-    message: string
-    ruleEngine?: RuleEngineResult
+    ruleEngine?: SRuleEngineResult
   }> {
     const fireSheet = new FireSheet()
     const accountConfig = Config.getAccountConfiguration(bankAccount)
@@ -130,25 +129,27 @@ class PipelineRPC {
       .addStage(removeEmptyRowsStage)
 
     const rawRulesData = RuleSheet.getRulesData()
-    const { rules, warnings } = parseRules(rawRulesData)
+    const { rules, warnings } = parseRulesByAccount(rawRulesData, bankAccount)
 
     if (FEATURES.RULE_ENGINE_ENABLED) {
       context.ruleEngine = {
         warnings: warnings,
+        rulesCount: rules.length,
         appliedRules: [],
         rowExcludedRule: {},
+        removedHashes: new Set<string>(),
       }
 
       pipeline = pipeline.addStage(input => applyPreTransformRulesStage(input, context, rules))
     }
 
-    let fireTablePipeline = pipeline.addStage(transformToFireTableStage)
+    let transformedPipeline = pipeline.addStage(transformToFireTableStage)
 
     if (FEATURES.RULE_ENGINE_ENABLED) {
-      fireTablePipeline = fireTablePipeline.addStage(input => postTransformRulesStage(input, context, rules))
+      transformedPipeline = transformedPipeline.addStage(input => postTransformRulesStage(input, context, rules))
     }
 
-    const fireTable = fireTablePipeline
+    const fireTable = transformedPipeline
       .addStage(applyUserDecisionsStage)
       .addStage(sortByDateStage)
       .execute(inputTable, context)
@@ -170,9 +171,16 @@ class PipelineRPC {
 
     return {
       success: true,
+      message: msg,
       data: {
-        message: msg,
-        ruleEngine: context.ruleEngine,
+        ...(context.ruleEngine
+          ? {
+              ruleEngine: {
+                ...context.ruleEngine,
+                removedHashes: Array.from(context.ruleEngine.removedHashes),
+              },
+            }
+          : {}),
       },
     }
   }
@@ -188,22 +196,41 @@ class PipelineRPC {
     const context: PreviewPipelineContext = {
       config,
       duplicateHashes: new Set(),
-      removedHashes: new Set(),
     }
 
-    let previewPipeline = Pipeline.create<Table, PreviewPipelineContext>()
+    let pipeline = Pipeline.create<Table, PreviewPipelineContext>()
       .addStage(removeEmptyRowsStage)
-      .addStage(transformToFireTableStage)
-      .addStage(sortByDateStage)
+
+    const rawRulesData = RuleSheet.getRulesData()
+    const { rules, warnings } = parseRulesByAccount(rawRulesData, bankAccount)
+
+    if (FEATURES.RULE_ENGINE_ENABLED) {
+      context.ruleEngine = {
+        warnings: warnings,
+        rulesCount: rules.length,
+        appliedRules: [],
+        rowExcludedRule: {},
+        removedHashes: new Set<string>(),
+      }
+
+      pipeline = pipeline.addStage(input => applyPreTransformRulesStage(input, context, rules))
+    }
+
+    let transformedPipeline = pipeline.addStage(transformToFireTableStage)
+
+    if (FEATURES.RULE_ENGINE_ENABLED) {
+      transformedPipeline = transformedPipeline.addStage(input => postTransformRulesStage(input, context, rules))
+    }
 
     if (FEATURES.IMPORT_DUPLICATE_DETECTION) {
-      previewPipeline = previewPipeline.addStage(duplicateDetectionStage)
+      transformedPipeline = transformedPipeline.addStage(duplicateDetectionStage)
     }
 
-    previewPipeline = previewPipeline
+    transformedPipeline = transformedPipeline
+      .addStage(sortByDateStage)
       .addStage(autoFillPreviewStage)
 
-    const previewTable = previewPipeline.execute(rawTable, context)
+    const previewTable = transformedPipeline.execute(rawTable, context)
 
     const newBalance = calculateNewBalance(previewTable, context)
 
@@ -216,8 +243,15 @@ class PipelineRPC {
         rows: previewTable.data.map(row => row.map(formatCellValue)),
         newBalance: newBalance,
         duplicateHashes: Array.from(context.duplicateHashes),
-        removedHashes: Array.from(context.removedHashes),
-        ruleEngine: context.ruleEngine,
+        removedHashes: Array.from(context.ruleEngine?.removedHashes ?? []),
+        ...(context.ruleEngine
+          ? {
+              ruleEngine: {
+                ...context.ruleEngine,
+                removedHashes: Array.from(context.ruleEngine.removedHashes),
+              },
+            }
+          : {}),
       },
     }
   }

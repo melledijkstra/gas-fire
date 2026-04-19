@@ -10,11 +10,13 @@
   import { serverFunctions } from "@/client/utils/serverFunctions";
   import { BadgeCheckSolid } from "flowbite-svelte-icons";
   import type { RawTable } from "@/common/types";
+  import type { RuleEngineResult } from "@/server/rule-engine";
 
   let importFinished = $state(false);
   let message = $state("Ready to import your data?");
-  let rulesAppliedCount = $state(0);
-  let ruleWarnings = $state<{ruleName: string, message: string}[]>([]);
+  let ruleEngineResult = $state<RuleEngineResult>();
+  let rulesAppliedCount = $derived(ruleEngineResult?.appliedRules.length ?? 0);
+  let ruleWarnings = $derived(ruleEngineResult?.warnings ?? []);
 
   const submitDataToServer = (data: RawTable, importStrategy: string) => {
     importState.isProcessing = true;
@@ -27,9 +29,8 @@
       .then((response) => {
         if (response.success && response.data) {
           importFinished = true;
-          message = response.data.message ?? "Import successful!";
-          rulesAppliedCount = response.data.ruleEngine?.appliedRules.length ?? 0;
-          ruleWarnings = response.data.ruleEngine?.warnings ?? [];
+          message = response.message ?? "Import successful!";
+          ruleEngineResult = response.data.ruleEngine;
         } else if (response.success && !response.data) {
           importFinished = true;
           message = "Import successful!";

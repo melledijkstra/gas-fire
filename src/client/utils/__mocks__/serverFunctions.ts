@@ -8,7 +8,7 @@ import type {
 import type * as publicServerFunctions from '@/server/index'
 import { fireTableMock } from '@/fixtures/fire-table'
 import { getRowHash } from '@/common/helpers'
-import type { ImportRule, RuleEngineResult } from '@/server/rule-engine'
+import type { ImportRule, SRuleEngineResult } from '@/server/rule-engine'
 
 ////////////////////////////////////////////////////////////////
 // This mock is used by storybook, to mimic server functions
@@ -43,7 +43,7 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     _userDecisions?: Record<string, TransactionAction>,
   ): Promise<ServerResponse<{
     message: string
-    ruleEngine?: RuleEngineResult
+    ruleEngine?: SRuleEngineResult
   }>> {
     console.log('importPipeline mock called with data:', rawTable, 'and selectedAccount:', bankAccount)
     await sleep(2000)
@@ -101,8 +101,10 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
         rows,
         newBalance: 1234.56,
         ruleEngine: {
+          rulesCount: appliedRules.length,
           appliedRules,
           warnings: [],
+          removedHashes: removedHashes,
           rowExcludedRule: {
             [hashes[2]]: appliedRules[0].ruleName,
             [hashes[4]]: appliedRules[1].ruleName,

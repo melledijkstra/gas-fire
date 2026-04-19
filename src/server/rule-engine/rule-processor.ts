@@ -2,6 +2,7 @@ import type { ImportRule, RuleWarning } from './types'
 import { Table } from '../table/Table'
 import { FireTable } from '../table/FireTable'
 import { Logger } from '@/common/logger'
+import type { FireColumn } from '@/common/constants'
 
 export interface RuleExecutionResult {
   excludedIndices: Set<number>
@@ -14,11 +15,11 @@ export interface RuleExecutionResult {
 /**
  * Filters rules by bank applicability and phase.
  */
-function getApplicableRules(rules: ImportRule[], bank: string, phase: 'PRE_TRANSFORM' | 'POST_TRANSFORM'): ImportRule[] {
+function getApplicableRules(rules: ImportRule[], accountId: string, phase: 'PRE_TRANSFORM' | 'POST_TRANSFORM'): ImportRule[] {
   return rules.filter((rule) => {
     if (rule.rulePhase !== phase) return false
-    if (rule.banks.includes('All')) return true
-    return rule.banks.includes(bank)
+    if (rule.banks.some(b => b.toLowerCase() === 'all')) return true
+    return rule.banks.some(b => b.toLowerCase() === accountId.toLowerCase())
   })
 }
 
@@ -48,14 +49,14 @@ function evaluateCondition(cellValue: string, condition: ImportRule['condition']
         return false
       }
     case 'GREATER_THAN': {
-      const numVal = parseFloat(value)
-      const target = parseFloat(conditionValue || '0')
-      return !isNaN(numVal) && !isNaN(target) && numVal > target
+      const numVal = Number.parseFloat(value)
+      const target = Number.parseFloat(conditionValue || '0')
+      return !Number.isNaN(numVal) && !Number.isNaN(target) && numVal > target
     }
     case 'LESS_THAN': {
-      const numVal = parseFloat(value)
-      const target = parseFloat(conditionValue || '0')
-      return !isNaN(numVal) && !isNaN(target) && numVal < target
+      const numVal = Number.parseFloat(value)
+      const target = Number.parseFloat(conditionValue || '0')
+      return !Number.isNaN(numVal) && !Number.isNaN(target) && numVal < target
     }
     default:
       return false
@@ -80,14 +81,14 @@ function applyAction(
       row[targetColumnIndex] = rule.actionValue || ''
       break
     case 'ADD': {
-      const numVal = parseFloat(currentValue) || 0
-      const addVal = parseFloat(rule.actionValue || '0')
+      const numVal = Number.parseFloat(currentValue) || 0
+      const addVal = Number.parseFloat(rule.actionValue || '0')
       row[targetColumnIndex] = (numVal + addVal).toString()
       break
     }
     case 'SUBTRACT': {
-      const numVal = parseFloat(currentValue) || 0
-      const subVal = parseFloat(rule.actionValue || '0')
+      const numVal = Number.parseFloat(currentValue) || 0
+      const subVal = Number.parseFloat(rule.actionValue || '0')
       row[targetColumnIndex] = (numVal - subVal).toString()
       break
     }
@@ -95,6 +96,62 @@ function applyAction(
       // Handled outside
       break
   }
+}
+
+/**
+ * Applies rules to a single row.
+ * Returns true if the row was affected by any rule.
+ */
+function applyRulesToRow(
+  row: unknown[],
+  rowIndex: number,
+  rules: ImportRule[],
+  getColumnIndex: (colName: string | FireColumn) => number,
+  result: RuleExecutionResult,
+): boolean {
+  let rowAffected = false
+
+  for (const rule of rules) {
+    const conditionColIndex = getColumnIndex(rule.conditionColumn)
+
+    if (conditionColIndex === -1) {
+      if (!result.warnings.some(w => w.ruleName === rule.ruleName)) {
+        result.warnings.push({ ruleName: rule.ruleName, message: `Column '${rule.conditionColumn}' not found.` })
+      }
+      continue
+    }
+
+    const cellValue = String(row[conditionColIndex] ?? '')
+    const conditionMet = evaluateCondition(cellValue, rule.condition, rule.conditionValue)
+
+    if (conditionMet) {
+      rowAffected = true
+
+      if (rule.action === 'EXCLUDE') {
+        result.excludedIndices.add(rowIndex)
+        result.excludedByRule.set(rowIndex, rule.ruleName)
+        return true // Row is excluded, stop processing further rules for this row
+      }
+
+      const actionTargetIndex = getColumnIndex(rule.actionTarget)
+      if (actionTargetIndex === -1) {
+        if (!result.warnings.some(w => w.ruleName === rule.ruleName)) {
+          result.warnings.push({ ruleName: rule.ruleName, message: `Target column '${rule.actionTarget}' not found.` })
+        }
+      }
+      else {
+        applyAction(row, actionTargetIndex, rule)
+      }
+
+      result.appliedRules.push(rule)
+
+      if (rule.stopProcessing) {
+        break
+      }
+    }
+  }
+
+  return rowAffected
 }
 
 /**
@@ -120,53 +177,12 @@ export function applyPreTransformRules(
 
   const data = table.data
   const affectedRows = new Set<number>()
+  const getColumnIndex = (name: string) => table.headers.indexOf(name)
 
   for (let i = 0; i < data.length; i++) {
-    const row = data[i]
-    let rowAffected = false
-
-    for (const rule of applicableRules) {
-      const conditionColIndex = table.headers.indexOf(rule.conditionColumn)
-
-      if (conditionColIndex === -1) {
-        if (!result.warnings.some(w => w.ruleName === rule.ruleName)) {
-          result.warnings.push({ ruleName: rule.ruleName, message: `Column '${rule.conditionColumn}' not found in headers.` })
-        }
-        continue
-      }
-
-      const cellValue = String(row[conditionColIndex] ?? '')
-      const conditionMet = evaluateCondition(cellValue, rule.condition, rule.conditionValue)
-
-      if (conditionMet) {
-        rowAffected = true
-
-        if (rule.action === 'EXCLUDE') {
-          result.excludedIndices.add(i)
-          result.excludedByRule.set(i, rule.ruleName)
-          break // Once excluded, no further rules needed for this row
-        }
-        else {
-          const actionTargetIndex = table.headers.indexOf(rule.actionTarget)
-          if (actionTargetIndex === -1) {
-            if (!result.warnings.some(w => w.ruleName === rule.ruleName)) {
-              result.warnings.push({ ruleName: rule.ruleName, message: `Target column '${rule.actionTarget}' not found in headers.` })
-            }
-          }
-          else {
-            applyAction(row, actionTargetIndex, rule)
-          }
-        }
-
-        result.appliedRules.push(rule)
-
-        if (rule.stopProcessing) {
-          break
-        }
-      }
+    if (applyRulesToRow(data[i], i, applicableRules, getColumnIndex, result)) {
+      affectedRows.add(i)
     }
-
-    if (rowAffected) affectedRows.add(i)
   }
 
   result.rowsAffectedCount = affectedRows.size
@@ -185,10 +201,10 @@ export function applyPostTransformRules(
 ): RuleExecutionResult {
   const applicableRules = getApplicableRules(rules, accountId, 'POST_TRANSFORM')
   const result: RuleExecutionResult = {
-    excludedIndices: new Set(),
     appliedRules: [],
     rowsAffectedCount: 0,
     warnings: [],
+    excludedIndices: new Set(),
     excludedByRule: new Map(),
   }
 
@@ -196,54 +212,13 @@ export function applyPostTransformRules(
 
   const data = fireTable.data
   const affectedRows = new Set<number>()
+  const getColumnIndex = (name: string | FireColumn) =>
+    fireTable.headers.indexOf(name)
 
   for (let i = 0; i < data.length; i++) {
-    const row = data[i]
-    let rowAffected = false
-
-    for (const rule of applicableRules) {
-      // Cast safely since rule engine types uses string to allow any column names
-      const conditionColIndex = FireTable.getFireColumnIndex(rule.conditionColumn as import('@/common/constants').FireColumn)
-
-      if (conditionColIndex === -1) {
-        if (!result.warnings.some(w => w.ruleName === rule.ruleName)) {
-          result.warnings.push({ ruleName: rule.ruleName, message: `FIRE Column '${rule.conditionColumn}' not found.` })
-        }
-        continue
-      }
-
-      const cellValue = String(row[conditionColIndex] ?? '')
-      const conditionMet = evaluateCondition(cellValue, rule.condition, rule.conditionValue)
-
-      if (conditionMet) {
-        rowAffected = true
-
-        if (rule.action === 'EXCLUDE') {
-          result.excludedIndices.add(i)
-          result.excludedByRule.set(i, rule.ruleName)
-          break
-        }
-        else {
-          const actionTargetIndex = FireTable.getFireColumnIndex(rule.actionTarget as import('@/common/constants').FireColumn)
-          if (actionTargetIndex === -1) {
-            if (!result.warnings.some(w => w.ruleName === rule.ruleName)) {
-              result.warnings.push({ ruleName: rule.ruleName, message: `FIRE Target column '${rule.actionTarget}' not found.` })
-            }
-          }
-          else {
-            applyAction(row, actionTargetIndex, rule)
-          }
-        }
-
-        result.appliedRules.push(rule)
-
-        if (rule.stopProcessing) {
-          break
-        }
-      }
+    if (applyRulesToRow(data[i], i, applicableRules, getColumnIndex, result)) {
+      affectedRows.add(i)
     }
-
-    if (rowAffected) affectedRows.add(i)
   }
 
   result.rowsAffectedCount = affectedRows.size

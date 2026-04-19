@@ -18,7 +18,6 @@ export interface ImportPipelineContext extends PipelineContext {
 
 export interface PreviewPipelineContext extends PipelineContext {
   duplicateHashes: Set<string>
-  removedHashes: Set<string>
 }
 
 export type PipelineStage<I, O, C> = (input: I, context: C) => O
@@ -108,7 +107,7 @@ export function sortByDateStage<T extends FireTable>(input: T, _context: Pipelin
 export function duplicateDetectionStage(input: FireTable, context: PreviewPipelineContext): FireTable {
   const fireSheet = new FireSheet()
   const existingHashes = fireSheet.loadExistingHashes()
-  Logger.log(`Loaded ${existingHashes.size} existing transaction hashes for duplicate detection`)
+  Logger.log(`Loaded ${existingHashes?.size} existing transaction hashes for duplicate detection`)
 
   for (const row of input.data) {
     const hash = getRowHash(row)

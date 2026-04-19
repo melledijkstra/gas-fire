@@ -1,15 +1,26 @@
 import { getRowHash } from '@/common/helpers'
 import type { Table } from '../table/Table'
-import type { ImportPipelineContext } from '../import-pipeline/pipeline'
+import type { PipelineContext } from '../import-pipeline/pipeline'
 import { FireTable } from '../table/FireTable'
 import { applyPreTransformRules, applyPostTransformRules } from './rule-processor'
 import type { ImportRule } from './types'
 
-export function applyPreTransformRulesStage(input: Table, context: ImportPipelineContext, rules: ImportRule[]): Table {
-  if (!context.ruleEngine) {
-    context.ruleEngine = {
-      warnings: [], appliedRules: [], rowExcludedRule: {},
-    }
+const emptyRuleEngineContext = {
+  warnings: [],
+  appliedRules: [],
+  removedHashes: new Set<string>(),
+  rowExcludedRule: {},
+  rulesCount: 0,
+}
+
+export function applyPreTransformRulesStage(
+  input: Table,
+  context: PipelineContext,
+  rules: ImportRule[],
+): Table {
+  context.ruleEngine ??= {
+    ...emptyRuleEngineContext,
+    rulesCount: rules.length,
   }
 
   const bankAccount = context.config.getAccountId()
@@ -22,6 +33,7 @@ export function applyPreTransformRulesStage(input: Table, context: ImportPipelin
   for (const index of result.excludedIndices) {
     const hash = getRowHash(input.data[index])
     context.ruleEngine.rowExcludedRule[hash] = result.excludedByRule.get(index)!
+    context.ruleEngine.removedHashes.add(hash)
   }
 
   return input
@@ -29,14 +41,13 @@ export function applyPreTransformRulesStage(input: Table, context: ImportPipelin
 
 export function postTransformRulesStage(
   fireTable: FireTable,
-  context: ImportPipelineContext,
+  context: PipelineContext,
   rules: ImportRule[],
   dryRun: boolean = false,
 ): FireTable {
-  if (!context.ruleEngine) {
-    context.ruleEngine = {
-      warnings: [], appliedRules: [], rowExcludedRule: {},
-    }
+  context.ruleEngine ??= {
+    ...emptyRuleEngineContext,
+    rulesCount: rules.length,
   }
 
   const bankAccount = context.config.getAccountId()
@@ -45,7 +56,7 @@ export function postTransformRulesStage(
   context.ruleEngine.appliedRules.push(...result.appliedRules)
   context.ruleEngine.warnings.push(...result.warnings)
 
-  // Map excluded indices to hashes before sorting alters row order
+  // map excluded indices to hashes before sorting alters row order
   const excludedHashes = new Set<string>()
   const data = fireTable.data
 
@@ -53,9 +64,10 @@ export function postTransformRulesStage(
     const hash = getRowHash(data[index])
     excludedHashes.add(hash)
     context.ruleEngine.rowExcludedRule[hash] = result.excludedByRule.get(index)!
+    context.ruleEngine.removedHashes.add(hash)
   }
 
-  // Remove rows permanently if this is an actual import (not preview)
+  // remove rows permanently if this is an actual import (not preview)
   if (!dryRun && excludedHashes.size > 0) {
     const filteredData = data.filter(row => !excludedHashes.has(getRowHash(row)))
     fireTable = new FireTable(filteredData)

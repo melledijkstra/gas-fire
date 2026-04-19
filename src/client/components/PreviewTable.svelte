@@ -32,7 +32,7 @@
 
 <FlowTable class={[tableClass, 'border border-gray-400 mb-2.5 mr-2.5']} striped hoverable>
   <TableHead>
-    <TableHeadCell class="py-2 px-1 normal-case">Action</TableHeadCell>
+    <TableHeadCell class="py-2 px-1 normal-case border-r border-gray-400">Action</TableHeadCell>
     {#each headers as header, i (i)}
       <TableHeadCell class="py-2 px-1 normal-case">{header}</TableHeadCell>
     {/each}
@@ -43,7 +43,7 @@
       {@const status = getRowStatus(hash)}
       {@const excludedByRuleName = report?.ruleEngine?.rowExcludedRule[hash]}
       <TableBodyRow class={getRowClass(status)}>
-        <TableBodyCell class="py-2 px-1 text-xs text-center">
+        <TableBodyCell class="py-2 px-1 text-xs text-center border-r border-gray-400">
           {#if status === 'duplicate'}
             <Select
               size="sm"

@@ -1,0 +1,6 @@
+{
+  "sonarlint.connectedMode.project": {
+    "connectionId": "melledijkstra",
+    "projectKey": "melledijkstra_gas-fire"
+  }
+}

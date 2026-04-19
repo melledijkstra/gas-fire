@@ -9,9 +9,10 @@
   const validCount = $derived(report.rows.length - report.duplicateHashes.length - report.removedHashes.length);
   const removedCount = $derived(report.removedHashes.length)
   const duplicateCount = $derived(report.duplicateHashes.length)
-  const rulesApplied = $derived(report.ruleEngine?.appliedRules?.length || 0)
-
-  const warnings = $derived(report.ruleEngine?.warnings || [])
+  
+  const totalRuleCount = $derived(report.ruleEngine?.rulesCount ?? 0)
+  const rulesApplied = $derived(report.ruleEngine?.appliedRules?.length ?? 0)
+  const warnings = $derived(report.ruleEngine?.warnings ?? [])
 </script>
 
 <div class="mb-4">
@@ -19,7 +20,7 @@
   <Badge color="green" border>Valid Rows: {validCount}</Badge>
   <Badge color="red" border>Removed Rows: {removedCount}</Badge>
   <Badge color="yellow" border>Duplicate Rows: {duplicateCount}</Badge>
-  <Badge color="indigo" border>Rules Applied: {rulesApplied}</Badge>
+  <Badge color="indigo" border>Rules Applied: {rulesApplied} / {totalRuleCount}</Badge>
   {#if report.newBalance !== undefined}
     <p class="mt-2">New Balance: <strong>{report.newBalance.toLocaleString(locale, { style: 'currency', currency: 'EUR' })}</strong></p>
   {/if}

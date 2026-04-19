@@ -6,8 +6,8 @@
   const report: ImportPreviewResult = {
     newBalance: 12345.67,
     rows: [],
-    duplicateHashes: new Set(['hash1', 'hash2']),
-    removedHashes: new Set(['hash3']),
+    duplicateHashes: ['hash1', 'hash2'],
+    removedHashes: ['hash3'],
   }
   
   const { Story } = defineMeta({

@@ -1,3 +1,4 @@
+import { slugify } from '@/common/helpers'
 import type { ImportRule, RuleWarning, RuleCondition, RuleAction, RulePhase } from './types'
 
 export interface ParseResult {
@@ -29,7 +30,7 @@ const VALID_PHASES: RulePhase[] = ['PRE_TRANSFORM', 'POST_TRANSFORM']
  * 9: Rule Phase
  */
 // eslint-disable-next-line complexity
-export function parseRules(rows: string[][]): ParseResult {
+export function parseRulesByAccount(rows: string[][], accountId: string): ParseResult {
   const rules: ImportRule[] = []
   const warnings: RuleWarning[] = []
 
@@ -54,6 +55,21 @@ export function parseRules(rows: string[][]): ParseResult {
     ] = row.map(cell => cell?.trim() || '')
 
     const ruleName = ruleNameRaw || `Rule at row ${i + 2}` // +2 because row 1 is header
+
+    let banks: string[] = []
+    if (banksRaw) {
+      banks = banksRaw.split(',').map(b => b.trim()).filter(b => b.length > 0).map(slugify)
+    }
+
+    if (!banks.includes('all') && !banks.includes(accountId)) {
+      // This rule does not apply to the current account, so we can skip it without a warning.
+      continue
+    }
+
+    if (banks.length === 0) {
+      warnings.push({ ruleName, message: 'At least one bank must be specified, or "All".' })
+      continue
+    }
 
     if (!conditionColumnRaw) {
       warnings.push({ ruleName, message: 'Condition Column is required.' })
@@ -99,11 +115,6 @@ export function parseRules(rows: string[][]): ParseResult {
       continue
     }
 
-    let banks = ['All']
-    if (banksRaw && banksRaw.toLowerCase() !== 'all') {
-      banks = banksRaw.split(',').map(b => b.trim()).filter(b => b.length > 0)
-    }
-
     const stopProcessing = stopProcessingRaw.toLowerCase() === 'true' || stopProcessingRaw === 'TRUE'
 
     rules.push({
@@ -113,7 +124,7 @@ export function parseRules(rows: string[][]): ParseResult {
       condition,
       conditionValue: conditionValueRaw,
       action,
-      actionTarget: actionTargetRaw || '',
+      actionTarget: actionTargetRaw ?? '',
       actionValue: actionValueRaw,
       stopProcessing,
       rulePhase: rulePhaseRaw as RulePhase,

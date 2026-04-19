@@ -65,19 +65,25 @@ describe('RPC: Import Functions', () => {
   describe('previewPipeline', () => {
     let getBalanceSpy: ReturnType<typeof vi.spyOn>
     let fireSheetSpy: ReturnType<typeof vi.spyOn>
+    let loadExistingHashesSpy: ReturnType<typeof vi.spyOn>
 
     beforeEach(() => {
       getBalanceSpy = vi.spyOn(AccountUtils, 'getBalance').mockReturnValue(302.8)
       fireSheetSpy = vi.spyOn(FireSheet.prototype, 'getLastImportedTransactions').mockReturnValue(new FireTable([]))
+      loadExistingHashesSpy = vi.spyOn(FireSheet.prototype, 'loadExistingHashes').mockReturnValue(new Set())
     })
 
     afterEach(() => {
       getBalanceSpy.mockRestore()
       fireSheetSpy.mockRestore()
+      loadExistingHashesSpy.mockRestore()
     })
 
     test('is able to handle table without any useful data and should return the current balance', () => {
-      const table: RawTable = [['TransactionAmount', 'TransactionDate', 'Payee'], ['', '', '']]
+      const table: RawTable = [
+        ['TransactionAmount', 'TransactionDate', 'Payee'],
+        ['', '', ''],
+      ]
       const response = previewPipeline(
         table,
         BANK_ID,
@@ -171,7 +177,7 @@ describe('RPC: Import Functions', () => {
       expect(importDataSpy).toHaveBeenCalled()
       expect(result.success).toBe(true)
       if (result.success) {
-        expect(result.data?.message).toBe('imported 4 rows!')
+        expect(result.message).toBe('imported 4 rows!')
       }
     })
 
@@ -186,7 +192,7 @@ describe('RPC: Import Functions', () => {
       expect(importDataSpy).toHaveBeenCalled()
       expect(result.success).toBe(true)
       if (result.success) {
-        expect(result.data?.message).toBe('imported 1 rows!')
+        expect(result.message).toBe('imported 1 rows!')
       }
     })
 
@@ -214,7 +220,7 @@ describe('RPC: Import Functions', () => {
       ]))
       expect(result.success).toBe(true)
       if (result.success) {
-        expect(result.data?.message).toBe('imported 5 rows!')
+        expect(result.message).toBe('imported 5 rows!')
       }
     })
 

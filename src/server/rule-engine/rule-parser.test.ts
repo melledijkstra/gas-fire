@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseRules } from './rule-parser'
+import { parseRulesByAccount } from './rule-parser'
 
 describe('parseRules', () => {
   it('should successfully parse a valid rule', () => {
@@ -18,13 +18,13 @@ describe('parseRules', () => {
       ],
     ]
 
-    const result = parseRules(rows)
+    const result = parseRulesByAccount(rows, 'bank-a')
 
     expect(result.warnings).toHaveLength(0)
     expect(result.rules).toHaveLength(1)
     expect(result.rules[0]).toEqual({
       ruleName: 'Test Rule',
-      banks: ['Bank A'],
+      banks: ['bank-a'],
       conditionColumn: 'description',
       condition: 'CONTAINS',
       conditionValue: 'uber',
@@ -43,11 +43,24 @@ describe('parseRules', () => {
       ['Rule 3', '', 'col', 'NOT_EMPTY', '', 'EXCLUDE', '', '', 'false', 'PRE_TRANSFORM'],
     ]
 
-    const result = parseRules(rows)
+    const result = parseRulesByAccount(rows, 'banka')
 
-    expect(result.rules[0].banks).toEqual(['All'])
-    expect(result.rules[1].banks).toEqual(['BankA', 'BankB'])
-    expect(result.rules[2].banks).toEqual(['All']) // Empty defaults to All
+    expect(result.rules).toHaveLength(2)
+    expect(result.rules[0].banks).toEqual(['all'])
+    expect(result.rules[1].banks).toEqual(['banka', 'bankb'])
+  })
+
+  it('should only parse rules according to accountId', () => {
+    const rows = [
+      ['Rule 1', 'Bank A', 'col', 'NOT_EMPTY', '', 'EXCLUDE', '', '', 'false', 'PRE_TRANSFORM'],
+      ['Rule 2', 'Bank B', 'col', 'NOT_EMPTY', '', 'EXCLUDE', '', '', 'false', 'PRE_TRANSFORM'],
+      ['Rule 3', 'All', 'col', 'NOT_EMPTY', '', 'EXCLUDE', '', '', 'false', 'PRE_TRANSFORM'],
+      ['Rule 4', 'Bank A, Bank C', 'col', 'NOT_EMPTY', '', 'EXCLUDE', '', '', 'false', 'PRE_TRANSFORM'],
+    ]
+
+    const result = parseRulesByAccount(rows, 'bank-a')
+
+    expect(result.rules).toHaveLength(3)
   })
 
   it('should generate warnings for missing required fields', () => {
@@ -61,7 +74,7 @@ describe('parseRules', () => {
       ['Bad Phase', 'All', 'col', 'CONTAINS', 'val', 'SET', 'cat', 'val', 'false', 'BAD_PHASE'],
     ]
 
-    const result = parseRules(rows)
+    const result = parseRulesByAccount(rows, 'bank-a')
 
     expect(result.rules).toHaveLength(0)
     expect(result.warnings).toHaveLength(7)
@@ -79,7 +92,7 @@ describe('parseRules', () => {
       ['', '', '', '', '', '', '', '', '', ''],
       ['   ', ' ', '', '', '', '', '', '', '', ''],
     ]
-    const result = parseRules(rows)
+    const result = parseRulesByAccount(rows, 'bank-a')
     expect(result.rules).toHaveLength(0)
     expect(result.warnings).toHaveLength(0)
   })
@@ -88,7 +101,7 @@ describe('parseRules', () => {
     const rows = [
       ['', 'All', 'col', 'NOT_EMPTY', '', 'EXCLUDE', '', '', 'false', 'PRE_TRANSFORM'],
     ]
-    const result = parseRules(rows)
+    const result = parseRulesByAccount(rows, 'bank-a')
     expect(result.rules[0].ruleName).toBe('Rule at row 2')
   })
 })
