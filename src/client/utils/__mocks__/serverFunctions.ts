@@ -71,7 +71,7 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
         banks: ['All'],
         conditionColumn: 'test_column',
         condition: 'REGEX',
-        actionTarget: 'action_column',
+        actionColumn: 'action_column',
         stopProcessing: false,
         rulePhase: 'POST_TRANSFORM',
       },
@@ -81,7 +81,7 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
         banks: ['All'],
         conditionColumn: 'test_column',
         condition: 'REGEX',
-        actionTarget: 'action_column',
+        actionColumn: 'action_column',
         stopProcessing: false,
         rulePhase: 'PRE_TRANSFORM',
       },
@@ -97,7 +97,6 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
       success: true,
       data: {
         duplicateHashes,
-        removedHashes,
         rows,
         newBalance: 1234.56,
         ruleEngine: {

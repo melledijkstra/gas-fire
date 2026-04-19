@@ -13,7 +13,9 @@ export type RuleAction
     | 'SUBTRACT'
     | 'ADD'
 
-export type RulePhase = 'PRE_TRANSFORM' | 'POST_TRANSFORM'
+export type RulePhase
+  = | 'PRE_TRANSFORM'
+    | 'POST_TRANSFORM'
 
 export interface ImportRule {
   ruleName: string
@@ -22,7 +24,7 @@ export interface ImportRule {
   condition: RuleCondition
   conditionValue?: string
   action: RuleAction
-  actionTarget: string
+  actionColumn?: string
   actionValue?: string
   stopProcessing: boolean
   rulePhase: RulePhase

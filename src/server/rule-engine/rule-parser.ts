@@ -24,7 +24,7 @@ const VALID_PHASES: RulePhase[] = ['PRE_TRANSFORM', 'POST_TRANSFORM']
  * 3: Condition
  * 4: Condition Value
  * 5: Action
- * 6: Action Target
+ * 6: Action Column
  * 7: Action Value
  * 8: Stop Processing?
  * 9: Rule Phase
@@ -100,18 +100,18 @@ export function parseRulesByAccount(rows: string[][], accountId: string): ParseR
       continue
     }
 
-    // Validation for action targets and values
+    // Validation for action columns and values
     if (action === 'SET' && (!actionTargetRaw || !actionValueRaw)) {
-      warnings.push({ ruleName, message: 'Action Target and Action Value are required for SET action.' })
+      warnings.push({ ruleName, message: 'Action Column and Action Value are required for SET action.' })
       continue
     }
 
     if (action === 'EXCLUDE' && !actionTargetRaw) {
-      // Allow EXCLUDE to not have an action target if it just implies removing the row.
-      // We can default actionTarget to empty string or 'ROW' internally.
+      // Allow EXCLUDE to not have an action column if it just implies removing the row.
+      // We can default actionColumn to empty string or 'ROW' internally.
     }
     else if (action !== 'EXCLUDE' && !actionTargetRaw) {
-      warnings.push({ ruleName, message: `Action Target is required for action "${action}".` })
+      warnings.push({ ruleName, message: `Action Column is required for action "${action}".` })
       continue
     }
 
@@ -124,7 +124,7 @@ export function parseRulesByAccount(rows: string[][], accountId: string): ParseR
       condition,
       conditionValue: conditionValueRaw,
       action,
-      actionTarget: actionTargetRaw ?? '',
+      actionColumn: actionTargetRaw ?? '',
       actionValue: actionValueRaw,
       stopProcessing,
       rulePhase: rulePhaseRaw as RulePhase,

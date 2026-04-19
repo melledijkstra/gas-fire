@@ -3,12 +3,13 @@
   import { getBrowserLocale } from '../utils/web';
   import { Badge, Accordion, AccordionItem } from 'flowbite-svelte';
 
-  const { report }: { report: ImportPreviewResult } = $props();
-  const locale = getBrowserLocale();
+  const { report }: { report: ImportPreviewResult } = $props()
+  const locale = getBrowserLocale()
 
-  const validCount = $derived(report.rows.length - report.duplicateHashes.length - report.removedHashes.length);
-  const removedCount = $derived(report.removedHashes.length)
+  const ruleEngineResult = $derived(report.ruleEngine)
+  const removedCount = $derived(ruleEngineResult?.removedHashes?.length ?? 0)
   const duplicateCount = $derived(report.duplicateHashes.length)
+  const validCount = $derived(report.rows.length - duplicateCount - removedCount)
   
   const totalRuleCount = $derived(report.ruleEngine?.rulesCount ?? 0)
   const rulesApplied = $derived(report.ruleEngine?.appliedRules?.length ?? 0)

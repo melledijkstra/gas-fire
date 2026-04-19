@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { parseRulesByAccount } from './rule-parser'
+import type { ImportRule } from './types'
 
 describe('parseRules', () => {
   it('should successfully parse a valid rule', () => {
@@ -29,11 +30,11 @@ describe('parseRules', () => {
       condition: 'CONTAINS',
       conditionValue: 'uber',
       action: 'SET',
-      actionTarget: 'category',
+      actionColumn: 'category',
       actionValue: 'Transport',
       stopProcessing: true,
       rulePhase: 'POST_TRANSFORM',
-    })
+    } satisfies ImportRule)
   })
 
   it('should handle "All" banks and multiple banks correctly', () => {
@@ -67,7 +68,7 @@ describe('parseRules', () => {
     const rows = [
       ['No Col', 'All', '', 'CONTAINS', 'val', 'SET', 'cat', 'val', 'false', 'POST_TRANSFORM'],
       ['No Cond Val', 'All', 'col', 'CONTAINS', '', 'SET', 'cat', 'val', 'false', 'POST_TRANSFORM'],
-      ['No Action Target SET', 'All', 'col', 'CONTAINS', 'val', 'SET', '', 'val', 'false', 'POST_TRANSFORM'],
+      ['No Action Column SET', 'All', 'col', 'CONTAINS', 'val', 'SET', '', 'val', 'false', 'POST_TRANSFORM'],
       ['No Action Value SET', 'All', 'col', 'CONTAINS', 'val', 'SET', 'cat', '', 'false', 'POST_TRANSFORM'],
       ['Bad Cond', 'All', 'col', 'BAD_COND', 'val', 'SET', 'cat', 'val', 'false', 'POST_TRANSFORM'],
       ['Bad Act', 'All', 'col', 'CONTAINS', 'val', 'BAD_ACT', 'cat', 'val', 'false', 'POST_TRANSFORM'],
@@ -80,8 +81,8 @@ describe('parseRules', () => {
     expect(result.warnings).toHaveLength(7)
     expect(result.warnings[0].message).toContain('Condition Column is required')
     expect(result.warnings[1].message).toContain('Condition value is required')
-    expect(result.warnings[2].message).toContain('Action Target and Action Value are required')
-    expect(result.warnings[3].message).toContain('Action Target and Action Value are required')
+    expect(result.warnings[2].message).toContain('Action Column and Action Value are required')
+    expect(result.warnings[3].message).toContain('Action Column and Action Value are required')
     expect(result.warnings[4].message).toContain('Invalid condition')
     expect(result.warnings[5].message).toContain('Invalid action')
     expect(result.warnings[6].message).toContain('Invalid rule phase')

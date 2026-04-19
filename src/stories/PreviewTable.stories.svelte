@@ -20,8 +20,7 @@
   const report: ImportPreviewResult = {
     rows: rows,
     duplicateHashes: [getRowHash(rows[1]), getRowHash(rows[2]), getRowHash(rows[3]), getRowHash(rows[5])],
-    removedHashes: [getRowHash(rows[4]), getRowHash(rows[6]), getRowHash(rows[7])],
-    newBalance: 1234.53
+    newBalance: 1234.53,
   };
 
   const { Story } = defineMeta({

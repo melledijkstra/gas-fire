@@ -45,7 +45,6 @@ export interface ImportPreviewResult {
   rows: RawTable // FireTable serialized as RawTable for transport
   newBalance: number
   duplicateHashes: string[] // Set<string> converted to array for serialization
-  removedHashes: string[] // Set<string> converted to array for serialization
   ruleEngine?: SRuleEngineResult
 }
 

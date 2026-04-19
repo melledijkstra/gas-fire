@@ -24,7 +24,7 @@
   };
 
   const getRowStatus = (hash: string): RowStatus => {
-    if (report.removedHashes?.includes(hash)) return 'removed'
+    if (report?.ruleEngine?.removedHashes?.includes(hash)) return 'removed'
     if (report.duplicateHashes?.includes(hash)) return 'duplicate'
     return 'import'
   };

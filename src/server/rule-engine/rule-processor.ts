@@ -133,10 +133,10 @@ function applyRulesToRow(
         return true // Row is excluded, stop processing further rules for this row
       }
 
-      const actionTargetIndex = getColumnIndex(rule.actionTarget)
+      const actionTargetIndex = getColumnIndex(rule?.actionColumn ?? '')
       if (actionTargetIndex === -1) {
         if (!result.warnings.some(w => w.ruleName === rule.ruleName)) {
-          result.warnings.push({ ruleName: rule.ruleName, message: `Target column '${rule.actionTarget}' not found.` })
+          result.warnings.push({ ruleName: rule.ruleName, message: `Target column '${rule?.actionColumn ?? ''}' not found.` })
         }
       }
       else {

@@ -7,7 +7,6 @@
     newBalance: 12345.67,
     rows: [],
     duplicateHashes: ['hash1', 'hash2'],
-    removedHashes: ['hash3'],
   }
   
   const { Story } = defineMeta({

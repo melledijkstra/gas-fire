@@ -243,7 +243,6 @@ class PipelineRPC {
         rows: previewTable.data.map(row => row.map(formatCellValue)),
         newBalance: newBalance,
         duplicateHashes: Array.from(context.duplicateHashes),
-        removedHashes: Array.from(context.ruleEngine?.removedHashes ?? []),
         ...(context.ruleEngine
           ? {
               ruleEngine: {
