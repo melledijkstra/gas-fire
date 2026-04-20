@@ -1,5 +1,5 @@
 import { Logger } from '@/common/logger'
-import type { CellValue } from '@/common/types'
+import type { CellValue, PackedTable, PackedCellValue } from '@/common/types'
 
 const EMPTY = ''
 
@@ -158,28 +158,52 @@ export class Table<T = CellValue> {
   }
 
   /**
+   * Converts the table to a serialize-safe object format (PackedTable).
+   * Dates are converted to tagged objects: { __type: 'Date', value: string }
+   */
+  pack(): PackedTable {
+    const serializedData: PackedCellValue[][] = this._data.map(row =>
+      row.map((cell) => {
+        if (cell instanceof Date) {
+          return { __type: 'Date', value: cell.toISOString() }
+        }
+        return cell as PackedCellValue
+      }),
+    )
+    return {
+      headers: this._headers,
+      data: serializedData,
+    }
+  }
+
+  /**
+   * Reconstructs a Table instance from a PackedTable object.
+   */
+  static unpack<T = CellValue>(packedTable: PackedTable): Table<T> {
+    const data = packedTable.data.map(row =>
+      row.map((cell) => {
+        if (cell && typeof cell === 'object' && cell.__type === 'Date') {
+          return new Date(cell.value) as unknown as T
+        }
+        return cell as unknown as T
+      }),
+    )
+    return new Table<T>(packedTable.headers, data)
+  }
+
+  /**
    * Serializes the table to a JSON string.
    * Useful for debugging or transferring data.
    */
   serialize(): string {
-    return JSON.stringify({ headers: this._headers, data: this._data }, (_key, value) => {
-      if (value instanceof Date) {
-        return { __type: 'Date', value: value.toISOString() }
-      }
-      return value
-    })
+    return JSON.stringify(this.pack())
   }
 
   static deserialize<T = CellValue>(serializedData: string): Table<T> {
     try {
-      const parsed = JSON.parse(serializedData, (_key, value) => {
-        if (value?.__type === 'Date') {
-          return new Date(value.value)
-        }
-        return value
-      })
+      const parsed = JSON.parse(serializedData) as PackedTable
       if (parsed && Array.isArray(parsed?.headers) && Array.isArray(parsed?.data)) {
-        return new Table<T>(parsed.headers, parsed.data)
+        return Table.unpack<T>(parsed)
       }
       else {
         throw new Error('Invalid data format for deserialization')

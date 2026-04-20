@@ -1,5 +1,5 @@
 import type { ImportRule, RuleWarning } from './types'
-import { Table } from '../table/Table'
+import { Table } from '@/common/table/Table'
 import { FireTable } from '../table/FireTable'
 import { Logger } from '@/common/logger'
 import type { FireColumn } from '@/common/constants'

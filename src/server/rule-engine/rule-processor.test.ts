@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { applyPreTransformRules, applyPostTransformRules } from './rule-processor'
-import { Table } from '../table/Table'
+import { Table } from '@/common/table/Table'
 import { FireTable } from '../table/FireTable'
 import type { ImportRule } from './types'
 

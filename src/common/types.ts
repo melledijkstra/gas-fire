@@ -1,4 +1,4 @@
-import type { SRuleEngineResult } from '@/server/rule-engine'
+import type { PackedRuleEngineResult } from '@/server/rule-engine'
 
 /**
  * Represents a single cell value in a table.
@@ -35,6 +35,16 @@ export type AccountOptions = Record<string, string>
  */
 export type RawTable<T = string> = T[][]
 
+export type PackedCellValue = string | number | boolean | null | { __type: 'Date', value: string }
+
+/**
+ * A serialize-safe table structure that can be sent over the wire.
+ */
+export interface PackedTable {
+  headers: string[]
+  data: PackedCellValue[][]
+}
+
 export type TransactionAction = 'skip' | 'import'
 
 export interface TransactionMeta {
@@ -42,10 +52,10 @@ export interface TransactionMeta {
 }
 
 export interface ImportPreviewResult {
-  rows: RawTable // FireTable serialized as RawTable for transport
+  table: PackedTable
   newBalance: number
   duplicateHashes: string[] // Set<string> converted to array for serialization
-  ruleEngine?: SRuleEngineResult
+  ruleEngine?: PackedRuleEngineResult
 }
 
 export type UserDecisions = Map<string, TransactionAction>

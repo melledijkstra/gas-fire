@@ -4,6 +4,8 @@
   import type { ImportPreviewResult } from '@/common/types';
   import { buildFireTableRow } from '@/fixtures/fire-row';
   import { getRowHash } from '@/common/helpers';
+  import { Table } from '@/common/table/Table';
+  import { FIRE_COLUMNS } from '@/common/constants';
   
   const rows = [
     buildFireTableRow({ ref: 'ref-001', description: 'Transaction 1' }),
@@ -17,8 +19,10 @@
     buildFireTableRow({ ref: 'ref-009', description: 'Transaction 9' })
   ]
 
+  const table = new Table(Array.from(FIRE_COLUMNS), rows)
+
   const report: ImportPreviewResult = {
-    rows: rows,
+    table: table.pack(),
     duplicateHashes: [getRowHash(rows[1]), getRowHash(rows[2]), getRowHash(rows[3]), getRowHash(rows[5])],
     newBalance: 1234.53,
   };

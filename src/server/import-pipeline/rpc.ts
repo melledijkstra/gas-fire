@@ -12,13 +12,12 @@ import {
   duplicateDetectionStage,
   autoFillPreviewStage,
   applyUserDecisionsStage,
-  formatCellValue,
 } from './pipeline'
 import type { ImportPipelineContext, PreviewPipelineContext } from './pipeline'
 import { Config } from '../config'
 import { FireSheet } from '../spreadsheet/FireSheet'
-import { parseRulesByAccount, type SRuleEngineResult } from '../rule-engine'
-import { Table } from '../table/Table'
+import { parseRulesByAccount, type PackedRuleEngineResult } from '../rule-engine'
+import { Table } from '@/common/table/Table'
 import { getRowHash, structuredClone } from '@/common/helpers'
 import { Logger } from '@/common/logger'
 import { removeFilterCriteria } from '../spreadsheet/spreadsheet'
@@ -109,7 +108,7 @@ class PipelineRPC {
     bankAccount: string,
     userDecisions?: Record<string, TransactionAction>,
   ): ServerResponse<{
-    ruleEngine?: SRuleEngineResult
+    ruleEngine?: PackedRuleEngineResult
   }> {
     const fireSheet = new FireSheet()
     const accountConfig = Config.getAccountConfiguration(bankAccount)
@@ -219,7 +218,7 @@ class PipelineRPC {
     let transformedPipeline = pipeline.addStage(transformToFireTableStage)
 
     if (FEATURES.RULE_ENGINE_ENABLED) {
-      transformedPipeline = transformedPipeline.addStage(input => postTransformRulesStage(input, context, rules))
+      transformedPipeline = transformedPipeline.addStage(input => postTransformRulesStage(input, context, rules, true))
     }
 
     if (FEATURES.IMPORT_DUPLICATE_DETECTION) {
@@ -234,13 +233,10 @@ class PipelineRPC {
 
     const newBalance = calculateNewBalance(previewTable, context)
 
-    return {
+    const result = {
       success: true,
       data: {
-        // PENDING: works for now, but we need proper transport types for tables
-        // having Date objects or other complex types will break this
-        // we should ideally have a proper serialization/deserialization step in the FireTable class
-        rows: previewTable.data.map(row => row.map(formatCellValue)),
+        table: previewTable.pack(),
         newBalance: newBalance,
         duplicateHashes: Array.from(context.duplicateHashes),
         ...(context.ruleEngine
@@ -252,7 +248,13 @@ class PipelineRPC {
             }
           : {}),
       },
-    }
+    } satisfies ServerResponse<ImportPreviewResult>
+
+    Logger.log('newBalance', result.data.newBalance)
+    Logger.log('duplicateHashes', result.data.duplicateHashes)
+    Logger.log('rule engine result', result.data?.ruleEngine)
+
+    return result
   }
 }
 

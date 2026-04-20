@@ -1,4 +1,4 @@
-import { Table } from '../table/Table'
+import { Table } from '@/common/table/Table'
 import { FireTable } from '../table/FireTable'
 import { Config } from '../config'
 import {
@@ -99,7 +99,6 @@ describe('Import Pipeline Stages', () => {
       const context: PreviewPipelineContext = {
         ...createContext(),
         duplicateHashes: new Set<string>(),
-        removedHashes: new Set<string>(),
       }
 
       loadExistingHashesMock.mockReturnValue(new Set([hash]))

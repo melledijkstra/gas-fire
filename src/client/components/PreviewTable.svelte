@@ -4,6 +4,7 @@
   import { Table as FlowTable, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell, Select, Tooltip } from 'flowbite-svelte'
   import { FIRE_COLUMNS } from '@/common/constants'
   import { getRowHash } from '@/common/helpers'
+  import { Table } from '@/common/table/Table'
 
   const {
     report,
@@ -13,6 +14,8 @@
     tableClass?: string
   } = $props()
 
+  const rows = $derived(Table.unpack(report.table).data)
+
   type RowStatus = 'import' | 'removed' | 'duplicate'
   
   const headers = Array.from(FIRE_COLUMNS)
@@ -21,7 +24,7 @@
     if (status === 'removed') return 'bg-red-100! dark:bg-red-900! line-through'
     if (status === 'duplicate') return 'bg-yellow-100! dark:bg-yellow-900! opacity-75'
     return '';
-  };
+  }
 
   const getRowStatus = (hash: string): RowStatus => {
     if (report?.ruleEngine?.removedHashes?.includes(hash)) return 'removed'
@@ -38,11 +41,11 @@
     {/each}
   </TableHead>
   <TableBody>
-    {#each report.rows as row, i (`${getRowHash(row)}-${i}`)}
+    {#each rows as row, i}
       {@const hash = getRowHash(row) /* PENDING: compute hash elsewhere for performance */}
       {@const status = getRowStatus(hash)}
       {@const excludedByRuleName = report?.ruleEngine?.rowExcludedRule[hash]}
-      <TableBodyRow class={getRowClass(status)}>
+      <TableBodyRow id={hash} class={getRowClass(status)}>
         <TableBodyCell class="py-2 px-1 text-xs text-center border-r border-gray-400">
           {#if status === 'duplicate'}
             <Select
@@ -69,7 +72,9 @@
           {/if}
         </TableBodyCell>
         {#each row as cell}
-          <TableBodyCell class="py-2 px-1 text-xs">{cell}</TableBodyCell>
+          <TableBodyCell class="py-2 px-1 text-xs">
+            {cell instanceof Date ? cell.toISOString() : cell}
+          </TableBodyCell>
         {/each}
       </TableBodyRow>
     {/each}

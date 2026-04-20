@@ -1,5 +1,5 @@
 import { getRowHash } from '@/common/helpers'
-import type { Table } from '../table/Table'
+import type { Table } from '@/common/table/Table'
 import type { PipelineContext } from '../import-pipeline/pipeline'
 import { FireTable } from '../table/FireTable'
 import { applyPreTransformRules, applyPostTransformRules } from './rule-processor'

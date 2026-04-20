@@ -8,7 +8,9 @@ import type {
 import type * as publicServerFunctions from '@/server/index'
 import { fireTableMock } from '@/fixtures/fire-table'
 import { getRowHash } from '@/common/helpers'
-import type { ImportRule, SRuleEngineResult } from '@/server/rule-engine'
+import { FIRE_COLUMNS } from '@/common/constants'
+import { Table } from '@/common/table/Table'
+import type { ImportRule, PackedRuleEngineResult } from '@/server/rule-engine'
 
 ////////////////////////////////////////////////////////////////
 // This mock is used by storybook, to mimic server functions
@@ -43,7 +45,7 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     _userDecisions?: Record<string, TransactionAction>,
   ): Promise<ServerResponse<{
     message: string
-    ruleEngine?: SRuleEngineResult
+    ruleEngine?: PackedRuleEngineResult
   }>> {
     console.log('importPipeline mock called with data:', rawTable, 'and selectedAccount:', bankAccount)
     await sleep(2000)
@@ -87,7 +89,8 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
       },
     ]
 
-    const rows = fireTableMock.map(row => row.map(String))
+    const rows = fireTableMock
+    const table = new Table(Array.from(FIRE_COLUMNS), rows)
     const hashes = rows.map(getRowHash)
 
     const duplicateHashes = [hashes[3], hashes[5]]
@@ -97,7 +100,7 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
       success: true,
       data: {
         duplicateHashes,
-        rows,
+        table: table.pack(),
         newBalance: 1234.56,
         ruleEngine: {
           rulesCount: appliedRules.length,
@@ -111,7 +114,7 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
         },
       },
     }
-  };
+  }
 
   async executeAutomaticCategorization(): Promise<void> {
     console.log('executeAutomaticCategorization mock called')

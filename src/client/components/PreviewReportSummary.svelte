@@ -9,7 +9,7 @@
   const ruleEngineResult = $derived(report.ruleEngine)
   const removedCount = $derived(ruleEngineResult?.removedHashes?.length ?? 0)
   const duplicateCount = $derived(report.duplicateHashes.length)
-  const validCount = $derived(report.rows.length - duplicateCount - removedCount)
+  const validCount = $derived(report.table.data.length - duplicateCount - removedCount)
   
   const totalRuleCount = $derived(report.ruleEngine?.rulesCount ?? 0)
   const rulesApplied = $derived(report.ruleEngine?.appliedRules?.length ?? 0)
@@ -17,7 +17,7 @@
 </script>
 
 <div class="mb-4">
-  <p class="mb-2">Total Rows: <Badge color="gray" class="text-base" border>{report.rows.length}</Badge></p>
+  <p class="mb-2">Total Rows: <Badge color="gray" class="text-base" border>{report.table.data.length}</Badge></p>
   <Badge color="green" border>Valid Rows: {validCount}</Badge>
   <Badge color="red" border>Removed Rows: {removedCount}</Badge>
   <Badge color="yellow" border>Duplicate Rows: {duplicateCount}</Badge>

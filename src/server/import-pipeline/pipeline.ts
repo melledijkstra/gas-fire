@@ -1,7 +1,7 @@
 import type { UserDecisions, TransactionAction, CellValue } from '@/common/types'
 import { Logger } from '@/common/logger'
 import { Config } from '../config'
-import { Table } from '../table/Table'
+import { Table } from '@/common/table/Table'
 import { FireTable } from '../table/FireTable'
 import { FireSheet } from '../spreadsheet/FireSheet'
 import { getRowHash } from '@/common/helpers'
