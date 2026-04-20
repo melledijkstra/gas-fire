@@ -13,7 +13,7 @@ import {
   autoFillPreviewStage,
   applyUserDecisionsStage,
 } from './pipeline'
-import type { ImportPipelineContext, PreviewPipelineContext } from './pipeline'
+import type { ImportPipelineContext, PipelineContext, PreviewPipelineContext } from './pipeline'
 import { Config } from '../config'
 import { FireSheet } from '../spreadsheet/FireSheet'
 import { parseRulesByAccount, type PackedRuleEngineResult } from '../rule-engine'
@@ -92,6 +92,34 @@ function withPipelineLogger(
 }
 
 class PipelineRPC {
+  static setupCommonPipeline<C extends PipelineContext>(bankAccount: string, context: C): Pipeline<Table, FireTable, C> {
+    let pipeline = Pipeline.create<Table, C>()
+      .addStage(removeEmptyRowsStage)
+
+    const rawRulesData = RuleSheet.getRulesData()
+    const { rules, warnings } = parseRulesByAccount(rawRulesData, bankAccount)
+
+    if (FEATURES.RULE_ENGINE_ENABLED) {
+      context.ruleEngine = {
+        warnings: warnings,
+        rulesCount: rules.length,
+        appliedRules: [],
+        rowExcludedRule: {},
+        removedHashes: new Set<string>(),
+      }
+
+      pipeline = pipeline.addStage(input => applyPreTransformRulesStage(input, context, rules))
+    }
+
+    let transformedPipeline = pipeline.addStage(transformToFireTableStage)
+
+    if (FEATURES.RULE_ENGINE_ENABLED) {
+      transformedPipeline = transformedPipeline.addStage(input => postTransformRulesStage(input, context, rules))
+    }
+
+    return transformedPipeline
+  }
+
   /**
    * Handles incoming CSV (already parsed by the frontend) and processes it in order to be imported
    * into the spreadsheet.
@@ -122,33 +150,12 @@ class PipelineRPC {
       config: accountConfig,
       userDecisions: userDecisionsMap,
     }
+
     const inputTable = Table.from(structuredClone(rawTable))
 
-    let pipeline = Pipeline.create<Table, ImportPipelineContext>()
-      .addStage(removeEmptyRowsStage)
+    const pipeline = this.setupCommonPipeline<ImportPipelineContext>(bankAccount, context)
 
-    const rawRulesData = RuleSheet.getRulesData()
-    const { rules, warnings } = parseRulesByAccount(rawRulesData, bankAccount)
-
-    if (FEATURES.RULE_ENGINE_ENABLED) {
-      context.ruleEngine = {
-        warnings: warnings,
-        rulesCount: rules.length,
-        appliedRules: [],
-        rowExcludedRule: {},
-        removedHashes: new Set<string>(),
-      }
-
-      pipeline = pipeline.addStage(input => applyPreTransformRulesStage(input, context, rules))
-    }
-
-    let transformedPipeline = pipeline.addStage(transformToFireTableStage)
-
-    if (FEATURES.RULE_ENGINE_ENABLED) {
-      transformedPipeline = transformedPipeline.addStage(input => postTransformRulesStage(input, context, rules))
-    }
-
-    const fireTable = transformedPipeline
+    const fireTable = pipeline
       .addStage(applyUserDecisionsStage)
       .addStage(sortByDateStage)
       .execute(inputTable, context)
@@ -197,39 +204,17 @@ class PipelineRPC {
       duplicateHashes: new Set(),
     }
 
-    let pipeline = Pipeline.create<Table, PreviewPipelineContext>()
-      .addStage(removeEmptyRowsStage)
-
-    const rawRulesData = RuleSheet.getRulesData()
-    const { rules, warnings } = parseRulesByAccount(rawRulesData, bankAccount)
-
-    if (FEATURES.RULE_ENGINE_ENABLED) {
-      context.ruleEngine = {
-        warnings: warnings,
-        rulesCount: rules.length,
-        appliedRules: [],
-        rowExcludedRule: {},
-        removedHashes: new Set<string>(),
-      }
-
-      pipeline = pipeline.addStage(input => applyPreTransformRulesStage(input, context, rules))
-    }
-
-    let transformedPipeline = pipeline.addStage(transformToFireTableStage)
-
-    if (FEATURES.RULE_ENGINE_ENABLED) {
-      transformedPipeline = transformedPipeline.addStage(input => postTransformRulesStage(input, context, rules, true))
-    }
+    let pipeline = this.setupCommonPipeline<PreviewPipelineContext>(bankAccount, context)
 
     if (FEATURES.IMPORT_DUPLICATE_DETECTION) {
-      transformedPipeline = transformedPipeline.addStage(duplicateDetectionStage)
+      pipeline = pipeline.addStage(duplicateDetectionStage)
     }
 
-    transformedPipeline = transformedPipeline
+    pipeline = pipeline
       .addStage(sortByDateStage)
       .addStage(autoFillPreviewStage)
 
-    const previewTable = transformedPipeline.execute(rawTable, context)
+    const previewTable = pipeline.execute(rawTable, context)
 
     const newBalance = calculateNewBalance(previewTable, context)
 

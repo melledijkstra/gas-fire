@@ -54,7 +54,7 @@ export function parseRulesByAccount(rows: string[][], accountId: string): ParseR
       rulePhaseRaw,
     ] = row.map(cell => cell?.trim() ?? '')
 
-    const ruleName = ruleNameRaw ?? `Rule at row ${i + 2}` // +2 because row 1 is header
+    const ruleName = ruleNameRaw || `Rule at row ${i + 2}` // +2 because row 1 is header
 
     let banks: string[] = []
     if (banksRaw) {
