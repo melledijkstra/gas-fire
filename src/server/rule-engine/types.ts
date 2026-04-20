@@ -44,7 +44,7 @@ export interface RuleEngineResult {
   rowExcludedRule: Record<string, string>
 }
 
-// S prefix is for serialize safe types, which can be safely sent over the wire without losing type information
+// Packed prefix is for serialized safe types, which can be safely sent over the wire without losing type information
 export interface PackedRuleEngineResult {
   warnings: RuleEngineResult['warnings']
   rulesCount: RuleEngineResult['rulesCount']

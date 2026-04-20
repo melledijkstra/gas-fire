@@ -1,17 +1,17 @@
 import { slugify } from '@/common/helpers'
 import type { ImportRule, RuleWarning, RuleCondition, RuleAction, RulePhase } from './types'
 
+const VALID_CONDITIONS: Set<RuleCondition> = new Set([
+  'REGEX', 'CONTAINS', 'EQUALS', 'NOT_EMPTY', 'NOT_CONTAINS', 'GREATER_THAN', 'LESS_THAN',
+])
+
+const VALID_ACTIONS: Set<RuleAction> = new Set(['EXCLUDE', 'SET', 'SUBTRACT', 'ADD'])
+const VALID_PHASES: Set<RulePhase> = new Set(['PRE_TRANSFORM', 'POST_TRANSFORM'])
+
 export interface ParseResult {
   rules: ImportRule[]
   warnings: RuleWarning[]
 }
-
-const VALID_CONDITIONS: RuleCondition[] = [
-  'REGEX', 'CONTAINS', 'EQUALS', 'NOT_EMPTY', 'NOT_CONTAINS', 'GREATER_THAN', 'LESS_THAN',
-]
-
-const VALID_ACTIONS: RuleAction[] = ['EXCLUDE', 'SET', 'SUBTRACT', 'ADD']
-const VALID_PHASES: RulePhase[] = ['PRE_TRANSFORM', 'POST_TRANSFORM']
 
 /**
  * Parses raw string rows from the Google Sheet into structured ImportRules.
@@ -52,9 +52,9 @@ export function parseRulesByAccount(rows: string[][], accountId: string): ParseR
       actionValueRaw,
       stopProcessingRaw,
       rulePhaseRaw,
-    ] = row.map(cell => cell?.trim() || '')
+    ] = row.map(cell => cell?.trim() ?? '')
 
-    const ruleName = ruleNameRaw || `Rule at row ${i + 2}` // +2 because row 1 is header
+    const ruleName = ruleNameRaw ?? `Rule at row ${i + 2}` // +2 because row 1 is header
 
     let banks: string[] = []
     if (banksRaw) {
@@ -76,18 +76,18 @@ export function parseRulesByAccount(rows: string[][], accountId: string): ParseR
       continue
     }
 
-    if (!VALID_CONDITIONS.includes(conditionRaw as RuleCondition)) {
+    if (!VALID_CONDITIONS.has(conditionRaw as RuleCondition)) {
       warnings.push({ ruleName, message: `Invalid condition: "${conditionRaw}".` })
       continue
     }
 
-    if (!VALID_ACTIONS.includes(actionRaw as RuleAction)) {
+    if (!VALID_ACTIONS.has(actionRaw as RuleAction)) {
       warnings.push({ ruleName, message: `Invalid action: "${actionRaw}".` })
       continue
     }
 
-    if (!VALID_PHASES.includes(rulePhaseRaw as RulePhase)) {
-      warnings.push({ ruleName, message: `Invalid rule phase: "${rulePhaseRaw}". Must be PRE_TRANSFORM or POST_TRANSFORM.` })
+    if (!VALID_PHASES.has(rulePhaseRaw as RulePhase)) {
+      warnings.push({ ruleName, message: `Invalid rule phase: "${rulePhaseRaw}". Must be one of ${Array.from(VALID_PHASES).join(', ')}` })
       continue
     }
 

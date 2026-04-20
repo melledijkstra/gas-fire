@@ -1,8 +1,8 @@
-import type { ImportRule, RuleWarning } from './types'
+import type { ImportRule, RuleCondition, RulePhase, RuleWarning } from './types'
 import { Table } from '@/common/table/Table'
 import { FireTable } from '../table/FireTable'
 import { Logger } from '@/common/logger'
-import type { FireColumn } from '@/common/constants'
+import type { CellValue } from '@/common/types'
 
 export interface RuleExecutionResult {
   excludedIndices: Set<number>
@@ -15,7 +15,7 @@ export interface RuleExecutionResult {
 /**
  * Filters rules by bank applicability and phase.
  */
-function getApplicableRules(rules: ImportRule[], accountId: string, phase: 'PRE_TRANSFORM' | 'POST_TRANSFORM'): ImportRule[] {
+function getApplicableRules(rules: ImportRule[], accountId: string, phase: RulePhase): ImportRule[] {
   return rules.filter((rule) => {
     if (rule.rulePhase !== phase) return false
     if (rule.banks.some(b => b.toLowerCase() === 'all')) return true
@@ -27,21 +27,21 @@ function getApplicableRules(rules: ImportRule[], accountId: string, phase: 'PRE_
  * Evaluates a single condition.
  */
 // eslint-disable-next-line complexity
-function evaluateCondition(cellValue: string, condition: ImportRule['condition'], conditionValue?: string): boolean {
-  const value = cellValue?.toString() || ''
+function evaluateCondition(cellValue: string, condition: RuleCondition, conditionValue?: string): boolean {
+  const value = cellValue?.toString() ?? ''
 
   switch (condition) {
     case 'NOT_EMPTY':
       return value.trim() !== ''
     case 'EQUALS':
-      return value.toLowerCase() === (conditionValue?.toLowerCase() || '')
+      return value.toLowerCase() === (conditionValue?.toLowerCase() ?? '')
     case 'CONTAINS':
-      return value.toLowerCase().includes((conditionValue?.toLowerCase() || ''))
+      return value.toLowerCase().includes((conditionValue?.toLowerCase() ?? ''))
     case 'NOT_CONTAINS':
-      return !value.toLowerCase().includes((conditionValue?.toLowerCase() || ''))
+      return !value.toLowerCase().includes((conditionValue?.toLowerCase() ?? ''))
     case 'REGEX':
       try {
-        const regex = new RegExp(conditionValue || '', 'i')
+        const regex = new RegExp(conditionValue ?? '', 'i')
         return regex.test(value)
       }
       catch {
@@ -50,12 +50,12 @@ function evaluateCondition(cellValue: string, condition: ImportRule['condition']
       }
     case 'GREATER_THAN': {
       const numVal = Number.parseFloat(value)
-      const target = Number.parseFloat(conditionValue || '0')
+      const target = Number.parseFloat(conditionValue ?? '0')
       return !Number.isNaN(numVal) && !Number.isNaN(target) && numVal > target
     }
     case 'LESS_THAN': {
       const numVal = Number.parseFloat(value)
-      const target = Number.parseFloat(conditionValue || '0')
+      const target = Number.parseFloat(conditionValue ?? '0')
       return !Number.isNaN(numVal) && !Number.isNaN(target) && numVal < target
     }
     default:
@@ -68,27 +68,27 @@ function evaluateCondition(cellValue: string, condition: ImportRule['condition']
  * Mutates the row array if it's a SET/ADD/SUBTRACT action.
  */
 function applyAction(
-  row: unknown[],
+  row: CellValue[],
   targetColumnIndex: number,
   rule: ImportRule,
 ): void {
   if (targetColumnIndex === -1) return
 
-  const currentValue = row[targetColumnIndex]?.toString() || ''
+  const currentValue = row[targetColumnIndex]?.toString() ?? ''
 
   switch (rule.action) {
     case 'SET':
-      row[targetColumnIndex] = rule.actionValue || ''
+      row[targetColumnIndex] = rule.actionValue ?? ''
       break
     case 'ADD': {
-      const numVal = Number.parseFloat(currentValue) || 0
-      const addVal = Number.parseFloat(rule.actionValue || '0')
+      const numVal = Number.parseFloat(currentValue) ?? 0
+      const addVal = Number.parseFloat(rule.actionValue ?? '0')
       row[targetColumnIndex] = (numVal + addVal).toString()
       break
     }
     case 'SUBTRACT': {
-      const numVal = Number.parseFloat(currentValue) || 0
-      const subVal = Number.parseFloat(rule.actionValue || '0')
+      const numVal = Number.parseFloat(currentValue) ?? 0
+      const subVal = Number.parseFloat(rule.actionValue ?? '0')
       row[targetColumnIndex] = (numVal - subVal).toString()
       break
     }
@@ -103,10 +103,10 @@ function applyAction(
  * Returns true if the row was affected by any rule.
  */
 function applyRulesToRow(
-  row: unknown[],
+  row: CellValue[],
   rowIndex: number,
   rules: ImportRule[],
-  getColumnIndex: (colName: string | FireColumn) => number,
+  getColumnIndex: (colName: string) => number,
   result: RuleExecutionResult,
 ): boolean {
   let rowAffected = false
@@ -121,7 +121,7 @@ function applyRulesToRow(
       continue
     }
 
-    const cellValue = String(row[conditionColIndex] ?? '')
+    const cellValue = row[conditionColIndex]?.toString() ?? ''
     const conditionMet = evaluateCondition(cellValue, rule.condition, rule.conditionValue)
 
     if (conditionMet) {
@@ -212,8 +212,7 @@ export function applyPostTransformRules(
 
   const data = fireTable.data
   const affectedRows = new Set<number>()
-  const getColumnIndex = (name: string | FireColumn) =>
-    fireTable.headers.indexOf(name)
+  const getColumnIndex = (name: string) => fireTable.headers.indexOf(name)
 
   for (let i = 0; i < data.length; i++) {
     if (applyRulesToRow(data[i], i, applicableRules, getColumnIndex, result)) {
