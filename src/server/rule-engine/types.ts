@@ -11,7 +11,9 @@ export type RuleAction
   = | 'EXCLUDE'
     | 'SET'
     | 'SUBTRACT'
+    | 'SUBTRACT_COLUMN'
     | 'ADD'
+    | 'ADD_COLUMN'
 
 export type RulePhase
   = | 'PRE_TRANSFORM'

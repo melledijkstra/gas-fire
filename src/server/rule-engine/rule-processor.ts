@@ -4,7 +4,7 @@ import { FireTable } from '../table/FireTable'
 import { Logger } from '@/common/logger'
 import type { CellValue } from '@/common/types'
 
-export interface RuleExecutionResult {
+export interface RuleExecutionContext {
   excludedIndices: Set<number>
   appliedRules: ImportRule[]
   rowsAffectedCount: number
@@ -67,11 +67,13 @@ function evaluateCondition(cellValue: string, condition: RuleCondition, conditio
  * Applies actions to a specific row array.
  * Mutates the row array if it's a SET/ADD/SUBTRACT action.
  */
+// eslint-disable-next-line complexity
 function applyAction(
   row: CellValue[],
-  targetColumnIndex: number,
   rule: ImportRule,
+  getColumnIndex: (colName: string) => number,
 ): void {
+  const targetColumnIndex = getColumnIndex(rule?.actionColumn ?? '')
   if (targetColumnIndex === -1) return
 
   const currentValue = row[targetColumnIndex]?.toString() ?? ''
@@ -81,20 +83,79 @@ function applyAction(
       row[targetColumnIndex] = rule.actionValue ?? ''
       break
     case 'ADD': {
-      const numVal = Number.parseFloat(currentValue) ?? 0
+      const numVal = Number.parseFloat(currentValue) || 0
       const addVal = Number.parseFloat(rule.actionValue ?? '0')
+      if (!Number.isNaN(numVal) && !Number.isNaN(addVal)) {
+        row[targetColumnIndex] = (numVal + addVal).toString()
+      }
+      break
+    }
+    case 'ADD_COLUMN': {
+      const addColIndex = getColumnIndex(rule.actionValue ?? '')
+      if (addColIndex === -1) {
+        // We don't want to log for every row, but maybe we should have warned at the beginning of applyRulesToRow
+        break
+      }
+      const numVal = Number.parseFloat(currentValue) || 0
+      const addVal = Number.parseFloat(row[addColIndex]?.toString() ?? '0')
       row[targetColumnIndex] = (numVal + addVal).toString()
       break
     }
     case 'SUBTRACT': {
-      const numVal = Number.parseFloat(currentValue) ?? 0
+      const numVal = Number.parseFloat(currentValue) || 0
       const subVal = Number.parseFloat(rule.actionValue ?? '0')
-      row[targetColumnIndex] = (numVal - subVal).toString()
+      if (!Number.isNaN(numVal) && !Number.isNaN(subVal)) {
+        row[targetColumnIndex] = (numVal - subVal).toString()
+      }
+      break
+    }
+    case 'SUBTRACT_COLUMN': {
+      const subColIndex = getColumnIndex(rule.actionValue ?? '')
+      if (subColIndex === -1) {
+        Logger.warn(`Action value column '${rule.actionValue}' not found for rule '${rule.ruleName}'.`)
+        break
+      }
+      const numVal = Number.parseFloat(currentValue) || 0
+      const subVal = Number.parseFloat(row[subColIndex]?.toString() ?? '0')
+      if (!Number.isNaN(numVal) && !Number.isNaN(subVal)) {
+        row[targetColumnIndex] = (numVal - subVal).toString()
+      }
       break
     }
     case 'EXCLUDE':
       // Handled outside
       break
+  }
+}
+
+function addRuleWarning(context: RuleExecutionContext, ruleName: string, message: string): void {
+  if (!context.warnings.some(w => w.ruleName === ruleName)) {
+    context.warnings.push({ ruleName, message })
+  }
+}
+
+/**
+ * Handles the specific action logic for a rule that has met its condition.
+ */
+function handleRuleAction(
+  row: CellValue[],
+  rowIndex: number,
+  rule: ImportRule,
+  getColumnIndex: (colName: string) => number,
+  context: RuleExecutionContext,
+): void {
+  if (rule.action === 'EXCLUDE') {
+    context.excludedIndices.add(rowIndex)
+    context.excludedByRule.set(rowIndex, rule.ruleName)
+    return
+  }
+
+  const actionTargetIndex = getColumnIndex(rule?.actionColumn ?? '')
+  if (actionTargetIndex === -1) {
+    addRuleWarning(context, rule.ruleName, `Target column '${rule?.actionColumn ?? ''}' not found.`)
+  }
+  else {
+    applyAction(row, rule, getColumnIndex)
   }
 }
 
@@ -107,7 +168,7 @@ function applyRulesToRow(
   rowIndex: number,
   rules: ImportRule[],
   getColumnIndex: (colName: string) => number,
-  result: RuleExecutionResult,
+  context: RuleExecutionContext,
 ): boolean {
   let rowAffected = false
 
@@ -115,9 +176,7 @@ function applyRulesToRow(
     const conditionColIndex = getColumnIndex(rule.conditionColumn)
 
     if (conditionColIndex === -1) {
-      if (!result.warnings.some(w => w.ruleName === rule.ruleName)) {
-        result.warnings.push({ ruleName: rule.ruleName, message: `Column '${rule.conditionColumn}' not found.` })
-      }
+      addRuleWarning(context, rule.ruleName, `Column '${rule.conditionColumn}' not found.`)
       continue
     }
 
@@ -127,23 +186,15 @@ function applyRulesToRow(
     if (conditionMet) {
       rowAffected = true
 
+      if (!context.appliedRules.includes(rule)) {
+        context.appliedRules.push(rule)
+      }
+
+      handleRuleAction(row, rowIndex, rule, getColumnIndex, context)
+
       if (rule.action === 'EXCLUDE') {
-        result.excludedIndices.add(rowIndex)
-        result.excludedByRule.set(rowIndex, rule.ruleName)
         return true // Row is excluded, stop processing further rules for this row
       }
-
-      const actionTargetIndex = getColumnIndex(rule?.actionColumn ?? '')
-      if (actionTargetIndex === -1) {
-        if (!result.warnings.some(w => w.ruleName === rule.ruleName)) {
-          result.warnings.push({ ruleName: rule.ruleName, message: `Target column '${rule?.actionColumn ?? ''}' not found.` })
-        }
-      }
-      else {
-        applyAction(row, actionTargetIndex, rule)
-      }
-
-      result.appliedRules.push(rule)
 
       if (rule.stopProcessing) {
         break
@@ -163,9 +214,10 @@ export function applyPreTransformRules(
   table: Table,
   rules: ImportRule[],
   accountId: string,
-): RuleExecutionResult {
+): RuleExecutionContext {
+  Logger.time('applyPreTransformRules')
   const applicableRules = getApplicableRules(rules, accountId, 'PRE_TRANSFORM')
-  const result: RuleExecutionResult = {
+  const context: RuleExecutionContext = {
     excludedIndices: new Set(),
     appliedRules: [],
     rowsAffectedCount: 0,
@@ -173,21 +225,23 @@ export function applyPreTransformRules(
     excludedByRule: new Map(),
   }
 
-  if (applicableRules.length === 0) return result
+  if (applicableRules.length === 0) return context
 
   const data = table.data
   const affectedRows = new Set<number>()
   const getColumnIndex = (name: string) => table.headers.indexOf(name)
 
   for (let i = 0; i < data.length; i++) {
-    if (applyRulesToRow(data[i], i, applicableRules, getColumnIndex, result)) {
+    if (applyRulesToRow(data[i], i, applicableRules, getColumnIndex, context)) {
       affectedRows.add(i)
     }
   }
 
-  result.rowsAffectedCount = affectedRows.size
+  context.rowsAffectedCount = affectedRows.size
 
-  return result
+  Logger.timeEnd('applyPreTransformRules')
+
+  return context
 }
 
 /**
@@ -198,9 +252,10 @@ export function applyPostTransformRules(
   fireTable: FireTable,
   rules: ImportRule[],
   accountId: string,
-): RuleExecutionResult {
+): RuleExecutionContext {
+  Logger.time('applyPostTransformRules')
   const applicableRules = getApplicableRules(rules, accountId, 'POST_TRANSFORM')
-  const result: RuleExecutionResult = {
+  const context: RuleExecutionContext = {
     appliedRules: [],
     rowsAffectedCount: 0,
     warnings: [],
@@ -208,19 +263,21 @@ export function applyPostTransformRules(
     excludedByRule: new Map(),
   }
 
-  if (applicableRules.length === 0) return result
+  if (applicableRules.length === 0) return context
 
   const data = fireTable.data
   const affectedRows = new Set<number>()
   const getColumnIndex = (name: string) => fireTable.headers.indexOf(name)
 
   for (let i = 0; i < data.length; i++) {
-    if (applyRulesToRow(data[i], i, applicableRules, getColumnIndex, result)) {
+    if (applyRulesToRow(data[i], i, applicableRules, getColumnIndex, context)) {
       affectedRows.add(i)
     }
   }
 
-  result.rowsAffectedCount = affectedRows.size
+  context.rowsAffectedCount = affectedRows.size
 
-  return result
+  Logger.timeEnd('applyPostTransformRules')
+
+  return context
 }

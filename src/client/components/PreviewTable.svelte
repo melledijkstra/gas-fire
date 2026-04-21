@@ -50,7 +50,9 @@
           {#if status === 'duplicate'}
             <Select
               size="sm"
-              selectClass="p-1 w-[70px] wrap-break-word"
+              classes={{
+                select: "p-1 w-[70px] wrap-break-word"
+              }}
               value={importState.userDecisions.get(hash) ?? 'import'}
               placeholder="Select action"
               onchange={(e) => {

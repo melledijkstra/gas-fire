@@ -92,7 +92,7 @@ function withPipelineLogger(
 }
 
 class PipelineRPC {
-  static setupCommonPipeline<C extends PipelineContext>(bankAccount: string, context: C): Pipeline<Table, FireTable, C> {
+  static setupCommonPipeline<C extends PipelineContext>(bankAccount: string, context: C, dryRun = false): Pipeline<Table, FireTable, C> {
     let pipeline = Pipeline.create<Table, C>()
       .addStage(removeEmptyRowsStage)
 
@@ -114,7 +114,7 @@ class PipelineRPC {
     let transformedPipeline = pipeline.addStage(transformToFireTableStage)
 
     if (FEATURES.RULE_ENGINE_ENABLED) {
-      transformedPipeline = transformedPipeline.addStage(input => postTransformRulesStage(input, context, rules))
+      transformedPipeline = transformedPipeline.addStage(input => postTransformRulesStage(input, context, rules, dryRun))
     }
 
     return transformedPipeline
@@ -204,7 +204,7 @@ class PipelineRPC {
       duplicateHashes: new Set(),
     }
 
-    let pipeline = this.setupCommonPipeline<PreviewPipelineContext>(bankAccount, context)
+    let pipeline = this.setupCommonPipeline<PreviewPipelineContext>(bankAccount, context, true)
 
     if (FEATURES.IMPORT_DUPLICATE_DETECTION) {
       pipeline = pipeline.addStage(duplicateDetectionStage)

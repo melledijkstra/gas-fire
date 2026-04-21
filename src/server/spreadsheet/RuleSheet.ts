@@ -3,14 +3,20 @@ import { getImportRulesSheet } from '../globals'
 import { Logger } from '@/common/logger'
 
 export class RuleSheet {
+  static rulesCache: string[][] | null = null
+
   /**
    * Reads raw string data from the 'import-rules' sheet, omitting the header row.
    * Returns an empty array if the sheet doesn't exist or has no data.
    */
   static getRulesData(): string[][] {
+    if (this.rulesCache) {
+      return this.rulesCache
+    }
+
     const sheet = getImportRulesSheet()
     if (!sheet) {
-      Logger.log(`${IMPORT_RULES_SHEET_NAME} sheet not found. Skipping rule processing.`)
+      Logger.warn(`${IMPORT_RULES_SHEET_NAME} sheet not found. Skipping rule processing.`)
       return []
     }
 
@@ -26,6 +32,8 @@ export class RuleSheet {
 
     // Read all data except the first row (headers)
     const values = sheet.getRange(2, 1, lastRow - 1, lastColumn).getDisplayValues()
+
+    this.rulesCache = values
 
     return values
   }

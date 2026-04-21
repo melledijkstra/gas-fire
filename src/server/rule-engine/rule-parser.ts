@@ -5,7 +5,7 @@ const VALID_CONDITIONS: Set<RuleCondition> = new Set([
   'REGEX', 'CONTAINS', 'EQUALS', 'NOT_EMPTY', 'NOT_CONTAINS', 'GREATER_THAN', 'LESS_THAN',
 ])
 
-const VALID_ACTIONS: Set<RuleAction> = new Set(['EXCLUDE', 'SET', 'SUBTRACT', 'ADD'])
+const VALID_ACTIONS: Set<RuleAction> = new Set(['EXCLUDE', 'SET', 'SUBTRACT', 'SUBTRACT_COLUMN', 'ADD', 'ADD_COLUMN'])
 const VALID_PHASES: Set<RulePhase> = new Set(['PRE_TRANSFORM', 'POST_TRANSFORM'])
 
 export interface ParseResult {
@@ -66,6 +66,10 @@ export function parseRulesByAccount(rows: string[][], accountId: string): ParseR
       continue
     }
 
+    if (!ruleNameRaw) {
+      warnings.push({ ruleName, message: `No rule name provided, defaulting to "${ruleName}".` })
+    }
+
     if (banks.length === 0) {
       warnings.push({ ruleName, message: 'At least one bank must be specified, or "All".' })
       continue
@@ -101,8 +105,13 @@ export function parseRulesByAccount(rows: string[][], accountId: string): ParseR
     }
 
     // Validation for action columns and values
-    if (action === 'SET' && (!actionTargetRaw || !actionValueRaw)) {
-      warnings.push({ ruleName, message: 'Action Column and Action Value are required for SET action.' })
+    if ((action === 'SET' || action === 'SUBTRACT' || action === 'ADD') && (!actionTargetRaw || !actionValueRaw)) {
+      warnings.push({ ruleName, message: `Action Column and Action Value are required for ${action} action.` })
+      continue
+    }
+
+    if ((action === 'SUBTRACT_COLUMN' || action === 'ADD_COLUMN') && (!actionTargetRaw || !actionValueRaw)) {
+      warnings.push({ ruleName, message: `Action Column and Action Value are required for ${action} action.` })
       continue
     }
 

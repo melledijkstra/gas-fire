@@ -70,6 +70,14 @@ describe('parseRules', () => {
       ['No Cond Val', 'All', 'col', 'CONTAINS', '', 'SET', 'cat', 'val', 'false', 'POST_TRANSFORM'],
       ['No Action Column SET', 'All', 'col', 'CONTAINS', 'val', 'SET', '', 'val', 'false', 'POST_TRANSFORM'],
       ['No Action Value SET', 'All', 'col', 'CONTAINS', 'val', 'SET', 'cat', '', 'false', 'POST_TRANSFORM'],
+      ['No Action Column ADD', 'All', 'col', 'CONTAINS', 'val', 'ADD', '', 'val', 'false', 'POST_TRANSFORM'],
+      ['No Action Value ADD', 'All', 'col', 'CONTAINS', 'val', 'ADD', 'cat', '', 'false', 'POST_TRANSFORM'],
+      ['No Action Column SUBTRACT', 'All', 'col', 'CONTAINS', 'val', 'SUBTRACT', '', 'val', 'false', 'POST_TRANSFORM'],
+      ['No Action Value SUBTRACT', 'All', 'col', 'CONTAINS', 'val', 'SUBTRACT', 'cat', '', 'false', 'POST_TRANSFORM'],
+      ['No Action Column SUBTRACT_COLUMN', 'All', 'col', 'CONTAINS', 'val', 'SUBTRACT_COLUMN', '', 'val', 'false', 'POST_TRANSFORM'],
+      ['No Action Value SUBTRACT_COLUMN', 'All', 'col', 'CONTAINS', 'val', 'SUBTRACT_COLUMN', 'cat', '', 'false', 'POST_TRANSFORM'],
+      ['No Action Column ADD_COLUMN', 'All', 'col', 'CONTAINS', 'val', 'ADD_COLUMN', '', 'val', 'false', 'POST_TRANSFORM'],
+      ['No Action Value ADD_COLUMN', 'All', 'col', 'CONTAINS', 'val', 'ADD_COLUMN', 'cat', '', 'false', 'POST_TRANSFORM'],
       ['Bad Cond', 'All', 'col', 'BAD_COND', 'val', 'SET', 'cat', 'val', 'false', 'POST_TRANSFORM'],
       ['Bad Act', 'All', 'col', 'CONTAINS', 'val', 'BAD_ACT', 'cat', 'val', 'false', 'POST_TRANSFORM'],
       ['Bad Phase', 'All', 'col', 'CONTAINS', 'val', 'SET', 'cat', 'val', 'false', 'BAD_PHASE'],
@@ -78,14 +86,22 @@ describe('parseRules', () => {
     const result = parseRulesByAccount(rows, 'bank-a')
 
     expect(result.rules).toHaveLength(0)
-    expect(result.warnings).toHaveLength(7)
+    expect(result.warnings).toHaveLength(15)
     expect(result.warnings[0].message).toContain('Condition Column is required')
     expect(result.warnings[1].message).toContain('Condition value is required')
-    expect(result.warnings[2].message).toContain('Action Column and Action Value are required')
-    expect(result.warnings[3].message).toContain('Action Column and Action Value are required')
-    expect(result.warnings[4].message).toContain('Invalid condition')
-    expect(result.warnings[5].message).toContain('Invalid action')
-    expect(result.warnings[6].message).toContain('Invalid rule phase')
+    expect(result.warnings[2].message).toContain('Action Column and Action Value are required for SET action')
+    expect(result.warnings[3].message).toContain('Action Column and Action Value are required for SET action')
+    expect(result.warnings[4].message).toContain('Action Column and Action Value are required for ADD action')
+    expect(result.warnings[5].message).toContain('Action Column and Action Value are required for ADD action')
+    expect(result.warnings[6].message).toContain('Action Column and Action Value are required for SUBTRACT action')
+    expect(result.warnings[7].message).toContain('Action Column and Action Value are required for SUBTRACT action')
+    expect(result.warnings[8].message).toContain('Action Column and Action Value are required for SUBTRACT_COLUMN action')
+    expect(result.warnings[9].message).toContain('Action Column and Action Value are required for SUBTRACT_COLUMN action')
+    expect(result.warnings[10].message).toContain('Action Column and Action Value are required for ADD_COLUMN action')
+    expect(result.warnings[11].message).toContain('Action Column and Action Value are required for ADD_COLUMN action')
+    expect(result.warnings[12].message).toContain('Invalid condition')
+    expect(result.warnings[13].message).toContain('Invalid action')
+    expect(result.warnings[14].message).toContain('Invalid rule phase')
   })
 
   it('should ignore completely empty rows', () => {
