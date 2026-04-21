@@ -16,7 +16,7 @@ import {
 import type { ImportPipelineContext, PipelineContext, PreviewPipelineContext } from './pipeline'
 import { Config } from '../config'
 import { FireSheet } from '../spreadsheet/FireSheet'
-import { parseRulesByAccount, type PackedRuleEngineResult } from '../rule-engine'
+import { RuleParser, type PackedRuleEngineResult } from '../rule-engine'
 import { Table } from '@/common/table/Table'
 import { getRowHash, structuredClone } from '@/common/helpers'
 import { Logger } from '@/common/logger'
@@ -97,7 +97,8 @@ class PipelineRPC {
       .addStage(removeEmptyRowsStage)
 
     const rawRulesData = RuleSheet.getRulesData()
-    const { rules, warnings } = parseRulesByAccount(rawRulesData, bankAccount)
+    const ruleParser = new RuleParser()
+    const { rules, warnings } = ruleParser.parseRulesByAccount(rawRulesData, bankAccount)
 
     if (FEATURES.RULE_ENGINE_ENABLED) {
       context.ruleEngine = {

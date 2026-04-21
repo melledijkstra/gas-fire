@@ -1,5 +1,6 @@
 import { slugify } from '@/common/helpers'
 import type { ImportRule, RuleWarning, RuleCondition, RuleAction, RulePhase } from './types'
+import { withLogger } from '@/common/decorators'
 
 const VALID_CONDITIONS: Set<RuleCondition> = new Set([
   'REGEX', 'CONTAINS', 'EQUALS', 'NOT_EMPTY', 'NOT_CONTAINS', 'GREATER_THAN', 'LESS_THAN',
@@ -13,36 +14,57 @@ export interface ParseResult {
   warnings: RuleWarning[]
 }
 
-/**
- * Parses raw string rows from the Google Sheet into structured ImportRules.
- * Validates the rules and generates warnings for any invalid rows.
- *
- * Expected columns:
- * 0: Rule Name
- * 1: Bank(s)
- * 2: Condition Column
- * 3: Condition
- * 4: Condition Value
- * 5: Action
- * 6: Action Column
- * 7: Action Value
- * 8: Stop Processing?
- * 9: Rule Phase
- */
-// eslint-disable-next-line complexity
-export function parseRulesByAccount(rows: string[][], accountId: string): ParseResult {
-  const rules: ImportRule[] = []
-  const warnings: RuleWarning[] = []
+export class RuleParser {
+  rules: ImportRule[] = []
+  warnings: RuleWarning[] = []
 
-  for (let i = 0; i < rows.length; i++) {
-    const row = rows[i]
-    // Skip completely empty rows
-    if (row.every(cell => !cell || cell.trim() === '')) {
-      continue
+  /**
+   * Parses raw string rows from the Google Sheet into structured ImportRules.
+   * Validates the rules and generates warnings for any invalid rows.
+   *
+   * Expected columns:
+   * 0: Rule Name
+   * 1: Bank(s)
+   * 2: Condition Column
+   * 3: Condition
+   * 4: Condition Value
+   * 5: Action
+   * 6: Action Column
+   * 7: Action Value
+   * 8: Stop Processing?
+   * 9: Rule Phase
+   */
+  @withLogger
+  parseRulesByAccount(rows: string[][], accountId: string): ParseResult {
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i]
+
+      // Skip completely empty rows
+      if (row.every(cell => !cell || cell.trim() === '')) {
+        continue
+      }
+
+      const ruleNameRaw = row?.[0].trim()
+      const ruleName = ruleNameRaw || `Rule at row ${i + 2}` // +2 because row 1 is header
+
+      if (!ruleNameRaw) {
+        this.warnings.push({ ruleName, message: `No rule name provided, defaulting to "${ruleName}".` })
+      }
+
+      const rule = this.parseRuleRow(row, ruleName, accountId)
+
+      if (rule) {
+        this.rules.push(rule)
+      }
     }
 
+    return { rules: this.rules, warnings: this.warnings }
+  }
+
+  // eslint-disable-next-line complexity
+  private parseRuleRow(row: string[], ruleName: string, accountId?: string): ImportRule | undefined {
     const [
-      ruleNameRaw,
+      _ruleNameRaw,
       banksRaw,
       conditionColumnRaw,
       conditionRaw,
@@ -54,45 +76,38 @@ export function parseRulesByAccount(rows: string[][], accountId: string): ParseR
       rulePhaseRaw,
     ] = row.map(cell => cell?.trim() ?? '')
 
-    const ruleName = ruleNameRaw || `Rule at row ${i + 2}` // +2 because row 1 is header
+    const banks = this.parseBanks(banksRaw)
 
-    let banks: string[] = []
-    if (banksRaw) {
-      banks = banksRaw.split(',').map(b => b.trim()).filter(b => b.length > 0).map(slugify)
+    if (!banks || banks?.length === 0) {
+      // At least a single bank or "all" should be set for a rule to be valid
+      this.warnings.push({ ruleName, message: 'At least one bank must be specified, or "All".' })
+      return
     }
 
-    if (!banks.includes('all') && !banks.includes(accountId)) {
-      // This rule does not apply to the current account, so we can skip it without a warning.
-      continue
-    }
-
-    if (!ruleNameRaw) {
-      warnings.push({ ruleName, message: `No rule name provided, defaulting to "${ruleName}".` })
-    }
-
-    if (banks.length === 0) {
-      warnings.push({ ruleName, message: 'At least one bank must be specified, or "All".' })
-      continue
+    if (!this.validateBanks(banks, accountId)) {
+      // This rule does not apply to the current account, neither applies to all banks
+      // we can skip it without a warning.
+      return
     }
 
     if (!conditionColumnRaw) {
-      warnings.push({ ruleName, message: 'Condition Column is required.' })
-      continue
+      this.warnings.push({ ruleName, message: 'Condition Column is required.' })
+      return
     }
 
     if (!VALID_CONDITIONS.has(conditionRaw as RuleCondition)) {
-      warnings.push({ ruleName, message: `Invalid condition: "${conditionRaw}".` })
-      continue
+      this.warnings.push({ ruleName, message: `Invalid condition: "${conditionRaw}".` })
+      return
     }
 
     if (!VALID_ACTIONS.has(actionRaw as RuleAction)) {
-      warnings.push({ ruleName, message: `Invalid action: "${actionRaw}".` })
-      continue
+      this.warnings.push({ ruleName, message: `Invalid action: "${actionRaw}".` })
+      return
     }
 
     if (!VALID_PHASES.has(rulePhaseRaw as RulePhase)) {
-      warnings.push({ ruleName, message: `Invalid rule phase: "${rulePhaseRaw}". Must be one of ${Array.from(VALID_PHASES).join(', ')}` })
-      continue
+      this.warnings.push({ ruleName, message: `Invalid rule phase: "${rulePhaseRaw}". Must be one of ${Array.from(VALID_PHASES).join(', ')}` })
+      return
     }
 
     const condition = conditionRaw as RuleCondition
@@ -100,19 +115,19 @@ export function parseRulesByAccount(rows: string[][], accountId: string): ParseR
 
     // Validation for condition values
     if (condition !== 'NOT_EMPTY' && !conditionValueRaw) {
-      warnings.push({ ruleName, message: `Condition value is required for condition "${condition}".` })
-      continue
+      this.warnings.push({ ruleName, message: `Condition value is required for condition "${condition}".` })
+      return
     }
 
     // Validation for action columns and values
     if ((action === 'SET' || action === 'SUBTRACT' || action === 'ADD') && (!actionTargetRaw || !actionValueRaw)) {
-      warnings.push({ ruleName, message: `Action Column and Action Value are required for ${action} action.` })
-      continue
+      this.warnings.push({ ruleName, message: `Action Column and Action Value are required for ${action} action.` })
+      return
     }
 
     if ((action === 'SUBTRACT_COLUMN' || action === 'ADD_COLUMN') && (!actionTargetRaw || !actionValueRaw)) {
-      warnings.push({ ruleName, message: `Action Column and Action Value are required for ${action} action.` })
-      continue
+      this.warnings.push({ ruleName, message: `Action Column and Action Value are required for ${action} action.` })
+      return
     }
 
     if (action === 'EXCLUDE' && !actionTargetRaw) {
@@ -120,13 +135,13 @@ export function parseRulesByAccount(rows: string[][], accountId: string): ParseR
       // We can default actionColumn to empty string or 'ROW' internally.
     }
     else if (action !== 'EXCLUDE' && !actionTargetRaw) {
-      warnings.push({ ruleName, message: `Action Column is required for action "${action}".` })
-      continue
+      this.warnings.push({ ruleName, message: `Action Column is required for action "${action}".` })
+      return
     }
 
     const stopProcessing = stopProcessingRaw.toLowerCase() === 'true' || stopProcessingRaw === 'TRUE'
 
-    rules.push({
+    return {
       ruleName,
       banks,
       conditionColumn: conditionColumnRaw,
@@ -137,8 +152,24 @@ export function parseRulesByAccount(rows: string[][], accountId: string): ParseR
       actionValue: actionValueRaw,
       stopProcessing,
       rulePhase: rulePhaseRaw as RulePhase,
-    })
+    }
   }
 
-  return { rules, warnings }
+  private validateBanks(banks: string[], accountId?: string): boolean {
+    if (banks.includes('all')) {
+      return true
+    }
+
+    // if an account is specified, then make sure it is in the list of included banks
+    return !!accountId
+      && banks.includes(accountId)
+  }
+
+  private parseBanks(banksRaw: string): string[] {
+    if (banksRaw) {
+      return banksRaw.split(',').map(b => b.trim()).filter(b => b.length > 0).map(slugify)
+    }
+
+    return []
+  }
 }
