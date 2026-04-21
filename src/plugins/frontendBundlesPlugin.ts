@@ -38,8 +38,8 @@ export function buildFrontendBundlesPlugin(options: BuildFrontendBundlesPluginOp
         this.info(`Building client bundle for ${clientEntrypoint.name}`)
         const buildOutput = await build(options.clientBuildConfig(clientEntrypoint))
 
-        if (isRolldownOutput(buildOutput) && isOutputAsset(buildOutput.output[0])) {
-          const outputAsset = buildOutput.output[0] as OutputAsset
+        const outputAsset = isRolldownOutput(buildOutput) ? buildOutput.output.find(isOutputAsset) : undefined
+        if (outputAsset) {
           await writeFile(
             resolve(options.baseDir, options.outDir, `${clientEntrypoint.filename}.html`),
             outputAsset.source,
