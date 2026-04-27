@@ -69,7 +69,7 @@ export function postTransformRulesStage(
 
   // remove rows permanently if this is an actual import (not preview)
   if (!dryRun && excludedHashes.size > 0) {
-    const filteredData = data.filter(row => !excludedHashes.has(getRowHash(row)))
+    const filteredData = data.filter((_row, index) => !result.excludedIndices.has(index))
     fireTable = new FireTable(filteredData)
   }
 

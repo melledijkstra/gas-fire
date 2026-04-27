@@ -4,6 +4,20 @@ import { FireTable } from '../table/FireTable'
 import { Logger } from '@/common/logger'
 import type { CellValue } from '@/common/types'
 
+const regexCache = new Map<string, RegExp>()
+
+function getCachedRegex(pattern: string): RegExp {
+  const cachedRegex = regexCache.get(pattern)
+
+  if (cachedRegex) {
+    return cachedRegex
+  }
+
+  const regex = new RegExp(pattern, 'i')
+  regexCache.set(pattern, regex)
+  return regex
+}
+
 export interface RuleExecutionContext {
   excludedIndices: Set<number>
   appliedRules: ImportRule[]
@@ -41,7 +55,7 @@ function evaluateCondition(cellValue: string, condition: RuleCondition, conditio
       return !value.toLowerCase().includes((conditionValue?.toLowerCase() ?? ''))
     case 'REGEX':
       try {
-        const regex = new RegExp(conditionValue ?? '', 'i')
+        const regex = getCachedRegex(conditionValue ?? '')
         return regex.test(value)
       }
       catch {

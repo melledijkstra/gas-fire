@@ -139,7 +139,7 @@ export class RuleParser {
       return
     }
 
-    const stopProcessing = stopProcessingRaw.toLowerCase() === 'true' || stopProcessingRaw === 'TRUE'
+    const stopProcessing = stopProcessingRaw.toLowerCase() === 'true'
 
     return {
       ruleName,
