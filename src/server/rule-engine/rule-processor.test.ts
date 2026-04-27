@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { applyPreTransformRules, applyPostTransformRules } from './rule-processor'
+import { RuleProcessor } from './rule-processor'
 import { Table } from '@/common/table/Table'
 import { FireTable } from '../table/FireTable'
 import type { ImportRule } from './types'
@@ -26,7 +26,8 @@ describe('rule-processor', () => {
         rulePhase: 'PRE_TRANSFORM',
       }]
 
-      const result = applyPreTransformRules(table, rules, 'TestBank')
+      const processor = new RuleProcessor(rules)
+      const result = processor.applyPreTransformRules(table, 'TestBank')
       expect(result.excludedIndices.has(0)).toBe(true)
       expect(result.excludedIndices.has(1)).toBe(false)
       expect(result.excludedByRule.get(0)).toBe('Exclude Uber')
@@ -50,7 +51,8 @@ describe('rule-processor', () => {
         rulePhase: 'PRE_TRANSFORM',
       }]
 
-      const result = applyPreTransformRules(table, rules, 'TestBank')
+      const processor = new RuleProcessor(rules)
+      const result = processor.applyPreTransformRules(table, 'TestBank')
       expect(result.excludedIndices.size).toBe(0)
       expect(table.data[0][0]).toBe('Internal Transfer')
       expect(result.rowsAffectedCount).toBe(1)
@@ -75,7 +77,8 @@ describe('rule-processor', () => {
         rulePhase: 'PRE_TRANSFORM',
       }]
 
-      const result = applyPreTransformRules(table, rules, 'TestBank')
+      const processor = new RuleProcessor(rules)
+      const result = processor.applyPreTransformRules(table, 'TestBank')
       expect(result.appliedRules.length).toBe(1) // Should be 1 unique rule, currently it will be 2
     })
 
@@ -96,7 +99,8 @@ describe('rule-processor', () => {
         rulePhase: 'PRE_TRANSFORM',
       }]
 
-      const result = applyPreTransformRules(table, rules, 'TestBank')
+      const processor = new RuleProcessor(rules)
+      const result = processor.applyPreTransformRules(table, 'TestBank')
       expect(result.appliedRules.length).toBe(1)
       expect(result.appliedRules[0].ruleName).toBe('Exclude Uber')
     })
@@ -134,7 +138,8 @@ describe('rule-processor', () => {
         },
       ]
 
-      applyPreTransformRules(table, rules, 'TestBank')
+      const processor = new RuleProcessor(rules)
+      processor.applyPreTransformRules(table, 'TestBank')
       // 100 - 10 = 90
       // 90 + 5 = 95
       expect(table.data[0][0]).toBe('95')
@@ -160,7 +165,8 @@ describe('rule-processor', () => {
         rulePhase: 'POST_TRANSFORM',
       }]
 
-      const result = applyPostTransformRules(fireTable, rules, 'TestBank')
+      const processor = new RuleProcessor(rules)
+      const result = processor.applyPostTransformRules(fireTable, 'TestBank')
       expect(result.excludedIndices.size).toBe(0)
 
       const categoryIndex = FireTable.getFireColumnIndex('category')

@@ -19,22 +19,12 @@ import { fakeTestBankImportData } from '@/fixtures/test-bank'
 import { removeFilterCriteria } from '../spreadsheet/spreadsheet'
 import { FireSheet } from '../spreadsheet/FireSheet'
 import { getRowHash, slugify } from '@/common/helpers'
-import { applyPostTransformRules } from '../rule-engine/rule-processor'
+import { RuleProcessor } from '../rule-engine/rule-processor'
 
 vi.mock('../globals', () => ({
   FireSpreadsheet: SpreadsheetMock,
   getSourceSheet: vi.fn(() => SheetMock),
   getImportRulesSheet: vi.fn(() => undefined),
-}))
-
-vi.mock('../rule-engine/rule-processor', () => ({
-  applyPostTransformRules: vi.fn(),
-  applyPreTransformRules: vi.fn(() => ({
-    appliedRules: [],
-    warnings: [],
-    excludedIndices: new Set(),
-    excludedByRule: new Map(),
-  })),
 }))
 
 vi.mock('../spreadsheet/FireSheet')
@@ -56,6 +46,7 @@ removeFilterCriteriaMock.mockReturnValue(true)
 
 const configSpy = vi.spyOn(Config, 'getAccountConfiguration')
 const importDataSpy = vi.spyOn(FireSheet.prototype, 'importData')
+const applyPostTransformRulesSpy = vi.spyOn(RuleProcessor.prototype, 'applyPostTransformRules')
 
 const BANK_ID = 'TestBank'
 
@@ -70,7 +61,7 @@ describe('RPC: Import Functions', () => {
   })
 
   beforeEach(() => {
-    vi.mocked(applyPostTransformRules).mockReturnValue({
+    applyPostTransformRulesSpy.mockReturnValue({
       appliedRules: [],
       rowsAffectedCount: 0,
       warnings: [],
@@ -140,7 +131,7 @@ describe('RPC: Import Functions', () => {
         ['73.2', '2015-05-22', 'Test Payee 4'], // index 3 in FireTable - remove
       ]
 
-      vi.mocked(applyPostTransformRules).mockReturnValue({
+      applyPostTransformRulesSpy.mockReturnValue({
         appliedRules: [],
         rowsAffectedCount: 2,
         warnings: [],

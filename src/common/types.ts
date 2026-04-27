@@ -1,4 +1,4 @@
-import type { PackedRuleEngineResult } from '@/server/rule-engine'
+import type { PackedRuleEngineResult } from '@/server/rule-engine/types'
 
 /**
  * Represents a single cell value in a table.

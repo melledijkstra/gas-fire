@@ -2,8 +2,7 @@ import { getRowHash } from '@/common/helpers'
 import type { Table } from '@/common/table/Table'
 import type { PipelineContext } from '../import-pipeline/pipeline'
 import { FireTable } from '../table/FireTable'
-import { applyPreTransformRules, applyPostTransformRules } from './rule-processor'
-import type { ImportRule } from './types'
+import { RuleProcessor } from './rule-processor'
 
 const emptyRuleEngineContext = {
   warnings: [],
@@ -15,17 +14,17 @@ const emptyRuleEngineContext = {
 
 export function applyPreTransformRulesStage(
   input: Table,
+  ruleProcessor: RuleProcessor,
   context: PipelineContext,
-  rules: ImportRule[],
 ): Table {
   context.ruleEngine ??= {
     ...emptyRuleEngineContext,
-    rulesCount: rules.length,
+    rulesCount: ruleProcessor.importRules.length,
   }
 
   const bankAccount = context.config.getAccountId()
 
-  const result = applyPreTransformRules(input, rules, bankAccount)
+  const result = ruleProcessor.applyPreTransformRules(input, bankAccount)
 
   context.ruleEngine.appliedRules.push(...result.appliedRules)
   context.ruleEngine.warnings.push(...result.warnings)
@@ -41,17 +40,17 @@ export function applyPreTransformRulesStage(
 
 export function postTransformRulesStage(
   fireTable: FireTable,
+  ruleProcessor: RuleProcessor,
   context: PipelineContext,
-  rules: ImportRule[],
   dryRun: boolean = false,
 ): FireTable {
   context.ruleEngine ??= {
     ...emptyRuleEngineContext,
-    rulesCount: rules.length,
+    rulesCount: ruleProcessor.importRules.length,
   }
 
   const bankAccount = context.config.getAccountId()
-  const result = applyPostTransformRules(fireTable, rules, bankAccount)
+  const result = ruleProcessor.applyPostTransformRules(fireTable, bankAccount)
 
   context.ruleEngine.appliedRules.push(...result.appliedRules)
   context.ruleEngine.warnings.push(...result.warnings)

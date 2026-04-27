@@ -16,7 +16,8 @@ import {
 import type { ImportPipelineContext, PipelineContext, PreviewPipelineContext } from './pipeline'
 import { Config } from '../config'
 import { FireSheet } from '../spreadsheet/FireSheet'
-import { RuleParser, type PackedRuleEngineResult } from '../rule-engine'
+import type { PackedRuleEngineResult } from '../rule-engine/types'
+import { RuleParser } from '../rule-engine/rule-parser'
 import { Table } from '@/common/table/Table'
 import { getRowHash, structuredClone } from '@/common/helpers'
 import { Logger } from '@/common/logger'
@@ -26,6 +27,7 @@ import { AccountUtils, isNumeric } from '../accounts/account-utils'
 import { FireTable } from '../table/FireTable'
 import { applyPreTransformRulesStage, postTransformRulesStage } from '../rule-engine/pipeline'
 import { RuleSheet } from '../spreadsheet/RuleSheet'
+import { RuleProcessor } from '../rule-engine/rule-processor'
 
 /**
  * Activates the target sheet and removes any active filters.
@@ -99,6 +101,7 @@ class PipelineRPC {
     const rawRulesData = RuleSheet.getRulesData()
     const ruleParser = new RuleParser()
     const { rules, warnings } = ruleParser.parseRulesByAccount(rawRulesData, bankAccount)
+    const ruleProcessor = new RuleProcessor(rules)
 
     if (FEATURES.RULE_ENGINE_ENABLED) {
       context.ruleEngine = {
@@ -109,13 +112,13 @@ class PipelineRPC {
         removedHashes: new Set<string>(),
       }
 
-      pipeline = pipeline.addStage(input => applyPreTransformRulesStage(input, context, rules))
+      pipeline = pipeline.addStage(input => applyPreTransformRulesStage(input, ruleProcessor, context))
     }
 
     let transformedPipeline = pipeline.addStage(transformToFireTableStage)
 
     if (FEATURES.RULE_ENGINE_ENABLED) {
-      transformedPipeline = transformedPipeline.addStage(input => postTransformRulesStage(input, context, rules, dryRun))
+      transformedPipeline = transformedPipeline.addStage(input => postTransformRulesStage(input, ruleProcessor, context, dryRun))
     }
 
     return transformedPipeline

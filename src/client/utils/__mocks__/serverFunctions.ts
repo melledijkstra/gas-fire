@@ -10,7 +10,7 @@ import { fireTableMock } from '@/fixtures/fire-table'
 import { getRowHash } from '@/common/helpers'
 import { FIRE_COLUMNS } from '@/common/constants'
 import { Table } from '@/common/table/Table'
-import type { ImportRule, PackedRuleEngineResult } from '@/server/rule-engine'
+import type { ImportRule, PackedRuleEngineResult } from '@/server/rule-engine/types'
 
 ////////////////////////////////////////////////////////////////
 // This mock is used by storybook, to mimic server functions
