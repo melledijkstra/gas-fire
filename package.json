@@ -36,7 +36,7 @@
   "dependencies": {
     "papaparse": "^5.5.3",
     "svelte": "^5.55.4",
-    "tailwindcss": "^4.2.2"
+    "tailwindcss": "^4.2.4"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -48,7 +48,7 @@
     "@storybook/svelte-vite": "^10.3.5",
     "@stylistic/eslint-plugin": "^5.10.0",
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
-    "@tailwindcss/vite": "^4.2.2",
+    "@tailwindcss/vite": "^4.2.4",
     "@types/google-apps-script": "^2.0.8",
     "@types/node": "^25.5.2",
     "@types/papaparse": "^5.5.2",
