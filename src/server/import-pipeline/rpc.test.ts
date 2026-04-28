@@ -18,11 +18,13 @@ import Papa from 'papaparse'
 import { fakeTestBankImportData } from '@/fixtures/test-bank'
 import { removeFilterCriteria } from '../spreadsheet/spreadsheet'
 import { FireSheet } from '../spreadsheet/FireSheet'
-import { slugify } from '@/common/helpers'
+import { getRowHash, slugify } from '@/common/helpers'
+import { RuleProcessor } from '../rule-engine/rule-processor'
 
 vi.mock('../globals', () => ({
   FireSpreadsheet: SpreadsheetMock,
   getSourceSheet: vi.fn(() => SheetMock),
+  getImportRulesSheet: vi.fn(() => undefined),
 }))
 
 vi.mock('../spreadsheet/FireSheet')
@@ -44,6 +46,7 @@ removeFilterCriteriaMock.mockReturnValue(true)
 
 const configSpy = vi.spyOn(Config, 'getAccountConfiguration')
 const importDataSpy = vi.spyOn(FireSheet.prototype, 'importData')
+const applyPostTransformRulesSpy = vi.spyOn(RuleProcessor.prototype, 'applyPostTransformRules')
 
 const BANK_ID = 'TestBank'
 
@@ -57,6 +60,16 @@ describe('RPC: Import Functions', () => {
     }))
   })
 
+  beforeEach(() => {
+    applyPostTransformRulesSpy.mockReturnValue({
+      appliedRules: [],
+      rowsAffectedCount: 0,
+      warnings: [],
+      excludedIndices: new Set(),
+      excludedByRule: new Map(),
+    })
+  })
+
   afterEach(() => {
     vi.clearAllMocks()
   })
@@ -64,19 +77,25 @@ describe('RPC: Import Functions', () => {
   describe('previewPipeline', () => {
     let getBalanceSpy: ReturnType<typeof vi.spyOn>
     let fireSheetSpy: ReturnType<typeof vi.spyOn>
+    let loadExistingHashesSpy: ReturnType<typeof vi.spyOn>
 
     beforeEach(() => {
       getBalanceSpy = vi.spyOn(AccountUtils, 'getBalance').mockReturnValue(302.8)
       fireSheetSpy = vi.spyOn(FireSheet.prototype, 'getLastImportedTransactions').mockReturnValue(new FireTable([]))
+      loadExistingHashesSpy = vi.spyOn(FireSheet.prototype, 'loadExistingHashes').mockReturnValue(new Set())
     })
 
     afterEach(() => {
       getBalanceSpy.mockRestore()
       fireSheetSpy.mockRestore()
+      loadExistingHashesSpy.mockRestore()
     })
 
     test('is able to handle table without any useful data and should return the current balance', () => {
-      const table: RawTable = [['TransactionAmount', 'TransactionDate', 'Payee'], ['', '', '']]
+      const table: RawTable = [
+        ['TransactionAmount', 'TransactionDate', 'Payee'],
+        ['', '', ''],
+      ]
       const response = previewPipeline(
         table,
         BANK_ID,
@@ -86,7 +105,6 @@ describe('RPC: Import Functions', () => {
       if (response.success) {
         expect(response.data?.newBalance).toBeCloseTo(302.8, 2)
         expect(response.data?.duplicateHashes?.length).toBe(0)
-        expect(response.data?.removedHashes?.length).toBe(0)
       }
     })
 
@@ -101,6 +119,44 @@ describe('RPC: Import Functions', () => {
       expect(response.success).toBe(true)
       if (response.success) {
         expect(response.data?.newBalance).toBeCloseTo(358.55, 2)
+      }
+    })
+
+    test('is able to calculate removed hashed', () => {
+      const table: RawTable = [
+        ['TransactionAmount', 'TransactionDate', 'Payee'],
+        ['-25.6', '2016-01-23', 'Test Payee 1'], // index 0 in FireTable
+        ['58.3', '2015-05-21', 'Test Payee 2'], // index 1 in FireTable - remove
+        ['20', '2015-05-20', 'Test Payee 3'], // index 2 in FireTable
+        ['73.2', '2015-05-22', 'Test Payee 4'], // index 3 in FireTable - remove
+      ]
+
+      applyPostTransformRulesSpy.mockReturnValue({
+        appliedRules: [],
+        rowsAffectedCount: 2,
+        warnings: [],
+        excludedIndices: new Set([1, 3]),
+        excludedByRule: new Map([[1, 'Rule 2'], [3, 'Rule 4']]),
+      })
+
+      const response = previewPipeline(
+        table,
+        BANK_ID,
+      )
+
+      expect(response.success).toBe(true)
+      if (response.success) {
+        // Since we are mocking applyPostTransformRules, it uses FireTable rows for hashing.
+        // We need to calculate the hashes of the transformed rows to match what the pipeline will produce.
+        const fireTable = FireTable.fromAccountSpecification({
+          headers: table[0],
+          rows: table.slice(1),
+          config: Config.getAccountConfiguration(BANK_ID),
+        })
+        const hash2 = getRowHash(fireTable.data[1])
+        const hash4 = getRowHash(fireTable.data[3])
+
+        expect(response.data?.ruleEngine?.removedHashes).toEqual([hash2, hash4])
       }
     })
   })

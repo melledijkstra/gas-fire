@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.15.0-beta
+
+- **Feature** - Introduces a rule-based data processing pipeline that allows users to define transaction import rules in a Google Sheet. The implementation includes a new rule engine module that handles parsing and applying rules during the pre-transform and post-transform phases of the import process, along with UI enhancements to display rule application summaries and warnings.
+
 ## 4.14.10-beta
 
 - **Refactor** - Refactored `Table` to contain headers now + added a `Pipeline` class which can be used to pipe different stages during import and preview pipelines.

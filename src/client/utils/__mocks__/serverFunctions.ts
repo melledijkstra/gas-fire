@@ -3,10 +3,14 @@ import type {
   AccountOptions,
   RawTable,
   ImportPreviewResult,
+  TransactionAction,
 } from '@/common/types'
 import type * as publicServerFunctions from '@/server/index'
 import { fireTableMock } from '@/fixtures/fire-table'
 import { getRowHash } from '@/common/helpers'
+import { FIRE_COLUMNS } from '@/common/constants'
+import { Table } from '@/common/table/Table'
+import type { ImportRule, PackedRuleEngineResult } from '@/server/rule-engine/types'
 
 ////////////////////////////////////////////////////////////////
 // This mock is used by storybook, to mimic server functions
@@ -36,14 +40,22 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
   }
 
   async importPipeline(
-    data: RawTable,
-    selectedAccount: string,
-  ): Promise<ServerResponse> {
-    console.log('importPipeline mock called with data:', data, 'and selectedAccount:', selectedAccount)
-    await sleep(5000)
+    rawTable: RawTable,
+    bankAccount: string,
+    _userDecisions?: Record<string, TransactionAction>,
+  ): Promise<ServerResponse<{
+    message: string
+    ruleEngine?: PackedRuleEngineResult
+  }>> {
+    console.log('importPipeline mock called with data:', rawTable, 'and selectedAccount:', bankAccount)
+    await sleep(2000)
+    const msg = `Successfully imported ${rawTable.length} rows!`
     return {
       success: true,
-      message: `Successfully imported ${data.length} rows!`,
+      message: msg,
+      data: {
+        message: msg,
+      },
     }
   };
 
@@ -54,21 +66,55 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     console.log('previewPipeline mock called')
     await sleep(2000)
 
-    const rows = fireTableMock.map(row => row.map(String))
+    const appliedRules: ImportRule[] = [
+      {
+        action: 'EXCLUDE',
+        ruleName: 'Test Rule',
+        banks: ['All'],
+        conditionColumn: 'test_column',
+        condition: 'REGEX',
+        actionColumn: 'action_column',
+        stopProcessing: false,
+        rulePhase: 'POST_TRANSFORM',
+      },
+      {
+        action: 'EXCLUDE',
+        ruleName: 'Another Rule',
+        banks: ['All'],
+        conditionColumn: 'test_column',
+        condition: 'REGEX',
+        actionColumn: 'action_column',
+        stopProcessing: false,
+        rulePhase: 'PRE_TRANSFORM',
+      },
+    ]
 
-    const duplicateHashes = new Set([getRowHash(rows[3]), getRowHash(rows[5])])
-    const removedHashes = new Set([getRowHash(rows[1]), getRowHash(rows[4])])
+    const rows = fireTableMock
+    const table = new Table(Array.from(FIRE_COLUMNS), rows)
+    const hashes = rows.map(getRowHash)
+
+    const duplicateHashes = [hashes[3], hashes[5]]
+    const removedHashes = [hashes[2], hashes[4]]
 
     return {
       success: true,
       data: {
         duplicateHashes,
-        removedHashes,
-        rows,
+        table: table.pack(),
         newBalance: 1234.56,
+        ruleEngine: {
+          rulesCount: appliedRules.length,
+          appliedRules,
+          warnings: [],
+          removedHashes: removedHashes,
+          rowExcludedRule: {
+            [hashes[2]]: appliedRules[0].ruleName,
+            [hashes[4]]: appliedRules[1].ruleName,
+          },
+        },
       },
     }
-  };
+  }
 
   async executeAutomaticCategorization(): Promise<void> {
     console.log('executeAutomaticCategorization mock called')

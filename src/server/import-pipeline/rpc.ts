@@ -12,18 +12,22 @@ import {
   duplicateDetectionStage,
   autoFillPreviewStage,
   applyUserDecisionsStage,
-  formatCellValue,
 } from './pipeline'
-import type { ImportPipelineContext, PreviewPipelineContext } from './pipeline'
+import type { ImportPipelineContext, PipelineContext, PreviewPipelineContext } from './pipeline'
 import { Config } from '../config'
 import { FireSheet } from '../spreadsheet/FireSheet'
-import { Table } from '../table/Table'
+import type { PackedRuleEngineResult } from '../rule-engine/types'
+import { RuleParser } from '../rule-engine/rule-parser'
+import { Table } from '@/common/table/Table'
 import { getRowHash, structuredClone } from '@/common/helpers'
 import { Logger } from '@/common/logger'
 import { removeFilterCriteria } from '../spreadsheet/spreadsheet'
 import { FEATURES } from '@/common/settings'
 import { AccountUtils, isNumeric } from '../accounts/account-utils'
 import { FireTable } from '../table/FireTable'
+import { applyPreTransformRulesStage, postTransformRulesStage } from '../rule-engine/pipeline'
+import { RuleSheet } from '../spreadsheet/RuleSheet'
+import { RuleProcessor } from '../rule-engine/rule-processor'
 
 /**
  * Activates the target sheet and removes any active filters.
@@ -41,7 +45,7 @@ function prepareSheetForImport(fireSheet: FireSheet): void {
 function calculateNewBalance(fireTable: FireTable, previewContext: PreviewPipelineContext): number {
   const excludedHashes = new Set<string>([
     ...previewContext?.duplicateHashes ?? [],
-    ...previewContext?.removedHashes ?? [],
+    ...previewContext?.ruleEngine?.removedHashes ?? [],
   ])
 
   const amountColIndex = FireTable.getFireColumnIndex('amount')
@@ -90,6 +94,36 @@ function withPipelineLogger(
 }
 
 class PipelineRPC {
+  static setupCommonPipeline<C extends PipelineContext>(bankAccount: string, context: C, dryRun = false): Pipeline<Table, FireTable, C> {
+    let pipeline = Pipeline.create<Table, C>()
+      .addStage(removeEmptyRowsStage)
+
+    const rawRulesData = RuleSheet.getRulesData()
+    const ruleParser = new RuleParser()
+    const { rules, warnings } = ruleParser.parseRulesByAccount(rawRulesData, bankAccount)
+    const ruleProcessor = new RuleProcessor(rules)
+
+    if (FEATURES.RULE_ENGINE_ENABLED) {
+      context.ruleEngine = {
+        warnings: warnings,
+        rulesCount: rules.length,
+        appliedRules: [],
+        rowExcludedRule: {},
+        removedHashes: new Set<string>(),
+      }
+
+      pipeline = pipeline.addStage(input => applyPreTransformRulesStage(input, ruleProcessor, context))
+    }
+
+    let transformedPipeline = pipeline.addStage(transformToFireTableStage)
+
+    if (FEATURES.RULE_ENGINE_ENABLED) {
+      transformedPipeline = transformedPipeline.addStage(input => postTransformRulesStage(input, ruleProcessor, context, dryRun))
+    }
+
+    return transformedPipeline
+  }
+
   /**
    * Handles incoming CSV (already parsed by the frontend) and processes it in order to be imported
    * into the spreadsheet.
@@ -105,7 +139,9 @@ class PipelineRPC {
     rawTable: RawTable,
     bankAccount: string,
     userDecisions?: Record<string, TransactionAction>,
-  ): ServerResponse {
+  ): ServerResponse<{
+    ruleEngine?: PackedRuleEngineResult
+  }> {
     const fireSheet = new FireSheet()
     const accountConfig = Config.getAccountConfiguration(bankAccount)
     const userDecisionsMap = userDecisions ? new Map(Object.entries(userDecisions)) : undefined
@@ -118,15 +154,15 @@ class PipelineRPC {
       config: accountConfig,
       userDecisions: userDecisionsMap,
     }
+
     const inputTable = Table.from(structuredClone(rawTable))
 
-    const importPipeline = Pipeline.create<Table, ImportPipelineContext>()
-      .addStage(removeEmptyRowsStage)
-      .addStage(transformToFireTableStage)
+    const pipeline = this.setupCommonPipeline<ImportPipelineContext>(bankAccount, context)
+
+    const fireTable = pipeline
       .addStage(applyUserDecisionsStage)
       .addStage(sortByDateStage)
-
-    const fireTable = importPipeline.execute(inputTable, context)
+      .execute(inputTable, context)
 
     if (fireTable.isEmpty()) {
       const msg = 'No rows to import, check your import data, rules, row decisions or configuration!'
@@ -137,10 +173,26 @@ class PipelineRPC {
     const autoFillColumns = accountConfig.autoFillEnabled ? accountConfig.autoFillColumnIndices : undefined
     fireSheet.importData(fireTable, autoFillColumns)
 
-    const msg = `imported ${fireTable.getRowCount()} rows!`
+    const appliedRules = context?.ruleEngine?.appliedRules || []
+
+    const rulesMsg = appliedRules.length > 0 ? ` (Applied ${appliedRules.length} rules)` : ''
+    const msg = `imported ${fireTable.getRowCount()} rows!${rulesMsg}`
     Logger.log(msg)
 
-    return { success: true, message: msg }
+    return {
+      success: true,
+      message: msg,
+      data: {
+        ...(context.ruleEngine
+          ? {
+              ruleEngine: {
+                ...context.ruleEngine,
+                removedHashes: Array.from(context.ruleEngine.removedHashes),
+              },
+            }
+          : {}),
+      },
+    }
   }
 
   @withPipelineLogger
@@ -154,37 +206,44 @@ class PipelineRPC {
     const context: PreviewPipelineContext = {
       config,
       duplicateHashes: new Set(),
-      removedHashes: new Set(),
     }
 
-    let previewPipeline = Pipeline.create<Table, PreviewPipelineContext>()
-      .addStage(removeEmptyRowsStage)
-      .addStage(transformToFireTableStage)
-      .addStage(sortByDateStage)
+    let pipeline = this.setupCommonPipeline<PreviewPipelineContext>(bankAccount, context, true)
 
     if (FEATURES.IMPORT_DUPLICATE_DETECTION) {
-      previewPipeline = previewPipeline.addStage(duplicateDetectionStage)
+      pipeline = pipeline.addStage(duplicateDetectionStage)
     }
 
-    previewPipeline = previewPipeline
+    pipeline = pipeline
+      .addStage(sortByDateStage)
       .addStage(autoFillPreviewStage)
 
-    const previewTable = previewPipeline.execute(rawTable, context)
+    const previewTable = pipeline.execute(rawTable, context)
 
     const newBalance = calculateNewBalance(previewTable, context)
 
-    return {
+    const result = {
       success: true,
       data: {
-        // PENDING: works for now, but we need proper transport types for tables
-        // having Date objects or other complex types will break this
-        // we should ideally have a proper serialization/deserialization step in the FireTable class
-        rows: previewTable.data.map(row => row.map(formatCellValue)),
+        table: previewTable.pack(),
         newBalance: newBalance,
         duplicateHashes: Array.from(context.duplicateHashes),
-        removedHashes: Array.from(context.removedHashes),
+        ...(context.ruleEngine
+          ? {
+              ruleEngine: {
+                ...context.ruleEngine,
+                removedHashes: Array.from(context.ruleEngine.removedHashes),
+              },
+            }
+          : {}),
       },
-    }
+    } satisfies ServerResponse<ImportPreviewResult>
+
+    Logger.log('newBalance', result.data.newBalance)
+    Logger.log('duplicateHashes', result.data.duplicateHashes)
+    Logger.log('rule engine result', result.data?.ruleEngine)
+
+    return result
   }
 }
 
