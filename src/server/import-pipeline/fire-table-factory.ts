@@ -79,7 +79,7 @@ export class FireTableFactory {
         column = Table.ensureLength(column, rowCount)
       }
       catch (e) {
-        Logger.error(e)
+        Logger.error('Failed to process column ' + columnName + ':', e)
         column = new Array(rowCount).fill(null)
       }
       output.push(column as CellValue[])
