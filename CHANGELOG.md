@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.15.1-beta
+
+- **Testing** - Added missing unit tests for `getAccountIdentifiers` in `src/server/accounts/account-utils.ts`, covering multiple accounts, special characters, and edge cases like empty data or rows.
+
 ## 4.15.0-beta
 
 - **Feature** - Introduces a rule-based data processing pipeline that allows users to define transaction import rules in a Google Sheet. The implementation includes a new rule engine module that handles parsing and applying rules during the pre-transform and post-transform phases of the import process, along with UI enhancements to display rule application summaries and warnings.
