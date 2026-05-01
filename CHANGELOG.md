@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.15.3-beta
+
+- **Fix** - Migrated to Vite 8 / Rolldown and addressed build/typecheck issues.
+  - Used `RolldownOutput` and `OutputAsset` in the build plugin.
+  - Set `inlineDynamicImports: false` in `vite.config.ts`.
+  - Fixed a type mismatch in `serverFunctions.ts` mock.
+
 ## 4.15.1-beta
 
 - **Testing** - Added missing unit tests for `getAccountIdentifiers` in `src/server/accounts/account-utils.ts`, covering multiple accounts, special characters, and edge cases like empty data or rows.

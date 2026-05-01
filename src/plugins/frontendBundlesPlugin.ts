@@ -1,6 +1,6 @@
 import { build } from 'vite'
 import type { Plugin, InlineConfig } from 'vite'
-import type { PreRenderedAsset, RollupOutput } from 'rollup'
+import type { RolldownOutput, OutputAsset } from 'rolldown'
 import { resolve } from 'node:path'
 import { writeFile } from 'node:fs/promises'
 
@@ -17,10 +17,10 @@ export interface BuildFrontendBundlesPluginOptions {
   baseDir: string
 }
 
-const isRollupOutput = (output: unknown): output is RollupOutput => !!(output as RollupOutput)?.output
+const isRolldownOutput = (output: unknown): output is RolldownOutput => !!(output as RolldownOutput)?.output
 
-const isPreRenderedAsset = (asset: unknown): asset is PreRenderedAsset =>
-  (asset as PreRenderedAsset)?.type === 'asset' && !!(asset as PreRenderedAsset)?.source
+const isOutputAsset = (asset: unknown): asset is OutputAsset =>
+  (asset as OutputAsset)?.type === 'asset' && !!(asset as OutputAsset)?.source
 
 /**
  * This builds the client app bundles for production, and writes them to disk.
@@ -38,8 +38,8 @@ export function buildFrontendBundlesPlugin(options: BuildFrontendBundlesPluginOp
         this.info(`Building client bundle for ${clientEntrypoint.name}`)
         const buildOutput = await build(options.clientBuildConfig(clientEntrypoint))
 
-        if (isRollupOutput(buildOutput) && isPreRenderedAsset(buildOutput.output[0])) {
-          const outputAsset = buildOutput.output[0] as PreRenderedAsset
+        if (isRolldownOutput(buildOutput) && isOutputAsset(buildOutput.output[0])) {
+          const outputAsset = buildOutput.output[0] as OutputAsset
           await writeFile(
             resolve(options.baseDir, options.outDir, `${clientEntrypoint.filename}.html`),
             outputAsset.source,
