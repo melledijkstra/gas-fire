@@ -10,11 +10,11 @@
   import { serverFunctions } from "@/client/utils/serverFunctions";
   import { BadgeCheckSolid } from "flowbite-svelte-icons";
   import type { RawTable } from "@/common/types";
-  import type { RuleEngineResult } from "@/server/rule-engine";
+  import type { PackedRuleEngineResult } from "@/server/rule-engine/types";
 
   let importFinished = $state(false);
   let message = $state("Ready to import your data?");
-  let ruleEngineResult = $state<RuleEngineResult>();
+  let ruleEngineResult = $state<PackedRuleEngineResult>();
   let rulesAppliedCount = $derived(ruleEngineResult?.appliedRules.length ?? 0);
   let ruleWarnings = $derived(ruleEngineResult?.warnings ?? []);
 
