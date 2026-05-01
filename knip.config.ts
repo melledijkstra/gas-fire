@@ -17,15 +17,11 @@ export default {
     'mkcert',
   ],
   ignoreDependencies: [
-    // is actually used in vite.config.ts for the coverage engine
-    '@vitest/coverage-v8',
     // global types for Google Apps Script
     '@types/google-apps-script',
     // from the core package we never directly import
     // instead from 'flowbite-svelte'
     'flowbite',
-    // only used to get a type, and the package is already installed because of svelte storybook dependencies
-    '@storybook/svelte',
   ],
   ignore: [
     // plugin that generates the frontend bundles, but is not imported in the src code
