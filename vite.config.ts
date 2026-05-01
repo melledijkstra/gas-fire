@@ -80,9 +80,6 @@ const clientBuildConfig = ({ filename, template }: DialogEntry) =>
       minify: true,
       rollupOptions: {
         input: resolve(__dirname, clientRoot, template),
-        output: {
-          inlineDynamicImports: false,
-        },
       },
     },
   })
