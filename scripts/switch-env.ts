@@ -1,6 +1,6 @@
+import dotenv from 'dotenv'
 import fs from 'fs'
 import path from 'path'
-import dotenv from 'dotenv'
 
 // Load .env file
 dotenv.config()

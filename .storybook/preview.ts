@@ -1,7 +1,7 @@
+import '@/client/app.css'
 import type { Preview } from '@storybook/svelte'
 import { sb } from 'storybook/test'
 import { google } from './google.mock.ts'
-import '@/client/app.css'
 
 sb.mock(import('../src/client/utils/serverFunctions.ts'))
 

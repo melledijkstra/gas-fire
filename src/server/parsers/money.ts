@@ -1,5 +1,5 @@
-import { FireSheet } from '../spreadsheet/FireSheet'
 import { Logger } from '@/common/logger'
+import { FireSheet } from '../spreadsheet/FireSheet'
 
 let cachedNumberFormatter: Intl.NumberFormat
 

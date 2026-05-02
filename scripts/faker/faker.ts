@@ -1,6 +1,6 @@
-import type { Accounts, FireTransaction, RawTable } from '../../src/common/types'
 import { faker } from '@faker-js/faker'
 import fs from 'fs'
+import type { Accounts, FireTransaction, RawTable } from '../../src/common/types'
 import { convertFireTransactionToBankDefinition } from './commonwealth-bank'
 
 const fakeBankAccountsConfig: Accounts = {

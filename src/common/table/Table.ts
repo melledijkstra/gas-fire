@@ -1,5 +1,5 @@
 import { Logger } from '@/common/logger'
-import type { CellValue, PackedTable, PackedCellValue } from '@/common/types'
+import type { CellValue, PackedCellValue, PackedTable } from '@/common/types'
 
 const EMPTY = ''
 

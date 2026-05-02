@@ -1,6 +1,6 @@
 import { Table } from '@/common/table/Table'
 import type { CellValue } from '@/common/types'
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 describe('Table', () => {
   describe('PackedTable serialization', () => {

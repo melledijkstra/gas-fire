@@ -1,18 +1,18 @@
 /// <reference types="vitest/config" />
+import { svelte } from '@sveltejs/vite-plugin-svelte'
+import tailwind from '@tailwindcss/vite'
+import { existsSync, readFileSync } from 'fs'
+import { resolve } from 'path'
 import {
   BuildOptions,
   ServerOptions,
   UserConfig,
   defineConfig,
 } from 'vite'
-import { resolve } from 'path'
-import { existsSync, readFileSync } from 'fs'
-import { svelte } from '@sveltejs/vite-plugin-svelte'
-import tailwind from '@tailwindcss/vite'
-import { viteStaticCopy } from 'vite-plugin-static-copy'
 import { viteSingleFile } from 'vite-plugin-singlefile'
+import { viteStaticCopy } from 'vite-plugin-static-copy'
 import packageInfo from './package.json'
-import { buildFrontendBundlesPlugin, type DialogEntry } from './src/plugins/frontendBundlesPlugin'
+import { type DialogEntry, buildFrontendBundlesPlugin } from './src/plugins/frontendBundlesPlugin'
 
 const PORT = 3000
 export const clientRoot = './src/client'

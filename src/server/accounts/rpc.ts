@@ -1,5 +1,5 @@
-import type { AccountOptions, ServerResponse } from '@/common/types'
 import { Logger } from '@/common/logger'
+import type { AccountOptions, ServerResponse } from '@/common/types'
 import { AccountUtils } from './account-utils'
 
 /**

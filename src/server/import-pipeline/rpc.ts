@@ -1,33 +1,33 @@
-import type {
-  ServerResponse,
-  RawTable,
-  ImportPreviewResult,
-  TransactionAction,
-} from '@/common/types'
-import {
-  Pipeline,
-  removeEmptyRowsStage,
-  transformToFireTableStage,
-  sortByDateStage,
-  duplicateDetectionStage,
-  autoFillPreviewStage,
-  applyUserDecisionsStage,
-} from './pipeline'
-import type { ImportPipelineContext, PipelineContext, PreviewPipelineContext } from './pipeline'
-import { Config } from '../config'
-import { FireSheet } from '../spreadsheet/FireSheet'
-import type { PackedRuleEngineResult } from '../rule-engine/types'
-import { RuleParser } from '../rule-engine/rule-parser'
-import { Table } from '@/common/table/Table'
 import { getRowHash, structuredClone } from '@/common/helpers'
 import { Logger } from '@/common/logger'
-import { removeFilterCriteria } from '../spreadsheet/spreadsheet'
 import { FEATURES } from '@/common/settings'
-import { AccountUtils, isNumeric } from '../accounts/account-utils'
-import { applyPreTransformRulesStage, postTransformRulesStage } from '../rule-engine/pipeline'
-import { RuleSheet } from '../spreadsheet/RuleSheet'
-import { RuleProcessor } from '../rule-engine/rule-processor'
 import { FireTable } from '@/common/table/FireTable'
+import { Table } from '@/common/table/Table'
+import type {
+  ImportPreviewResult,
+  RawTable,
+  ServerResponse,
+  TransactionAction,
+} from '@/common/types'
+import { AccountUtils, isNumeric } from '../accounts/account-utils'
+import { Config } from '../config'
+import { applyPreTransformRulesStage, postTransformRulesStage } from '../rule-engine/pipeline'
+import { RuleParser } from '../rule-engine/rule-parser'
+import { RuleProcessor } from '../rule-engine/rule-processor'
+import type { PackedRuleEngineResult } from '../rule-engine/types'
+import { FireSheet } from '../spreadsheet/FireSheet'
+import { RuleSheet } from '../spreadsheet/RuleSheet'
+import { removeFilterCriteria } from '../spreadsheet/spreadsheet'
+import type { ImportPipelineContext, PipelineContext, PreviewPipelineContext } from './pipeline'
+import {
+  Pipeline,
+  applyUserDecisionsStage,
+  autoFillPreviewStage,
+  duplicateDetectionStage,
+  removeEmptyRowsStage,
+  sortByDateStage,
+  transformToFireTableStage,
+} from './pipeline'
 
 /**
  * Activates the target sheet and removes any active filters.

@@ -1,6 +1,6 @@
 import { IMPORT_RULES_SHEET_NAME } from '@/common/constants'
-import { getImportRulesSheet } from '../globals'
 import { Logger } from '@/common/logger'
+import { getImportRulesSheet } from '../globals'
 
 export class RuleSheet {
   static rulesCache: string[][] | null = null
