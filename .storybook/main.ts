@@ -1,6 +1,6 @@
 import type { StorybookConfig } from '@storybook/svelte-vite'
 import { createRequire } from 'module'
-import { join, dirname } from 'path'
+import { dirname, join } from 'path'
 
 const require = createRequire(import.meta.url)
 

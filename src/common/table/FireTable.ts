@@ -1,8 +1,8 @@
 import type { FireColumn } from '@/common/constants'
 import { FIRE_COLUMNS } from '@/common/constants'
+import { getRowHash } from '@/common/helpers'
 import type { CellValue } from '@/common/types'
 import { Table } from './Table'
-import { getRowHash } from '@/common/helpers'
 
 /**
  * A table with knowledge of the FIRE column structure.

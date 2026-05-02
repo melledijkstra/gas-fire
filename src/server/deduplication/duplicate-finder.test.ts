@@ -1,7 +1,7 @@
-import { describe, expect } from 'vitest'
 import { getRowHash } from '@/common/helpers'
 import type { CellValue } from '@/common/types'
 import { buildFireTableRow } from '@/fixtures/fire-row'
+import { describe, expect } from 'vitest'
 
 describe('getRowHash', () => {
   test('should generate a hash', () => {

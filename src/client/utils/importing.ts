@@ -1,6 +1,6 @@
-import type { RawTable } from '@/common/types'
-import { Logger } from '@/common/logger'
 import { structuredClone } from '@/common/helpers'
+import { Logger } from '@/common/logger'
+import type { RawTable } from '@/common/types'
 
 export const acceptedMimeTypes = ['text/csv']
 

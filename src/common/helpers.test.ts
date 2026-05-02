@@ -1,4 +1,4 @@
-import { slugify, structuredCloneFallback, structuredClone } from './helpers'
+import { slugify, structuredClone, structuredCloneFallback } from './helpers'
 
 describe('helpers', () => {
   describe('slugify', () => {

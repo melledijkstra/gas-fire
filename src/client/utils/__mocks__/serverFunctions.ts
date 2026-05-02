@@ -1,15 +1,15 @@
+import { FIRE_COLUMNS } from '@/common/constants'
+import { getRowHash } from '@/common/helpers'
+import { Table } from '@/common/table/Table'
 import type {
-  ServerResponse,
   AccountOptions,
-  RawTable,
   ImportPreviewResult,
+  RawTable,
+  ServerResponse,
   TransactionAction,
 } from '@/common/types'
-import type * as publicServerFunctions from '@/server/index'
 import { fireTableMock } from '@/fixtures/fire-table'
-import { getRowHash } from '@/common/helpers'
-import { FIRE_COLUMNS } from '@/common/constants'
-import { Table } from '@/common/table/Table'
+import type * as publicServerFunctions from '@/server/index'
 import type { ImportRule, PackedRuleEngineResult } from '@/server/rule-engine/types'
 
 ////////////////////////////////////////////////////////////////

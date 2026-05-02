@@ -1,6 +1,6 @@
-import { slugify } from '@/common/helpers'
-import type { ImportRule, RuleWarning, RuleCondition, RuleAction, RulePhase } from './types'
 import { withLogger } from '@/common/decorators'
+import { slugify } from '@/common/helpers'
+import type { ImportRule, RuleAction, RuleCondition, RulePhase, RuleWarning } from './types'
 
 const VALID_CONDITIONS: Set<RuleCondition> = new Set([
   'REGEX', 'CONTAINS', 'EQUALS', 'NOT_EMPTY', 'NOT_CONTAINS', 'GREATER_THAN', 'LESS_THAN',

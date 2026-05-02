@@ -1,7 +1,7 @@
-import { FireTable } from '@/common/table/FireTable'
-import { FireSheet } from '../spreadsheet/FireSheet'
-import { getCategoryNames } from '../helpers'
 import { Logger } from '@/common/logger'
+import { FireTable } from '@/common/table/FireTable'
+import { getCategoryNames } from '../helpers'
+import { FireSheet } from '../spreadsheet/FireSheet'
 import { categorizeFireTable } from './categorize'
 
 /**

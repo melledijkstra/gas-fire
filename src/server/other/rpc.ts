@@ -1,8 +1,8 @@
-import { FireSheet } from '../spreadsheet/FireSheet'
 import { FIRE_COLUMNS } from '@/common/constants'
-import { Config } from '../config'
-import { NAMED_RANGES } from '../../common/constants'
 import { Logger } from '@/common/logger'
+import { NAMED_RANGES } from '../../common/constants'
+import { Config } from '../config'
+import { FireSheet } from '../spreadsheet/FireSheet'
 
 export const mailNetWorth = () => {
   const spreadsheet = SpreadsheetApp.getActiveSpreadsheet()

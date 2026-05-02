@@ -1,5 +1,5 @@
-import { csvToJson } from './importing'
 import type { RawTable } from '@/common/types'
+import { csvToJson } from './importing'
 
 describe('Utility Functions', () => {
   it('csvToJson', () => {

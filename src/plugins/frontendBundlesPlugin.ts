@@ -1,8 +1,8 @@
-import { build } from 'vite'
-import type { Plugin, InlineConfig } from 'vite'
-import type { RolldownOutput, OutputAsset } from 'rolldown'
-import { resolve } from 'node:path'
 import { writeFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
+import type { OutputAsset, RolldownOutput } from 'rolldown'
+import type { InlineConfig, Plugin } from 'vite'
+import { build } from 'vite'
 
 export type DialogEntry = {
   name: string

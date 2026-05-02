@@ -1,5 +1,5 @@
-import { clientEntrypoints, clientRoot } from './vite.config'
 import type { KnipConfig } from 'knip'
+import { clientEntrypoints, clientRoot } from './vite.config'
 
 const entries = clientEntrypoints.map((entry) => {
   // knip is not able to parse HTML files, instead use the imported JS instead

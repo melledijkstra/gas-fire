@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { RuleParser } from './rule-parser'
 import type { ImportRule } from './types'
 

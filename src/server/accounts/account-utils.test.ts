@@ -1,7 +1,7 @@
-import { AccountUtils, isNumeric } from './account-utils'
-import { FireSpreadsheet, getSheetById } from '../globals'
-import { RangeMock, SheetMock } from '../../../test-setup'
 import { SOURCE_SHEET_ID } from '@/common/constants'
+import { RangeMock, SheetMock } from '../../../test-setup'
+import { FireSpreadsheet, getSheetById } from '../globals'
+import { AccountUtils, isNumeric } from './account-utils'
 
 describe('Utility tests', () => {
   beforeEach(() => {
