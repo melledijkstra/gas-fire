@@ -1,8 +1,8 @@
-import type { ImportRule, RuleCondition, RulePhase, RuleWarning } from './types'
-import { Table } from '@/common/table/Table'
-import { FireTable } from '../table/FireTable'
 import { Logger } from '@/common/logger'
+import { FireTable } from '@/common/table/FireTable'
+import { Table } from '@/common/table/Table'
 import type { CellValue } from '@/common/types'
+import type { ImportRule, RuleCondition, RulePhase, RuleWarning } from './types'
 
 export interface RuleExecutionContext {
   excludedIndices: Set<number>

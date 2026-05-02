@@ -1,25 +1,26 @@
+import { getRowHash, slugify } from '@/common/helpers'
+import { Logger } from '@/common/logger'
+import { FireTable } from '@/common/table/FireTable'
+import type { RawTable } from '@/common/types'
+import bankOfAmericaCSV from '@/fixtures/commonwealth-bank.csv?raw'
+import { N26ImportMock } from '@/fixtures/n26'
+import { raboImportMock } from '@/fixtures/rabobank'
+import { fakeTestBankImportData } from '@/fixtures/test-bank'
+import Papa from 'papaparse'
 import {
   SheetMock,
   SpreadsheetMock,
 } from '../../../test-setup'
-import type { RawTable } from '@/common/types'
-import { N26ImportMock } from '@/fixtures/n26'
-import { FireTable } from '../table/FireTable'
 import { AccountUtils } from '../accounts/account-utils'
-import { raboImportMock } from '@/fixtures/rabobank'
-import { Logger } from '@/common/logger'
-import {
-  previewPipeline,
-  importPipeline,
-} from './rpc'
 import { Config } from '../config'
-import bankOfAmericaCSV from '@/fixtures/commonwealth-bank.csv?raw'
-import Papa from 'papaparse'
-import { fakeTestBankImportData } from '@/fixtures/test-bank'
-import { removeFilterCriteria } from '../spreadsheet/spreadsheet'
-import { FireSheet } from '../spreadsheet/FireSheet'
-import { getRowHash, slugify } from '@/common/helpers'
 import { RuleProcessor } from '../rule-engine/rule-processor'
+import { FireSheet } from '../spreadsheet/FireSheet'
+import { removeFilterCriteria } from '../spreadsheet/spreadsheet'
+import { FireTableFactory } from './fire-table-factory'
+import {
+  importPipeline,
+  previewPipeline,
+} from './rpc'
 
 vi.mock('../globals', () => ({
   FireSpreadsheet: SpreadsheetMock,
@@ -148,7 +149,7 @@ describe('RPC: Import Functions', () => {
       if (response.success) {
         // Since we are mocking applyPostTransformRules, it uses FireTable rows for hashing.
         // We need to calculate the hashes of the transformed rows to match what the pipeline will produce.
-        const fireTable = FireTable.fromAccountSpecification({
+        const fireTable = FireTableFactory.fromAccountSpecification({
           headers: table[0],
           rows: table.slice(1),
           config: Config.getAccountConfiguration(BANK_ID),

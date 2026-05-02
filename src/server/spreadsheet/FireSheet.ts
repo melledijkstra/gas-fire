@@ -1,5 +1,5 @@
 import type { CellValue } from '@/common/types'
-import { FireTable } from '../table/FireTable'
+import { FireTable } from '@/common/table/FireTable'
 import { SheetsRequestBuilder } from '../request-builder'
 import { Logger } from '@/common/logger'
 import { getSourceSheet } from '../globals'

@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest'
-import { RuleProcessor } from './rule-processor'
+import { FireTable } from '@/common/table/FireTable'
 import { Table } from '@/common/table/Table'
-import { FireTable } from '../table/FireTable'
+import { describe, expect, it } from 'vitest'
+import { RuleProcessor } from './rule-processor'
 import type { ImportRule } from './types'
 
 describe('rule-processor', () => {

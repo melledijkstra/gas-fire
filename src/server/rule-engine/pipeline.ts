@@ -1,7 +1,7 @@
 import { getRowHash } from '@/common/helpers'
+import { FireTable } from '@/common/table/FireTable'
 import type { Table } from '@/common/table/Table'
 import type { PipelineContext } from '../import-pipeline/pipeline'
-import { FireTable } from '../table/FireTable'
 import { RuleProcessor } from './rule-processor'
 
 const emptyRuleEngineContext = {

@@ -1,11 +1,12 @@
 import type { UserDecisions, TransactionAction, CellValue } from '@/common/types'
+import type { RuleEngineResult } from '../rule-engine/types'
 import { Logger } from '@/common/logger'
 import { Config } from '../config'
 import { Table } from '@/common/table/Table'
-import { FireTable } from '../table/FireTable'
+import { FireTable } from '@/common/table/FireTable'
 import { FireSheet } from '../spreadsheet/FireSheet'
 import { getRowHash } from '@/common/helpers'
-import type { RuleEngineResult } from '../rule-engine/types'
+import { FireTableFactory } from './fire-table-factory'
 
 export interface PipelineContext {
   config: Config
@@ -88,7 +89,7 @@ export function transformToFireTableStage(input: Table, context: PipelineContext
     throw new Error('No header row detected in import data!')
   }
 
-  return FireTable.fromAccountSpecification({
+  return FireTableFactory.fromAccountSpecification({
     headers: input.headers,
     rows: input.data,
     config: context.config,
