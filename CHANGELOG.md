@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.15.5-beta
+
+- Sorted all imports in the entire codebase and setup automatic on-save action. This should improve code readability and maintainability.
+
 ## 4.15.4-beta
 
 - **Refactor** - Decoupled server dependencies from `FireTable` and moved `Table` and `FireTable` to `src/common/table/`. Extracted category detection logic and fromAccountSpecification logic into their own functions (`categorizeFireTable` and `FireTableFactory`).

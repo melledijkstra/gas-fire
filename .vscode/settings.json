@@ -2,8 +2,7 @@
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit",
     "source.organizeImports": "explicit",
-    "source.removeUnusedImports": "explicit",
-    "source.sort.json": "explicit"
+    "source.removeUnusedImports": "explicit"
   },
   "sonarlint.connectedMode.project": {
     "connectionId": "melledijkstra",
