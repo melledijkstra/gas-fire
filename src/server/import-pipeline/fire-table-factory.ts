@@ -1,12 +1,13 @@
+import type { FireColumn } from '@/common/constants'
 import { FIRE_COLUMNS } from '@/common/constants'
-import type { FireColumn, CellValue } from '@/common/types'
-import { Config } from '../config'
-import { Table } from '@/common/table/Table'
+import { Logger } from '@/common/logger'
 import { FireTable } from '@/common/table/FireTable'
+import { Table } from '@/common/table/Table'
+import type { CellValue } from '@/common/types'
 import { AccountUtils } from '../accounts/account-utils'
+import { Config } from '../config'
 import { Transformers } from '../transformers'
 import type { FireColumnParsers } from '../types'
-import { Logger } from '@/common/logger'
 
 export class FireTableFactory {
   /**
@@ -49,7 +50,6 @@ export class FireTableFactory {
 
     const importDate = new Date()
 
-    // prettier-ignore
     const columnImportParsers: FireColumnParsers = {
       ref: null,
       iban: () => new Array(rowCount).fill(AccountUtils.getAccountIban(config.getAccountId())),
