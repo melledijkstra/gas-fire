@@ -1,0 +1,21 @@
+name: CI Pipeline
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
+      - name: Run linting
+        run: pnpm lint
+      - name: Run build
+        run: pnpm build
+      - name: Run unit tests
+        run: pnpm test:coverage
