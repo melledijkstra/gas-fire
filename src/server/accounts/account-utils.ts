@@ -15,7 +15,7 @@ interface AccountInfo {
 }
 
 function isAccountInfo(value: unknown): value is AccountInfo {
-  if (typeof value !== 'object' || value === null) return false
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false
   const info = value as Record<string, unknown>
   return (
     typeof info.label === 'string'
