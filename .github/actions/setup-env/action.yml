@@ -1,0 +1,16 @@
+name: 'Setup Environment'
+description: 'Sets up Node.js, pnpm, and installs dependencies'
+runs:
+  using: 'composite'
+  steps:
+    - uses: pnpm/action-setup@v6
+      with:
+        version: 10
+    - name: Use Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version-file: 'package.json'
+        cache: 'pnpm'
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+      shell: bash
