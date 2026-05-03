@@ -29,7 +29,7 @@ export class RuleProcessor {
   private parseRegexString(pattern: string): RegExp {
     // Regex to match /pattern/flags format
     // The pattern part (.*) is greedy to handle slashes within the regex itself
-    const match = pattern.match(/^\/(.*)\/([gimsuyv]*)$/)
+    const match = /^\/(.*)\/([gimsuyv]*)$/.exec(pattern)
 
     if (match) {
       const [, regexPattern, flags] = match
