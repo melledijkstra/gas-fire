@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.15.7-beta
+
+- **Security** - 🔒 Fixed Insecure Deserialization of Cached Accounts Data by validating the parsed object's shape before returning it from `fetchAccountsData`.
+
 ## 4.15.6-beta
 
 - Separate CI and CD pipelines
