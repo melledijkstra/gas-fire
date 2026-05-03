@@ -8,7 +8,7 @@ describe('RuleProcessor Regex Flags', () => {
   const data = [['UBER'], ['uber']]
   const table = new Table(headers, data)
 
-  const rules: ImportRule[] = [{
+  const defaultRules: ImportRule[] = [{
     ruleName: 'Match Uber',
     banks: ['All'],
     conditionColumn: 'description',
@@ -21,21 +21,21 @@ describe('RuleProcessor Regex Flags', () => {
   }]
 
   it('should not use any flags by default (case-sensitive regex)', () => {
-    const processor = new RuleProcessor(rules)
+    const processor = new RuleProcessor(defaultRules)
     const result = processor.applyPreTransformRules(table, 'TestBank')
     expect(result.excludedIndices.has(0)).toBe(false)
     expect(result.excludedIndices.has(1)).toBe(true)
   })
 
   it('should support explicit regex flags /pattern/flags', () => {
-    const sensitiveRules = [
+    const rules = [
       {
-        ...rules[0],
+        ...defaultRules[0],
         conditionValue: '/uber/i', // case-insensitive match
       },
     ]
 
-    const processor = new RuleProcessor(sensitiveRules)
+    const processor = new RuleProcessor(rules)
     const result = processor.applyPreTransformRules(table, 'TestBank')
 
     // it should match both 'UBER' and 'uber' due to the 'i' flag
@@ -49,15 +49,8 @@ describe('RuleProcessor Regex Flags', () => {
 
     // Match across multiple lines with 's' flag
     const rules: ImportRule[] = [{
-      ruleName: 'Multi-line match',
-      banks: ['All'],
-      conditionColumn: 'description',
-      condition: 'REGEX',
+      ...defaultRules[0],
       conditionValue: '/line1.*line2/s',
-      action: 'EXCLUDE',
-      actionColumn: '',
-      stopProcessing: false,
-      rulePhase: 'PRE_TRANSFORM',
     }]
 
     const processor = new RuleProcessor(rules)
@@ -71,16 +64,9 @@ describe('RuleProcessor Regex Flags', () => {
     const table = new Table(headers, data)
 
     const rules: ImportRule[] = [{
-      ruleName: 'Multi-line case-insensitive match',
-      banks: ['All'],
-      conditionColumn: 'description',
-      condition: 'REGEX',
+      ...defaultRules[0],
       // This should match 'UBER' even with the 'i' flag, and also work across lines with the 's' flag
       conditionValue: '/line1.*uber/sig',
-      action: 'EXCLUDE',
-      actionColumn: '',
-      stopProcessing: false,
-      rulePhase: 'PRE_TRANSFORM',
     }]
 
     const processor = new RuleProcessor(rules)
