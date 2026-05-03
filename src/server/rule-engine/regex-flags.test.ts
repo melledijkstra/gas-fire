@@ -6,7 +6,7 @@ import type { ImportRule } from './types'
 describe('RuleProcessor Regex Flags', () => {
   const headers = ['description']
 
-  it('should support case-insensitive regex by default', () => {
+  it('should not use any flags by default (case-sensitive regex)', () => {
     const data = [['UBER'], ['uber']]
     const table = new Table(headers, data)
     const rules: ImportRule[] = [{
@@ -23,7 +23,7 @@ describe('RuleProcessor Regex Flags', () => {
 
     const processor = new RuleProcessor(rules)
     const result = processor.applyPreTransformRules(table, 'TestBank')
-    expect(result.excludedIndices.has(0)).toBe(true)
+    expect(result.excludedIndices.has(0)).toBe(false)
     expect(result.excludedIndices.has(1)).toBe(true)
   })
 
@@ -73,26 +73,6 @@ describe('RuleProcessor Regex Flags', () => {
     const processor = new RuleProcessor(rules)
     const result = processor.applyPreTransformRules(table, 'TestBank')
 
-    expect(result.excludedIndices.has(0)).toBe(true)
-  })
-
-  it('should fallback to default "i" flag if not in /pattern/flags format', () => {
-    const data = [['UBER']]
-    const table = new Table(headers, data)
-    const rules: ImportRule[] = [{
-      ruleName: 'Match Uber',
-      banks: ['All'],
-      conditionColumn: 'description',
-      condition: 'REGEX',
-      conditionValue: 'uber', // no slashes
-      action: 'EXCLUDE',
-      actionColumn: '',
-      stopProcessing: false,
-      rulePhase: 'PRE_TRANSFORM',
-    }]
-
-    const processor = new RuleProcessor(rules)
-    const result = processor.applyPreTransformRules(table, 'TestBank')
     expect(result.excludedIndices.has(0)).toBe(true)
   })
 })
