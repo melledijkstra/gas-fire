@@ -5,22 +5,22 @@ import type { ImportRule } from './types'
 
 describe('RuleProcessor Regex Flags', () => {
   const headers = ['description']
+  const data = [['UBER'], ['uber']]
+  const table = new Table(headers, data)
+
+  const rules: ImportRule[] = [{
+    ruleName: 'Match Uber',
+    banks: ['All'],
+    conditionColumn: 'description',
+    condition: 'REGEX',
+    conditionValue: 'uber',
+    action: 'EXCLUDE',
+    actionColumn: '',
+    stopProcessing: false,
+    rulePhase: 'PRE_TRANSFORM',
+  }]
 
   it('should not use any flags by default (case-sensitive regex)', () => {
-    const data = [['UBER'], ['uber']]
-    const table = new Table(headers, data)
-    const rules: ImportRule[] = [{
-      ruleName: 'Match Uber',
-      banks: ['All'],
-      conditionColumn: 'description',
-      condition: 'REGEX',
-      conditionValue: 'uber',
-      action: 'EXCLUDE',
-      actionColumn: '',
-      stopProcessing: false,
-      rulePhase: 'PRE_TRANSFORM',
-    }]
-
     const processor = new RuleProcessor(rules)
     const result = processor.applyPreTransformRules(table, 'TestBank')
     expect(result.excludedIndices.has(0)).toBe(false)
@@ -28,28 +28,18 @@ describe('RuleProcessor Regex Flags', () => {
   })
 
   it('should support explicit regex flags /pattern/flags', () => {
-    const data = [['UBER'], ['uber']]
-    const table = new Table(headers, data)
+    const sensitiveRules = [
+      {
+        ...rules[0],
+        conditionValue: '/uber/i', // case-insensitive match
+      },
+    ]
 
-    // Case sensitive regex
-    const rules: ImportRule[] = [{
-      ruleName: 'Match Uber Case Sensitive',
-      banks: ['All'],
-      conditionColumn: 'description',
-      condition: 'REGEX',
-      conditionValue: '/uber/',
-      action: 'EXCLUDE',
-      actionColumn: '',
-      stopProcessing: false,
-      rulePhase: 'PRE_TRANSFORM',
-    }]
-
-    const processor = new RuleProcessor(rules)
+    const processor = new RuleProcessor(sensitiveRules)
     const result = processor.applyPreTransformRules(table, 'TestBank')
 
-    // With current implementation, it will look for literal "/uber/" and fail both
-    // After my changes, it should match "uber" but not "UBER" (no 'i' flag)
-    expect(result.excludedIndices.has(0)).toBe(false)
+    // it should match both 'UBER' and 'uber' due to the 'i' flag
+    expect(result.excludedIndices.has(0)).toBe(true)
     expect(result.excludedIndices.has(1)).toBe(true)
   })
 
@@ -64,6 +54,29 @@ describe('RuleProcessor Regex Flags', () => {
       conditionColumn: 'description',
       condition: 'REGEX',
       conditionValue: '/line1.*line2/s',
+      action: 'EXCLUDE',
+      actionColumn: '',
+      stopProcessing: false,
+      rulePhase: 'PRE_TRANSFORM',
+    }]
+
+    const processor = new RuleProcessor(rules)
+    const result = processor.applyPreTransformRules(table, 'TestBank')
+
+    expect(result.excludedIndices.has(0)).toBe(true)
+  })
+
+  it('can parse multiple regex flags', () => {
+    const data = [['line1\nuber']]
+    const table = new Table(headers, data)
+
+    const rules: ImportRule[] = [{
+      ruleName: 'Multi-line case-insensitive match',
+      banks: ['All'],
+      conditionColumn: 'description',
+      condition: 'REGEX',
+      // This should match 'UBER' even with the 'i' flag, and also work across lines with the 's' flag
+      conditionValue: '/line1.*uber/sig',
       action: 'EXCLUDE',
       actionColumn: '',
       stopProcessing: false,
