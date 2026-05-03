@@ -3,17 +3,6 @@ name: Feature Request
 about: Suggest a new feature or improvement for the project
 title: "[Feature] "
 labels: enhancement
-body:
-  - type: dropdown
-    id: priority
-    attributes:
-      label: What is the priority of this feature?
-      options:
-        - high
-        - medium
-        - low
-    validations:
-      required: true
 ---
 
 **Is your feature request related to a problem? Please describe.**
