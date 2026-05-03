@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.15.6-beta
+
+- Separate CI and CD pipelines
+
 ## 4.15.5-beta
 
 - Sorted all imports in the entire codebase and setup automatic on-save action. This should improve code readability and maintainability.
