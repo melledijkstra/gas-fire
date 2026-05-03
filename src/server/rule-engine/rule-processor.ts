@@ -26,11 +26,6 @@ export class RuleProcessor {
     this.importRules = importRules
   }
 
-  /**
-   * Parses a string into a RegExp object.
-   * Supports /pattern/flags format. If flags are omitted or it's not in /pattern/flags format,
-   * it defaults to case-insensitive ('i') for backward compatibility.
-   */
   private parseRegexString(pattern: string): RegExp {
     // Regex to match /pattern/flags format
     // The pattern part (.*) is greedy to handle slashes within the regex itself
