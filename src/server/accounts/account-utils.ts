@@ -25,7 +25,7 @@ function isAccountInfo(value: unknown): value is AccountInfo {
 }
 
 function isAccountInfoRecord(value: unknown): value is Record<string, AccountInfo> {
-  if (typeof value !== 'object' || value === null) return false
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false
   return Object.values(value).every(isAccountInfo)
 }
 
