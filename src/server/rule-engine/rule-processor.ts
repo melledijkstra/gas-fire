@@ -26,6 +26,25 @@ export class RuleProcessor {
     this.importRules = importRules
   }
 
+  /**
+   * Parses a string into a RegExp object.
+   * Supports /pattern/flags format. If flags are omitted or it's not in /pattern/flags format,
+   * it defaults to case-insensitive ('i') for backward compatibility.
+   */
+  private parseRegexString(pattern: string): RegExp {
+    // Regex to match /pattern/flags format
+    // The pattern part (.*) is greedy to handle slashes within the regex itself
+    const match = pattern.match(/^\/(.*)\/([gimsuyv]*)$/)
+
+    if (match) {
+      const [, regexPattern, flags] = match
+      return new RegExp(regexPattern, flags)
+    }
+
+    // No flags if not in /pattern/flags format
+    return new RegExp(pattern)
+  }
+
   getCachedRegex(pattern: string): RegExp {
     const cachedRegex = this.regexCache.get(pattern)
 
@@ -33,7 +52,7 @@ export class RuleProcessor {
       return cachedRegex
     }
 
-    const regex = new RegExp(pattern, 'i')
+    const regex = this.parseRegexString(pattern)
     this.regexCache.set(pattern, regex)
     return regex
   }
