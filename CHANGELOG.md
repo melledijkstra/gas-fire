@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.16.0-beta
+
+- **Feature** - ✨ Initial setup and integration for Enable Banking
+- **Feature** - ✨ Setup daily automated trigger to sync and fetch Enable Banking transactions
+- **Feature** - ✨ Connect accounts through new UI commands under the Apps Script menu
+
 ## 4.15.7-beta
 
 - **Security** - 🔒 Fixed Insecure Deserialization of Cached Accounts Data by validating the parsed object's shape before returning it from `fetchAccountsData`.

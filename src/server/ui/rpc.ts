@@ -2,6 +2,7 @@ import { NAMED_RANGES } from '@/common/constants'
 import { DIALOG_SIZES } from '@/common/settings'
 import { executeAutomaticCategorization } from '../category-detection/rpc'
 import { debugImportSettings, executeFindDuplicates } from '../other/rpc'
+import { setupEnableBankingConnection, toggleEnableBankingDailySync } from '../enable-banking/ui'
 
 export function onOpen(): void {
   const isDebugEnabled: boolean = SpreadsheetApp.getActiveSpreadsheet().getRangeByName(NAMED_RANGES.debug)?.getValue() ?? false
@@ -10,7 +11,13 @@ export function onOpen(): void {
     .addItem('Upload Transactions (CSV)', openFileUploadDialog.name)
     .addItem('Auto Categorize', executeAutomaticCategorization.name)
     .addItem('Find duplicates', executeFindDuplicates.name)
-    .addItem('About', openAboutDialog.name)
+
+  const enableBankingMenu = ui.createMenu('Enable Banking')
+    .addItem('Setup Connection', setupEnableBankingConnection.name)
+    .addItem('Toggle Daily Sync', toggleEnableBankingDailySync.name)
+  menu.addSubMenu(enableBankingMenu)
+
+  menu.addItem('About', openAboutDialog.name)
 
   if (isDebugEnabled) {
     const debugMenu = ui.createMenu('Debug')
