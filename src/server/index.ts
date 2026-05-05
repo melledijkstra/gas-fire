@@ -6,5 +6,9 @@ export * from './accounts/rpc'
 export * from './category-detection/rpc'
 export * from './import-pipeline/rpc'
 
+// Enable Banking logic
+export * from './enable-banking/ui'
+export * from './enable-banking/pipeline'
+
 // Custom functions that can be used within the Spreadsheet UI
 export * from './other/rpc'

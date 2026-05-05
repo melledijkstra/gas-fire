@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.17.0-beta
+
+- **Feature** - ✨ Initial setup and integration for Enable Banking
+- **Feature** - ✨ Setup daily automated trigger to sync and fetch Enable Banking transactions
+- **Feature** - ✨ Connect accounts through new UI commands under the Apps Script menu
+
 ## 4.16.0-beta
 
 - **Feature** - Bootstrapped documentation with VitePress in the `docs/` directory. This will host all the user facing documentation and guides.
