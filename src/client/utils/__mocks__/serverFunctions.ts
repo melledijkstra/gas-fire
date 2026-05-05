@@ -158,6 +158,18 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     console.log('getAccountOptions mock called')
     return { success: true, data: StrategyOptions }
   }
+
+  async setupEnableBankingConnection(): Promise<void> {
+    console.log('setupEnableBankingConnection mock called')
+  }
+
+  async toggleEnableBankingDailySync(): Promise<void> {
+    console.log('toggleEnableBankingDailySync mock called')
+  }
+
+  async syncEnableBankingTransactions(): Promise<void> {
+    console.log('syncEnableBankingTransactions mock called')
+  }
 }
 
 export const serverFunctions = new ServerFunctions()
