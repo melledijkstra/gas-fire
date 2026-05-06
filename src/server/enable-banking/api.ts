@@ -52,7 +52,7 @@ export class EnableBankingApi {
     return `${toSign}.${encodedSignature}`
   }
 
-  private static fetchApi<T>(endpoint: string, options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {}): T {
+  private static fetchApi<T>(endpoint: string, options: Record<string, unknown> = {}): T {
     const jwt = this.generateJWT()
     const url = `${ENABLE_BANKING_API_URL}${endpoint}`
 
@@ -63,7 +63,7 @@ export class EnableBankingApi {
     }
 
     const fetchOptions: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-      ...options,
+      ...(options as GoogleAppsScript.URL_Fetch.URLFetchRequestOptions),
       headers,
       muteHttpExceptions: true,
     }
