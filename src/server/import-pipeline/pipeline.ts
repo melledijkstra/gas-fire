@@ -2,7 +2,7 @@ import { getRowHash } from '@/common/helpers'
 import { Logger } from '@/common/logger'
 import { FireTable } from '@/common/table/FireTable'
 import { Table } from '@/common/table/Table'
-import type { CellValue, TransactionAction, UserDecisions } from '@/common/types'
+import type { TransactionAction, UserDecisions } from '@/common/types'
 import { Config } from '../config'
 import type { RuleEngineResult } from '../rule-engine/types'
 import { FireSheet } from '../spreadsheet/FireSheet'
@@ -119,23 +119,6 @@ export function duplicateDetectionStage(input: FireTable, context: PreviewPipeli
   }
 
   return input
-}
-
-/**
- * Formats a single cell value to a display string.
- * Dates are formatted as 'yyyy-MM-dd' using the spreadsheet's timezone.
- */
-export function formatCellValue(cell: CellValue): string {
-  if (cell instanceof Date) {
-    try {
-      const timeZone = FireSheet.getTimeZone()
-      return Utilities.formatDate(cell, timeZone, 'yyyy-MM-dd')
-    }
-    catch {
-      return cell.toISOString().split('T')[0]
-    }
-  }
-  return String(cell ?? '')
 }
 
 /**
