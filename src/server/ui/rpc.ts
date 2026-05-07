@@ -1,5 +1,5 @@
 import { NAMED_RANGES } from '@/common/constants'
-import { DIALOG_SIZES } from '@/common/settings'
+import { DIALOG_SIZES, FEATURES } from '@/common/settings'
 import { executeAutomaticCategorization } from '../category-detection/rpc'
 import { debugImportSettings, executeFindDuplicates } from '../other/rpc'
 
@@ -10,7 +10,10 @@ export function onOpen(): void {
     .addItem('Upload Transactions (CSV)', openFileUploadDialog.name)
     .addItem('Auto Categorize', executeAutomaticCategorization.name)
     .addItem('Find duplicates', executeFindDuplicates.name)
-    .addItem('Enable Banking Integration', openEnableBankingDialog.name)
+
+  if (FEATURES.ENABLE_BANKING_ENABLED) {
+    menu.addItem('Enable Banking Integration', openEnableBankingDialog.name)
+  }
 
   menu.addItem('About', openAboutDialog.name)
 
