@@ -30,16 +30,16 @@
   });
 
   async function loadData() {
-    const connRes = await serverFunctions.getEnableBankingConnections();
+    const connRes = await serverFunctions.RPCgetEnableBankingConnections();
     if (connRes.success) {
       connections = connRes.data;
     }
 
-    const trigRes = await serverFunctions.getEnableBankingTriggerStatus();
-    if (trigRes.success) {
-      triggerEnabled = trigRes.data.enabled;
-      triggerFreqType = trigRes.data.frequencyType;
-      triggerFreqVal = trigRes.data.frequencyValue;
+    const triggerStatusResult = await serverFunctions.RPCgetEnableBankingTriggerStatus();
+    if (triggerStatusResult.success) {
+      triggerEnabled = triggerStatusResult.data.enabled;
+      triggerFreqType = triggerStatusResult.data.frequencyType;
+      triggerFreqVal = triggerStatusResult.data.frequencyValue;
     }
   }
 

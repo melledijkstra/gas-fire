@@ -71,7 +71,7 @@ export function getEnableBankingAspsps(): ServerResponse<{ name: string, country
 
 export function startEnableBankingAuthorization(aspsp: { name: string, country: string }): ServerResponse<string> {
   try {
-    const dummyRedirectUrl = 'https://enablebanking.com/callback'
+    const dummyRedirectUrl = 'https://localhost:8080/callback'
     const state = Utilities.getUuid()
     const authResponse = EnableBankingApi.startAuthorization(aspsp, dummyRedirectUrl, state)
     return { success: true, data: authResponse.url }
@@ -138,15 +138,17 @@ export function getEnableBankingTriggerStatus(): ServerResponse<{ enabled: boole
     const existingTrigger = triggers.find(t => t.getHandlerFunction() === SYNC_TRIGGER_HANDLER)
 
     const props = PropertiesService.getUserProperties()
-    const freqType = (props.getProperty('ENABLE_BANKING_TRIGGER_FREQ_TYPE') as 'hours' | 'days') || 'days'
-    const freqVal = parseInt(props.getProperty('ENABLE_BANKING_TRIGGER_FREQ_VAL') || '1', 10)
+    const frequencyRaw = props.getProperty('ENABLE_BANKING_TRIGGER_FREQ_VAL')
+    const frequencyTypeRaw = props.getProperty('ENABLE_BANKING_TRIGGER_FREQ_TYPE')
+    const frequencyType = (frequencyTypeRaw as 'hours' | 'days') || 'days'
+    const frequency = Number.parseInt(frequencyRaw || '1', 10)
 
     return {
       success: true,
       data: {
         enabled: !!existingTrigger,
-        frequencyType: freqType,
-        frequencyValue: freqVal,
+        frequencyType: frequencyType,
+        frequencyValue: frequency,
       },
     }
   }
