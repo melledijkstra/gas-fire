@@ -44,7 +44,7 @@ export function openAboutDialog(): void {
 
 export function openSettingsDialog(): void {
   const [width, height] = DIALOG_SIZES.settings
-  const html = HtmlService.createTemplateFromFile('settings-dialog.html')
+  const html = HtmlService.createTemplateFromFile('settings-dialog')
     .evaluate()
     .setWidth(width)
     .setHeight(height)
@@ -52,7 +52,7 @@ export function openSettingsDialog(): void {
 }
 
 export function openEnableBankingDialog(): void {
-  const [width, height] = DIALOG_SIZES.settings
+  const [width, height] = DIALOG_SIZES.enableBanking
   const html = HtmlService.createTemplateFromFile('enable-banking-dialog')
     .evaluate()
     .setWidth(width)

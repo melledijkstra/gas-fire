@@ -57,13 +57,13 @@ export class EnableBankingApi {
     const url = `${ENABLE_BANKING_API_URL}${endpoint}`
 
     const headers = {
-      ...(options.headers as Record<string, string> || {}),
+      ...options?.headers ?? {},
       Authorization: `Bearer ${jwt}`,
       Accept: 'application/json',
     }
 
-    const fetchOptions: unknown = {
-      ...(options as Record<string, unknown>),
+    const fetchOptions = {
+      ...options,
       headers,
       muteHttpExceptions: true,
     }

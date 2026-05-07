@@ -1,12 +1,12 @@
 <script lang="ts">
+  import { Alert, Button, Input, Label, Modal, Select } from 'flowbite-svelte';
   import { onMount } from 'svelte';
-  import Application from '../Application.svelte';
-  import { Button, Alert, Modal, Input, Label, Select } from 'flowbite-svelte';
-  import { serverFunctions } from '../utils/serverFunctions';
   import type { EnableBankingConnection } from '../../server/enable-banking/rpc';
+  import Application from '../Application.svelte';
+  import { serverFunctions } from '../utils/serverFunctions';
 
   let connections = $state<EnableBankingConnection[]>([]);
-  let aspsps = $state<{name: string, country: string}[]>([]);
+  
   let isSyncing = $state(false);
   let syncMessage = $state('');
 
@@ -14,8 +14,12 @@
   let triggerFreqType = $state<'hours' | 'days'>('days');
   let triggerFreqVal = $state(1);
 
-  let showAddModal = $state(false);
+  let aspsps = $state<{name: string, country: string}[]>([]);
   let searchAspsp = $state('');
+  let filteredAspsps = $derived(
+    aspsps.filter(a => a.name.toLowerCase().includes(searchAspsp.toLowerCase()))
+  )
+  let showAddModal = $state(false);
 
   let showAuthCodeModal = $state(false);
   let authCode = $state('');
@@ -27,7 +31,9 @@
 
   async function loadData() {
     const connRes = await serverFunctions.getEnableBankingConnections();
-    if (connRes.success) connections = connRes.data;
+    if (connRes.success) {
+      connections = connRes.data;
+    }
 
     const trigRes = await serverFunctions.getEnableBankingTriggerStatus();
     if (trigRes.success) {
@@ -169,7 +175,7 @@
     <div class="space-y-4">
       <Input placeholder="Search bank..." bind:value={searchAspsp} />
       <div class="max-h-60 overflow-y-auto space-y-2">
-        {#each aspsps.filter(a => a.name.toLowerCase().includes(searchAspsp.toLowerCase())) as aspsp}
+        {#each filteredAspsps as aspsp}
           <div class="flex justify-between items-center p-2 hover:bg-gray-50 border-b">
             <span>{aspsp.name} ({aspsp.country})</span>
             <Button size="xs" onclick={() => startAuth(aspsp)}>Connect</Button>

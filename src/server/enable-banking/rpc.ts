@@ -3,7 +3,16 @@ import { AccountUtils } from '../accounts/account-utils'
 import { EnableBankingApi } from './api'
 import { syncEnableBankingTransactions } from './pipeline'
 
-const SYNC_TRIGGER_HANDLER = 'syncEnableBankingTransactions'
+const SYNC_TRIGGER_HANDLER = syncEnableBankingTransactions.name
+
+function isBankConnection(obj: unknown): obj is EnableBankingConnection {
+  return obj !== null
+    && typeof obj === 'object'
+    && 'sessionId' in obj && typeof obj.sessionId === 'string'
+    && 'bankName' in obj && typeof obj.bankName === 'string'
+    && 'accounts' in obj && Array.isArray(obj.accounts)
+    && 'createdAt' in obj && typeof obj.createdAt === 'string'
+}
 
 function normalizeIban(iban: string) {
   return iban.replace(/\s+/g, '').toUpperCase()
@@ -16,11 +25,20 @@ export type EnableBankingConnection = {
   createdAt: string
 }
 
-export function getEnableBankingConnections(): ServerResponse<EnableBankingConnection[]> {
+function getEnableBankingConnections(): EnableBankingConnection[] {
+  const props = PropertiesService.getUserProperties()
+  const str = props.getProperty('ENABLE_BANKING_CONNECTIONS')
+  const parsed = str ? JSON.parse(str) : []
+  if (Array.isArray(parsed) && parsed.every(isBankConnection)) {
+    return parsed
+  }
+  return []
+}
+
+export function RPCgetEnableBankingConnections(): ServerResponse<EnableBankingConnection[]> {
   try {
-    const props = PropertiesService.getUserProperties()
-    const str = props.getProperty('ENABLE_BANKING_CONNECTIONS')
-    return { success: true, data: str ? JSON.parse(str) : [] }
+    const connections = getEnableBankingConnections()
+    return { success: true, data: connections }
   }
   catch (error) {
     return { success: false, error: String(error) }
@@ -30,9 +48,7 @@ export function getEnableBankingConnections(): ServerResponse<EnableBankingConne
 export function removeEnableBankingConnection(sessionId: string): ServerResponse<void> {
   try {
     const props = PropertiesService.getUserProperties()
-    let connections: EnableBankingConnection[] = []
-    const str = props.getProperty('ENABLE_BANKING_CONNECTIONS')
-    if (str) connections = JSON.parse(str)
+    let connections = getEnableBankingConnections()
 
     connections = connections.filter(c => c.sessionId !== sessionId)
     props.setProperty('ENABLE_BANKING_CONNECTIONS', JSON.stringify(connections))
@@ -88,11 +104,7 @@ export function completeEnableBankingAuthorization(code: string, bankName: strin
     }
 
     const props = PropertiesService.getUserProperties()
-    let connections: EnableBankingConnection[] = []
-    const existingStr = props.getProperty('ENABLE_BANKING_CONNECTIONS')
-    if (existingStr) {
-      connections = JSON.parse(existingStr)
-    }
+    const connections = getEnableBankingConnections()
 
     connections.push({
       sessionId: sessionResponse.session_id,

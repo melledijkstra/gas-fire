@@ -49,27 +49,56 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     return { success: true, data: { duplicateHashes: [], table: [], newBalance: 0 } as unknown as ImportPreviewResult }
   }
 
-  async executeAutomaticCategorization(): Promise<void> {}
-  async mailNetWorth(): Promise<void> {}
-  async onOpen(): Promise<void> {}
-  async openFileUploadDialog(): Promise<void> {}
-  async openAboutDialog(): Promise<void> {}
-  async openSettingsDialog(): Promise<void> {}
-  async MD5(_value: string): Promise<string> { return 'md5' }
+  async executeAutomaticCategorization(): Promise<void> {
+    throw new Error('Mock not implemented')
+  }
+
+  async mailNetWorth(): Promise<void> {
+    throw new Error('Mock not implemented')
+  }
+
+  async onOpen(): Promise<void> {
+    throw new Error('Mock not implemented')
+  }
+
+  async openFileUploadDialog(): Promise<void> {
+    throw new Error('Mock not implemented')
+  }
+
+  async openAboutDialog(): Promise<void> {
+    throw new Error('Mock not implemented')
+  }
+
+  async openSettingsDialog(): Promise<void> {
+    throw new Error('Mock not implemented')
+  }
+
   async GET_PROJECT_VERSION(): Promise<string> { return 'version' }
-  async executeFindDuplicates(): Promise<void> {}
+  async executeFindDuplicates(): Promise<void> {
+    throw new Error('Mock not implemented')
+  }
 
   async getAccountOptions(): Promise<ServerResponse<AccountOptions>> {
     return { success: true, data: StrategyOptions }
   }
 
-  async setupEnableBankingConnection(): Promise<void> {}
-  async toggleEnableBankingDailySync(): Promise<void> {}
-  async syncEnableBankingTransactions(): Promise<void> {}
+  async setupEnableBankingConnection(): Promise<void> {
+    throw new Error('Mock not implemented')
+  }
 
-  async openEnableBankingDialog(): Promise<void> {}
+  async toggleEnableBankingDailySync(): Promise<void> {
+    throw new Error('Mock not implemented')
+  }
 
-  async getEnableBankingConnections(): Promise<ServerResponse<{ sessionId: string, bankName: string, accounts: { accountId: string, slug: string }[], createdAt: string }[]>> {
+  async syncEnableBankingTransactions(): Promise<void> {
+    throw new Error('Mock not implemented')
+  }
+
+  async openEnableBankingDialog(): Promise<void> {
+    throw new Error('Mock not implemented')
+  }
+
+  async RPCgetEnableBankingConnections(): Promise<ServerResponse<{ sessionId: string, bankName: string, accounts: { accountId: string, slug: string }[], createdAt: string }[]>> {
     return { success: true, data: [] }
   }
 
