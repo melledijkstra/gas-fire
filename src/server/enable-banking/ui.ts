@@ -3,6 +3,10 @@ import { EnableBankingApi } from './api'
 
 const SYNC_TRIGGER_HANDLER = 'syncEnableBankingTransactions'
 
+function normalizeIban(iban: string) {
+  return iban.replace(/\s+/g, '').toUpperCase()
+}
+
 function getPrivateKeyOrAlert(ui: GoogleAppsScript.Base.Ui): string | null {
   try {
     const key = PropertiesService.getScriptProperties().getProperty('ENABLE_BANKING_PRIVATE_KEY')
@@ -54,7 +58,9 @@ function mapAccounts(sessionAccounts: { uid: string, account_id?: { iban?: strin
   for (const acc of sessionAccounts) {
     const iban = acc.account_id?.iban
     if (iban) {
-      const match = Object.entries(configuredAccounts).find(([_slug, configuredIban]) => configuredIban === iban)
+      const match = Object.entries(configuredAccounts).find(([_slug, configuredIban]) => {
+        return iban && normalizeIban(configuredIban) === normalizeIban(iban)
+      })
       if (match) {
         mappedAccounts.push({ accountId: acc.uid, slug: match[0] })
       }
