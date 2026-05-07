@@ -57,13 +57,13 @@ export class EnableBankingApi {
     const url = `${ENABLE_BANKING_API_URL}${endpoint}`
 
     const headers = {
-      ...(options.headers as Record<string, string> || {}),
+      ...options?.headers ?? {},
       Authorization: `Bearer ${jwt}`,
       Accept: 'application/json',
     }
 
-    const fetchOptions: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-      ...(options as GoogleAppsScript.URL_Fetch.URLFetchRequestOptions),
+    const fetchOptions = {
+      ...options,
       headers,
       muteHttpExceptions: true,
     }
