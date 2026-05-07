@@ -1,15 +1,14 @@
 # Changelog
 
-## 4.17.0-beta
+## 4.16.1-beta
 
-- **Feature** - ✨ Setup modern Svelte dialog for managing the Enable Banking integration.
-
+- **Feature** - Setup modern Svelte dialog for managing the Enable Banking integration.
 
 ## 4.16.0-beta
 
-- **Feature** - ✨ Initial setup and integration for Enable Banking
-- **Feature** - ✨ Setup daily automated trigger to sync and fetch Enable Banking transactions
-- **Feature** - ✨ Connect accounts through new UI commands under the Apps Script menu
+- **Feature** - Initial setup and integration for Enable Banking
+- **Feature** - Setup daily automated trigger to sync and fetch Enable Banking transactions
+- **Feature** - Connect accounts through new UI commands under the Apps Script menu
 
 ## 4.15.7-beta
 
