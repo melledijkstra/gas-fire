@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.17.0-beta
+
+- **Feature** - ✨ Setup modern Svelte dialog for managing the Enable Banking integration.
+
+
 ## 4.16.0-beta
 
 - **Feature** - ✨ Initial setup and integration for Enable Banking

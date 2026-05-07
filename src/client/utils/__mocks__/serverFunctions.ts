@@ -1,6 +1,3 @@
-import { FIRE_COLUMNS } from '@/common/constants'
-import { getRowHash } from '@/common/helpers'
-import { Table } from '@/common/table/Table'
 import type {
   AccountOptions,
   ImportPreviewResult,
@@ -8,13 +5,8 @@ import type {
   ServerResponse,
   TransactionAction,
 } from '@/common/types'
-import { fireTableMock } from '@/fixtures/fire-table'
 import type * as publicServerFunctions from '@/server/index'
-import type { ImportRule, PackedRuleEngineResult } from '@/server/rule-engine/types'
-
-////////////////////////////////////////////////////////////////
-// This mock is used by storybook, to mimic server functions
-////////////////////////////////////////////////////////////////
+import type { PackedRuleEngineResult } from '@/server/rule-engine/types'
 
 type ServerFunctionsInterface = typeof publicServerFunctions
 
@@ -25,8 +17,6 @@ type Promisified<T> = {
 }
 
 type PromisifiedServerFunctionsInterface = Promisified<ServerFunctionsInterface>
-
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 const StrategyOptions = {
   aurora_financial_group: 'Aurora Financial Group',
@@ -40,135 +30,75 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
   }
 
   async importPipeline(
-    rawTable: RawTable,
-    bankAccount: string,
+    _rawTable: RawTable,
+    _bankAccount: string,
     _userDecisions?: Record<string, TransactionAction>,
   ): Promise<ServerResponse<{
     message: string
     ruleEngine?: PackedRuleEngineResult
   }>> {
-    console.log('importPipeline mock called with data:', rawTable, 'and selectedAccount:', bankAccount)
-    await sleep(2000)
-    const msg = `Successfully imported ${rawTable.length} rows!`
-    return {
-      success: true,
-      message: msg,
-      data: {
-        message: msg,
-      },
-    }
-  };
+    console.log('importPipeline mock called')
+    return { success: true, message: 'ok', data: { message: 'ok' } }
+  }
 
   async previewPipeline(
     _table: RawTable,
     _strategy: string,
   ): Promise<ServerResponse<ImportPreviewResult>> {
     console.log('previewPipeline mock called')
-    await sleep(2000)
-
-    const appliedRules: ImportRule[] = [
-      {
-        action: 'EXCLUDE',
-        ruleName: 'Test Rule',
-        banks: ['All'],
-        conditionColumn: 'test_column',
-        condition: 'REGEX',
-        actionColumn: 'action_column',
-        stopProcessing: false,
-        rulePhase: 'POST_TRANSFORM',
-      },
-      {
-        action: 'EXCLUDE',
-        ruleName: 'Another Rule',
-        banks: ['All'],
-        conditionColumn: 'test_column',
-        condition: 'REGEX',
-        actionColumn: 'action_column',
-        stopProcessing: false,
-        rulePhase: 'PRE_TRANSFORM',
-      },
-    ]
-
-    const rows = fireTableMock
-    const table = new Table(Array.from(FIRE_COLUMNS), rows)
-    const hashes = rows.map(getRowHash)
-
-    const duplicateHashes = [hashes[3], hashes[5]]
-    const removedHashes = [hashes[2], hashes[4]]
-
-    return {
-      success: true,
-      data: {
-        duplicateHashes,
-        table: table.pack(),
-        newBalance: 1234.56,
-        ruleEngine: {
-          rulesCount: appliedRules.length,
-          appliedRules,
-          warnings: [],
-          removedHashes: removedHashes,
-          rowExcludedRule: {
-            [hashes[2]]: appliedRules[0].ruleName,
-            [hashes[4]]: appliedRules[1].ruleName,
-          },
-        },
-      },
-    }
+    return { success: true, data: { duplicateHashes: [], table: [], newBalance: 0 } as unknown as ImportPreviewResult }
   }
 
-  async executeAutomaticCategorization(): Promise<void> {
-    console.log('executeAutomaticCategorization mock called')
-  };
-
-  async mailNetWorth(): Promise<void> {
-    console.log('mailNetWorth mock called')
-  };
-
-  async onOpen(): Promise<void> {
-    console.log('onOpen mock called')
-  };
-
-  async openFileUploadDialog(): Promise<void> {
-    console.log('openFileUploadDialog mock called')
-  };
-
-  async openAboutDialog(): Promise<void> {
-    console.log('openAboutDialog mock called')
-  };
-
-  async openSettingsDialog(): Promise<void> {
-    console.log('openSettingsDialog mock called')
-  };
-
-  async MD5(_value: string): Promise<string> {
-    console.log('MD5 mock called')
-    return 'mocked-md5'
-  };
-
-  async GET_PROJECT_VERSION(): Promise<string> {
-    console.log('GET_PROJECT_VERSION mock called')
-    return 'mocked-version'
-  };
-
-  async executeFindDuplicates(): Promise<void> {
-    console.log('executeFindDuplicates mock called')
-  };
+  async executeAutomaticCategorization(): Promise<void> {}
+  async mailNetWorth(): Promise<void> {}
+  async onOpen(): Promise<void> {}
+  async openFileUploadDialog(): Promise<void> {}
+  async openAboutDialog(): Promise<void> {}
+  async openSettingsDialog(): Promise<void> {}
+  async MD5(_value: string): Promise<string> { return 'md5' }
+  async GET_PROJECT_VERSION(): Promise<string> { return 'version' }
+  async executeFindDuplicates(): Promise<void> {}
 
   async getAccountOptions(): Promise<ServerResponse<AccountOptions>> {
-    console.log('getAccountOptions mock called')
     return { success: true, data: StrategyOptions }
   }
 
-  async setupEnableBankingConnection(): Promise<void> {
-    console.log('setupEnableBankingConnection mock called')
+  async setupEnableBankingConnection(): Promise<void> {}
+  async toggleEnableBankingDailySync(): Promise<void> {}
+  async syncEnableBankingTransactions(): Promise<void> {}
+
+  async openEnableBankingDialog(): Promise<void> {}
+
+  async getEnableBankingConnections(): Promise<ServerResponse<{ sessionId: string, bankName: string, accounts: { accountId: string, slug: string }[], createdAt: string }[]>> {
+    return { success: true, data: [] }
   }
 
-  async toggleEnableBankingDailySync(): Promise<void> {
-    console.log('toggleEnableBankingDailySync mock called')
+  async removeEnableBankingConnection(_sessionId: string): Promise<ServerResponse<void>> {
+    return { success: true }
   }
 
-  async syncEnableBankingTransactions(): Promise<void> {
-    console.log('syncEnableBankingTransactions mock called')
+  async getEnableBankingAspsps(): Promise<ServerResponse<{ name: string, country: string }[]>> {
+    return { success: true, data: [] }
+  }
+
+  async startEnableBankingAuthorization(_aspsp: unknown): Promise<ServerResponse<string>> {
+    return { success: true, data: '' }
+  }
+
+  async completeEnableBankingAuthorization(_code: string, _bankName: string): Promise<ServerResponse<number>> {
+    return { success: true, data: 1 }
+  }
+
+  async triggerEnableBankingSync(): Promise<ServerResponse<void>> {
+    return { success: true }
+  }
+
+  async getEnableBankingTriggerStatus(): Promise<ServerResponse<{ enabled: boolean, frequencyType: 'hours' | 'days', frequencyValue: number }>> {
+    return { success: true, data: { enabled: false, frequencyType: 'days', frequencyValue: 1 } }
+  }
+
+  async setEnableBankingTrigger(_enabled: boolean, _frequencyType: string, _frequencyValue: number): Promise<ServerResponse<void>> {
+    return { success: true }
   }
 }
 

@@ -62,8 +62,8 @@ export class EnableBankingApi {
       Accept: 'application/json',
     }
 
-    const fetchOptions: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-      ...(options as GoogleAppsScript.URL_Fetch.URLFetchRequestOptions),
+    const fetchOptions: unknown = {
+      ...(options as Record<string, unknown>),
       headers,
       muteHttpExceptions: true,
     }
