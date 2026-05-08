@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.15.9-beta
+
+- **Feature** - Setup github pages for potential enable banking integration in the future.
+
 ## 4.15.8-beta
 
 - **Refactor** - 🧹 Removed unused export `formatCellValue` from `src/server/import-pipeline/pipeline.ts` to improve maintainability and resolve Knip issue.
