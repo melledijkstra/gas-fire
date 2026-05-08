@@ -1,22 +1,21 @@
 import { Logger } from '@/common/logger'
-
-const ENABLE_BANKING_API_URL = 'https://api.enablebanking.com'
+import { ENABLE_BANKING_API_URL, PROP_ENABLE_BANKING_APP_ID, PROP_ENABLE_BANKING_PRIVATE_KEY } from './config'
 
 export class EnableBankingApi {
   private static getAppId(): string {
     const props = PropertiesService.getScriptProperties()
-    const appId = props.getProperty('ENABLE_BANKING_APP_ID')
+    const appId = props.getProperty(PROP_ENABLE_BANKING_APP_ID)
     if (!appId) {
-      throw new Error('ENABLE_BANKING_APP_ID is not set in Script Properties.')
+      throw new Error(`${PROP_ENABLE_BANKING_APP_ID} is not set in Script Properties.`)
     }
     return appId
   }
 
   private static getPrivateKey(): string {
     const props = PropertiesService.getScriptProperties()
-    const key = props.getProperty('ENABLE_BANKING_PRIVATE_KEY')
+    const key = props.getProperty(PROP_ENABLE_BANKING_PRIVATE_KEY)
     if (!key) {
-      throw new Error('ENABLE_BANKING_PRIVATE_KEY is not set in Script Properties. Please add your .pem private key.')
+      throw new Error(`${PROP_ENABLE_BANKING_PRIVATE_KEY} is not set in Script Properties. Please add your .pem private key.`)
     }
     return key
   }
