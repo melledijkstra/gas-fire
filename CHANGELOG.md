@@ -1,5 +1,12 @@
 # Changelog
 
+## 5.0.0-beta
+
+- **Feature** - Setup modern Svelte dialog for managing the Enable Banking integration.
+- **Feature** - Initial setup and integration for Enable Banking
+- **Feature** - Setup daily automated trigger to sync and fetch Enable Banking transactions
+- **Feature** - Connect accounts through new UI commands under the Apps Script menu
+
 ## 4.15.8-beta
 
 - **Refactor** - 🧹 Removed unused export `formatCellValue` from `src/server/import-pipeline/pipeline.ts` to improve maintainability and resolve Knip issue.

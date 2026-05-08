@@ -9,7 +9,9 @@ describe('AccountUtils Security Tests', () => {
 
   test('should fall back to live retrieval if cached data is malformed', () => {
     const cacheGetMock = vi.fn()
+    // @ts-expect-error test
     CacheServiceMock.getDocumentCache.mockReturnValue({
+
       get: cacheGetMock,
       put: vi.fn(),
     } as unknown as GoogleAppsScript.Cache.Cache)
