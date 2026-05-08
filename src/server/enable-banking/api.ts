@@ -1,13 +1,11 @@
 import { Logger } from '@/common/logger'
 
 const ENABLE_BANKING_API_URL = 'https://api.enablebanking.com'
-// Use script properties since the private key is application-wide
 
 export class EnableBankingApi {
   private static getAppId(): string {
     const props = PropertiesService.getScriptProperties()
-    // Fallback to the default application ID if not provided in script properties
-    const appId = props.getProperty('ENABLE_BANKING_APP_ID') || '77422cf6-6543-43c9-ba14-e16722d44a51'
+    const appId = props.getProperty('ENABLE_BANKING_APP_ID')
     if (!appId) {
       throw new Error('ENABLE_BANKING_APP_ID is not set in Script Properties.')
     }
