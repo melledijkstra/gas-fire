@@ -50,10 +50,10 @@
   <button id="copy-btn" onclick="copyAuthCode()">Copy Authorization Code</button>
 
   <script>
-    // Extract the hash parameters from the URL
-    const hashParams = new URLSearchParams(window.location.search);
-    const code = hashParams.get('code');
-    const state = hashParams.get('state');
+    // Extract the query parameters from the URL
+    const queryParams = new URLSearchParams(window.location.search);
+    const code = queryParams.get('code');
+    const state = queryParams.get('state');
 
     if (code && state) {
       // Display the authorization code in the page for the user to copy
@@ -66,8 +66,6 @@
 
     function copyAuthCode() {
       const btn = document.getElementById('copy-btn');
-      const hashParams = new URLSearchParams(window.location.search);
-      const code = hashParams.get('code');
 
       navigator.clipboard.writeText(code).then(() => {
         btn.textContent = 'Copied to clipboard!';
