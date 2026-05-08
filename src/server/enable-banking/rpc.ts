@@ -1,6 +1,7 @@
 import type { ServerResponse } from '@/common/types'
 import { AccountUtils } from '../accounts/account-utils'
 import { EnableBankingApi } from './api'
+import { PROP_ENABLE_BANKING_CONNECTIONS, PROP_ENABLE_BANKING_TRIGGER_FREQ_TYPE, PROP_ENABLE_BANKING_TRIGGER_FREQ_VAL, REDIRECT_URL } from './config'
 import { syncEnableBankingTransactions } from './pipeline'
 
 const SYNC_TRIGGER_HANDLER = syncEnableBankingTransactions.name
@@ -27,7 +28,7 @@ export type EnableBankingConnection = {
 
 function getEnableBankingConnections(): EnableBankingConnection[] {
   const props = PropertiesService.getUserProperties()
-  const str = props.getProperty('ENABLE_BANKING_CONNECTIONS')
+  const str = props.getProperty(PROP_ENABLE_BANKING_CONNECTIONS)
   const parsed = str ? JSON.parse(str) : []
   if (Array.isArray(parsed) && parsed.every(isBankConnection)) {
     return parsed
@@ -51,7 +52,7 @@ export function removeEnableBankingConnection(sessionId: string): ServerResponse
     let connections = getEnableBankingConnections()
 
     connections = connections.filter(c => c.sessionId !== sessionId)
-    props.setProperty('ENABLE_BANKING_CONNECTIONS', JSON.stringify(connections))
+    props.setProperty(PROP_ENABLE_BANKING_CONNECTIONS, JSON.stringify(connections))
     return { success: true }
   }
   catch (error) {
@@ -71,9 +72,8 @@ export function getEnableBankingAspsps(): ServerResponse<{ name: string, country
 
 export function startEnableBankingAuthorization(aspsp: { name: string, country: string }): ServerResponse<string> {
   try {
-    const dummyRedirectUrl = 'https://localhost:8080/callback'
     const state = Utilities.getUuid()
-    const authResponse = EnableBankingApi.startAuthorization(aspsp, dummyRedirectUrl, state)
+    const authResponse = EnableBankingApi.startAuthorization(aspsp, REDIRECT_URL, state)
     return { success: true, data: authResponse.url }
   }
   catch (error) {
@@ -87,14 +87,14 @@ export function completeEnableBankingAuthorization(code: string, bankName: strin
     const configuredAccounts = AccountUtils.getBankAccounts()
     const mappedAccounts: { accountId: string, slug: string }[] = []
 
-    for (const acc of sessionResponse.accounts || []) {
-      const iban = acc.account_id?.iban
+    for (const account of sessionResponse.accounts ?? []) {
+      const iban = account.account_id?.iban
       if (iban) {
         const match = Object.entries(configuredAccounts).find(
           ([_slug, configuredIban]) => normalizeIban(configuredIban) === normalizeIban(iban),
         )
         if (match) {
-          mappedAccounts.push({ accountId: acc.uid, slug: match[0] })
+          mappedAccounts.push({ accountId: account.uid, slug: match[0] })
         }
       }
     }
@@ -113,7 +113,7 @@ export function completeEnableBankingAuthorization(code: string, bankName: strin
       createdAt: new Date().toISOString(),
     })
 
-    props.setProperty('ENABLE_BANKING_CONNECTIONS', JSON.stringify(connections))
+    props.setProperty(PROP_ENABLE_BANKING_CONNECTIONS, JSON.stringify(connections))
 
     return { success: true, data: mappedAccounts.length }
   }
@@ -138,8 +138,8 @@ export function getEnableBankingTriggerStatus(): ServerResponse<{ enabled: boole
     const existingTrigger = triggers.find(t => t.getHandlerFunction() === SYNC_TRIGGER_HANDLER)
 
     const props = PropertiesService.getUserProperties()
-    const frequencyRaw = props.getProperty('ENABLE_BANKING_TRIGGER_FREQ_VAL')
-    const frequencyTypeRaw = props.getProperty('ENABLE_BANKING_TRIGGER_FREQ_TYPE')
+    const frequencyRaw = props.getProperty(PROP_ENABLE_BANKING_TRIGGER_FREQ_VAL)
+    const frequencyTypeRaw = props.getProperty(PROP_ENABLE_BANKING_TRIGGER_FREQ_TYPE)
     const frequencyType = (frequencyTypeRaw as 'hours' | 'days') || 'days'
     const frequency = Number.parseInt(frequencyRaw || '1', 10)
 
@@ -177,8 +177,8 @@ export function setEnableBankingTrigger(enabled: boolean, frequencyType: 'hours'
       builder.create()
 
       const props = PropertiesService.getUserProperties()
-      props.setProperty('ENABLE_BANKING_TRIGGER_FREQ_TYPE', frequencyType)
-      props.setProperty('ENABLE_BANKING_TRIGGER_FREQ_VAL', frequencyValue.toString())
+      props.setProperty(PROP_ENABLE_BANKING_TRIGGER_FREQ_TYPE, frequencyType)
+      props.setProperty(PROP_ENABLE_BANKING_TRIGGER_FREQ_VAL, frequencyValue.toString())
     }
 
     return { success: true }
