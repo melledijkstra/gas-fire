@@ -4,7 +4,7 @@ import { Table } from '@/common/table/Table'
 import type { CellValue } from '@/common/types'
 import type { ImportRule, RuleCondition, RulePhase, RuleWarning } from './types'
 
-export interface RuleExecutionContext {
+interface RuleExecutionContext {
   excludedIndices: Set<number>
   appliedRules: ImportRule[]
   rowsAffectedCount: number
@@ -77,44 +77,49 @@ export class RuleProcessor {
     }
   }
 
+  private evaluateNumericCondition(value: string, conditionValue: string | undefined, operator: 'GREATER_THAN' | 'LESS_THAN'): boolean {
+    const numVal = Number.parseFloat(value)
+    const target = Number.parseFloat(conditionValue ?? '0')
+    if (Number.isNaN(numVal) || Number.isNaN(target)) return false
+
+    return operator === 'GREATER_THAN' ? numVal > target : numVal < target
+  }
+
+  private evaluateRegexCondition(value: string, conditionValue: string | undefined): boolean {
+    try {
+      const regex = this.getCachedRegex(conditionValue ?? '')
+      return regex.test(value)
+    }
+    catch {
+      Logger.warn(`Invalid regex in rule: ${conditionValue}`)
+      return false
+    }
+  }
+
+  private evaluateStringCondition(value: string, condition: string, conditionValue: string | undefined): boolean {
+    const target = conditionValue?.toLowerCase() ?? ''
+    const val = value.toLowerCase()
+
+    if (condition === 'EQUALS') return val === target
+    if (condition === 'CONTAINS') return val.includes(target)
+    if (condition === 'NOT_CONTAINS') return !val.includes(target)
+
+    return false
+  }
+
   /**
    * Evaluates a single condition.
    */
-  // eslint-disable-next-line complexity
   private evaluateCondition(cellValue: string, condition: RuleCondition, conditionValue?: string): boolean {
     const value = cellValue?.toString() ?? ''
 
-    switch (condition) {
-      case 'NOT_EMPTY':
-        return value.trim() !== ''
-      case 'EQUALS':
-        return value.toLowerCase() === (conditionValue?.toLowerCase() ?? '')
-      case 'CONTAINS':
-        return value.toLowerCase().includes((conditionValue?.toLowerCase() ?? ''))
-      case 'NOT_CONTAINS':
-        return !value.toLowerCase().includes((conditionValue?.toLowerCase() ?? ''))
-      case 'REGEX':
-        try {
-          const regex = this.getCachedRegex(conditionValue ?? '')
-          return regex.test(value)
-        }
-        catch {
-          Logger.warn(`Invalid regex in rule: ${conditionValue}`)
-          return false
-        }
-      case 'GREATER_THAN': {
-        const numVal = Number.parseFloat(value)
-        const target = Number.parseFloat(conditionValue ?? '0')
-        return !Number.isNaN(numVal) && !Number.isNaN(target) && numVal > target
-      }
-      case 'LESS_THAN': {
-        const numVal = Number.parseFloat(value)
-        const target = Number.parseFloat(conditionValue ?? '0')
-        return !Number.isNaN(numVal) && !Number.isNaN(target) && numVal < target
-      }
-      default:
-        return false
+    if (condition === 'NOT_EMPTY') return value.trim() !== ''
+    if (condition === 'REGEX') return this.evaluateRegexCondition(value, conditionValue)
+    if (condition === 'GREATER_THAN' || condition === 'LESS_THAN') {
+      return this.evaluateNumericCondition(value, conditionValue, condition)
     }
+
+    return this.evaluateStringCondition(value, condition, conditionValue)
   }
 
   /**
@@ -163,11 +168,39 @@ export class RuleProcessor {
     return rowAffected
   }
 
+  private applyNumericAction(row: CellValue[], targetColumnIndex: number, actionValueStr: string, operator: 'ADD' | 'SUBTRACT'): void {
+    const currentValue = row[targetColumnIndex]?.toString() ?? ''
+    const numVal = Number.parseFloat(currentValue) || 0
+    const val = Number.parseFloat(actionValueStr)
+    if (!Number.isNaN(numVal) && !Number.isNaN(val)) {
+      row[targetColumnIndex] = operator === 'ADD' ? (numVal + val).toString() : (numVal - val).toString()
+    }
+  }
+
+  private applyColumnNumericAction(
+    row: CellValue[],
+    targetColumnIndex: number,
+    actionColumnName: string,
+    getColumnIndex: (colName: string) => number,
+    operator: 'ADD' | 'SUBTRACT',
+    ruleName: string,
+  ): void {
+    const sourceColIndex = getColumnIndex(actionColumnName)
+    if (sourceColIndex === -1) {
+      if (operator === 'SUBTRACT') {
+        Logger.warn(`Action value column '${actionColumnName}' not found for rule '${ruleName}'.`)
+      }
+      return
+    }
+
+    const actionValueStr = row[sourceColIndex]?.toString() ?? '0'
+    this.applyNumericAction(row, targetColumnIndex, actionValueStr, operator)
+  }
+
   /**
    * Applies actions to a specific row array.
    * Mutates the row array if it's a SET/ADD/SUBTRACT action.
    */
-  // eslint-disable-next-line complexity
   private applyAction(
     row: CellValue[],
     rule: ImportRule,
@@ -176,50 +209,18 @@ export class RuleProcessor {
     const targetColumnIndex = getColumnIndex(rule?.actionColumn ?? '')
     if (targetColumnIndex === -1) return
 
-    const currentValue = row[targetColumnIndex]?.toString() ?? ''
-
     switch (rule.action) {
       case 'SET':
         row[targetColumnIndex] = rule.actionValue ?? ''
         break
-      case 'ADD': {
-        const numVal = Number.parseFloat(currentValue) || 0
-        const addVal = Number.parseFloat(rule.actionValue ?? '0')
-        if (!Number.isNaN(numVal) && !Number.isNaN(addVal)) {
-          row[targetColumnIndex] = (numVal + addVal).toString()
-        }
+      case 'ADD':
+      case 'SUBTRACT':
+        this.applyNumericAction(row, targetColumnIndex, rule.actionValue ?? '0', rule.action)
         break
-      }
-      case 'ADD_COLUMN': {
-        const addColIndex = getColumnIndex(rule.actionValue ?? '')
-        if (addColIndex === -1) {
-          // We don't want to log for every row, but maybe we should have warned at the beginning of applyRulesToRow
-          break
-        }
-        const numVal = Number.parseFloat(currentValue) || 0
-        const addVal = Number.parseFloat(row[addColIndex]?.toString() ?? '0')
-        row[targetColumnIndex] = (numVal + addVal).toString()
-        break
-      }
-      case 'SUBTRACT': {
-        const numVal = Number.parseFloat(currentValue) || 0
-        const subVal = Number.parseFloat(rule.actionValue ?? '0')
-        if (!Number.isNaN(numVal) && !Number.isNaN(subVal)) {
-          row[targetColumnIndex] = (numVal - subVal).toString()
-        }
-        break
-      }
+      case 'ADD_COLUMN':
       case 'SUBTRACT_COLUMN': {
-        const subColIndex = getColumnIndex(rule.actionValue ?? '')
-        if (subColIndex === -1) {
-          Logger.warn(`Action value column '${rule.actionValue}' not found for rule '${rule.ruleName}'.`)
-          break
-        }
-        const numVal = Number.parseFloat(currentValue) || 0
-        const subVal = Number.parseFloat(row[subColIndex]?.toString() ?? '0')
-        if (!Number.isNaN(numVal) && !Number.isNaN(subVal)) {
-          row[targetColumnIndex] = (numVal - subVal).toString()
-        }
+        const op = rule.action === 'ADD_COLUMN' ? 'ADD' : 'SUBTRACT'
+        this.applyColumnNumericAction(row, targetColumnIndex, rule.actionValue ?? '', getColumnIndex, op, rule.ruleName)
         break
       }
       case 'EXCLUDE':
@@ -239,17 +240,15 @@ export class RuleProcessor {
     })
   }
 
-  /**
-   * Applies PRE_TRANSFORM rules to a raw Table.
-   * Note: EXCLUDE rules don't remove the row from the Table directly in this function,
-   * they just return the indices to be removed so the caller can handle it safely.
-   */
-  applyPreTransformRules(
-    table: Table,
+  private applyRulesToTable(
+    table: Table | FireTable,
     accountId: string,
+    phase: RulePhase,
   ): RuleExecutionContext {
-    Logger.time('applyPreTransformRules')
-    const applicableRules = this.getApplicableRules(accountId, 'PRE_TRANSFORM')
+    const loggerName = phase === 'PRE_TRANSFORM' ? 'applyPreTransformRules' : 'applyPostTransformRules'
+    Logger.time(loggerName)
+
+    const applicableRules = this.getApplicableRules(accountId, phase)
     const context: RuleExecutionContext = {
       excludedIndices: new Set(),
       appliedRules: [],
@@ -258,7 +257,10 @@ export class RuleProcessor {
       excludedByRule: new Map(),
     }
 
-    if (applicableRules.length === 0) return context
+    if (applicableRules.length === 0) {
+      Logger.timeEnd(loggerName)
+      return context
+    }
 
     const data = table.data
     const affectedRows = new Set<number>()
@@ -272,9 +274,21 @@ export class RuleProcessor {
 
     context.rowsAffectedCount = affectedRows.size
 
-    Logger.timeEnd('applyPreTransformRules')
+    Logger.timeEnd(loggerName)
 
     return context
+  }
+
+  /**
+   * Applies PRE_TRANSFORM rules to a raw Table.
+   * Note: EXCLUDE rules don't remove the row from the Table directly in this function,
+   * they just return the indices to be removed so the caller can handle it safely.
+   */
+  applyPreTransformRules(
+    table: Table,
+    accountId: string,
+  ): RuleExecutionContext {
+    return this.applyRulesToTable(table, accountId, 'PRE_TRANSFORM')
   }
 
   /**
@@ -285,32 +299,6 @@ export class RuleProcessor {
     fireTable: FireTable,
     accountId: string,
   ): RuleExecutionContext {
-    Logger.time('applyPostTransformRules')
-    const applicableRules = this.getApplicableRules(accountId, 'POST_TRANSFORM')
-    const context: RuleExecutionContext = {
-      appliedRules: [],
-      rowsAffectedCount: 0,
-      warnings: [],
-      excludedIndices: new Set(),
-      excludedByRule: new Map(),
-    }
-
-    if (applicableRules.length === 0) return context
-
-    const data = fireTable.data
-    const affectedRows = new Set<number>()
-    const getColumnIndex = (name: string) => fireTable.headers.indexOf(name)
-
-    for (let i = 0; i < data.length; i++) {
-      if (this.applyRulesToRow(data[i], i, applicableRules, getColumnIndex, context)) {
-        affectedRows.add(i)
-      }
-    }
-
-    context.rowsAffectedCount = affectedRows.size
-
-    Logger.timeEnd('applyPostTransformRules')
-
-    return context
+    return this.applyRulesToTable(fireTable, accountId, 'POST_TRANSFORM')
   }
 }
