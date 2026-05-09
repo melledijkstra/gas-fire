@@ -4,7 +4,7 @@ import { Table } from '@/common/table/Table'
 import type { CellValue } from '@/common/types'
 import type { ImportRule, RuleCondition, RulePhase, RuleWarning } from './types'
 
-interface RuleExecutionContext {
+export interface RuleExecutionContext {
   excludedIndices: Set<number>
   appliedRules: ImportRule[]
   rowsAffectedCount: number
