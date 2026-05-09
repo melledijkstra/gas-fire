@@ -9,7 +9,7 @@ const VALID_CONDITIONS: Set<RuleCondition> = new Set([
 const VALID_ACTIONS: Set<RuleAction> = new Set(['EXCLUDE', 'SET', 'SUBTRACT', 'SUBTRACT_COLUMN', 'ADD', 'ADD_COLUMN'])
 const VALID_PHASES: Set<RulePhase> = new Set(['PRE_TRANSFORM', 'POST_TRANSFORM'])
 
-export interface ParseResult {
+interface ParseResult {
   rules: ImportRule[]
   warnings: RuleWarning[]
 }
@@ -61,7 +61,83 @@ export class RuleParser {
     return { rules: this.rules, warnings: this.warnings }
   }
 
-  // eslint-disable-next-line complexity
+  private validateRuleBase(
+    ruleName: string,
+    banks: string[],
+    conditionColumnRaw: string,
+    conditionRaw: string,
+    actionRaw: string,
+    rulePhaseRaw: string,
+    accountId?: string,
+  ): boolean {
+    if (!banks || banks?.length === 0) {
+      // At least a single bank or "all" should be set for a rule to be valid
+      this.warnings.push({ ruleName, message: 'At least one bank must be specified, or "All".' })
+      return false
+    }
+
+    if (!this.validateBanks(banks, accountId)) {
+      // This rule does not apply to the current account, neither applies to all banks
+      // we can skip it without a warning.
+      return false
+    }
+
+    if (!conditionColumnRaw) {
+      this.warnings.push({ ruleName, message: 'Condition Column is required.' })
+      return false
+    }
+
+    if (!VALID_CONDITIONS.has(conditionRaw as RuleCondition)) {
+      this.warnings.push({ ruleName, message: `Invalid condition: "${conditionRaw}".` })
+      return false
+    }
+
+    if (!VALID_ACTIONS.has(actionRaw as RuleAction)) {
+      this.warnings.push({ ruleName, message: `Invalid action: "${actionRaw}".` })
+      return false
+    }
+
+    if (!VALID_PHASES.has(rulePhaseRaw as RulePhase)) {
+      this.warnings.push({ ruleName, message: `Invalid rule phase: "${rulePhaseRaw}". Must be one of ${Array.from(VALID_PHASES).join(', ')}` })
+      return false
+    }
+
+    return true
+  }
+
+  private validateRuleValues(
+    ruleName: string,
+    condition: RuleCondition,
+    conditionValueRaw: string,
+    action: RuleAction,
+    actionTargetRaw: string,
+    actionValueRaw: string,
+  ): boolean {
+    // Validation for condition values
+    if (condition !== 'NOT_EMPTY' && !conditionValueRaw) {
+      this.warnings.push({ ruleName, message: `Condition value is required for condition "${condition}".` })
+      return false
+    }
+
+    // Validation for action columns and values
+    const actionRequiresValues = action === 'SET' || action === 'SUBTRACT' || action === 'ADD' || action === 'SUBTRACT_COLUMN' || action === 'ADD_COLUMN'
+    if (actionRequiresValues && (!actionTargetRaw || !actionValueRaw)) {
+      this.warnings.push({ ruleName, message: `Action Column and Action Value are required for ${action} action.` })
+      return false
+    }
+
+    if (action === 'EXCLUDE' && !actionTargetRaw) {
+      // Allow EXCLUDE to not have an action column if it just implies removing the row.
+      // We can default actionColumn to empty string or 'ROW' internally.
+    }
+    else if (action !== 'EXCLUDE' && !actionTargetRaw) {
+      this.warnings.push({ ruleName, message: `Action Column is required for action "${action}".` })
+      return false
+    }
+
+    return true
+  }
+
   private parseRuleRow(row: string[], ruleName: string, accountId?: string): ImportRule | undefined {
     const [
       _ruleNameRaw,
@@ -78,64 +154,14 @@ export class RuleParser {
 
     const banks = this.parseBanks(banksRaw)
 
-    if (!banks || banks?.length === 0) {
-      // At least a single bank or "all" should be set for a rule to be valid
-      this.warnings.push({ ruleName, message: 'At least one bank must be specified, or "All".' })
-      return
-    }
-
-    if (!this.validateBanks(banks, accountId)) {
-      // This rule does not apply to the current account, neither applies to all banks
-      // we can skip it without a warning.
-      return
-    }
-
-    if (!conditionColumnRaw) {
-      this.warnings.push({ ruleName, message: 'Condition Column is required.' })
-      return
-    }
-
-    if (!VALID_CONDITIONS.has(conditionRaw as RuleCondition)) {
-      this.warnings.push({ ruleName, message: `Invalid condition: "${conditionRaw}".` })
-      return
-    }
-
-    if (!VALID_ACTIONS.has(actionRaw as RuleAction)) {
-      this.warnings.push({ ruleName, message: `Invalid action: "${actionRaw}".` })
-      return
-    }
-
-    if (!VALID_PHASES.has(rulePhaseRaw as RulePhase)) {
-      this.warnings.push({ ruleName, message: `Invalid rule phase: "${rulePhaseRaw}". Must be one of ${Array.from(VALID_PHASES).join(', ')}` })
+    if (!this.validateRuleBase(ruleName, banks, conditionColumnRaw, conditionRaw, actionRaw, rulePhaseRaw, accountId)) {
       return
     }
 
     const condition = conditionRaw as RuleCondition
     const action = actionRaw as RuleAction
 
-    // Validation for condition values
-    if (condition !== 'NOT_EMPTY' && !conditionValueRaw) {
-      this.warnings.push({ ruleName, message: `Condition value is required for condition "${condition}".` })
-      return
-    }
-
-    // Validation for action columns and values
-    if ((action === 'SET' || action === 'SUBTRACT' || action === 'ADD') && (!actionTargetRaw || !actionValueRaw)) {
-      this.warnings.push({ ruleName, message: `Action Column and Action Value are required for ${action} action.` })
-      return
-    }
-
-    if ((action === 'SUBTRACT_COLUMN' || action === 'ADD_COLUMN') && (!actionTargetRaw || !actionValueRaw)) {
-      this.warnings.push({ ruleName, message: `Action Column and Action Value are required for ${action} action.` })
-      return
-    }
-
-    if (action === 'EXCLUDE' && !actionTargetRaw) {
-      // Allow EXCLUDE to not have an action column if it just implies removing the row.
-      // We can default actionColumn to empty string or 'ROW' internally.
-    }
-    else if (action !== 'EXCLUDE' && !actionTargetRaw) {
-      this.warnings.push({ ruleName, message: `Action Column is required for action "${action}".` })
+    if (!this.validateRuleValues(ruleName, condition, conditionValueRaw, action, actionTargetRaw, actionValueRaw)) {
       return
     }
 
