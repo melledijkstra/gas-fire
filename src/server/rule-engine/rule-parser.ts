@@ -9,7 +9,7 @@ const VALID_CONDITIONS: Set<RuleCondition> = new Set([
 const VALID_ACTIONS: Set<RuleAction> = new Set(['EXCLUDE', 'SET', 'SUBTRACT', 'SUBTRACT_COLUMN', 'ADD', 'ADD_COLUMN'])
 const VALID_PHASES: Set<RulePhase> = new Set(['PRE_TRANSFORM', 'POST_TRANSFORM'])
 
-interface ParseResult {
+export interface ParseResult {
   rules: ImportRule[]
   warnings: RuleWarning[]
 }
