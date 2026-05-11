@@ -1,51 +1,12 @@
+import { FIRE_COLUMNS } from '@/common/constants'
 import { Logger } from '@/common/logger'
-import type { RawTable } from '@/common/types'
+import { FireTable } from '@/common/table/FireTable'
+import { AccountUtils } from '../accounts/account-utils'
+import { Config } from '../config'
+import { enableBankingPipeline } from '../import-pipeline/rpc'
+import { Transformers } from '../transformers'
 import { EnableBankingApi } from './api'
-import { importPipeline } from '../import-pipeline/rpc'
-
-type EnableBankingConnection = {
-  sessionId: string
-  bankName: string
-  accounts: { accountId: string, slug: string }[]
-  createdAt: string
-}
-
-type EnableBankingTransaction = {
-  transaction_amount?: { amount: string, currency: string }
-  value_date?: string
-  booking_date?: string
-  transaction_date?: string
-  creditor?: { name: string }
-  debtor?: { name: string }
-  creditor_account?: { iban: string }
-  debtor_account?: { iban: string }
-  remittance_information?: string[]
-  note?: string
-  credit_debit_indicator?: string
-}
-
-function fetchAndTransformTransactions(accountId: string): RawTable | null {
-  // Only fetch transactions from the last 7 days to avoid huge payloads,
-  // duplicate detection will handle overlaps.
-  const dateFrom = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-
-  const response = EnableBankingApi.getAccountTransactions(accountId, dateFrom)
-  const transactions: EnableBankingTransaction[] = response.transactions || []
-
-  if (transactions.length === 0) {
-    return null
-  }
-
-  // Transform JSON transactions into a Table format
-  // We define a standard set of headers that our mapping config should expect.
-  const headers = ['Amount', 'Currency', 'Date', 'Payee', 'IBAN', 'Description']
-
-  const rawData: RawTable = [headers]
-
-  rawData.push(...transactions.map(mapTransactionToRow))
-
-  return rawData
-}
+import type { EnableBankingConnection, EnableBankingTransaction } from './types'
 
 function getTransactionDate(tx: EnableBankingTransaction): string {
   if (tx.value_date) return tx.value_date
@@ -67,22 +28,38 @@ function getTransactionAmount(tx: EnableBankingTransaction): string {
   return amount
 }
 
-function mapTransactionToRow(tx: EnableBankingTransaction): string[] {
-  const amount = getTransactionAmount(tx)
-  const currency = tx.transaction_amount?.currency || ''
-  const date = getTransactionDate(tx)
-  const payee = tx.creditor?.name || tx.debtor?.name || ''
-  const iban = tx.creditor_account?.iban || tx.debtor_account?.iban || ''
-  const description = tx.remittance_information?.join(' ') || tx.note || ''
+function fetchAndMapToFireTable(enableBankingAccount: string, config: Config): FireTable | null {
+  // Only fetch transactions from the last 7 days to avoid huge payloads,
+  // duplicate detection will handle overlaps.
+  const dateFrom = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 
-  return [
-    amount,
-    currency,
-    date,
-    payee,
-    iban,
-    description,
-  ]
+  const response = EnableBankingApi.getAccountTransactions(enableBankingAccount, dateFrom)
+  const transactions: EnableBankingTransaction[] = response.transactions || []
+
+  if (transactions.length === 0) {
+    return null
+  }
+
+  const importDate = new Date()
+  const iban = AccountUtils.getAccountIban(config.getAccountId())
+
+  const data = transactions.map((tx) => {
+    const row = new Array(FIRE_COLUMNS.length).fill('')
+
+    row[FireTable.getFireColumnIndex('amount')] = Transformers.transformMoney(getTransactionAmount(tx))
+    row[FireTable.getFireColumnIndex('currency')] = tx.transaction_amount?.currency || ''
+    row[FireTable.getFireColumnIndex('date')] = Transformers.transformDate(getTransactionDate(tx))
+    row[FireTable.getFireColumnIndex('contra_account')] = tx.creditor?.name || tx.debtor?.name || ''
+    // PENDING: only apply contra_iban mapping when it makes sense, avoid duplicating with same IBAN in both 'iban' and 'contra_iban'.
+    row[FireTable.getFireColumnIndex('contra_iban')] = tx.creditor_account?.iban || tx.debtor_account?.iban || ''
+    row[FireTable.getFireColumnIndex('description')] = tx.remittance_information?.join(' ') || tx.note || ''
+    row[FireTable.getFireColumnIndex('import_date')] = importDate
+    row[FireTable.getFireColumnIndex('iban')] = iban
+
+    return row
+  })
+
+  return new FireTable(data)
 }
 
 export function syncEnableBankingTransactions() {
@@ -112,24 +89,17 @@ export function syncEnableBankingTransactions() {
       Logger.log(`Fetching transactions for account slug: ${account.slug}`)
 
       try {
-        const rawData = fetchAndTransformTransactions(account.accountId)
-        if (!rawData) {
+        const config = Config.getAccountConfiguration(account.slug)
+        const fireTable = fetchAndMapToFireTable(account.accountId, config)
+
+        if (!fireTable) {
           Logger.log(`No new transactions found for ${account.slug}`)
           continue
         }
 
-        Logger.log(`Converted ${rawData.length - 1} transactions for ${account.slug} into RawTable`)
+        Logger.log(`Converted ${fireTable.getRowCount()} transactions for ${account.slug} into FireTable`)
 
-        // Important: Note that for this to work, the user MUST configure the 'import-settings'
-        // sheet for the relevant account slug to map:
-        // amount -> Amount
-        // date -> Date
-        // contra_account -> Payee
-        // contra_iban -> IBAN
-        // description -> Description
-        // currency -> Currency
-
-        const result = importPipeline(rawData, account.slug)
+        const result = enableBankingPipeline(fireTable, account.slug)
 
         if (result.success) {
           Logger.log(`Successfully synced ${account.slug}: ${result.message}`)
