@@ -3,6 +3,7 @@ import { AccountUtils } from '../accounts/account-utils'
 import { EnableBankingApi } from './api'
 import { PROP_ENABLE_BANKING_CONNECTIONS, PROP_ENABLE_BANKING_TRIGGER_FREQ_TYPE, PROP_ENABLE_BANKING_TRIGGER_FREQ_VAL, REDIRECT_URL } from './config'
 import { syncEnableBankingTransactions } from './pipeline'
+import { normalizeIban } from './utils'
 
 const SYNC_TRIGGER_HANDLER = syncEnableBankingTransactions.name
 
@@ -13,10 +14,6 @@ function isBankConnection(obj: unknown): obj is EnableBankingConnection {
     && 'bankName' in obj && typeof obj.bankName === 'string'
     && 'accounts' in obj && Array.isArray(obj.accounts)
     && 'createdAt' in obj && typeof obj.createdAt === 'string'
-}
-
-function normalizeIban(iban: string) {
-  return iban.replace(/\s+/g, '').toUpperCase()
 }
 
 export type EnableBankingConnection = {
@@ -60,10 +57,24 @@ export function removeEnableBankingConnection(sessionId: string): ServerResponse
   }
 }
 
-export function getEnableBankingAspsps(): ServerResponse<{ name: string, country: string }[]> {
+export function getEnableBankingAspsps(): ServerResponse<{ name: string, country: string, logo?: string, connected?: boolean }[]> {
   try {
     const aspspsResponse = EnableBankingApi.getAspsps()
-    return { success: true, data: aspspsResponse.aspsps || [] }
+    const connections = getEnableBankingConnections()
+
+    const aspsps = (aspspsResponse.aspsps || []).map(aspsp => ({
+      ...aspsp,
+      connected: connections.some(c => c.bankName === aspsp.name),
+    }))
+
+    // Sort so connected banks are first, then alphabetically by name
+    aspsps.sort((a, b) => {
+      if (a.connected && !b.connected) return -1
+      if (!a.connected && b.connected) return 1
+      return a.name.localeCompare(b.name)
+    })
+
+    return { success: true, data: aspsps }
   }
   catch (error) {
     return { success: false, error: String(error) }
@@ -85,7 +96,7 @@ export function completeEnableBankingAuthorization(code: string, bankName: strin
   try {
     const sessionResponse = EnableBankingApi.authorizeSession(code)
     const configuredAccounts = AccountUtils.getBankAccounts()
-    const mappedAccounts: { accountId: string, slug: string }[] = []
+    let mappedAccounts: { accountId: string, slug: string }[] = []
 
     for (const account of sessionResponse.accounts ?? []) {
       const iban = account.account_id?.iban
@@ -105,6 +116,17 @@ export function completeEnableBankingAuthorization(code: string, bankName: strin
 
     const props = PropertiesService.getUserProperties()
     const connections = getEnableBankingConnections()
+
+    // Check for duplicate accounts across existing connections to prevent duplicate transactions
+    const existingMappedAccountIds = new Set(
+      connections.flatMap(c => c.accounts.map(a => a.accountId)),
+    )
+
+    mappedAccounts = mappedAccounts.filter(acc => !existingMappedAccountIds.has(acc.accountId))
+
+    if (mappedAccounts.length === 0) {
+      return { success: false, error: 'Session authorized, but all matching bank accounts have already been connected. No new connections were created.' }
+    }
 
     connections.push({
       sessionId: sessionResponse.session_id,

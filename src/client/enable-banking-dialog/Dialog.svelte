@@ -14,12 +14,14 @@
   let triggerFreqType = $state<'hours' | 'days'>('days');
   let triggerFreqVal = $state(1);
 
-  let aspsps = $state<{name: string, country: string}[]>([]);
+  let aspsps = $state<{name: string, country: string, logo?: string, connected?: boolean}[]>([]);
   let searchAspsp = $state('');
   let filteredAspsps = $derived(
     aspsps.filter(a => a.name.toLowerCase().includes(searchAspsp.toLowerCase()))
   )
   let showAddModal = $state(false);
+  let isFetchingBanks = $state(false);
+  let isStartingAuth = $state(false);
 
   let showAuthCodeModal = $state(false);
   let authCode = $state('');
@@ -75,7 +77,9 @@
   }
 
   async function openAddModal() {
+    isFetchingBanks = true;
     const res = await serverFunctions.getEnableBankingAspsps();
+    isFetchingBanks = false;
     if (res.success) {
       aspsps = res.data;
       showAddModal = true;
@@ -85,14 +89,17 @@
   }
 
   async function startAuth(aspsp: {name: string, country: string}) {
+    pendingBankName = aspsp.name;
+    isStartingAuth = true;
     const res = await serverFunctions.startEnableBankingAuthorization(aspsp);
+    isStartingAuth = false;
     if (res.success) {
       showAddModal = false;
-      pendingBankName = aspsp.name;
       // Open in new tab
       window.open(res.data, '_blank');
       showAuthCodeModal = true;
     } else {
+      pendingBankName = '';
       alert('Failed to start auth: ' + res.error);
     }
   }
@@ -132,7 +139,9 @@
         </ul>
       {/if}
       <div class="flex gap-2">
-        <Button onclick={openAddModal}>Add Connection</Button>
+        <Button onclick={openAddModal} disabled={isFetchingBanks}>
+          {isFetchingBanks ? 'Loading...' : 'Add Connection'}
+        </Button>
         <Button color="green" onclick={triggerSync} disabled={isSyncing}>
           {isSyncing ? 'Syncing...' : 'Run Sync Now'}
         </Button>
@@ -171,16 +180,33 @@
     </div>
   </div>
 
-  <Modal title="Add Bank Connection" bind:open={showAddModal} autoclose={false}>
+  <Modal title="Add Bank Connection" bind:open={showAddModal} autoclose={false} size="lg">
     <div class="space-y-4">
       <Input placeholder="Search bank..." bind:value={searchAspsp} />
-      <div class="max-h-60 overflow-y-auto space-y-2">
-        {#each filteredAspsps as aspsp}
-          <div class="flex justify-between items-center p-2 hover:bg-gray-50 border-b">
-            <span>{aspsp.name} ({aspsp.country})</span>
-            <Button size="xs" onclick={() => startAuth(aspsp)}>Connect</Button>
-          </div>
-        {/each}
+      <div class="max-h-96 overflow-y-auto">
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          {#each filteredAspsps as aspsp}
+            <div class="flex flex-col items-center p-4 border rounded-lg hover:shadow-md transition-shadow relative {aspsp.connected ? 'bg-green-50 border-green-200' : 'bg-white'}">
+              {#if aspsp.connected}
+                <div class="absolute top-2 right-2 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-medium">
+                  Connected
+                </div>
+              {/if}
+              {#if aspsp.logo}
+                <img src={aspsp.logo} alt={aspsp.name} class="h-12 w-auto mb-3 object-contain" />
+              {:else}
+                <div class="h-12 w-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                  <span class="text-gray-400 font-bold text-xl">{aspsp.name.charAt(0)}</span>
+                </div>
+              {/if}
+              <span class="text-sm font-medium text-center mb-1 line-clamp-2" title={aspsp.name}>{aspsp.name}</span>
+              <span class="text-xs text-gray-500 mb-3">{aspsp.country}</span>
+              <Button size="xs" color={aspsp.connected ? "alternative" : "primary"} class="mt-auto w-full" onclick={() => startAuth(aspsp)} disabled={isStartingAuth}>
+                {isStartingAuth && pendingBankName === aspsp.name ? 'Connecting...' : 'Connect'}
+              </Button>
+            </div>
+          {/each}
+        </div>
       </div>
     </div>
   </Modal>
