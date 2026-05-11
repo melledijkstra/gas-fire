@@ -162,3 +162,20 @@ export function applyUserDecisionsStage(input: FireTable, context: ImportPipelin
 
   return input
 }
+
+/**
+ * Removes rows that have been flagged as duplicates or excluded by rules.
+ * This is particularly useful for automated imports where user intervention is not possible.
+ */
+export function filterOutDuplicatesStage(input: FireTable, context: PreviewPipelineContext): FireTable {
+  const excludedHashes = new Set<string>([
+    ...context.duplicateHashes,
+    ...(context.ruleEngine?.removedHashes ?? []),
+  ])
+
+  if (excludedHashes.size === 0) return input
+
+  input.filter(row => !excludedHashes.has(getRowHash(row)))
+
+  return input
+}
