@@ -50,8 +50,10 @@ function fetchAndMapToFireTable(enableBankingAccount: string, config: Config): F
     row[FireTable.getFireColumnIndex('currency')] = tx.transaction_amount?.currency || ''
     row[FireTable.getFireColumnIndex('date')] = Transformers.transformDate(getTransactionDate(tx))
     row[FireTable.getFireColumnIndex('contra_account')] = tx.creditor?.name || tx.debtor?.name || ''
-    // PENDING: only apply contra_iban mapping when it makes sense, avoid duplicating with same IBAN in both 'iban' and 'contra_iban'.
-    row[FireTable.getFireColumnIndex('contra_iban')] = tx.creditor_account?.iban || tx.debtor_account?.iban || ''
+
+    const contraIban = tx.creditor_account?.iban || tx.debtor_account?.iban || ''
+    row[FireTable.getFireColumnIndex('contra_iban')] = (contraIban === iban) ? '' : contraIban
+
     row[FireTable.getFireColumnIndex('description')] = tx.remittance_information?.join(' ') || tx.note || ''
     row[FireTable.getFireColumnIndex('import_date')] = importDate
     row[FireTable.getFireColumnIndex('iban')] = iban
