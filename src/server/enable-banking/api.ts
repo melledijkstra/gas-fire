@@ -79,7 +79,7 @@ export class EnableBankingApi {
   }
 
   static getAspsps() {
-    return this.fetchApi<{ aspsps: { name: string, country: string }[] }>('/aspsps')
+    return this.fetchApi<{ aspsps: { name: string, country: string, logo?: string }[] }>('/aspsps')
   }
 
   static startAuthorization(aspsp: { name: string, country: string }, redirectUrl: string, state: string) {
