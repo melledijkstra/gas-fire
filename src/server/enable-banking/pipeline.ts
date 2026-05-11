@@ -7,6 +7,7 @@ import { enableBankingPipeline } from '../import-pipeline/rpc'
 import { Transformers } from '../transformers'
 import { EnableBankingApi } from './api'
 import type { EnableBankingConnection, EnableBankingTransaction } from './types'
+import { normalizeIban } from './utils'
 
 function getTransactionDate(tx: EnableBankingTransaction): string {
   if (tx.value_date) return tx.value_date
@@ -52,7 +53,7 @@ function fetchAndMapToFireTable(enableBankingAccount: string, config: Config): F
     row[FireTable.getFireColumnIndex('contra_account')] = tx.creditor?.name || tx.debtor?.name || ''
 
     const contraIban = tx.creditor_account?.iban || tx.debtor_account?.iban || ''
-    row[FireTable.getFireColumnIndex('contra_iban')] = (contraIban === iban) ? '' : contraIban
+    row[FireTable.getFireColumnIndex('contra_iban')] = (normalizeIban(contraIban) === normalizeIban(iban)) ? '' : contraIban
 
     row[FireTable.getFireColumnIndex('description')] = tx.remittance_information?.join(' ') || tx.note || ''
     row[FireTable.getFireColumnIndex('import_date')] = importDate

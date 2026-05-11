@@ -3,6 +3,7 @@ import { AccountUtils } from '../accounts/account-utils'
 import { EnableBankingApi } from './api'
 import { PROP_ENABLE_BANKING_CONNECTIONS, PROP_ENABLE_BANKING_TRIGGER_FREQ_TYPE, PROP_ENABLE_BANKING_TRIGGER_FREQ_VAL, REDIRECT_URL } from './config'
 import { syncEnableBankingTransactions } from './pipeline'
+import { normalizeIban } from './utils'
 
 const SYNC_TRIGGER_HANDLER = syncEnableBankingTransactions.name
 
@@ -13,10 +14,6 @@ function isBankConnection(obj: unknown): obj is EnableBankingConnection {
     && 'bankName' in obj && typeof obj.bankName === 'string'
     && 'accounts' in obj && Array.isArray(obj.accounts)
     && 'createdAt' in obj && typeof obj.createdAt === 'string'
-}
-
-function normalizeIban(iban: string) {
-  return iban.replace(/\s+/g, '').toUpperCase()
 }
 
 export type EnableBankingConnection = {
