@@ -121,7 +121,7 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     const mockConnections: EnableBankingConnection[] = [
       {
         sessionId: 'mock-session-id-1',
-        bankName: 'Nordea',
+        aspsp: { name: 'Nordea', country: 'FI' },
         accounts: [
           { accountId: 'account-1', slug: 'checking' },
           { accountId: 'account-2', slug: 'savings' },
@@ -130,7 +130,7 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
       },
       {
         sessionId: 'mock-session-id-2',
-        bankName: 'N26',
+        aspsp: { name: 'N26', country: 'ES' },
         accounts: [
           { accountId: 'account-3', slug: 'main' },
         ],
@@ -151,18 +151,21 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     const mockAspsps: Aspsp[] = [
       { name: 'Nordea', country: 'FI', logo: 'https://enablebanking.com/brands/FI/Nordea', connected: true },
       { name: 'N26', country: 'ES', logo: 'https://enablebanking.com/brands/ES/N26', connected: true },
+      { name: 'N26', country: 'PT', logo: 'https://enablebanking.com/brands/PT/N26' },
+      { name: 'N26', country: 'FI', logo: 'https://enablebanking.com/brands/FI/N26' },
+      { name: 'N26', country: 'NL', logo: 'https://enablebanking.com/brands/NL/N26' },
       { name: 'ING', country: 'NL', logo: 'https://enablebanking.com/brands/NL/ING' },
       { name: 'BNP Paribas', country: 'FR' },
     ]
     return { success: true, data: mockAspsps }
   }
 
-  async startEnableBankingAuthorization(_aspsp: unknown): Promise<ServerResponse<string>> {
+  async startEnableBankingAuthorization(_aspsp: Aspsp): Promise<ServerResponse<string>> {
     await this.delay(1000)
     return { success: true, data: '' }
   }
 
-  async completeEnableBankingAuthorization(_code: string, _bankName: string): Promise<ServerResponse<number>> {
+  async completeEnableBankingAuthorization(_code: string, _aspsp: Aspsp): Promise<ServerResponse<number>> {
     await this.delay(1000)
     return { success: true, data: 1 }
   }
@@ -177,7 +180,7 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     return { success: true, data: { enabled: false, frequencyType: 'days', frequencyValue: 1 } }
   }
 
-  async setEnableBankingTrigger(_enabled: boolean, _frequencyType: string, _frequencyValue: number): Promise<ServerResponse<{
+  async setEnableBankingTrigger(_enabled: boolean, _frequencyType: 'hours' | 'days', _frequencyValue: number): Promise<ServerResponse<{
     enabled: boolean
     frequencyType: 'hours' | 'days'
     frequencyValue: number
