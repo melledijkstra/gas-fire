@@ -12,7 +12,7 @@ export function onOpen(): void {
     .addItem('Find duplicates', executeFindDuplicates.name)
 
   if (FEATURES.ENABLE_BANKING_ENABLED) {
-    menu.addItem('Enable Banking Integration', openEnableBankingDialog.name)
+    menu.addItem('Enable Banking (Beta)', openEnableBankingDialog.name)
   }
 
   menu.addItem('About', openAboutDialog.name)
@@ -60,5 +60,5 @@ export function openEnableBankingDialog(): void {
     .evaluate()
     .setWidth(width)
     .setHeight(height)
-  SpreadsheetApp.getUi().showModalDialog(html, 'Enable Banking Integration')
+  SpreadsheetApp.getUi().showModalDialog(html, 'Enable Banking (Beta)')
 }

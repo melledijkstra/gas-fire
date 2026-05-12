@@ -1,6 +1,12 @@
 import { Logger } from '@/common/logger'
 import { ENABLE_BANKING_API_URL, PROP_ENABLE_BANKING_APP_ID, PROP_ENABLE_BANKING_PRIVATE_KEY } from './config'
 
+type Aspsp = {
+  name: string
+  country: string
+  logo?: string
+}
+
 export class EnableBankingApi {
   private static getAppId(): string {
     const props = PropertiesService.getScriptProperties()
@@ -79,7 +85,7 @@ export class EnableBankingApi {
   }
 
   static getAspsps() {
-    return this.fetchApi<{ aspsps: { name: string, country: string, logo?: string }[] }>('/aspsps')
+    return this.fetchApi<{ aspsps: Aspsp[] }>('/aspsps')
   }
 
   static startAuthorization(aspsp: { name: string, country: string }, redirectUrl: string, state: string) {

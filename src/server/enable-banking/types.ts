@@ -1,3 +1,10 @@
+export type Aspsp = {
+  name: string
+  country: string
+  logo?: string
+  connected?: boolean
+}
+
 export type EnableBankingConnection = {
   sessionId: string
   bankName: string

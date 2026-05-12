@@ -1,3 +1,4 @@
+import type { FireTable } from '@/common/table/FireTable'
 import type {
   AccountOptions,
   ImportPreviewResult,
@@ -5,6 +6,7 @@ import type {
   ServerResponse,
   TransactionAction,
 } from '@/common/types'
+import type { Aspsp, EnableBankingConnection } from '@/server/enable-banking/types'
 import type * as publicServerFunctions from '@/server/index'
 import type { PackedRuleEngineResult } from '@/server/rule-engine/types'
 
@@ -25,6 +27,10 @@ const StrategyOptions = {
 }
 
 class ServerFunctions implements PromisifiedServerFunctionsInterface {
+  private async delay(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms))
+  }
+
   async debugImportSettings() {
     console.log('debugImportSettings mock called')
   }
@@ -45,8 +51,20 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     _table: RawTable,
     _strategy: string,
   ): Promise<ServerResponse<ImportPreviewResult>> {
+    await this.delay(1000)
     console.log('previewPipeline mock called')
     return { success: true, data: { duplicateHashes: [], table: [], newBalance: 0 } as unknown as ImportPreviewResult }
+  }
+
+  async enableBankingPipeline(
+    _fireTable: FireTable,
+    _bankAccount: string,
+  ): Promise<ServerResponse<{
+    ruleEngine?: PackedRuleEngineResult
+  }>> {
+    await this.delay(1000)
+    console.log('enableBankingPipeline mock called')
+    return { success: true, data: {} }
   }
 
   async executeAutomaticCategorization(): Promise<void> {
@@ -98,36 +116,81 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     throw new Error('Mock not implemented')
   }
 
-  async RPCgetEnableBankingConnections(): Promise<ServerResponse<{ sessionId: string, bankName: string, accounts: { accountId: string, slug: string }[], createdAt: string }[]>> {
-    return { success: true, data: [] }
+  async RPCgetEnableBankingConnections(): Promise<ServerResponse<EnableBankingConnection[]>> {
+    await this.delay(1000)
+    const mockConnections: EnableBankingConnection[] = [
+      {
+        sessionId: 'mock-session-id-1',
+        bankName: 'Nordea',
+        accounts: [
+          { accountId: 'account-1', slug: 'checking' },
+          { accountId: 'account-2', slug: 'savings' },
+        ],
+        createdAt: new Date().toISOString(),
+      },
+      {
+        sessionId: 'mock-session-id-2',
+        bankName: 'N26',
+        accounts: [
+          { accountId: 'account-3', slug: 'main' },
+        ],
+        createdAt: new Date().toISOString(),
+      },
+    ]
+
+    return { success: true, data: mockConnections }
   }
 
   async removeEnableBankingConnection(_sessionId: string): Promise<ServerResponse<void>> {
+    await this.delay(1000)
     return { success: true }
   }
 
-  async getEnableBankingAspsps(): Promise<ServerResponse<{ name: string, country: string }[]>> {
-    return { success: true, data: [] }
+  async getEnableBankingAspsps(): Promise<ServerResponse<Aspsp[]>> {
+    await this.delay(1000)
+    const mockAspsps: Aspsp[] = [
+      { name: 'Nordea', country: 'FI', logo: 'https://enablebanking.com/brands/FI/Nordea', connected: true },
+      { name: 'N26', country: 'ES', logo: 'https://enablebanking.com/brands/ES/N26', connected: true },
+      { name: 'ING', country: 'NL', logo: 'https://enablebanking.com/brands/NL/ING' },
+      { name: 'BNP Paribas', country: 'FR' },
+    ]
+    return { success: true, data: mockAspsps }
   }
 
   async startEnableBankingAuthorization(_aspsp: unknown): Promise<ServerResponse<string>> {
+    await this.delay(1000)
     return { success: true, data: '' }
   }
 
   async completeEnableBankingAuthorization(_code: string, _bankName: string): Promise<ServerResponse<number>> {
+    await this.delay(1000)
     return { success: true, data: 1 }
   }
 
   async triggerEnableBankingSync(): Promise<ServerResponse<void>> {
+    await this.delay(1000)
     return { success: true }
   }
 
   async getEnableBankingTriggerStatus(): Promise<ServerResponse<{ enabled: boolean, frequencyType: 'hours' | 'days', frequencyValue: number }>> {
+    await this.delay(1000)
     return { success: true, data: { enabled: false, frequencyType: 'days', frequencyValue: 1 } }
   }
 
-  async setEnableBankingTrigger(_enabled: boolean, _frequencyType: string, _frequencyValue: number): Promise<ServerResponse<void>> {
-    return { success: true }
+  async setEnableBankingTrigger(_enabled: boolean, _frequencyType: string, _frequencyValue: number): Promise<ServerResponse<{
+    enabled: boolean
+    frequencyType: 'hours' | 'days'
+    frequencyValue: number
+  }>> {
+    await this.delay(1000)
+    return {
+      success: true,
+      data: {
+        enabled: _enabled,
+        frequencyType: _frequencyType as 'hours' | 'days',
+        frequencyValue: _frequencyValue,
+      },
+    }
   }
 }
 
