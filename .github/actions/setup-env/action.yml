@@ -13,7 +13,7 @@ runs:
         node-version-file: 'package.json'
         cache: pnpm
     - name: Install dependencies
-      run: pnpm ci
+      run: pnpm install --frozen-lockfile
       shell: bash
 
 
