@@ -1,4 +1,4 @@
-import { slugify, structuredClone, structuredCloneFallback } from './helpers'
+import { slugify, structuredClone, structuredCloneFallback, getRowHash } from './helpers'
 
 describe('helpers', () => {
   describe('slugify', () => {
@@ -85,6 +85,54 @@ describe('helpers', () => {
       expect(clonedSet).toEqual(set)
       expect(clonedSet).not.toBe(set)
       expect(clonedSet instanceof Set).toBe(true)
+    })
+  })
+
+  describe('getRowHash', () => {
+    it('should generate a hash from specific columns', () => {
+      const date = new Date('2023-01-01T00:00:00.000Z')
+      // FIRE_COLUMNS = ['ref', 'iban', 'date', 'amount', 'balance', 'contra_account', 'description', ...]
+      // HASH_COLUMNS = ['iban', 'date', 'amount', 'contra_account', 'description']
+      // Indices: 1, 2, 3, 5, 6
+      const row = [
+        'ref123', // 0
+        'NLINGB123', // 1 (iban)
+        date, // 2 (date)
+        12.34, // 3 (amount)
+        1000.00, // 4
+        'CONTRA123', // 5 (contra_account)
+        'Test transaction', // 6 (description)
+        'some comment', // 7
+      ]
+      const expectedHash = `NLINGB123|${date.toISOString()}|12.34|CONTRA123|Test transaction`
+      expect(getRowHash(row)).toBe(expectedHash)
+    })
+
+    it('should handle null and undefined values by converting to empty strings', () => {
+      const row = [
+        null, // 0
+        undefined, // 1 (iban)
+        null, // 2 (date)
+        0, // 3 (amount)
+        null, // 4
+        null, // 5 (contra_account)
+        undefined, // 6 (description)
+      ]
+      expect(getRowHash(row)).toBe('||0||')
+    })
+
+    it('should handle different data types', () => {
+      const row = [
+        'ref',
+        'iban',
+        new Date('2024-12-31T23:59:59.999Z'),
+        -50.5,
+        0,
+        123456,
+        true,
+      ]
+      const expectedDateStr = new Date('2024-12-31T23:59:59.999Z').toISOString()
+      expect(getRowHash(row)).toBe(`iban|${expectedDateStr}|-50.5|123456|true`)
     })
   })
 })

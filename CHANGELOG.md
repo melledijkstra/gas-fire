@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.15.10-beta
+
+- **Testing** - Added missing unit tests for `getRowHash` utility function in `src/common/helpers.ts`, improving code coverage and reliability.
+
 ## 4.15.9-beta
 
 - **Feature** - Setup github pages for potential enable banking integration in the future.
