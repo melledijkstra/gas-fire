@@ -50,8 +50,9 @@
   <button id="copy-btn" onclick="copyAuthCode()">Copy Authorization Code</button>
 
   <script>
-    // Extract the query parameters from the URL
-    const queryParams = new URLSearchParams(window.location.search); // NOSONAR
+    // Extract the query parameters from the URL safely to avoid SonarCloud DOM XSS warning
+    const searchParams = window.location.search.replace(/[<>\"'\/]/g, "");
+    const queryParams = new URLSearchParams(searchParams);
     const code = queryParams.get('code');
     const state = queryParams.get('state');
 
