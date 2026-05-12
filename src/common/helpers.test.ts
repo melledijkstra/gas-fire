@@ -132,7 +132,7 @@ describe('helpers', () => {
         true,
       ]
       const expectedDateStr = new Date('2024-12-31T23:59:59.999Z').toISOString()
-      expect(getRowHash(row as unknown as CellValue[])).toBe(`iban|${expectedDateStr}|-50.5|123456|true`)
+      expect(getRowHash(row)).toBe(`iban|${expectedDateStr}|-50.5|123456|true`)
     })
   })
 })
