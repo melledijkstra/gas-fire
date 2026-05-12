@@ -3,6 +3,7 @@ import { AccountUtils } from '../accounts/account-utils'
 import { EnableBankingApi } from './api'
 import { PROP_ENABLE_BANKING_CONNECTIONS, PROP_ENABLE_BANKING_TRIGGER_FREQ_TYPE, PROP_ENABLE_BANKING_TRIGGER_FREQ_VAL, REDIRECT_URL } from './config'
 import { syncEnableBankingTransactions } from './pipeline'
+import type { Aspsp } from './types'
 import { normalizeIban } from './utils'
 
 const SYNC_TRIGGER_HANDLER = syncEnableBankingTransactions.name
@@ -57,7 +58,7 @@ export function removeEnableBankingConnection(sessionId: string): ServerResponse
   }
 }
 
-export function getEnableBankingAspsps(): ServerResponse<{ name: string, country: string, logo?: string, connected?: boolean }[]> {
+export function getEnableBankingAspsps(): ServerResponse<Aspsp[]> {
   try {
     const aspspsResponse = EnableBankingApi.getAspsps()
     const connections = getEnableBankingConnections()
@@ -179,7 +180,11 @@ export function getEnableBankingTriggerStatus(): ServerResponse<{ enabled: boole
   }
 }
 
-export function setEnableBankingTrigger(enabled: boolean, frequencyType: 'hours' | 'days', frequencyValue: number): ServerResponse<void> {
+export function setEnableBankingTrigger(enabled: boolean, frequencyType: 'hours' | 'days', frequencyValue: number): ServerResponse<{
+  enabled: boolean
+  frequencyType: 'hours' | 'days'
+  frequencyValue: number
+}> {
   try {
     const triggers = ScriptApp.getProjectTriggers()
     const existingTrigger = triggers.find(t => t.getHandlerFunction() === SYNC_TRIGGER_HANDLER)
@@ -203,7 +208,14 @@ export function setEnableBankingTrigger(enabled: boolean, frequencyType: 'hours'
       props.setProperty(PROP_ENABLE_BANKING_TRIGGER_FREQ_VAL, frequencyValue.toString())
     }
 
-    return { success: true }
+    return {
+      success: true,
+      data: {
+        enabled,
+        frequencyType,
+        frequencyValue,
+      },
+    }
   }
   catch (error) {
     return { success: false, error: String(error) }
