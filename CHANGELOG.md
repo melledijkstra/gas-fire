@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.14.11-beta
+
+- **Testing** - Added missing unit tests for `getRowHash` utility function in `src/common/helpers.ts`, improving code coverage and reliability.
+
 ## 4.14.10-beta
 
 - **Refactor** - Refactored `Table` to contain headers now + added a `Pipeline` class which can be used to pipe different stages during import and preview pipelines.
