@@ -1,4 +1,4 @@
-import { slugify, structuredCloneFallback, structuredClone, getRowHash } from './helpers'
+import { slugify, structuredClone, structuredCloneFallback, getRowHash } from './helpers'
 
 describe('helpers', () => {
   describe('slugify', () => {

@@ -1,6 +1,6 @@
-import { describe, expect, it, beforeEach } from 'vitest'
-import { SheetsRequestBuilder } from './request-builder'
 import type { CellValue } from '@/common/types'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { SheetsRequestBuilder } from './request-builder'
 
 describe('SheetsRequestBuilder', () => {
   let builder: SheetsRequestBuilder

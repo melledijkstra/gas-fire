@@ -1,5 +1,5 @@
-import { clientEntrypoints, clientRoot } from './vite.config'
 import type { KnipConfig } from 'knip'
+import { clientEntrypoints, clientRoot } from './vite.config'
 
 const entries = clientEntrypoints.map((entry) => {
   // knip is not able to parse HTML files, instead use the imported JS instead
@@ -17,15 +17,11 @@ export default {
     'mkcert',
   ],
   ignoreDependencies: [
-    // is actually used in vite.config.ts for the coverage engine
-    '@vitest/coverage-v8',
     // global types for Google Apps Script
     '@types/google-apps-script',
     // from the core package we never directly import
     // instead from 'flowbite-svelte'
     'flowbite',
-    // only used to get a type, and the package is already installed because of svelte storybook dependencies
-    '@storybook/svelte',
   ],
   ignore: [
     // plugin that generates the frontend bundles, but is not imported in the src code

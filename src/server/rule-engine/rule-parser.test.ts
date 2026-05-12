@@ -1,0 +1,131 @@
+import { describe, expect, it } from 'vitest'
+import { RuleParser } from './rule-parser'
+import type { ImportRule } from './types'
+
+describe('RuleParser', () => {
+  it('should successfully parse a valid rule', () => {
+    const rows = [
+      [
+        'Test Rule',
+        'Bank A',
+        'description',
+        'CONTAINS',
+        'uber',
+        'SET',
+        'category',
+        'Transport',
+        'true',
+        'POST_TRANSFORM',
+      ],
+    ]
+
+    const parser = new RuleParser()
+    const result = parser.parseRulesByAccount(rows, 'bank-a')
+
+    expect(result.warnings).toHaveLength(0)
+    expect(result.rules).toHaveLength(1)
+    expect(result.rules[0]).toEqual({
+      ruleName: 'Test Rule',
+      banks: ['bank-a'],
+      conditionColumn: 'description',
+      condition: 'CONTAINS',
+      conditionValue: 'uber',
+      action: 'SET',
+      actionColumn: 'category',
+      actionValue: 'Transport',
+      stopProcessing: true,
+      rulePhase: 'POST_TRANSFORM',
+    } satisfies ImportRule)
+  })
+
+  it('should handle "All" banks and multiple banks correctly', () => {
+    const rows = [
+      ['Rule 1', 'All', 'col', 'NOT_EMPTY', '', 'EXCLUDE', '', '', 'false', 'PRE_TRANSFORM'],
+      ['Rule 2', 'BankA, BankB', 'col', 'NOT_EMPTY', '', 'EXCLUDE', '', '', 'false', 'PRE_TRANSFORM'],
+      ['Rule 3', '', 'col', 'NOT_EMPTY', '', 'EXCLUDE', '', '', 'false', 'PRE_TRANSFORM'],
+    ]
+
+    const parser = new RuleParser()
+    const result = parser.parseRulesByAccount(rows, 'banka')
+
+    expect(result.rules).toHaveLength(2)
+    expect(result.rules[0].banks).toEqual(['all'])
+    expect(result.rules[1].banks).toEqual(['banka', 'bankb'])
+  })
+
+  it('should only parse rules according to accountId', () => {
+    const rows = [
+      ['Rule 1', 'Bank A', 'col', 'NOT_EMPTY', '', 'EXCLUDE', '', '', 'false', 'PRE_TRANSFORM'],
+      ['Rule 2', 'Bank B', 'col', 'NOT_EMPTY', '', 'EXCLUDE', '', '', 'false', 'PRE_TRANSFORM'],
+      ['Rule 3', 'All', 'col', 'NOT_EMPTY', '', 'EXCLUDE', '', '', 'false', 'PRE_TRANSFORM'],
+      ['Rule 4', 'Bank A, Bank C', 'col', 'NOT_EMPTY', '', 'EXCLUDE', '', '', 'false', 'PRE_TRANSFORM'],
+    ]
+
+    const parser = new RuleParser()
+    const result = parser.parseRulesByAccount(rows, 'bank-a')
+
+    expect(result.rules).toHaveLength(3)
+  })
+
+  it('should generate warnings for missing required fields', () => {
+    const rows = [
+      ['No Col', 'All', '', 'CONTAINS', 'val', 'SET', 'cat', 'val', 'false', 'POST_TRANSFORM'],
+      ['No Cond Val', 'All', 'col', 'CONTAINS', '', 'SET', 'cat', 'val', 'false', 'POST_TRANSFORM'],
+      ['No Action Column SET', 'All', 'col', 'CONTAINS', 'val', 'SET', '', 'val', 'false', 'POST_TRANSFORM'],
+      ['No Action Value SET', 'All', 'col', 'CONTAINS', 'val', 'SET', 'cat', '', 'false', 'POST_TRANSFORM'],
+      ['No Action Column ADD', 'All', 'col', 'CONTAINS', 'val', 'ADD', '', 'val', 'false', 'POST_TRANSFORM'],
+      ['No Action Value ADD', 'All', 'col', 'CONTAINS', 'val', 'ADD', 'cat', '', 'false', 'POST_TRANSFORM'],
+      ['No Action Column SUBTRACT', 'All', 'col', 'CONTAINS', 'val', 'SUBTRACT', '', 'val', 'false', 'POST_TRANSFORM'],
+      ['No Action Value SUBTRACT', 'All', 'col', 'CONTAINS', 'val', 'SUBTRACT', 'cat', '', 'false', 'POST_TRANSFORM'],
+      ['No Action Column SUBTRACT_COLUMN', 'All', 'col', 'CONTAINS', 'val', 'SUBTRACT_COLUMN', '', 'val', 'false', 'POST_TRANSFORM'],
+      ['No Action Value SUBTRACT_COLUMN', 'All', 'col', 'CONTAINS', 'val', 'SUBTRACT_COLUMN', 'cat', '', 'false', 'POST_TRANSFORM'],
+      ['No Action Column ADD_COLUMN', 'All', 'col', 'CONTAINS', 'val', 'ADD_COLUMN', '', 'val', 'false', 'POST_TRANSFORM'],
+      ['No Action Value ADD_COLUMN', 'All', 'col', 'CONTAINS', 'val', 'ADD_COLUMN', 'cat', '', 'false', 'POST_TRANSFORM'],
+      ['Bad Cond', 'All', 'col', 'BAD_COND', 'val', 'SET', 'cat', 'val', 'false', 'POST_TRANSFORM'],
+      ['Bad Act', 'All', 'col', 'CONTAINS', 'val', 'BAD_ACT', 'cat', 'val', 'false', 'POST_TRANSFORM'],
+      ['Bad Phase', 'All', 'col', 'CONTAINS', 'val', 'SET', 'cat', 'val', 'false', 'BAD_PHASE'],
+    ]
+
+    const parser = new RuleParser()
+    const result = parser.parseRulesByAccount(rows, 'bank-a')
+
+    expect(result.rules).toHaveLength(0)
+    expect(result.warnings).toHaveLength(15)
+    expect(result.warnings[0].message).toContain('Condition Column is required')
+    expect(result.warnings[1].message).toContain('Condition value is required')
+    expect(result.warnings[2].message).toContain('Action Column and Action Value are required for SET action')
+    expect(result.warnings[3].message).toContain('Action Column and Action Value are required for SET action')
+    expect(result.warnings[4].message).toContain('Action Column and Action Value are required for ADD action')
+    expect(result.warnings[5].message).toContain('Action Column and Action Value are required for ADD action')
+    expect(result.warnings[6].message).toContain('Action Column and Action Value are required for SUBTRACT action')
+    expect(result.warnings[7].message).toContain('Action Column and Action Value are required for SUBTRACT action')
+    expect(result.warnings[8].message).toContain('Action Column and Action Value are required for SUBTRACT_COLUMN action')
+    expect(result.warnings[9].message).toContain('Action Column and Action Value are required for SUBTRACT_COLUMN action')
+    expect(result.warnings[10].message).toContain('Action Column and Action Value are required for ADD_COLUMN action')
+    expect(result.warnings[11].message).toContain('Action Column and Action Value are required for ADD_COLUMN action')
+    expect(result.warnings[12].message).toContain('Invalid condition')
+    expect(result.warnings[13].message).toContain('Invalid action')
+    expect(result.warnings[14].message).toContain('Invalid rule phase')
+  })
+
+  it('should ignore completely empty rows', () => {
+    const rows = [
+      ['', '', '', '', '', '', '', '', '', ''],
+      ['   ', ' ', '', '', '', '', '', '', '', ''],
+    ]
+    const parser = new RuleParser()
+    const result = parser.parseRulesByAccount(rows, 'bank-a')
+
+    expect(result.rules).toHaveLength(0)
+    expect(result.warnings).toHaveLength(0)
+  })
+
+  it('should default ruleName if missing', () => {
+    const rows = [
+      ['', 'All', 'col', 'NOT_EMPTY', '', 'EXCLUDE', '', '', 'false', 'PRE_TRANSFORM'],
+    ]
+    const parser = new RuleParser()
+    const result = parser.parseRulesByAccount(rows, 'bank-a')
+    expect(result.rules[0].ruleName).toBe('Rule at row 2')
+  })
+})

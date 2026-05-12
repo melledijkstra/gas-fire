@@ -1,0 +1,11 @@
+{
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit",
+    "source.removeUnusedImports": "explicit"
+  },
+  "sonarlint.connectedMode.project": {
+    "connectionId": "melledijkstra",
+    "projectKey": "melledijkstra_gas-fire"
+  }
+}

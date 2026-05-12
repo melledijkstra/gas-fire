@@ -1,7 +1,7 @@
-import { FireSpreadsheet } from '../globals'
 import { NAMED_RANGES } from '@/common/constants'
 import { slugify } from '@/common/helpers'
-import { Table } from '../table/Table'
+import { Table } from '@/common/table/Table'
+import { FireSpreadsheet } from '../globals'
 import { cleanString } from '../utils'
 
 const BANK_ACCOUNTS_CACHE_KEY = 'bank_accounts_v2'
@@ -12,6 +12,21 @@ interface AccountInfo {
   label: string
   iban: string
   balance: number | null
+}
+
+function isAccountInfo(value: unknown): value is AccountInfo {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false
+  const info = value as Record<string, unknown>
+  return (
+    typeof info.label === 'string'
+    && typeof info.iban === 'string'
+    && (info.balance === null || typeof info.balance === 'number')
+  )
+}
+
+function isAccountInfoRecord(value: unknown): value is Record<string, AccountInfo> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false
+  return Object.values(value).every(isAccountInfo)
 }
 
 export const isNumeric = (value: unknown): boolean => {
@@ -34,8 +49,11 @@ export class AccountUtils {
     const cachedData = cache?.get(BANK_ACCOUNTS_CACHE_KEY)
     if (cachedData) {
       try {
-        this.cachedAccountsData = JSON.parse(cachedData)
-        return this.cachedAccountsData!
+        const parsed = JSON.parse(cachedData)
+        if (isAccountInfoRecord(parsed)) {
+          this.cachedAccountsData = parsed
+          return this.cachedAccountsData
+        }
       }
       catch {
         // Fall back to live retrieval if parsing fails

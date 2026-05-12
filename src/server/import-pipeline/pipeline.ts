@@ -1,13 +1,16 @@
-import type { UserDecisions, TransactionAction, CellValue } from '@/common/types'
-import { Logger } from '@/common/logger'
-import { Config } from '../config'
-import { Table } from '../table/Table'
-import { FireTable } from '../table/FireTable'
-import { FireSheet } from '../spreadsheet/FireSheet'
 import { getRowHash } from '@/common/helpers'
+import { Logger } from '@/common/logger'
+import { FireTable } from '@/common/table/FireTable'
+import { Table } from '@/common/table/Table'
+import type { TransactionAction, UserDecisions } from '@/common/types'
+import { Config } from '../config'
+import type { RuleEngineResult } from '../rule-engine/types'
+import { FireSheet } from '../spreadsheet/FireSheet'
+import { FireTableFactory } from './fire-table-factory'
 
 export interface PipelineContext {
   config: Config
+  ruleEngine?: RuleEngineResult
 }
 
 export interface ImportPipelineContext extends PipelineContext {
@@ -16,7 +19,6 @@ export interface ImportPipelineContext extends PipelineContext {
 
 export interface PreviewPipelineContext extends PipelineContext {
   duplicateHashes: Set<string>
-  removedHashes: Set<string>
 }
 
 export type PipelineStage<I, O, C> = (input: I, context: C) => O
@@ -87,7 +89,7 @@ export function transformToFireTableStage(input: Table, context: PipelineContext
     throw new Error('No header row detected in import data!')
   }
 
-  return FireTable.fromAccountSpecification({
+  return FireTableFactory.fromAccountSpecification({
     headers: input.headers,
     rows: input.data,
     config: context.config,
@@ -106,7 +108,7 @@ export function sortByDateStage<T extends FireTable>(input: T, _context: Pipelin
 export function duplicateDetectionStage(input: FireTable, context: PreviewPipelineContext): FireTable {
   const fireSheet = new FireSheet()
   const existingHashes = fireSheet.loadExistingHashes()
-  Logger.log(`Loaded ${existingHashes.size} existing transaction hashes for duplicate detection`)
+  Logger.log(`Loaded ${existingHashes?.size} existing transaction hashes for duplicate detection`)
 
   for (const row of input.data) {
     const hash = getRowHash(row)
@@ -117,23 +119,6 @@ export function duplicateDetectionStage(input: FireTable, context: PreviewPipeli
   }
 
   return input
-}
-
-/**
- * Formats a single cell value to a display string.
- * Dates are formatted as 'yyyy-MM-dd' using the spreadsheet's timezone.
- */
-export function formatCellValue(cell: CellValue): string {
-  if (cell instanceof Date) {
-    try {
-      const timeZone = FireSheet.getTimeZone()
-      return Utilities.formatDate(cell, timeZone, 'yyyy-MM-dd')
-    }
-    catch {
-      return cell.toISOString().split('T')[0]
-    }
-  }
-  return String(cell ?? '')
 }
 
 /**

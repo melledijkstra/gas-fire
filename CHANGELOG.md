@@ -1,8 +1,47 @@
 # Changelog
 
-## 4.14.11-beta
+## 4.15.10-beta
 
 - **Testing** - Added missing unit tests for `getRowHash` utility function in `src/common/helpers.ts`, improving code coverage and reliability.
+
+## 4.15.9-beta
+
+- **Feature** - Setup github pages for potential enable banking integration in the future.
+
+## 4.15.8-beta
+
+- **Refactor** - 🧹 Removed unused export `formatCellValue` from `src/server/import-pipeline/pipeline.ts` to improve maintainability and resolve Knip issue.
+
+## 4.15.7-beta
+
+- **Security** - 🔒 Fixed Insecure Deserialization of Cached Accounts Data by validating the parsed object's shape before returning it from `fetchAccountsData`.
+
+## 4.15.6-beta
+
+- Separate CI and CD pipelines
+
+## 4.15.5-beta
+
+- Sorted all imports in the entire codebase and setup automatic on-save action. This should improve code readability and maintainability.
+
+## 4.15.4-beta
+
+- **Refactor** - Decoupled server dependencies from `FireTable` and moved `Table` and `FireTable` to `src/common/table/`. Extracted category detection logic and fromAccountSpecification logic into their own functions (`categorizeFireTable` and `FireTableFactory`).
+
+## 4.15.3-beta
+
+- **Fix** - Migrated to Vite 8 / Rolldown and addressed build/typecheck issues.
+  - Used `RolldownOutput` and `OutputAsset` in the build plugin.
+  - Set `inlineDynamicImports: false` in `vite.config.ts`.
+  - Fixed a type mismatch in `serverFunctions.ts` mock.
+
+## 4.15.1-beta
+
+- **Testing** - Added missing unit tests for `getAccountIdentifiers` in `src/server/accounts/account-utils.ts`, covering multiple accounts, special characters, and edge cases like empty data or rows.
+
+## 4.15.0-beta
+
+- **Feature** - Introduces a rule-based data processing pipeline that allows users to define transaction import rules in a Google Sheet. The implementation includes a new rule engine module that handles parsing and applying rules during the pre-transform and post-transform phases of the import process, along with UI enhancements to display rule application summaries and warnings.
 
 ## 4.14.10-beta
 

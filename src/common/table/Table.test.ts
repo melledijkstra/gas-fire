@@ -1,7 +1,39 @@
-import { Table } from './Table'
+import { Table } from '@/common/table/Table'
 import type { CellValue } from '@/common/types'
+import { describe, expect, it } from 'vitest'
 
 describe('Table', () => {
+  describe('PackedTable serialization', () => {
+    it('should correctly serialize and deserialize a table with Date objects', () => {
+      const date = new Date('2024-01-01T12:00:00Z')
+      const headers = ['Name', 'Date']
+      const data = [['Test', date]]
+      const table = new Table(headers, data)
+
+      const packedTable = table.pack()
+      expect(packedTable.data[0][1]).toEqual({ __type: 'Date', value: date.toISOString() })
+
+      const revivedTable = Table.unpack(packedTable)
+      expect(revivedTable.headers).toEqual(headers)
+      expect(revivedTable.data[0][0]).toBe('Test')
+      expect(revivedTable.data[0][1]).toBeInstanceOf(Date)
+      expect((revivedTable.data[0][1] as Date).toISOString()).toBe(date.toISOString())
+    })
+
+    it('should correctly serialize to string and deserialize back', () => {
+      const date = new Date('2024-01-01T12:00:00Z')
+      const headers = ['Name', 'Date']
+      const data = [['Test', date]]
+      const table = new Table(headers, data)
+
+      const serialized = table.serialize()
+      const revivedTable = Table.deserialize(serialized)
+
+      expect(revivedTable.data[0][1]).toBeInstanceOf(Date)
+      expect((revivedTable.data[0][1] as Date).toISOString()).toBe(date.toISOString())
+    })
+  })
+
   describe('sortByColumn', () => {
     const sampleData: CellValue[][] = [
       ['Transaction 1', '2024-03-15', '100'],

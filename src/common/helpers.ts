@@ -1,6 +1,6 @@
-import type { CellValue } from './types'
 import { FIRE_COLUMNS } from './constants'
 import { HASH_COLUMNS } from './settings'
+import type { CellValue } from './types'
 
 const hashColumns = HASH_COLUMNS.map(col => Array.from(FIRE_COLUMNS).indexOf(col))
 

@@ -1,4 +1,4 @@
-import { SOURCE_SHEET_ID } from '@/common/constants'
+import { IMPORT_RULES_SHEET_NAME, SOURCE_SHEET_ID } from '@/common/constants'
 
 export const FireSpreadsheet = SpreadsheetApp.getActiveSpreadsheet()
 const sheets = FireSpreadsheet.getSheets()
@@ -12,4 +12,8 @@ let sourceSheet: GoogleAppsScript.Spreadsheet.Sheet | undefined
 export const getSourceSheet = (): GoogleAppsScript.Spreadsheet.Sheet | undefined => {
   sourceSheet ??= sheets.find(sheet => sheet.getSheetId() === SOURCE_SHEET_ID)
   return sourceSheet
+}
+
+export const getImportRulesSheet = (): GoogleAppsScript.Spreadsheet.Sheet | undefined => {
+  return sheets.find(sheet => sheet.getName() === IMPORT_RULES_SHEET_NAME)
 }

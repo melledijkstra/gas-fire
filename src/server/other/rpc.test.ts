@@ -1,3 +1,4 @@
+import { FireTable } from '@/common/table/FireTable'
 import {
   MailAppMock,
   RangeMock,
@@ -5,9 +6,8 @@ import {
   SpreadsheetMock,
   UIMock,
 } from '../../../test-setup'
-import { FireSheet } from '../spreadsheet/FireSheet'
-import { FireTable } from '../table/FireTable'
 import { executeFindDuplicates, mailNetWorth } from '../other/rpc'
+import { FireSheet } from '../spreadsheet/FireSheet'
 
 vi.mock('../globals', () => ({
   FireSpreadsheet: SpreadsheetMock,

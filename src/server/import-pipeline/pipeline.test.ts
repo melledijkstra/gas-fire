@@ -1,19 +1,19 @@
-import { Table } from '../table/Table'
-import { FireTable } from '../table/FireTable'
-import { Config } from '../config'
-import {
-  removeEmptyRowsStage,
-  transformToFireTableStage,
-  sortByDateStage,
-  duplicateDetectionStage,
-  autoFillPreviewStage,
-  applyUserDecisionsStage,
-} from './pipeline'
-import type { ImportPipelineContext, PipelineContext, PreviewPipelineContext } from './pipeline'
 import { FIRE_COLUMNS } from '@/common/constants'
 import { getRowHash } from '@/common/helpers'
+import { FireTable } from '@/common/table/FireTable'
+import { Table } from '@/common/table/Table'
 import type { CellValue } from '@/common/types'
+import { Config } from '../config'
 import { FireSheet } from '../spreadsheet/FireSheet'
+import type { ImportPipelineContext, PipelineContext, PreviewPipelineContext } from './pipeline'
+import {
+  applyUserDecisionsStage,
+  autoFillPreviewStage,
+  duplicateDetectionStage,
+  removeEmptyRowsStage,
+  sortByDateStage,
+  transformToFireTableStage,
+} from './pipeline'
 
 vi.mock('../spreadsheet/FireSheet')
 
@@ -99,7 +99,6 @@ describe('Import Pipeline Stages', () => {
       const context: PreviewPipelineContext = {
         ...createContext(),
         duplicateHashes: new Set<string>(),
-        removedHashes: new Set<string>(),
       }
 
       loadExistingHashesMock.mockReturnValue(new Set([hash]))

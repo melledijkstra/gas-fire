@@ -1,7 +1,7 @@
-import { AccountUtils, isNumeric } from './account-utils'
-import { FireSpreadsheet, getSheetById } from '../globals'
-import { RangeMock, SheetMock } from '../../../test-setup'
 import { SOURCE_SHEET_ID } from '@/common/constants'
+import { RangeMock, SheetMock } from '../../../test-setup'
+import { FireSpreadsheet, getSheetById } from '../globals'
+import { AccountUtils, isNumeric } from './account-utils'
 
 describe('Utility tests', () => {
   beforeEach(() => {
@@ -82,6 +82,54 @@ describe('Utility tests', () => {
     // After optimization, they share the same cache/fetch method.
     // So it should be called only once.
     expect(getRangeByNameSpy).toHaveBeenCalledTimes(1)
+  })
+
+  describe('getAccountIdentifiers', () => {
+    test('should return slugified identifiers for multiple accounts', () => {
+      RangeMock.getValues.mockReturnValueOnce([
+        ['Deutsche Bank', 'DB123456789', '100'],
+        ['n26', 'BANK123456789', '200'],
+        ['Banco de España', 'BANK124463534', '300'],
+      ])
+
+      expect(AccountUtils.getAccountIdentifiers()).toStrictEqual([
+        'deutsche-bank',
+        'n26',
+        'banco-de-espaa',
+      ])
+    })
+
+    test('should handle special characters and spaces in account names', () => {
+      RangeMock.getValues.mockReturnValueOnce([
+        ['My Bank Account!', 'IBAN123', '100'],
+        ['  Spaces  Around  ', 'IBAN456', '200'],
+      ])
+
+      expect(AccountUtils.getAccountIdentifiers()).toStrictEqual([
+        'my-bank-account',
+        'spaces-around',
+      ])
+    })
+
+    test('should return an empty array when no account data is present', () => {
+      RangeMock.getValues.mockReturnValueOnce([])
+
+      expect(AccountUtils.getAccountIdentifiers()).toStrictEqual([])
+    })
+
+    test('should ignore empty rows and rows without IBAN', () => {
+      RangeMock.getValues.mockReturnValueOnce([
+        ['N26', 'IBAN1', '100'],
+        ['', '', ''],
+        ['No IBAN', '', '50'],
+        ['Revolut', 'IBAN2', '200'],
+      ])
+
+      expect(AccountUtils.getAccountIdentifiers()).toStrictEqual([
+        'n26',
+        'revolut',
+      ])
+    })
   })
 })
 

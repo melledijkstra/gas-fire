@@ -1,9 +1,9 @@
-import { FIRE_COLUMNS } from '@/common/constants'
 import type { FireColumn } from '@/common/constants'
+import { FIRE_COLUMNS } from '@/common/constants'
 import { slugify } from '@/common/helpers'
 import { Logger } from '@/common/logger'
-import { FireSpreadsheet } from './globals'
 import type { CellValue } from '@/common/types'
+import { FireSpreadsheet } from './globals'
 
 const CONFIG_CACHE_KEY = 'cache.config'
 

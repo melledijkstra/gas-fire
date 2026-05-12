@@ -1,7 +1,8 @@
-import { FireTable } from '../table/FireTable'
-import { FireSheet } from '../spreadsheet/FireSheet'
-import { getCategoryNames } from '../helpers'
 import { Logger } from '@/common/logger'
+import { FireTable } from '@/common/table/FireTable'
+import { getCategoryNames } from '../helpers'
+import { FireSheet } from '../spreadsheet/FireSheet'
+import { categorizeFireTable } from './categorize'
 
 /**
  * Performs automatic categorization on the current active spreadsheet
@@ -45,7 +46,7 @@ export const executeAutomaticCategorization = () => {
 
     filter.setColumnFilterCriteria(categoryColIndex + 1, blankFilterCriteria)
 
-    const { categoryUpdates, rowsCategorized } = fireTable.categorize()
+    const { categoryUpdates, rowsCategorized } = categorizeFireTable(fireTable)
 
     if (rowsCategorized === 0) {
       ui.alert('No rows were categorized!')

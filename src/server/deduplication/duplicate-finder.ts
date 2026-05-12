@@ -1,6 +1,6 @@
-import type { RawTable } from '@/common/types'
 import type { FireColumn } from '@/common/constants'
-import { FireTable } from '../table/FireTable'
+import { FireTable } from '@/common/table/FireTable'
+import type { RawTable } from '@/common/types'
 
 /**
  * Finds duplicate rows in a dataset based on a timespan.

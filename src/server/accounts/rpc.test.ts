@@ -1,6 +1,6 @@
 import { RangeMock } from '../../../test-setup'
-import { getAccountOptions } from './rpc'
 import { AccountUtils } from './account-utils'
+import { getAccountOptions } from './rpc'
 
 describe('RPC: Account Functions', () => {
   beforeEach(() => {

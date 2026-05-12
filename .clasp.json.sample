@@ -1,5 +1,5 @@
 {
+  "projectId": "default",
   "rootDir": "dist",
-  "scriptId": "...add scriptId here...",
-  "projectId": "default"
+  "scriptId": "...add scriptId here..."
 }
