@@ -15,5 +15,7 @@ jobs:
         run: pnpm lint
       - name: Run build
         run: pnpm build
+      - name: Run build docs
+        run: pnpm build:docs
       - name: Run unit tests
         run: pnpm test:coverage
