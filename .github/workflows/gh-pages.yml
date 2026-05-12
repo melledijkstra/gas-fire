@@ -1,5 +1,4 @@
 # Sample workflow for building and deploying a VitePress site to GitHub Pages
-#
 name: Deploy VitePress site to Pages
 
 on:
@@ -32,17 +31,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Not needed if lastUpdated is not enabled
       - name: Setup pnpm
-        uses: pnpm/action-setup@v3 # docs https://pnpm.io/continuous-integration#github-actions
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093
         with:
-          version: 10 # Optional: specify pnpm version
+          version: 10
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm # or pnpm / yarn
+          cache: pnpm
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Install dependencies

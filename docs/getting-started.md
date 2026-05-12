@@ -1,6 +1,6 @@
 # Getting Started
 
-GAS FIRE (Google Apps Script - Financial Independence Retire Early) is a project designed to help automate your finances using Google Sheets.
+GAS FIRE (Google Apps Script - Financial Independence Retire Early) is a project designed to help automate your personal finances using Google Sheets.
 
 ## Prerequisites
 
@@ -22,11 +22,12 @@ pnpm exec clasp login
 2. Add your development and production environment Script IDs in the `.env` file.
 
 To find your Script ID:
+
 - Open your Apps Script project.
 - Click "Project Settings".
 - Under "IDs", copy the Script ID.
 
-3. Switch between environments easily:
+1. Switch between environments easily:
 
 ```bash
 pnpm switch-env dev
