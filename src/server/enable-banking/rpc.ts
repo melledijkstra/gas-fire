@@ -4,34 +4,15 @@ import { EnableBankingApi } from './api'
 import { PROP_ENABLE_BANKING_CONNECTIONS, PROP_ENABLE_BANKING_TRIGGER_FREQ_TYPE, PROP_ENABLE_BANKING_TRIGGER_FREQ_VAL, REDIRECT_URL } from './config'
 import { syncEnableBankingTransactions } from './pipeline'
 import type { Aspsp } from './types'
-import { normalizeIban } from './utils'
+import { getEnableBankingConnections, normalizeIban } from './utils'
 
 const SYNC_TRIGGER_HANDLER = syncEnableBankingTransactions.name
 
-function isBankConnection(obj: unknown): obj is EnableBankingConnection {
-  return obj !== null
-    && typeof obj === 'object'
-    && 'sessionId' in obj && typeof obj.sessionId === 'string'
-    && 'bankName' in obj && typeof obj.bankName === 'string'
-    && 'accounts' in obj && Array.isArray(obj.accounts)
-    && 'createdAt' in obj && typeof obj.createdAt === 'string'
-}
-
 export type EnableBankingConnection = {
   sessionId: string
-  bankName: string
+  aspsp: Aspsp
   accounts: { accountId: string, slug: string }[]
   createdAt: string
-}
-
-function getEnableBankingConnections(): EnableBankingConnection[] {
-  const props = PropertiesService.getUserProperties()
-  const str = props.getProperty(PROP_ENABLE_BANKING_CONNECTIONS)
-  const parsed = str ? JSON.parse(str) : []
-  if (Array.isArray(parsed) && parsed.every(isBankConnection)) {
-    return parsed
-  }
-  return []
 }
 
 export function RPCgetEnableBankingConnections(): ServerResponse<EnableBankingConnection[]> {
@@ -65,7 +46,9 @@ export function getEnableBankingAspsps(): ServerResponse<Aspsp[]> {
 
     const aspsps = (aspspsResponse.aspsps || []).map(aspsp => ({
       ...aspsp,
-      connected: connections.some(c => c.bankName === aspsp.name),
+      connected: connections.some(
+        c => c.aspsp.name === aspsp.name && c.aspsp.country === aspsp.country,
+      ),
     }))
 
     // Sort so connected banks are first, then alphabetically by name
@@ -93,7 +76,7 @@ export function startEnableBankingAuthorization(aspsp: { name: string, country: 
   }
 }
 
-export function completeEnableBankingAuthorization(code: string, bankName: string): ServerResponse<number> {
+export function completeEnableBankingAuthorization(code: string, aspsp: Aspsp): ServerResponse<number> {
   try {
     const sessionResponse = EnableBankingApi.authorizeSession(code)
     const configuredAccounts = AccountUtils.getBankAccounts()
@@ -131,7 +114,7 @@ export function completeEnableBankingAuthorization(code: string, bankName: strin
 
     connections.push({
       sessionId: sessionResponse.session_id,
-      bankName: bankName,
+      aspsp: aspsp,
       accounts: mappedAccounts,
       createdAt: new Date().toISOString(),
     })

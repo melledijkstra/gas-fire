@@ -7,7 +7,7 @@ export type Aspsp = {
 
 export type EnableBankingConnection = {
   sessionId: string
-  bankName: string
+  aspsp: Aspsp
   accounts: { accountId: string, slug: string }[]
   createdAt: string
 }

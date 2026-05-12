@@ -6,8 +6,8 @@ import { Config } from '../config'
 import { enableBankingPipeline } from '../import-pipeline/rpc'
 import { Transformers } from '../transformers'
 import { EnableBankingApi } from './api'
-import type { EnableBankingConnection, EnableBankingTransaction } from './types'
-import { normalizeIban } from './utils'
+import type { EnableBankingTransaction } from './types'
+import { getEnableBankingConnections, normalizeIban } from './utils'
 
 function getTransactionDate(tx: EnableBankingTransaction): string {
   if (tx.value_date) return tx.value_date
@@ -68,25 +68,11 @@ function fetchAndMapToFireTable(enableBankingAccount: string, config: Config): F
 export function syncEnableBankingTransactions() {
   Logger.log('Starting Enable Banking Daily Sync...')
 
-  const props = PropertiesService.getUserProperties()
-  const connectionsStr = props.getProperty('ENABLE_BANKING_CONNECTIONS')
-
-  if (!connectionsStr) {
-    Logger.log('No Enable Banking connections found. Exiting.')
-    return
-  }
-
-  let connections: EnableBankingConnection[]
-  try {
-    connections = JSON.parse(connectionsStr)
-  }
-  catch (e) {
-    Logger.error('Failed to parse connections', e)
-    return
-  }
+  const connections = getEnableBankingConnections()
+  Logger.log(`Found ${connections.length} banking connection(s) to sync.`)
 
   for (const connection of connections) {
-    Logger.log(`Processing connection for bank: ${connection.bankName}`)
+    Logger.log(`Processing connection for bank: ${connection.aspsp.name} (${connection.aspsp.country})`)
 
     for (const account of connection.accounts) {
       Logger.log(`Fetching transactions for account slug: ${account.slug}`)

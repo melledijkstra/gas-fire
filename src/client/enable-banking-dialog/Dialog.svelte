@@ -134,7 +134,7 @@
 
   async function completeAuth() {
     if (!authCode || !pendingAspsp) return;
-    const res = await serverFunctions.completeEnableBankingAuthorization(authCode, pendingAspsp.name);
+    const res = await serverFunctions.completeEnableBankingAuthorization(authCode, pendingAspsp);
     if (res.success) {
       setMessage(`Success! Mapped ${res.data} accounts.`);
       showAuthCodeModal = false;
@@ -161,7 +161,7 @@
             {@const isRemoving = removingSessionId === conn.sessionId}
             <li class="p-4 border rounded shadow-sm flex justify-between items-center">
               <div>
-                <p class="font-bold">{conn.bankName}</p>
+                <p class="font-bold">{conn.aspsp.name}</p>
                 <p class="text-sm text-gray-600">Mapped accounts: {conn.accounts.map(a => a.slug).join(', ')}</p>
                 <p class="text-xs text-gray-400">Added: {new Date(conn.createdAt).toLocaleString()}</p>
               </div>
