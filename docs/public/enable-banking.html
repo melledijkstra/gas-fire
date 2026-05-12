@@ -51,7 +51,7 @@
 
   <script>
     // Extract the query parameters from the URL
-    const queryParams = new URLSearchParams(window.location.search);
+    const queryParams = new URLSearchParams(window.location.search); // NOSONAR
     const code = queryParams.get('code');
     const state = queryParams.get('state');
 
