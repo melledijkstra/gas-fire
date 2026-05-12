@@ -11,11 +11,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Setup Environment
         uses: ./.github/actions/setup-env
-      - name: Run linting
+      - name: Lint code
         run: pnpm lint
-      - name: Run build
+      - name: Build application
         run: pnpm build
-      - name: Run build docs
-        run: pnpm build:docs
-      - name: Run unit tests
+      - name: Build documentation
+        run: pnpm docs:build
+      - name: Run tests with coverage
         run: pnpm test:coverage
