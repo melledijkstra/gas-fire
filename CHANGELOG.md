@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.16.0-beta
+
+- **Feature** - Bootstrapped documentation with VitePress in the `docs/` directory. This will host all the user facing documentation and guides.
+
 ## 4.15.10-beta
 
 - **Testing** - Added missing unit tests for `getRowHash` utility function in `src/common/helpers.ts`, improving code coverage and reliability.

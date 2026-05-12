@@ -57,7 +57,7 @@
 
     if (code && state) {
       // Display the authorization code in the page for the user to copy
-      document.getElementById('auth-code').textContent = code;
+      document.getElementById('auth-code').innerText = code;
     } else {
       document.getElementById('auth-code').textContent = 'Authorization code or state not received :(';
       document.getElementById('copy-btn').style.display = 'none';
