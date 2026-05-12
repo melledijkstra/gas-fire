@@ -6,6 +6,7 @@ export default defineConfig({
   title: 'GAS FIRE',
   description: 'Google Sheet Personal Finance Automation',
   base: '/gas-fire/docs/',
+  outDir: 'dist/docs/',
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
