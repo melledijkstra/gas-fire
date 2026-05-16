@@ -1,43 +1,29 @@
-# Getting Started
+# Getting Started with Firesheet
 
-GAS FIRE (Google Apps Script - Financial Independence Retire Early) is a project designed to help automate your personal finances using Google Sheets.
+Welcome to **Firesheet**, your automated personal finance command center! This guide will help you understand how to use the Google Sheet and the accompanying Add-on to take control of your money without the manual data entry headache.
 
-## Prerequisites
+## What is Firesheet?
 
-You will need to install the [clasp](https://developers.google.com/apps-script/guides/clasp) tooling globally or use the one installed via `pnpm`.
+Firesheet is a Google Spreadsheet designed to be the "Source of Truth" for your finances. It works alongside a custom Add-on that helps you import transactions from your bank accounts, clean the data, and categorize everything automatically.
 
-```bash
-pnpm install
-```
+### The Core Workflow
 
-First time running clasp? Make sure to login first:
+1. **Configure**: Set up your bank accounts once in the spreadsheet.
+2. **Import**: Use the Add-on to upload your bank's CSV files.
+3. **Clean**: Automation rules fix descriptions and remove duplicates.
+4. **Categorize**: Transactions are tagged with categories (like "Food" or "Rent") based on keywords.
+5. **Review**: You get a chance to double-check everything before it hits your main list.
 
-```bash
-pnpm exec clasp login
-```
+## Your First Steps
 
-## Configure Environment
+To get the most out of Firesheet, we recommend following these steps in order:
 
-1. Copy the `.env.sample` and `.clasp.json.sample` files and rename them to `.env` and `.clasp.json`.
-2. Add your development and production environment Script IDs in the `.env` file.
+1. [**Setup Your Bank Accounts**](./bank-accounts): Tell Firesheet which banks you use and how their data looks.
+2. [**Define Your Categories**](./categories): Customize the buckets where your money goes.
+3. [**Import Your First File**](./importing): Try uploading a recent statement.
 
-To find your Script ID:
+---
 
-- Open your Apps Script project.
-- Click "Project Settings".
-- Under "IDs", copy the Script ID.
-
-1. Switch between environments easily:
-
-```bash
-pnpm switch-env dev
-```
-
-## Development
-
-Make your changes and then run the build and publish steps:
-
-```bash
-pnpm build
-pnpm push
-```
+::: tip Pro Tip
+Don't worry about getting everything perfect on day one. You can always refine your rules and categories as you go!
+:::
