@@ -37,7 +37,7 @@
   "dependencies": {
     "papaparse": "^5.5.3",
     "svelte": "^5.55.7",
-    "tailwindcss": "^4.2.4"
+    "tailwindcss": "^4.3.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
