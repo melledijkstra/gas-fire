@@ -40,6 +40,7 @@ class Sheet {
   static readonly insertRowsBefore = vi.fn(() => Sheet)
   static readonly getSheetValues = vi.fn<() => unknown[]>(() => [])
   static readonly getLastRow = vi.fn()
+  static readonly getLastColumn = vi.fn()
 }
 
 class Spreadsheet {
@@ -71,6 +72,7 @@ class UI {
 }
 
 class SpreadSheetApp {
+  static readonly getActive = vi.fn(() => Spreadsheet)
   static readonly getActiveSpreadsheet = vi.fn(() => Spreadsheet)
   static readonly getUi = vi.fn(() => UI)
   static readonly newFilterCriteria = vi.fn(() => ({
