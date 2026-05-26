@@ -57,7 +57,7 @@
     "@vitest/coverage-v8": "^4.1.7",
     "dotenv": "^17.4.2",
     "eslint": "^10.3.0",
-    "flowbite": "^4.0.1",
+    "flowbite": "^4.0.2",
     "flowbite-svelte": "^1.33.1",
     "flowbite-svelte-icons": "^3.1.0",
     "gas-client": "^1.2.1",
