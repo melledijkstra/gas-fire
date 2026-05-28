@@ -10,10 +10,10 @@ describe('helpers.ts', () => {
 
     test('should return category names when they exist', () => {
       const mockCategories = ['Housing', 'Food', 'Transport']
-      SpreadsheetMock.getSheetByName.mockReturnValue(SheetMock as unknown as GoogleAppsScript.Spreadsheet.Sheet)
-      SheetMock.getLastColumn.mockReturnValue(3)
-      SheetMock.getRange.mockReturnValue(RangeMock as unknown as GoogleAppsScript.Spreadsheet.Range)
-      RangeMock.getValues.mockReturnValue([mockCategories])
+      SpreadsheetMock.getSheetByName.mockReturnValueOnce(SheetMock as any)
+      SheetMock.getLastColumn.mockReturnValueOnce(3)
+      SheetMock.getRange.mockReturnValueOnce(RangeMock as any)
+      RangeMock.getValues.mockReturnValueOnce([mockCategories])
 
       const result = getCategoryNames()
 
@@ -23,10 +23,10 @@ describe('helpers.ts', () => {
     })
 
     test('should return an empty array when getValues returns null or undefined', () => {
-      SpreadsheetMock.getSheetByName.mockReturnValue(SheetMock as unknown as GoogleAppsScript.Spreadsheet.Sheet)
-      SheetMock.getLastColumn.mockReturnValue(1)
-      SheetMock.getRange.mockReturnValue(RangeMock as unknown as GoogleAppsScript.Spreadsheet.Range)
-      RangeMock.getValues.mockReturnValue(null)
+      SpreadsheetMock.getSheetByName.mockReturnValueOnce(SheetMock as any)
+      SheetMock.getLastColumn.mockReturnValueOnce(1)
+      SheetMock.getRange.mockReturnValueOnce(RangeMock as any)
+      RangeMock.getValues.mockReturnValueOnce(null)
 
       const result = getCategoryNames()
 
@@ -34,10 +34,10 @@ describe('helpers.ts', () => {
     })
 
     test('should return an empty array when categories are not an array', () => {
-      SpreadsheetMock.getSheetByName.mockReturnValue(SheetMock as unknown as GoogleAppsScript.Spreadsheet.Sheet)
-      SheetMock.getLastColumn.mockReturnValue(1)
-      SheetMock.getRange.mockReturnValue(RangeMock as unknown as GoogleAppsScript.Spreadsheet.Range)
-      RangeMock.getValues.mockReturnValue('not-an-array')
+      SpreadsheetMock.getSheetByName.mockReturnValueOnce(SheetMock as any)
+      SheetMock.getLastColumn.mockReturnValueOnce(1)
+      SpreadsheetMock.getRange.mockReturnValueOnce(RangeMock as any)
+      RangeMock.getValues.mockReturnValueOnce('not-an-array')
 
       const result = getCategoryNames()
 
@@ -45,7 +45,7 @@ describe('helpers.ts', () => {
     })
 
     test('should throw an error when the categories sheet is not found', () => {
-      SpreadsheetMock.getSheetByName.mockReturnValue(null as unknown as GoogleAppsScript.Spreadsheet.Sheet)
+      SpreadsheetMock.getSheetByName.mockReturnValueOnce(null as any)
 
       expect(() => getCategoryNames()).toThrow()
     })
