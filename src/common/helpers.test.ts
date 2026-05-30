@@ -1,4 +1,4 @@
-import { slugify, structuredClone, structuredCloneFallback, getRowHash } from './helpers'
+import { slugify, structuredClone, structuredCloneFallback, getRowHash, sanitizeString } from './helpers'
 
 describe('helpers', () => {
   describe('slugify', () => {
@@ -94,7 +94,7 @@ describe('helpers', () => {
       // FIRE_COLUMNS = ['ref', 'iban', 'date', 'amount', 'balance', 'contra_account', 'description', ...]
       // HASH_COLUMNS = ['iban', 'date', 'amount', 'contra_account', 'description']
       // Indices: 1, 2, 3, 5, 6
-      const row = [
+      const row: import('@/common/types').CellValue[] = [
         'ref123', // 0
         'NLINGB123', // 1 (iban)
         date, // 2 (date)
@@ -111,12 +111,12 @@ describe('helpers', () => {
     it('should handle null and undefined values by converting to empty strings', () => {
       const row = [
         null, // 0
-        undefined, // 1 (iban)
+        null, // 1 (iban)
         null, // 2 (date)
         0, // 3 (amount)
         null, // 4
         null, // 5 (contra_account)
-        undefined, // 6 (description)
+        null, // 6 (description)
       ]
       expect(getRowHash(row)).toBe('||0||')
     })
@@ -133,6 +133,30 @@ describe('helpers', () => {
       ]
       const expectedDateStr = new Date('2024-12-31T23:59:59.999Z').toISOString()
       expect(getRowHash(row)).toBe(`iban|${expectedDateStr}|-50.5|123456|true`)
+    })
+  })
+
+  describe('sanitizeString', () => {
+    it('should prepend a single quote to strings starting with =', () => {
+      expect(sanitizeString('=1+1')).toBe('\'=1+1')
+    })
+
+    it('should prepend a single quote to strings starting with +', () => {
+      expect(sanitizeString('+A1')).toBe('\'+A1')
+    })
+
+    it('should prepend a single quote to strings starting with -', () => {
+      expect(sanitizeString('-B2')).toBe('\'-B2')
+    })
+
+    it('should prepend a single quote to strings starting with @', () => {
+      expect(sanitizeString('@SUM(A1:A10)')).toBe('\'@SUM(A1:A10)')
+    })
+
+    it('should not prepend a single quote to normal strings', () => {
+      expect(sanitizeString('Hello')).toBe('Hello')
+      expect(sanitizeString('123')).toBe('123')
+      expect(sanitizeString(' =1+1')).toBe(' =1+1')
     })
   })
 })

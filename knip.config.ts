@@ -23,8 +23,6 @@ export default {
     // instead from 'flowbite-svelte'
     'flowbite',
   ],
-  ignore: [
-    // plugin that generates the frontend bundles, but is not imported in the src code
-    'src/plugins/frontendBundlesPlugin.ts',
-  ],
+  ignoreExportsUsedInFile: true,
+  ignore: ['src/server/deduplication/duplicate-finder.ts'],
 } satisfies KnipConfig

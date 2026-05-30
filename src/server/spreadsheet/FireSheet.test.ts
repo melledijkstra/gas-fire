@@ -13,4 +13,19 @@ describe('generateCellData', () => {
       userEnteredValue: { numberValue: expected },
     })
   })
+
+  test('should prepend single quote for strings starting with formula characters (CSV injection prevention)', () => {
+    expect(generateCellData('=1+1')).toEqual({
+      userEnteredValue: { stringValue: '\'=1+1' },
+    })
+    expect(generateCellData('+A1')).toEqual({
+      userEnteredValue: { stringValue: '\'+A1' },
+    })
+    expect(generateCellData('-B2')).toEqual({
+      userEnteredValue: { stringValue: '\'-B2' },
+    })
+    expect(generateCellData('@SUM(A1:A10)')).toEqual({
+      userEnteredValue: { stringValue: '\'@SUM(A1:A10)' },
+    })
+  })
 })
