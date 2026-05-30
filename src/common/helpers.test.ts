@@ -1,3 +1,4 @@
+import type { CellValue } from '@/common/types'
 import { slugify, structuredClone, structuredCloneFallback, getRowHash, sanitizeString } from './helpers'
 
 describe('helpers', () => {
@@ -94,7 +95,7 @@ describe('helpers', () => {
       // FIRE_COLUMNS = ['ref', 'iban', 'date', 'amount', 'balance', 'contra_account', 'description', ...]
       // HASH_COLUMNS = ['iban', 'date', 'amount', 'contra_account', 'description']
       // Indices: 1, 2, 3, 5, 6
-      const row: import('@/common/types').CellValue[] = [
+      const row: CellValue[] = [
         'ref123', // 0
         'NLINGB123', // 1 (iban)
         date, // 2 (date)
