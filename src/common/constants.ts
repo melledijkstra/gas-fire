@@ -8,7 +8,6 @@ export enum DialogType {
 export enum NAMED_RANGES {
   netWorth = 'netWorth',
   accounts = 'accounts',
-  accountNames = 'accountNames',
   debug = 'DEBUG',
 }
 

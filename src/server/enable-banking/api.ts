@@ -1,5 +1,6 @@
 import { Logger } from '@/common/logger'
 import { ENABLE_BANKING_API_URL, PROP_ENABLE_BANKING_APP_ID, PROP_ENABLE_BANKING_PRIVATE_KEY } from './config'
+import type { Aspsp } from './types'
 
 // URLFetchApp doesn't provide us with a type for options
 // so we define our own with the properties we use.
