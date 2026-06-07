@@ -3,10 +3,6 @@ node_modules/
 # The bundles file, ignoring as it can be generated again from the source
 dist/
 
-# cache directories
-.cache/
-cache/
-
 # ignore the .clasp.json
 .clasp.json
 

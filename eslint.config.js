@@ -11,7 +11,6 @@ export default defineConfig([
       'coverage/',
       'storybook-static/',
       'worktrees/',
-      'docs/.vitepress/',
     ],
   },
   eslint.configs.recommended,

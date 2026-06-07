@@ -32,11 +32,6 @@ export const clientEntrypoints: Array<DialogEntry> = [
     filename: 'import-dialog',
     template: 'import-dialog/index.html',
   },
-  {
-    name: 'CLIENT:enable-banking',
-    filename: 'enable-banking-dialog',
-    template: 'enable-banking-dialog/index.html',
-  },
 ]
 
 const sharedConfig = defineConfig({

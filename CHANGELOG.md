@@ -1,26 +1,10 @@
 # Changelog
 
-## 4.17.0-beta
+## 4.16.0-beta
 
 - **Feature** - ✨ Initial setup and integration for Enable Banking
 - **Feature** - ✨ Setup daily automated trigger to sync and fetch Enable Banking transactions
 - **Feature** - ✨ Connect accounts through new UI commands under the Apps Script menu
-
-## 4.16.0-beta
-
-- **Feature** - Bootstrapped documentation with VitePress in the `docs/` directory. This will host all the user facing documentation and guides.
-
-## 4.15.10-beta
-
-- **Testing** - Added missing unit tests for `getRowHash` utility function in `src/common/helpers.ts`, improving code coverage and reliability.
-
-## 4.15.9-beta
-
-- **Feature** - Setup github pages for potential enable banking integration in the future.
-
-## 4.15.8-beta
-
-- **Refactor** - 🧹 Removed unused export `formatCellValue` from `src/server/import-pipeline/pipeline.ts` to improve maintainability and resolve Knip issue.
 
 ## 4.15.7-beta
 

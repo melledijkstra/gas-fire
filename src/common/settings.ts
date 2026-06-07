@@ -3,14 +3,12 @@ import type { DialogType, FireColumn } from './constants'
 export const DIALOG_SIZES: Record<keyof typeof DialogType, [number, number]> = {
   import: [900, 600],
   settings: [900, 600],
-  enableBanking: [900, 600],
   about: [300, 200],
 }
 
 export const FEATURES = {
   IMPORT_DUPLICATE_DETECTION: true,
   RULE_ENGINE_ENABLED: true,
-  ENABLE_BANKING_ENABLED: true,
 } as const
 
 // These are the columns that are used to calculate the hash of a FireTable row

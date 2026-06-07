@@ -2,7 +2,7 @@ import { getRowHash } from '@/common/helpers'
 import { Logger } from '@/common/logger'
 import { FireTable } from '@/common/table/FireTable'
 import { Table } from '@/common/table/Table'
-import type { TransactionAction, UserDecisions } from '@/common/types'
+import type { CellValue, TransactionAction, UserDecisions } from '@/common/types'
 import { Config } from '../config'
 import type { RuleEngineResult } from '../rule-engine/types'
 import { FireSheet } from '../spreadsheet/FireSheet'
@@ -122,6 +122,23 @@ export function duplicateDetectionStage(input: FireTable, context: PreviewPipeli
 }
 
 /**
+ * Formats a single cell value to a display string.
+ * Dates are formatted as 'yyyy-MM-dd' using the spreadsheet's timezone.
+ */
+export function formatCellValue(cell: CellValue): string {
+  if (cell instanceof Date) {
+    try {
+      const timeZone = FireSheet.getTimeZone()
+      return Utilities.formatDate(cell, timeZone, 'yyyy-MM-dd')
+    }
+    catch {
+      return cell.toISOString().split('T')[0]
+    }
+  }
+  return String(cell ?? '')
+}
+
+/**
  * Replaces empty cells in auto-fill columns with a placeholder for preview purposes.
  * This stage modifies the table data in-place.
  */
@@ -159,23 +176,6 @@ export function applyUserDecisionsStage(input: FireTable, context: ImportPipelin
     const action: TransactionAction = decisions.get(hash) ?? 'import'
     return action === 'import'
   })
-
-  return input
-}
-
-/**
- * Removes rows that have been flagged as duplicates or excluded by rules.
- * This is particularly useful for automated imports where user intervention is not possible.
- */
-export function filterOutDuplicatesStage(input: FireTable, context: PreviewPipelineContext): FireTable {
-  const excludedHashes = new Set<string>([
-    ...context.duplicateHashes,
-    ...(context.ruleEngine?.removedHashes ?? []),
-  ])
-
-  if (excludedHashes.size === 0) return input
-
-  input.filter(row => !excludedHashes.has(getRowHash(row)))
 
   return input
 }

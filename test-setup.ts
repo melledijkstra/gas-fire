@@ -40,13 +40,12 @@ class Sheet {
   static readonly insertRowsBefore = vi.fn(() => Sheet)
   static readonly getSheetValues = vi.fn<() => unknown[]>(() => [])
   static readonly getLastRow = vi.fn()
-  static readonly getLastColumn = vi.fn()
 }
 
 class Spreadsheet {
   static readonly getSheets = vi.fn(() => [Sheet])
   static readonly getRangeByName = vi.fn(() => Range)
-  static readonly getSheetByName = vi.fn((): Sheet | null => Sheet)
+  static readonly getSheetByName = vi.fn(() => Sheet)
   static readonly insertSheet = vi.fn(() => Sheet)
   static readonly getSpreadsheetLocale = vi.fn(() => 'en_US')
   static readonly getOwner = vi.fn(() => ({
@@ -72,11 +71,10 @@ class UI {
 }
 
 class SpreadSheetApp {
-  static readonly getActive = vi.fn(() => Spreadsheet)
   static readonly getActiveSpreadsheet = vi.fn(() => Spreadsheet)
   static readonly getUi = vi.fn(() => UI)
   static readonly newFilterCriteria = vi.fn(() => ({
-    whenCellEmpty: vi.fn(() => ({
+    setHiddenValues: vi.fn(() => ({
       build: vi.fn(),
     })),
   }))

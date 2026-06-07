@@ -2,7 +2,6 @@ export enum DialogType {
   import,
   settings,
   about,
-  enableBanking,
 }
 
 export enum NAMED_RANGES {

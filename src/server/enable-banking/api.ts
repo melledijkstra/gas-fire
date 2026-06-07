@@ -1,36 +1,24 @@
 import { Logger } from '@/common/logger'
-import { ENABLE_BANKING_API_URL, PROP_ENABLE_BANKING_APP_ID, PROP_ENABLE_BANKING_PRIVATE_KEY } from './config'
 
-// Unfortunately Google Apps Script doesn't provide a type for the UrlFetchApp.fetch options
-// so we define a minimal one here for better type safety in our API calls.
-type FetchOptions = {
-  method?: 'get' | 'post' | 'put' | 'delete'
-  contentType?: string
-  payload?: string
-  headers?: Record<string, string>
-}
-
-type Aspsp = {
-  name: string
-  country: string
-  logo?: string
-}
+const ENABLE_BANKING_API_URL = 'https://api.enablebanking.com'
+// Use script properties since the private key is application-wide
 
 export class EnableBankingApi {
   private static getAppId(): string {
     const props = PropertiesService.getScriptProperties()
-    const appId = props.getProperty(PROP_ENABLE_BANKING_APP_ID)
+    // Fallback to the default application ID if not provided in script properties
+    const appId = props.getProperty('ENABLE_BANKING_APP_ID') || '77422cf6-6543-43c9-ba14-e16722d44a51'
     if (!appId) {
-      throw new Error(`${PROP_ENABLE_BANKING_APP_ID} is not set in Script Properties.`)
+      throw new Error('ENABLE_BANKING_APP_ID is not set in Script Properties.')
     }
     return appId
   }
 
   private static getPrivateKey(): string {
     const props = PropertiesService.getScriptProperties()
-    const key = props.getProperty(PROP_ENABLE_BANKING_PRIVATE_KEY)
+    const key = props.getProperty('ENABLE_BANKING_PRIVATE_KEY')
     if (!key) {
-      throw new Error(`${PROP_ENABLE_BANKING_PRIVATE_KEY} is not set in Script Properties. Please add your .pem private key.`)
+      throw new Error('ENABLE_BANKING_PRIVATE_KEY is not set in Script Properties. Please add your .pem private key.')
     }
     return key
   }
@@ -64,18 +52,18 @@ export class EnableBankingApi {
     return `${toSign}.${encodedSignature}`
   }
 
-  private static fetchApi<T>(endpoint: string, options: FetchOptions = {}): T {
+  private static fetchApi<T>(endpoint: string, options: Record<string, unknown> = {}): T {
     const jwt = this.generateJWT()
     const url = `${ENABLE_BANKING_API_URL}${endpoint}`
 
     const headers = {
-      ...options?.headers,
+      ...(options.headers as Record<string, string> || {}),
       Authorization: `Bearer ${jwt}`,
       Accept: 'application/json',
     }
 
-    const fetchOptions = {
-      ...options,
+    const fetchOptions: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
+      ...(options as GoogleAppsScript.URL_Fetch.URLFetchRequestOptions),
       headers,
       muteHttpExceptions: true,
     }
@@ -94,7 +82,7 @@ export class EnableBankingApi {
   }
 
   static getAspsps() {
-    return this.fetchApi<{ aspsps: Aspsp[] }>('/aspsps')
+    return this.fetchApi<{ aspsps: { name: string, country: string }[] }>('/aspsps')
   }
 
   static startAuthorization(aspsp: { name: string, country: string }, redirectUrl: string, state: string) {

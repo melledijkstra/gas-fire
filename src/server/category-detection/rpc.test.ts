@@ -13,6 +13,11 @@ vi.mock('../globals', () => ({
   getSourceSheet: vi.fn(() => SheetMock),
 }))
 
+vi.mock('../helpers', async actualImport => ({
+  ...await actualImport<typeof import('../helpers')>(),
+  getCategoryNames: vi.fn(() => ['cat1', 'cat2']),
+}))
+
 const detectCategorySpy = vi.spyOn(
   categoryDetection,
   'detectCategoryByTextAnalysis',
@@ -34,7 +39,7 @@ describe('RPC: Automatic Categorization', () => {
 
     test('should show an alert if no rows were categorized', () => {
       UIMock.alert.mockReturnValueOnce(UIMock.Button.YES)
-      RangeMock.getValues.mockReturnValueOnce([
+      RangeMock.getValues.mockReturnValue([
         ['', 'category', 'contra_account'],
         ['cat1', 'account1'],
       ])
@@ -44,7 +49,7 @@ describe('RPC: Automatic Categorization', () => {
 
     test('should categorize rows', () => {
       UIMock.alert.mockReturnValueOnce(UIMock.Button.YES)
-      RangeMock.getValues.mockReturnValueOnce([
+      RangeMock.getValues.mockReturnValue([
         ['ref', 'iban', 'date', 'amount', 'balance', 'contra_account', 'description', 'comments', 'icon', 'category', 'label', 'import_date', 'hours', 'disabled', 'contra_iban', 'currency'],
         ['', '', '', '', '', 'account1', '', '', '', ''],
         ['', '', '', '', '', 'account2', '', '', '', ''],

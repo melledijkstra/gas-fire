@@ -24,7 +24,6 @@ import {
   applyUserDecisionsStage,
   autoFillPreviewStage,
   duplicateDetectionStage,
-  filterOutDuplicatesStage,
   removeEmptyRowsStage,
   sortByDateStage,
   transformToFireTableStage,
@@ -95,17 +94,13 @@ function withPipelineLogger(
 }
 
 class PipelineRPC {
-  private static fetchParsingRules(bankAccount: string) {
-    const rawRulesData = RuleSheet.getRulesData()
-    const ruleParser = new RuleParser()
-    return ruleParser.parseRulesByAccount(rawRulesData, bankAccount)
-  }
-
   static setupCommonPipeline<C extends PipelineContext>(bankAccount: string, context: C, dryRun = false): Pipeline<Table, FireTable, C> {
     let pipeline = Pipeline.create<Table, C>()
       .addStage(removeEmptyRowsStage)
 
-    const { rules, warnings } = this.fetchParsingRules(bankAccount)
+    const rawRulesData = RuleSheet.getRulesData()
+    const ruleParser = new RuleParser()
+    const { rules, warnings } = ruleParser.parseRulesByAccount(rawRulesData, bankAccount)
     const ruleProcessor = new RuleProcessor(rules)
 
     if (FEATURES.RULE_ENGINE_ENABLED) {
@@ -127,82 +122,6 @@ class PipelineRPC {
     }
 
     return transformedPipeline
-  }
-
-  /**
-   * Dedicated pipeline for background Enable Banking synchronization.
-   * Maps transactions directly to a FireTable and applies deduplication and rule engine.
-   */
-  @withPipelineLogger
-  static enableBankingPipeline(
-    fireTable: FireTable,
-    bankAccount: string,
-  ): ServerResponse<{
-    ruleEngine?: PackedRuleEngineResult
-  }> {
-    const fireSheet = new FireSheet()
-    const config = Config.getAccountConfiguration(bankAccount)
-
-    const context: PreviewPipelineContext = {
-      config,
-      duplicateHashes: new Set(),
-    }
-
-    const { rules, warnings } = this.fetchParsingRules(bankAccount)
-    const ruleProcessor = new RuleProcessor(rules)
-
-    if (FEATURES.RULE_ENGINE_ENABLED) {
-      context.ruleEngine = {
-        warnings,
-        rulesCount: rules.length,
-        appliedRules: [],
-        rowExcludedRule: {},
-        removedHashes: new Set<string>(),
-      }
-    }
-
-    let pipeline = Pipeline.create<FireTable, PreviewPipelineContext>()
-
-    if (FEATURES.RULE_ENGINE_ENABLED) {
-      // dryRun = false to permanently apply rule engine results (e.g. categorization or exclusion)
-      pipeline = pipeline.addStage(input => postTransformRulesStage(input, ruleProcessor, context, false))
-    }
-
-    if (FEATURES.IMPORT_DUPLICATE_DETECTION) {
-      pipeline = pipeline.addStage(duplicateDetectionStage)
-    }
-
-    const finalTable = pipeline
-      .addStage(filterOutDuplicatesStage)
-      .addStage(sortByDateStage)
-      .execute(fireTable, context)
-
-    if (finalTable.isEmpty()) {
-      const msg = 'No new rows to import after rules and deduplication.'
-      Logger.log(msg)
-      return { success: true, message: msg, data: {} }
-    }
-
-    const autoFillColumns = config.autoFillEnabled ? config.autoFillColumnIndices : undefined
-    fireSheet.importData(finalTable, autoFillColumns)
-
-    const msg = `Synced ${finalTable.getRowCount()} transactions!`
-    Logger.log(msg)
-
-    return {
-      success: true,
-      message: msg,
-      data: {
-        ...(context.ruleEngine
-          ? {
-              ruleEngine: {
-                ...context.ruleEngine,
-                removedHashes: Array.from(context.ruleEngine.removedHashes),
-              },
-            }
-          : {}),
-      },
-    }
   }
 
   /**
@@ -331,4 +250,3 @@ class PipelineRPC {
 // exported pipeline functions which can be called by the frontend
 export const importPipeline = PipelineRPC.importPipeline.bind(PipelineRPC)
 export const previewPipeline = PipelineRPC.previewPipeline.bind(PipelineRPC)
-export const enableBankingPipeline = PipelineRPC.enableBankingPipeline.bind(PipelineRPC)
