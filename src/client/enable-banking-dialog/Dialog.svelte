@@ -52,7 +52,7 @@
     isLoading = true;
 
     const [connRes, triggerStatusResult] = await Promise.all([
-      serverFunctions.RPCgetEnableBankingConnections(),
+      serverFunctions.fetchEnableBankingConnections(),
       serverFunctions.getEnableBankingTriggerStatus()
     ]);
 

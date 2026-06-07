@@ -1,6 +1,15 @@
 import { Logger } from '@/common/logger'
 import { ENABLE_BANKING_API_URL, PROP_ENABLE_BANKING_APP_ID, PROP_ENABLE_BANKING_PRIVATE_KEY } from './config'
 
+// Unfortunately Google Apps Script doesn't provide a type for the UrlFetchApp.fetch options
+// so we define a minimal one here for better type safety in our API calls.
+type FetchOptions = {
+  method?: 'get' | 'post' | 'put' | 'delete'
+  contentType?: string
+  payload?: string
+  headers?: Record<string, string>
+}
+
 type Aspsp = {
   name: string
   country: string
@@ -55,12 +64,12 @@ export class EnableBankingApi {
     return `${toSign}.${encodedSignature}`
   }
 
-  private static fetchApi<T>(endpoint: string, options: Record<string, unknown> = {}): T {
+  private static fetchApi<T>(endpoint: string, options: FetchOptions = {}): T {
     const jwt = this.generateJWT()
     const url = `${ENABLE_BANKING_API_URL}${endpoint}`
 
     const headers = {
-      ...options?.headers ?? {},
+      ...options?.headers,
       Authorization: `Bearer ${jwt}`,
       Accept: 'application/json',
     }

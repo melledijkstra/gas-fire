@@ -15,7 +15,7 @@ export type EnableBankingConnection = {
   createdAt: string
 }
 
-export function RPCgetEnableBankingConnections(): ServerResponse<EnableBankingConnection[]> {
+export function fetchEnableBankingConnections(): ServerResponse<EnableBankingConnection[]> {
   try {
     const connections = getEnableBankingConnections()
     return { success: true, data: connections }
@@ -103,10 +103,10 @@ export function completeEnableBankingAuthorization(code: string, aspsp: Aspsp): 
 
     // Check for duplicate accounts across existing connections to prevent duplicate transactions
     const existingMappedAccountIds = new Set(
-      connections.flatMap(c => c.accounts.map(a => a.accountId)),
+      connections.flatMap(connection => connection.accounts.map(account => account.accountId)),
     )
 
-    mappedAccounts = mappedAccounts.filter(acc => !existingMappedAccountIds.has(acc.accountId))
+    mappedAccounts = mappedAccounts.filter(account => !existingMappedAccountIds.has(account.accountId))
 
     if (mappedAccounts.length === 0) {
       return { success: false, error: 'Session authorized, but all matching bank accounts have already been connected. No new connections were created.' }

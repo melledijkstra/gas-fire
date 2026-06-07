@@ -126,7 +126,7 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     throw new Error('Mock not implemented')
   }
 
-  async RPCgetEnableBankingConnections(): Promise<ServerResponse<EnableBankingConnection[]>> {
+  async fetchEnableBankingConnections(): Promise<ServerResponse<EnableBankingConnection[]>> {
     await this.delay(1000)
     const mockConnections: EnableBankingConnection[] = [
       {
@@ -200,7 +200,7 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
       success: true,
       data: {
         enabled: _enabled,
-        frequencyType: _frequencyType as 'hours' | 'days',
+        frequencyType: _frequencyType,
         frequencyValue: _frequencyValue,
       },
     }
