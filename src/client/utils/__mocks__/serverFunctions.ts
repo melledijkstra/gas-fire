@@ -43,7 +43,6 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     message: string
     ruleEngine?: PackedRuleEngineResult
   }>> {
-    console.log('importPipeline mock called')
     return { success: true, message: 'ok', data: { message: 'ok' } }
   }
 
@@ -53,7 +52,19 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
   ): Promise<ServerResponse<ImportPreviewResult>> {
     await this.delay(1000)
     console.log('previewPipeline mock called')
-    return { success: true, data: { duplicateHashes: [], table: [], newBalance: 0 } as unknown as ImportPreviewResult }
+    return {
+      success: true,
+      data: {
+        duplicateHashes: [],
+        table: {
+          headers: ['date', 'amount', 'description'],
+          data: [
+            ['2023-01-01', '100', 'Grocery'],
+          ],
+        },
+        newBalance: 0,
+      },
+    }
   }
 
   async enableBankingPipeline(
@@ -63,7 +74,6 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     ruleEngine?: PackedRuleEngineResult
   }>> {
     await this.delay(1000)
-    console.log('enableBankingPipeline mock called')
     return { success: true, data: {} }
   }
 
