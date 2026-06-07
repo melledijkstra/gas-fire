@@ -1,19 +1,14 @@
 import { Logger } from '@/common/logger'
 import { ENABLE_BANKING_API_URL, PROP_ENABLE_BANKING_APP_ID, PROP_ENABLE_BANKING_PRIVATE_KEY } from './config'
 
-// Unfortunately Google Apps Script doesn't provide a type for the UrlFetchApp.fetch options
-// so we define a minimal one here for better type safety in our API calls.
+// URLFetchApp doesn't provide us with a type for options
+// so we define our own with the properties we use.
 type FetchOptions = {
-  method?: 'get' | 'post' | 'put' | 'delete'
+  method?: string
   contentType?: string
   payload?: string
   headers?: Record<string, string>
-}
-
-type Aspsp = {
-  name: string
-  country: string
-  logo?: string
+  muteHttpExceptions?: boolean
 }
 
 export class EnableBankingApi {
