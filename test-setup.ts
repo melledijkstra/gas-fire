@@ -46,7 +46,7 @@ class Sheet {
 class Spreadsheet {
   static readonly getSheets = vi.fn(() => [Sheet])
   static readonly getRangeByName = vi.fn(() => Range)
-  static readonly getSheetByName = vi.fn(() => Sheet)
+  static readonly getSheetByName = vi.fn((): Sheet | null => Sheet)
   static readonly insertSheet = vi.fn(() => Sheet)
   static readonly getSpreadsheetLocale = vi.fn(() => 'en_US')
   static readonly getOwner = vi.fn(() => ({
@@ -76,7 +76,7 @@ class SpreadSheetApp {
   static readonly getActiveSpreadsheet = vi.fn(() => Spreadsheet)
   static readonly getUi = vi.fn(() => UI)
   static readonly newFilterCriteria = vi.fn(() => ({
-    setHiddenValues: vi.fn(() => ({
+    whenCellEmpty: vi.fn(() => ({
       build: vi.fn(),
     })),
   }))

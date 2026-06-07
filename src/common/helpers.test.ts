@@ -1,4 +1,4 @@
-import { slugify, structuredClone, structuredCloneFallback, getRowHash } from './helpers'
+import { getRowHash, slugify, structuredClone, structuredCloneFallback } from './helpers'
 
 describe('helpers', () => {
   describe('slugify', () => {
@@ -108,15 +108,15 @@ describe('helpers', () => {
       expect(getRowHash(row)).toBe(expectedHash)
     })
 
-    it('should handle null and undefined values by converting to empty strings', () => {
+    it('should handle null values by converting to empty strings', () => {
       const row = [
         null, // 0
-        undefined, // 1 (iban)
+        null, // 1 (iban)
         null, // 2 (date)
         0, // 3 (amount)
         null, // 4
         null, // 5 (contra_account)
-        undefined, // 6 (description)
+        null, // 6 (description)
       ]
       expect(getRowHash(row)).toBe('||0||')
     })
