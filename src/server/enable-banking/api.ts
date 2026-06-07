@@ -1,5 +1,15 @@
 import { Logger } from '@/common/logger'
 
+// URLFetchApp doesn't provide us with a type for options
+// so we define our own with the properties we use.
+type FetchOptions = {
+  method?: string
+  contentType?: string
+  payload?: string
+  headers?: Record<string, string>
+  muteHttpExceptions?: boolean
+}
+
 const ENABLE_BANKING_API_URL = 'https://api.enablebanking.com'
 // Use script properties since the private key is application-wide
 
@@ -52,18 +62,18 @@ export class EnableBankingApi {
     return `${toSign}.${encodedSignature}`
   }
 
-  private static fetchApi<T>(endpoint: string, options: Record<string, unknown> = {}): T {
+  private static fetchApi<T>(endpoint: string, options: FetchOptions = {}): T {
     const jwt = this.generateJWT()
     const url = `${ENABLE_BANKING_API_URL}${endpoint}`
 
     const headers = {
-      ...(options.headers as Record<string, string> || {}),
+      ...options?.headers,
       Authorization: `Bearer ${jwt}`,
       Accept: 'application/json',
     }
 
-    const fetchOptions: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-      ...(options as GoogleAppsScript.URL_Fetch.URLFetchRequestOptions),
+    const fetchOptions = {
+      ...options,
       headers,
       muteHttpExceptions: true,
     }
