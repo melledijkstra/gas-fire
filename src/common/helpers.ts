@@ -74,3 +74,10 @@ export function getRowHash(row: CellValue[]): string {
     return cell instanceof Date ? cell.toISOString() : String(cell ?? '')
   }).join('|')
 }
+
+export function sanitizeString(value: string): string {
+  if (/^[=+\-@]/.test(value)) {
+    return `'${value}`
+  }
+  return value
+}

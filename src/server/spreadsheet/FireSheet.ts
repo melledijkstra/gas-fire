@@ -2,6 +2,7 @@ import { withLogger } from '@/common/decorators'
 import { Logger } from '@/common/logger'
 import { FireTable } from '@/common/table/FireTable'
 import type { CellValue } from '@/common/types'
+import { sanitizeString } from '@/common/helpers'
 import { getSourceSheet } from '../globals'
 import { SheetsRequestBuilder } from '../request-builder'
 
@@ -423,7 +424,7 @@ export function generateCellData(
     extendedValue.numberValue = cell
   }
   else {
-    extendedValue.stringValue = String(cell)
+    extendedValue.stringValue = sanitizeString(String(cell))
   }
 
   return { userEnteredValue: extendedValue }
