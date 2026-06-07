@@ -1,6 +1,5 @@
 import { Logger } from '@/common/logger'
 import { FireTable } from '@/common/table/FireTable'
-import { getCategoryNames } from '../helpers'
 import { FireSheet } from '../spreadsheet/FireSheet'
 import { categorizeFireTable } from './categorize'
 
@@ -38,10 +37,9 @@ export const executeAutomaticCategorization = () => {
     const fireTable = fireSheet.getDataTable()
     const categoryColIndex = FireTable.getFireColumnIndex('category')
 
-    // we set a filter which hides all categories, leaving only rows without category
-    // unfortunately there is no better way to do it currently
+    // we set a filter which shows only rows without category
     const blankFilterCriteria = SpreadsheetApp.newFilterCriteria()
-      .setHiddenValues(getCategoryNames())
+      .whenCellEmpty()
       .build()
 
     filter.setColumnFilterCriteria(categoryColIndex + 1, blankFilterCriteria)
