@@ -2,12 +2,12 @@ export enum DialogType {
   import,
   settings,
   about,
+  enableBanking,
 }
 
 export enum NAMED_RANGES {
   netWorth = 'netWorth',
   accounts = 'accounts',
-  accountNames = 'accountNames',
   debug = 'DEBUG',
 }
 

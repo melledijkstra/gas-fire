@@ -12,7 +12,7 @@ describe('AccountUtils Security Tests', () => {
     CacheServiceMock.getDocumentCache.mockReturnValue({
       get: cacheGetMock,
       put: vi.fn(),
-    } as unknown as GoogleAppsScript.Cache.Cache)
+    })
 
     // Mock cache to return data with missing required fields
     cacheGetMock.mockReturnValue(JSON.stringify({

@@ -1,0 +1,270 @@
+<script lang="ts">
+  import type { Aspsp } from '@/server/enable-banking/types';
+  import { Alert, Button, Input, Label, Modal, Select, Toggle } from 'flowbite-svelte';
+  import { onMount } from 'svelte';
+  import type { EnableBankingConnection } from '../../server/enable-banking/rpc';
+  import Application from '../Application.svelte';
+  import { serverFunctions } from '../utils/serverFunctions';
+
+  let connections = $state<EnableBankingConnection[]>([]);
+  let removingSessionId = $state<string>();
+  
+  let isLoading = $state(false);
+  let isSyncing = $state(false);
+  let syncMessage = $state('');
+
+  let triggerEnabled = $state(false);
+  let triggerFreqType = $state<'hours' | 'days'>('days');
+  let triggerFreqVal = $state(1);
+  let isSavingTrigger = $state(false);
+  let triggerSaveMessage = $state();
+
+  let aspsps = $state<Aspsp[]>([]);
+  let searchAspsp = $state('');
+  let filteredAspsps = $derived(
+    aspsps.filter(a => a.name.toLowerCase().includes(searchAspsp.toLowerCase()))
+  )
+  let showAddModal = $state(false);
+  let isFetchingBanks = $state(false);
+  let isStartingAuth = $state(false);
+
+  let showAuthCodeModal = $state(false);
+  let authCode = $state('');
+  let pendingAspsp = $state<Aspsp>();
+
+  let statusMessage = $state<string>();
+
+  onMount(async () => {
+    await loadData();
+  });
+
+  async function setMessage(message: string, timeout = 5000) {
+    statusMessage = message;
+    setTimeout(() => statusMessage = undefined, timeout);
+  }
+
+  async function setTriggerMessage(message: string, timeout = 5000) {
+    triggerSaveMessage = message;
+    setTimeout(() => triggerSaveMessage = undefined, timeout);
+  }
+
+  async function loadData() {
+    isLoading = true;
+
+    const [connRes, triggerStatusResult] = await Promise.all([
+      serverFunctions.fetchEnableBankingConnections(),
+      serverFunctions.getEnableBankingTriggerStatus()
+    ]);
+
+    if (connRes.success) {
+      connections = connRes.data;
+    }
+
+    if (triggerStatusResult.success) {
+      triggerEnabled = triggerStatusResult.data.enabled;
+      triggerFreqType = triggerStatusResult.data.frequencyType;
+      triggerFreqVal = triggerStatusResult.data.frequencyValue;
+    }
+
+    isLoading = false;
+  }
+
+  async function removeConnection(sessionId: string) {
+    removingSessionId = sessionId;
+    const res = await serverFunctions.removeEnableBankingConnection(sessionId);
+    removingSessionId = undefined;
+    if (res.success) {
+      connections = connections.filter(c => c.sessionId !== sessionId);
+    } else {
+      alert('Error removing: ' + res.error);
+    }
+  }
+
+  async function triggerSync() {
+    isSyncing = true;
+    syncMessage = 'Syncing...';
+    const res = await serverFunctions.triggerEnableBankingSync();
+    if (res.success) {
+      syncMessage = res.message || 'Sync complete!';
+    } else {
+      syncMessage = 'Sync failed: ' + res.error;
+    }
+    isSyncing = false;
+    setTimeout(() => syncMessage = '', 5000);
+  }
+
+  async function saveTrigger() {
+    isSavingTrigger = true;
+    const res = await serverFunctions.setEnableBankingTrigger(triggerEnabled, triggerFreqType, triggerFreqVal);
+    isSavingTrigger = false;
+    if (res.success) {
+      setTriggerMessage('Trigger settings saved!');
+    } else {
+      alert('Error saving trigger: ' + res.error);
+    }
+  }
+
+  async function openAddModal() {
+    isFetchingBanks = true;
+    const res = await serverFunctions.getEnableBankingAspsps();
+    isFetchingBanks = false;
+    if (res.success) {
+      aspsps = res.data;
+      showAddModal = true;
+    } else {
+      alert('Failed to load banks: ' + res.error);
+    }
+  }
+
+  async function startAuth(aspsp: {name: string, country: string}) {
+    pendingAspsp = aspsp;
+    isStartingAuth = true;
+    const res = await serverFunctions.startEnableBankingAuthorization(aspsp);
+    isStartingAuth = false;
+    if (res.success) {
+      showAddModal = false;
+      // Open in new tab
+      window.open(res.data, '_blank');
+      showAuthCodeModal = true;
+    } else {
+      pendingAspsp = undefined;
+      alert('Failed to start auth: ' + res.error);
+    }
+  }
+
+  async function completeAuth() {
+    if (!authCode || !pendingAspsp) return;
+    const res = await serverFunctions.completeEnableBankingAuthorization(authCode, pendingAspsp);
+    if (res.success) {
+      setMessage(`Success! Mapped ${res.data} accounts.`);
+      showAuthCodeModal = false;
+      authCode = ''
+      pendingAspsp = undefined
+      loadData();
+    } else {
+      alert('Authorization failed: ' + res.error);
+    }
+  }
+</script>
+
+<Application>
+  <div class="mx-auto space-y-8">
+    <div>
+      <h2 class="text-2xl font-semibold mb-4">Connections</h2>
+      {#if isLoading}
+        <p class="text-gray-500 mb-4">Loading...</p>
+      {:else if connections.length === 0}
+        <p class="text-gray-500 mb-4">No connections configured yet.</p>
+      {:else}
+        <ul class="space-y-4 mb-4">
+          {#each connections as conn}
+            {@const isRemoving = removingSessionId === conn.sessionId}
+            <li class="p-4 border rounded shadow-sm flex justify-between items-center">
+              <div>
+                <p class="font-bold">{conn.aspsp.name}</p>
+                <p class="text-sm text-gray-600">Mapped accounts: {conn.accounts.map(a => a.slug).join(', ')}</p>
+                <p class="text-xs text-gray-400">Added: {new Date(conn.createdAt).toLocaleString()}</p>
+              </div>
+              <Button color="red" disabled={isRemoving} size="sm" onclick={() => removeConnection(conn.sessionId)}>
+                {isRemoving ? 'Removing...' : 'Remove'}
+              </Button>
+            </li>
+          {/each}
+        </ul>
+      {/if}
+      <div class="flex gap-2">
+        <Button onclick={openAddModal} disabled={isLoading || isFetchingBanks}>
+          {isFetchingBanks ? 'Loading...' : 'Add Connection'}
+        </Button>
+        <Button color="green" onclick={triggerSync} disabled={isLoading || isSyncing}>
+          {isSyncing ? 'Syncing...' : 'Run Sync Now'}
+        </Button>
+      </div>
+      {#if syncMessage}
+        <Alert class="mt-4" color={syncMessage.includes('failed') ? 'red' : 'green'}>{syncMessage}</Alert>
+      {/if}
+      {#if statusMessage}
+        <Alert class="mt-4" color="green">{statusMessage}</Alert>
+      {/if}
+    </div>
+
+    <div class="border-t pt-6">
+      <h2 class="text-xl font-semibold mb-4">Automated Sync Settings</h2>
+      <div class="flex flex-col gap-4 max-w-sm">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <Toggle type="checkbox" bind:checked={triggerEnabled} disabled={isLoading} class="form-checkbox" />
+          <span>Enable Background Sync</span>
+        </label>
+
+        {#if triggerEnabled}
+          <div>
+            <Label class="mb-2">Frequency</Label>
+            <div class="flex gap-2">
+              <Input type="number" min="1" bind:value={triggerFreqVal} disabled={isLoading} />
+              <Select bind:value={triggerFreqType} disabled={isLoading}>
+                <option value="hours">Hours</option>
+                <option value="days">Days</option>
+              </Select>
+            </div>
+            {#if triggerFreqType === 'days'}
+              <p class="text-xs text-gray-500 mt-1">Daily syncs happen around 2 AM.</p>
+            {/if}
+          </div>
+        {/if}
+
+        {#if triggerSaveMessage}
+          <Alert class="mt-4" color="green">{triggerSaveMessage}</Alert>
+        {/if}
+
+        <Button
+          color="blue"
+          disabled={isLoading || isSavingTrigger}
+          onclick={saveTrigger}>
+          {isSavingTrigger ? 'Saving...' : 'Save Settings'}
+        </Button>
+      </div>
+    </div>
+  </div>
+
+  <Modal title="Add Bank Connection" bind:open={showAddModal} size="lg">
+    <div class="space-y-4">
+      <Input placeholder="Search bank..." bind:value={searchAspsp} />
+      <div class="max-h-96 overflow-y-auto">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {#each filteredAspsps as aspsp}
+            <div class="flex flex-col items-center p-4 border rounded-lg hover:shadow-md transition-shadow relative {aspsp.connected ? 'bg-green-50 border-green-200' : 'bg-white'}">
+              {#if aspsp.connected}
+                <div class="absolute top-2 right-2 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-medium">
+                  Connected
+                </div>
+              {/if}
+              {#if aspsp.logo}
+                <img src={aspsp.logo} alt={aspsp.name} class="h-12 w-auto mb-3 object-contain" />
+              {:else}
+                <div class="h-12 w-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                  <span class="text-gray-400 font-bold text-xl">{aspsp.name.charAt(0)}</span>
+                </div>
+              {/if}
+              <span class="text-sm font-medium text-center mb-1 line-clamp-2" title={aspsp.name}>{aspsp.name}</span>
+              <span class="text-xs text-gray-500 mb-3">{aspsp.country}</span>
+              <Button size="xs" color={aspsp.connected ? "alternative" : "primary"} class="mt-auto w-full" onclick={() => startAuth(aspsp)} disabled={isStartingAuth}>
+                {isStartingAuth &&
+                pendingAspsp?.name === aspsp.name &&
+                pendingAspsp?.country === aspsp.country ?
+                'Connecting...' : 'Connect'}
+              </Button>
+            </div>
+          {/each}
+        </div>
+      </div>
+    </div>
+  </Modal>
+
+  <Modal title="Enter Authorization Code" bind:open={showAuthCodeModal}>
+    <div class="space-y-4">
+      <p class="text-sm">After logging in to the bank, you will be redirected to an error or blank page. Copy the "code=" parameter from the URL address bar and paste it below.</p>
+      <Input placeholder="Paste code here" bind:value={authCode} />
+      <Button onclick={completeAuth} disabled={!authCode}>Complete Setup</Button>
+    </div>
+  </Modal>
+</Application>

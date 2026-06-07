@@ -47,10 +47,6 @@ export interface PackedTable {
 
 export type TransactionAction = 'skip' | 'import'
 
-export interface TransactionMeta {
-  appliedRule?: string
-}
-
 export interface ImportPreviewResult {
   table: PackedTable
   newBalance: number

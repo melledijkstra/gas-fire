@@ -1,6 +1,4 @@
-import { FIRE_COLUMNS } from '@/common/constants'
-import { getRowHash } from '@/common/helpers'
-import { Table } from '@/common/table/Table'
+import type { FireTable } from '@/common/table/FireTable'
 import type {
   AccountOptions,
   ImportPreviewResult,
@@ -8,13 +6,9 @@ import type {
   ServerResponse,
   TransactionAction,
 } from '@/common/types'
-import { fireTableMock } from '@/fixtures/fire-table'
+import type { Aspsp, EnableBankingConnection } from '@/server/enable-banking/types'
 import type * as publicServerFunctions from '@/server/index'
-import type { ImportRule, PackedRuleEngineResult } from '@/server/rule-engine/types'
-
-////////////////////////////////////////////////////////////////
-// This mock is used by storybook, to mimic server functions
-////////////////////////////////////////////////////////////////
+import type { PackedRuleEngineResult } from '@/server/rule-engine/types'
 
 type ServerFunctionsInterface = typeof publicServerFunctions
 
@@ -26,8 +20,6 @@ type Promisified<T> = {
 
 type PromisifiedServerFunctionsInterface = Promisified<ServerFunctionsInterface>
 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
-
 const StrategyOptions = {
   aurora_financial_group: 'Aurora Financial Group',
   cerulean_trust_bank: 'Cerulean Trust Bank',
@@ -35,128 +27,183 @@ const StrategyOptions = {
 }
 
 class ServerFunctions implements PromisifiedServerFunctionsInterface {
+  private async delay(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms))
+  }
+
   async debugImportSettings() {
     console.log('debugImportSettings mock called')
   }
 
   async importPipeline(
-    rawTable: RawTable,
-    bankAccount: string,
+    _rawTable: RawTable,
+    _bankAccount: string,
     _userDecisions?: Record<string, TransactionAction>,
   ): Promise<ServerResponse<{
     message: string
     ruleEngine?: PackedRuleEngineResult
   }>> {
-    console.log('importPipeline mock called with data:', rawTable, 'and selectedAccount:', bankAccount)
-    await sleep(2000)
-    const msg = `Successfully imported ${rawTable.length} rows!`
-    return {
-      success: true,
-      message: msg,
-      data: {
-        message: msg,
-      },
-    }
-  };
+    return { success: true, message: 'ok', data: { message: 'ok' } }
+  }
 
   async previewPipeline(
     _table: RawTable,
     _strategy: string,
   ): Promise<ServerResponse<ImportPreviewResult>> {
+    await this.delay(1000)
     console.log('previewPipeline mock called')
-    await sleep(2000)
-
-    const appliedRules: ImportRule[] = [
-      {
-        action: 'EXCLUDE',
-        ruleName: 'Test Rule',
-        banks: ['All'],
-        conditionColumn: 'test_column',
-        condition: 'REGEX',
-        actionColumn: 'action_column',
-        stopProcessing: false,
-        rulePhase: 'POST_TRANSFORM',
-      },
-      {
-        action: 'EXCLUDE',
-        ruleName: 'Another Rule',
-        banks: ['All'],
-        conditionColumn: 'test_column',
-        condition: 'REGEX',
-        actionColumn: 'action_column',
-        stopProcessing: false,
-        rulePhase: 'PRE_TRANSFORM',
-      },
-    ]
-
-    const rows = fireTableMock
-    const table = new Table(Array.from(FIRE_COLUMNS), rows)
-    const hashes = rows.map(getRowHash)
-
-    const duplicateHashes = [hashes[3], hashes[5]]
-    const removedHashes = [hashes[2], hashes[4]]
-
     return {
       success: true,
       data: {
-        duplicateHashes,
-        table: table.pack(),
-        newBalance: 1234.56,
-        ruleEngine: {
-          rulesCount: appliedRules.length,
-          appliedRules,
-          warnings: [],
-          removedHashes: removedHashes,
-          rowExcludedRule: {
-            [hashes[2]]: appliedRules[0].ruleName,
-            [hashes[4]]: appliedRules[1].ruleName,
-          },
+        duplicateHashes: [],
+        table: {
+          headers: ['date', 'amount', 'description'],
+          data: [
+            ['2023-01-01', '100', 'Grocery'],
+          ],
         },
+        newBalance: 0,
       },
     }
   }
 
+  async enableBankingPipeline(
+    _fireTable: FireTable,
+    _bankAccount: string,
+  ): Promise<ServerResponse<{
+    ruleEngine?: PackedRuleEngineResult
+  }>> {
+    await this.delay(1000)
+    return { success: true, data: {} }
+  }
+
   async executeAutomaticCategorization(): Promise<void> {
-    console.log('executeAutomaticCategorization mock called')
-  };
+    throw new Error('Mock not implemented')
+  }
 
   async mailNetWorth(): Promise<void> {
-    console.log('mailNetWorth mock called')
-  };
+    throw new Error('Mock not implemented')
+  }
 
   async onOpen(): Promise<void> {
-    console.log('onOpen mock called')
-  };
+    throw new Error('Mock not implemented')
+  }
 
   async openFileUploadDialog(): Promise<void> {
-    console.log('openFileUploadDialog mock called')
-  };
+    throw new Error('Mock not implemented')
+  }
 
   async openAboutDialog(): Promise<void> {
-    console.log('openAboutDialog mock called')
-  };
+    throw new Error('Mock not implemented')
+  }
 
   async openSettingsDialog(): Promise<void> {
-    console.log('openSettingsDialog mock called')
-  };
+    throw new Error('Mock not implemented')
+  }
 
-  async MD5(_value: string): Promise<string> {
-    console.log('MD5 mock called')
-    return 'mocked-md5'
-  };
-
-  async GET_PROJECT_VERSION(): Promise<string> {
-    console.log('GET_PROJECT_VERSION mock called')
-    return 'mocked-version'
-  };
-
+  async GET_PROJECT_VERSION(): Promise<string> { return 'version' }
   async executeFindDuplicates(): Promise<void> {
-    console.log('executeFindDuplicates mock called')
-  };
+    throw new Error('Mock not implemented')
+  }
 
   async getAccountOptions(): Promise<ServerResponse<AccountOptions>> {
-    console.log('getAccountOptions mock called')
     return { success: true, data: StrategyOptions }
+  }
+
+  async setupEnableBankingConnection(): Promise<void> {
+    throw new Error('Mock not implemented')
+  }
+
+  async toggleEnableBankingDailySync(): Promise<void> {
+    throw new Error('Mock not implemented')
+  }
+
+  async syncEnableBankingTransactions(): Promise<void> {
+    throw new Error('Mock not implemented')
+  }
+
+  async openEnableBankingDialog(): Promise<void> {
+    throw new Error('Mock not implemented')
+  }
+
+  async fetchEnableBankingConnections(): Promise<ServerResponse<EnableBankingConnection[]>> {
+    await this.delay(1000)
+    const mockConnections: EnableBankingConnection[] = [
+      {
+        sessionId: 'mock-session-id-1',
+        aspsp: { name: 'Nordea', country: 'FI' },
+        accounts: [
+          { accountId: 'account-1', slug: 'checking' },
+          { accountId: 'account-2', slug: 'savings' },
+        ],
+        createdAt: new Date().toISOString(),
+      },
+      {
+        sessionId: 'mock-session-id-2',
+        aspsp: { name: 'N26', country: 'ES' },
+        accounts: [
+          { accountId: 'account-3', slug: 'main' },
+        ],
+        createdAt: new Date().toISOString(),
+      },
+    ]
+
+    return { success: true, data: mockConnections }
+  }
+
+  async removeEnableBankingConnection(_sessionId: string): Promise<ServerResponse<void>> {
+    await this.delay(1000)
+    return { success: true }
+  }
+
+  async getEnableBankingAspsps(): Promise<ServerResponse<Aspsp[]>> {
+    await this.delay(1000)
+    const mockAspsps: Aspsp[] = [
+      { name: 'Nordea', country: 'FI', logo: 'https://enablebanking.com/brands/FI/Nordea', connected: true },
+      { name: 'N26', country: 'ES', logo: 'https://enablebanking.com/brands/ES/N26', connected: true },
+      { name: 'N26', country: 'PT', logo: 'https://enablebanking.com/brands/PT/N26' },
+      { name: 'N26', country: 'FI', logo: 'https://enablebanking.com/brands/FI/N26' },
+      { name: 'N26', country: 'NL', logo: 'https://enablebanking.com/brands/NL/N26' },
+      { name: 'ING', country: 'NL', logo: 'https://enablebanking.com/brands/NL/ING' },
+      { name: 'BNP Paribas', country: 'FR' },
+    ]
+    return { success: true, data: mockAspsps }
+  }
+
+  async startEnableBankingAuthorization(_aspsp: Aspsp): Promise<ServerResponse<string>> {
+    await this.delay(1000)
+    return { success: true, data: '' }
+  }
+
+  async completeEnableBankingAuthorization(_code: string, _aspsp: Aspsp): Promise<ServerResponse<number>> {
+    await this.delay(1000)
+    return { success: true, data: 1 }
+  }
+
+  async triggerEnableBankingSync(): Promise<ServerResponse<void>> {
+    await this.delay(1000)
+    return { success: true }
+  }
+
+  async getEnableBankingTriggerStatus(): Promise<ServerResponse<{ enabled: boolean, frequencyType: 'hours' | 'days', frequencyValue: number }>> {
+    await this.delay(1000)
+    return { success: true, data: { enabled: false, frequencyType: 'days', frequencyValue: 1 } }
+  }
+
+  async setEnableBankingTrigger(_enabled: boolean, _frequencyType: 'hours' | 'days', _frequencyValue: number): Promise<ServerResponse<{
+    enabled: boolean
+    frequencyType: 'hours' | 'days'
+    frequencyValue: number
+  }>> {
+    await this.delay(1000)
+    return {
+      success: true,
+      data: {
+        enabled: _enabled,
+        frequencyType: _frequencyType,
+        frequencyValue: _frequencyValue,
+      },
+    }
   }
 }
 

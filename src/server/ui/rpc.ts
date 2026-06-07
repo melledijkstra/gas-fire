@@ -1,5 +1,5 @@
 import { NAMED_RANGES } from '@/common/constants'
-import { DIALOG_SIZES } from '@/common/settings'
+import { DIALOG_SIZES, FEATURES } from '@/common/settings'
 import { executeAutomaticCategorization } from '../category-detection/rpc'
 import { debugImportSettings, executeFindDuplicates } from '../other/rpc'
 
@@ -10,7 +10,12 @@ export function onOpen(): void {
     .addItem('Upload Transactions (CSV)', openFileUploadDialog.name)
     .addItem('Auto Categorize', executeAutomaticCategorization.name)
     .addItem('Find duplicates', executeFindDuplicates.name)
-    .addItem('About', openAboutDialog.name)
+
+  if (FEATURES.ENABLE_BANKING_ENABLED) {
+    menu.addItem('Enable Banking (Beta)', openEnableBankingDialog.name)
+  }
+
+  menu.addItem('About', openAboutDialog.name)
 
   if (isDebugEnabled) {
     const debugMenu = ui.createMenu('Debug')
@@ -42,9 +47,18 @@ export function openAboutDialog(): void {
 
 export function openSettingsDialog(): void {
   const [width, height] = DIALOG_SIZES.settings
-  const html = HtmlService.createTemplateFromFile('settings-dialog.html')
+  const html = HtmlService.createTemplateFromFile('settings-dialog')
     .evaluate()
     .setWidth(width)
     .setHeight(height)
   SpreadsheetApp.getUi().showModalDialog(html, 'Settings Dialog')
+}
+
+export function openEnableBankingDialog(): void {
+  const [width, height] = DIALOG_SIZES.enableBanking
+  const html = HtmlService.createTemplateFromFile('enable-banking-dialog')
+    .evaluate()
+    .setWidth(width)
+    .setHeight(height)
+  SpreadsheetApp.getUi().showModalDialog(html, 'Enable Banking (Beta)')
 }
