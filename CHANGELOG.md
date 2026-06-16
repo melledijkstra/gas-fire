@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.17.2-beta
+
+- **Fix** - fix for [#316](https://github.com/melledijkstra/gas-fire/issues/316)
+
 ## 4.17.1-beta
 
 - **Cleanup** - Cleaned up rule parser and rule processor logic
