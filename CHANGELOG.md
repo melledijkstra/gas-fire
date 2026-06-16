@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.17.1-beta
+
+- **Cleanup** - Cleaned up rule parser and rule processor logic
+
 ## 4.17.0-beta
 
 - **Feature** - ✨ Initial setup and integration for Enable Banking
