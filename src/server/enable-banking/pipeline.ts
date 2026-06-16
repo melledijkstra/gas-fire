@@ -14,7 +14,7 @@ import { getEnableBankingConnections, normalizeIban } from './utils'
  * the account's own IBAN. Null ensures Google Sheets stores a truly empty cell so that
  * formulas like COUNTIF don't count it as a value (fixes issue #316).
  */
-function resolveContraIban(tx: EnableBankingTransaction, iban: string): string | null {
+export function resolveContraIban(tx: EnableBankingTransaction, iban: string): string | null {
   const contraIban = tx.creditor_account?.iban || tx.debtor_account?.iban || ''
   const isSelfTransfer = normalizeIban(contraIban) === normalizeIban(iban)
   return contraIban && !isSelfTransfer ? contraIban : null
