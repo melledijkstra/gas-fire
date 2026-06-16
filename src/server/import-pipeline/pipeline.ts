@@ -21,7 +21,7 @@ export interface PreviewPipelineContext extends PipelineContext {
   duplicateHashes: Set<string>
 }
 
-type PipelineStage<I, O, C> = (input: I, context: C) => O
+export type PipelineStage<I, O, C> = (input: I, context: C) => O
 
 /**
  * A generic Pipeline pattern implementation that chains together multiple stages.
