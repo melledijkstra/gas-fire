@@ -1,5 +1,9 @@
 # Changelog
 
+## 5.0.0-beta
+
+- **Refactor** - Convert the Google Apps Script from a bound container script to an official Workspace Add-On
+
 ## 4.17.2-beta
 
 - **Fix** - fix for [#316](https://github.com/melledijkstra/gas-fire/issues/316)
