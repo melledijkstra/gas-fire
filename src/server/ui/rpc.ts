@@ -1,5 +1,4 @@
 import { DIALOG_SIZES, FEATURES } from '@/common/settings'
-import { executeAutomaticCategorization } from '../category-detection/rpc'
 import { executeFindDuplicates, validateSpreadsheetTemplate } from '../other/rpc'
 
 export function onInstall(e: GoogleAppsScript.Events.AddonOnInstall): void {
@@ -10,15 +9,13 @@ export function onOpen(_e?: GoogleAppsScript.Events.SheetsOnOpen | GoogleAppsScr
   const ui = SpreadsheetApp.getUi()
   const menu = ui.createAddonMenu()
     .addItem('Upload Transactions (CSV)', openFileUploadDialog.name)
-    .addItem('Auto Categorize', executeAutomaticCategorization.name)
     .addItem('Find duplicates', executeFindDuplicates.name)
 
   if (FEATURES.ENABLE_BANKING_ENABLED) {
     menu.addItem('Enable Banking (Beta)', openEnableBankingDialog.name)
   }
 
-  menu.addItem('About', openAboutDialog.name)
-    .addItem('Initialize / Check Setup', validateSpreadsheetTemplate.name)
+  menu.addItem('Initialize / Check Setup', validateSpreadsheetTemplate.name)
     .addItem('About', openAboutDialog.name)
 
   menu.addToUi()
