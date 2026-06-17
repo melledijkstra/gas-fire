@@ -31,8 +31,16 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     return new Promise(resolve => setTimeout(resolve, ms))
   }
 
-  async debugImportSettings() {
-    console.log('debugImportSettings mock called')
+  async onInstall(_e: GoogleAppsScript.Events.AddonOnInstall): Promise<void> {
+    throw new Error('Mock not implemented')
+  }
+
+  async resolveContraIban(): Promise<string | null> {
+    throw new Error('Mock not implemented')
+  }
+
+  async validateSpreadsheetTemplate() {
+    throw new Error('Mock not implemented')
   }
 
   async importPipeline(

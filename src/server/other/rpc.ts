@@ -1,11 +1,12 @@
 import { FIRE_COLUMNS, SOURCE_SHEET_NAME } from '@/common/constants'
 import { Logger } from '@/common/logger'
 import { NAMED_RANGES } from '../../common/constants'
-import { CATEGORIES_SHEET_NAME, Config, CONFIG_SHEET_NAME } from '../config'
+import { CATEGORIES_SHEET_NAME, CONFIG_SHEET_NAME } from '../config'
+import { getFireSpreadsheet } from '../globals'
 import { FireSheet } from '../spreadsheet/FireSheet'
 
 export const mailNetWorth = () => {
-  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet()
+  const spreadsheet = getFireSpreadsheet()
   const locale = FireSheet.getLocale()
   const intlLocale = locale.replace('_', '-')
   const userEmail = spreadsheet.getOwner().getEmail()
@@ -55,7 +56,7 @@ export const executeFindDuplicates = () => {
       return
     }
 
-    const spreadSheet = SpreadsheetApp.getActiveSpreadsheet()
+    const spreadSheet = getFireSpreadsheet()
     const fireSheet = new FireSheet()
 
     const fireTable = fireSheet.getDataTable()
@@ -92,24 +93,12 @@ export const executeFindDuplicates = () => {
   }
 }
 
-export const debugImportSettings = () => {
-  const accountConfigs = Config.getConfigurations()
-
-  const ui = SpreadsheetApp.getUi()
-
-  const configKeys = Object.keys(accountConfigs)
-
-  ui.alert(`Found ${configKeys.length} account configurations!\n\n${configKeys.join('\n')}\n\nSee logs for more details`)
-
-  Logger.log(accountConfigs)
-}
-
 export function GET_PROJECT_VERSION() {
   return __APP_VERSION__
 }
 
 export const validateSpreadsheetTemplate = () => {
-  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet()
+  const spreadsheet = getFireSpreadsheet()
   const ui = SpreadsheetApp.getUi()
 
   const requiredSheets = [SOURCE_SHEET_NAME, CATEGORIES_SHEET_NAME, CONFIG_SHEET_NAME]

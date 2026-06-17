@@ -1,13 +1,12 @@
-import { NAMED_RANGES } from '@/common/constants'
 import { DIALOG_SIZES, FEATURES } from '@/common/settings'
 import { executeAutomaticCategorization } from '../category-detection/rpc'
-import { debugImportSettings, executeFindDuplicates, validateSpreadsheetTemplate } from '../other/rpc'
+import { executeFindDuplicates, validateSpreadsheetTemplate } from '../other/rpc'
 
 export function onInstall(e: GoogleAppsScript.Events.AddonOnInstall): void {
   onOpen(e)
 }
 
-export function onOpen(e?: GoogleAppsScript.Events.SheetsOnOpen | GoogleAppsScript.Events.AddonOnInstall): void {
+export function onOpen(_e?: GoogleAppsScript.Events.SheetsOnOpen | GoogleAppsScript.Events.AddonOnInstall): void {
   const ui = SpreadsheetApp.getUi()
   const menu = ui.createAddonMenu()
     .addItem('Upload Transactions (CSV)', openFileUploadDialog.name)
@@ -21,15 +20,6 @@ export function onOpen(e?: GoogleAppsScript.Events.SheetsOnOpen | GoogleAppsScri
   menu.addItem('About', openAboutDialog.name)
     .addItem('Initialize / Check Setup', validateSpreadsheetTemplate.name)
     .addItem('About', openAboutDialog.name)
-
-  if (e && e.authMode !== ScriptApp.AuthMode.NONE) {
-    const isDebugEnabled: boolean = SpreadsheetApp.getActiveSpreadsheet().getRangeByName(NAMED_RANGES.debug)?.getValue() ?? false
-    if (isDebugEnabled) {
-      const debugMenu = ui.createMenu('Debug')
-      debugMenu.addItem('Debug Import Settings', debugImportSettings.name)
-      menu.addSubMenu(debugMenu)
-    }
-  }
 
   menu.addToUi()
 }

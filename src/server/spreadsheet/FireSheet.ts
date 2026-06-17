@@ -389,7 +389,7 @@ export class FireSheet {
   static getLocale = (): string => {
     if (this._cachedLocale) return this._cachedLocale
 
-    const locale = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetLocale()
+    const locale = getFireSpreadsheet().getSpreadsheetLocale()
     this._cachedLocale = locale.replace('-', '_') // make sure to always use underscore
     return this._cachedLocale
   }
