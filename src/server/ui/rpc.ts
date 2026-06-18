@@ -1,4 +1,5 @@
 import { DIALOG_SIZES, FEATURES } from '@/common/settings'
+import { PROP_SPREADSHEET_ID } from '../globals'
 import { executeFindDuplicates, validateSpreadsheetTemplate } from '../other/rpc'
 
 export function onInstall(e: GoogleAppsScript.Events.AddonOnInstall): void {
@@ -6,6 +7,13 @@ export function onInstall(e: GoogleAppsScript.Events.AddonOnInstall): void {
 }
 
 export function onOpen(_e?: GoogleAppsScript.Events.SheetsOnOpen | GoogleAppsScript.Events.AddonOnInstall): void {
+  // persist the spreadsheet ID so headless triggers (e.g. Enable Banking sync)
+  // can resolve the spreadsheet via openById() when no active session is present
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet()
+  if (spreadsheet) {
+    PropertiesService.getUserProperties().setProperty(PROP_SPREADSHEET_ID, spreadsheet.getId())
+  }
+
   const ui = SpreadsheetApp.getUi()
   const menu = ui.createAddonMenu()
     .addItem('Upload Transactions (CSV)', openFileUploadDialog.name)
