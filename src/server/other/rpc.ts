@@ -93,10 +93,6 @@ export const executeFindDuplicates = () => {
   }
 }
 
-export function GET_PROJECT_VERSION() {
-  return __APP_VERSION__
-}
-
 export const validateSpreadsheetTemplate = () => {
   const spreadsheet = getFireSpreadsheet()
   const ui = SpreadsheetApp.getUi()

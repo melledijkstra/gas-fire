@@ -109,7 +109,6 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     throw new Error('Mock not implemented')
   }
 
-  async GET_PROJECT_VERSION(): Promise<string> { return 'version' }
   async executeFindDuplicates(): Promise<void> {
     throw new Error('Mock not implemented')
   }
