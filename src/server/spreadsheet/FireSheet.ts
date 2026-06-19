@@ -2,7 +2,7 @@ import { withLogger } from '@/common/decorators'
 import { Logger } from '@/common/logger'
 import { FireTable } from '@/common/table/FireTable'
 import type { CellValue } from '@/common/types'
-import { getSourceSheet } from '../globals'
+import { getFireSpreadsheet, getSourceSheet } from '../globals'
 import { SheetsRequestBuilder } from '../request-builder'
 
 const MS_IN_DAY = 86400000
@@ -377,7 +377,7 @@ export class FireSheet {
       return this._cachedTimeZone
     }
 
-    this._cachedTimeZone = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone()
+    this._cachedTimeZone = getFireSpreadsheet().getSpreadsheetTimeZone()
 
     return this._cachedTimeZone
   }
@@ -389,7 +389,7 @@ export class FireSheet {
   static getLocale = (): string => {
     if (this._cachedLocale) return this._cachedLocale
 
-    const locale = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetLocale()
+    const locale = getFireSpreadsheet().getSpreadsheetLocale()
     this._cachedLocale = locale.replace('-', '_') // make sure to always use underscore
     return this._cachedLocale
   }

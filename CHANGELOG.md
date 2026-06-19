@@ -1,5 +1,18 @@
 # Changelog
 
+## 5.0.0-beta
+
+- **Refactor** - Convert the Google Apps Script from a bound container script to an official Workspace Add-On
+
+### Changes
+- Created `validateSpreadsheetTemplate` initialization RPC to verify workspace is properly set up with all required sheets and named ranges for the Add-on.
+- `onInstall` hook added to initialize add-on menu upon installation.
+- Migrated script architecture from a container-bound script to a fully distributed Google Workspace Editor Add-on.
+- The top-level `FireSpreadsheet` constant was converted into a lazy-evaluated `getFireSpreadsheet()` getter function. This resolves authentication issues during the `AuthMode.NONE` lifecycle phase of Workspace Add-ons.
+- Dynamic source sheet resolution: Instead of a hardcoded sheet ID, the primary source sheet is now looked up by its `SOURCE_SHEET_NAME` ('source').
+- The `appsscript.json` manifest was updated to declare `addOns` and explicit `oauthScopes`.
+- `onOpen` was updated to properly use `createAddonMenu` and handles `AuthMode.NONE` to avoid API permission errors on document load.
+
 ## 4.17.2-beta
 
 - **Fix** - fix for [#316](https://github.com/melledijkstra/gas-fire/issues/316)

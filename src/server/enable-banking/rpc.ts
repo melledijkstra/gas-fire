@@ -1,5 +1,6 @@
 import type { ServerResponse } from '@/common/types'
 import { AccountUtils } from '../accounts/account-utils'
+import { PROP_SPREADSHEET_ID } from '../globals'
 import { EnableBankingApi } from './api'
 import { PROP_ENABLE_BANKING_CONNECTIONS, PROP_ENABLE_BANKING_TRIGGER_FREQ_TYPE, PROP_ENABLE_BANKING_TRIGGER_FREQ_VAL, REDIRECT_URL } from './config'
 import { syncEnableBankingTransactions } from './pipeline'
@@ -177,6 +178,13 @@ export function setEnableBankingTrigger(enabled: boolean, frequencyType: 'hours'
     }
 
     if (enabled) {
+      // persist the spreadsheet ID now, while the user is in an active session,
+      // so the headless time-trigger can resolve it via openById()
+      const spreadsheet = SpreadsheetApp.getActiveSpreadsheet()
+      if (spreadsheet) {
+        PropertiesService.getUserProperties().setProperty(PROP_SPREADSHEET_ID, spreadsheet.getId())
+      }
+
       const builder = ScriptApp.newTrigger(SYNC_TRIGGER_HANDLER).timeBased()
       if (frequencyType === 'hours') {
         builder.everyHours(frequencyValue)
