@@ -7,4 +7,4 @@ export const PROP_ENABLE_BANKING_TRIGGER_FREQ_VAL = 'ENABLE_BANKING_TRIGGER_FREQ
 
 export const ENABLE_BANKING_API_URL = 'https://api.enablebanking.com'
 
-export const REDIRECT_URL = 'https://melledijkstra.github.io/gas-fire/index.html'
+export const REDIRECT_URL = 'https://melledijkstra.github.io/gas-fire/docs/enable-banking.html'

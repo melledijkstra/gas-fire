@@ -23,7 +23,7 @@ import {
 } from './rpc'
 
 vi.mock('../globals', () => ({
-  FireSpreadsheet: SpreadsheetMock,
+  getFireSpreadsheet: vi.fn(() => SpreadsheetMock),
   getSourceSheet: vi.fn(() => SheetMock),
   getImportRulesSheet: vi.fn(() => undefined),
 }))

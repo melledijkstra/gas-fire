@@ -1,27 +1,30 @@
-import { NAMED_RANGES } from '@/common/constants'
 import { DIALOG_SIZES, FEATURES } from '@/common/settings'
-import { executeAutomaticCategorization } from '../category-detection/rpc'
-import { debugImportSettings, executeFindDuplicates } from '../other/rpc'
+import { PROP_SPREADSHEET_ID } from '../globals'
+import { executeFindDuplicates, validateSpreadsheetTemplate } from '../other/rpc'
 
-export function onOpen(): void {
-  const isDebugEnabled: boolean = SpreadsheetApp.getActiveSpreadsheet().getRangeByName(NAMED_RANGES.debug)?.getValue() ?? false
+export function onInstall(e: GoogleAppsScript.Events.AddonOnInstall): void {
+  onOpen(e)
+}
+
+export function onOpen(_e?: GoogleAppsScript.Events.SheetsOnOpen | GoogleAppsScript.Events.AddonOnInstall): void {
+  // persist the spreadsheet ID so headless triggers (e.g. Enable Banking sync)
+  // can resolve the spreadsheet via openById() when no active session is present
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet()
+  if (spreadsheet) {
+    PropertiesService.getUserProperties().setProperty(PROP_SPREADSHEET_ID, spreadsheet.getId())
+  }
+
   const ui = SpreadsheetApp.getUi()
-  const menu = ui.createMenu('FIRE')
+  const menu = ui.createAddonMenu()
     .addItem('Upload Transactions (CSV)', openFileUploadDialog.name)
-    .addItem('Auto Categorize', executeAutomaticCategorization.name)
     .addItem('Find duplicates', executeFindDuplicates.name)
 
   if (FEATURES.ENABLE_BANKING_ENABLED) {
     menu.addItem('Enable Banking (Beta)', openEnableBankingDialog.name)
   }
 
-  menu.addItem('About', openAboutDialog.name)
-
-  if (isDebugEnabled) {
-    const debugMenu = ui.createMenu('Debug')
-    debugMenu.addItem('Debug Import Settings', debugImportSettings.name)
-    menu.addSubMenu(debugMenu)
-  }
+  menu.addItem('Initialize / Check Setup', validateSpreadsheetTemplate.name)
+    .addItem('About', openAboutDialog.name)
 
   menu.addToUi()
 }

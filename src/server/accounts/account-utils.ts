@@ -1,7 +1,7 @@
 import { NAMED_RANGES } from '@/common/constants'
 import { slugify } from '@/common/helpers'
 import { Table } from '@/common/table/Table'
-import { FireSpreadsheet } from '../globals'
+import { getFireSpreadsheet } from '../globals'
 import { cleanString } from '../utils'
 
 const BANK_ACCOUNTS_CACHE_KEY = 'bank_accounts_v2'
@@ -61,7 +61,7 @@ export class AccountUtils {
     }
 
     // this range contains the ibans only
-    const ibansRange = FireSpreadsheet.getRangeByName(NAMED_RANGES.accounts)
+    const ibansRange = getFireSpreadsheet().getRangeByName(NAMED_RANGES.accounts)
     if (!ibansRange) {
       return {}
     }
