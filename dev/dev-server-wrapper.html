@@ -14,14 +14,14 @@ Two placeholders are used in this file that will need to be replaced in a build 
 - _ _FILE_NAME_ _: The name of the file being loaded. (e.g. dialog-demo-bootstrap/index.html)
 
 -->
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <base target="_top" />
     <title>Dev Server</title>
     <!-- Load gas-client as external. Exposed global variable is GASClient.  -->
     <script
-      crossorigin
+      crossorigin="anonymous"
       integrity="sha256-VDJvyGu0rRWnUgYwfc1FageWi4ZK3KyGErJ4WTaOsno="
       src="https://unpkg.com/gas-client@1.2.1/dist/index.js"
     ></script>
@@ -34,13 +34,13 @@ Two placeholders are used in this file that will need to be replaced in a build 
       }
     </style>
     <script>
-      document.addEventListener('DOMContentLoaded', function () {
+      document.addEventListener("DOMContentLoaded", function () {
         // These values need to be replaced during the build process
-        const PORT = '__PORT__';
-        const FILE_NAME = '__FILE_NAME__';
+        const PORT = "__PORT__";
+        const FILE_NAME = "__FILE_NAME__";
 
-        const iframe = document.getElementById('iframe');
-        iframe.src = 'https://localhost:' + PORT + '/' + FILE_NAME;
+        const iframe = document.getElementById("iframe");
+        iframe.src = "https://localhost:" + PORT + "/" + FILE_NAME;
         const { serverFunctions } = new window.GASClient.GASClient({
           allowedDevelopmentDomains: (origin) =>
             /https:\/\/.*\.googleusercontent\.com$/.test(origin),
@@ -50,28 +50,28 @@ Two placeholders are used in this file that will need to be replaced in a build 
           const request = event.data;
           const { type, functionName, id, args } = request;
 
-          if (type !== 'REQUEST') return;
+          if (type !== "REQUEST") return;
 
           serverFunctions[functionName](...args)
             .then((response) => {
               iframe.contentWindow.postMessage(
-                { type: 'RESPONSE', id, status: 'SUCCESS', response },
-                'https://localhost:' + PORT
+                { type: "RESPONSE", id, status: "SUCCESS", response },
+                "https://localhost:" + PORT,
               );
             })
             .catch((err) => {
               iframe.contentWindow.postMessage(
                 {
-                  type: 'RESPONSE',
+                  type: "RESPONSE",
                   id,
-                  status: 'ERROR',
+                  status: "ERROR",
                   response: err,
                 },
-                'https://localhost:' + PORT
+                "https://localhost:" + PORT,
               );
             });
         };
-        window.addEventListener('message', handleRequest, false);
+        window.addEventListener("message", handleRequest, false);
       });
     </script>
   </head>
