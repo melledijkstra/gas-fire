@@ -2,9 +2,12 @@ import type { ServerResponse } from '@/common/types'
 import { AccountUtils } from '../accounts/account-utils'
 import { EnableBankingApi } from './api'
 import { PROP_ENABLE_BANKING_CONNECTIONS, PROP_ENABLE_BANKING_TRIGGER_FREQ_TYPE, PROP_ENABLE_BANKING_TRIGGER_FREQ_VAL, REDIRECT_URL } from './config'
-import { syncEnableBankingTransactions } from './pipeline'
+import { fetchAndMapToFireTable } from './pipeline'
 import type { Aspsp } from './types'
 import { getEnableBankingConnections, normalizeIban } from './utils'
+import { Config } from '../config'
+import { enableBankingPipeline } from '../import-pipeline/rpc'
+import { Logger } from '@/common/logger'
 
 const SYNC_TRIGGER_HANDLER = syncEnableBankingTransactions.name
 
@@ -203,4 +206,44 @@ export function setEnableBankingTrigger(enabled: boolean, frequencyType: 'hours'
   catch (error) {
     return { success: false, error: String(error) }
   }
+}
+
+export function syncEnableBankingTransactions() {
+  Logger.log('Starting Enable Banking Daily Sync...')
+
+  const connections = getEnableBankingConnections()
+  Logger.log(`Found ${connections.length} banking connection(s) to sync.`)
+
+  for (const connection of connections) {
+    Logger.log(`Processing connection for bank: ${connection.aspsp.name} (${connection.aspsp.country})`)
+
+    for (const account of connection.accounts) {
+      Logger.log(`Fetching transactions for account slug: ${account.slug}`)
+
+      try {
+        const config = Config.getAccountConfiguration(account.slug)
+        const fireTable = fetchAndMapToFireTable(account.accountId, config)
+
+        if (!fireTable) {
+          Logger.log(`No new transactions found for ${account.slug}`)
+          continue
+        }
+
+        Logger.log(`Converted ${fireTable.getRowCount()} transactions for ${account.slug} into FireTable`)
+
+        const result = enableBankingPipeline(fireTable, account.slug)
+
+        if (result.success) {
+          Logger.log(`Successfully synced ${account.slug}: ${result.message}`)
+        }
+        else {
+          Logger.error(`Failed to sync ${account.slug}: ${result.error}`)
+        }
+      }
+      catch (e) {
+        Logger.error(`Error syncing account ${account.slug}`, e)
+      }
+    }
+  }
+  Logger.log('Enable Banking Daily Sync completed.')
 }

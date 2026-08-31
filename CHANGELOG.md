@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.18.0-beta
+
+- Split build configuration (fixing storybook), upgrade dependencies, and clean up server pipeline logic
+
 ## 4.17.2-beta
 
 - **Fix** - fix for [#316](https://github.com/melledijkstra/gas-fire/issues/316)

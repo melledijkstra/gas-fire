@@ -1,13 +1,11 @@
 import { FIRE_COLUMNS } from '@/common/constants'
-import { Logger } from '@/common/logger'
 import { FireTable } from '@/common/table/FireTable'
 import { AccountUtils } from '../accounts/account-utils'
 import { Config } from '../config'
-import { enableBankingPipeline } from '../import-pipeline/rpc'
 import { Transformers } from '../transformers'
 import { EnableBankingApi } from './api'
 import type { EnableBankingTransaction } from './types'
-import { getEnableBankingConnections, normalizeIban } from './utils'
+import { normalizeIban } from './utils'
 
 /**
  * Returns the contra IBAN for a transaction, or null if there is none or it matches
@@ -40,7 +38,7 @@ function getTransactionAmount(tx: EnableBankingTransaction): string {
   return amount
 }
 
-function fetchAndMapToFireTable(enableBankingAccount: string, config: Config): FireTable | null {
+export function fetchAndMapToFireTable(enableBankingAccount: string, config: Config): FireTable | null {
   // Only fetch transactions from the last 7 days to avoid huge payloads,
   // duplicate detection will handle overlaps.
   const dateFrom = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
@@ -73,44 +71,4 @@ function fetchAndMapToFireTable(enableBankingAccount: string, config: Config): F
   })
 
   return new FireTable(data)
-}
-
-export function syncEnableBankingTransactions() {
-  Logger.log('Starting Enable Banking Daily Sync...')
-
-  const connections = getEnableBankingConnections()
-  Logger.log(`Found ${connections.length} banking connection(s) to sync.`)
-
-  for (const connection of connections) {
-    Logger.log(`Processing connection for bank: ${connection.aspsp.name} (${connection.aspsp.country})`)
-
-    for (const account of connection.accounts) {
-      Logger.log(`Fetching transactions for account slug: ${account.slug}`)
-
-      try {
-        const config = Config.getAccountConfiguration(account.slug)
-        const fireTable = fetchAndMapToFireTable(account.accountId, config)
-
-        if (!fireTable) {
-          Logger.log(`No new transactions found for ${account.slug}`)
-          continue
-        }
-
-        Logger.log(`Converted ${fireTable.getRowCount()} transactions for ${account.slug} into FireTable`)
-
-        const result = enableBankingPipeline(fireTable, account.slug)
-
-        if (result.success) {
-          Logger.log(`Successfully synced ${account.slug}: ${result.message}`)
-        }
-        else {
-          Logger.error(`Failed to sync ${account.slug}: ${result.error}`)
-        }
-      }
-      catch (e) {
-        Logger.error(`Error syncing account ${account.slug}`, e)
-      }
-    }
-  }
-  Logger.log('Enable Banking Daily Sync completed.')
 }
