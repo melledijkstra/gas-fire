@@ -1,6 +1,6 @@
 # GAS - FIRE
 
-[![Build Check](https://github.com/melledijkstra/gas-fire/actions/workflows/main.yml/badge.svg)](https://github.com/melledijkstra/gas-fire/actions/workflows/main.yml)
+[![Build Check](https://github.com/melledijkstra/gas-fire/actions/workflows/ci.yml/badge.svg)](https://github.com/melledijkstra/gas-fire/actions/workflows/ci.yml)
 
 The title stands for Google Apps Script - Financial Independence Retire Early.
 This project helps with google sheets tasks and is used to keep my finances automated.
@@ -25,6 +25,7 @@ In the `.env` you will want to add your development and production environment S
 You can choose to use just one environment if that is what is you have.
 
 To find the Google Apps Script ID for your project:
+
 - Open Apps Script project
 - click "Project Settings"
 - Under "IDs", copy the Script ID
@@ -32,7 +33,7 @@ To find the Google Apps Script ID for your project:
 <br />
 
 3. Then run `pnpm switch-env <env>` to switch between environments.
-It will simply update your `.clasp.json` with the script ID for that environment.
+   It will simply update your `.clasp.json` with the script ID for that environment.
 
 4. Then you are ready to make changes make your changes
 5. > pnpm build
