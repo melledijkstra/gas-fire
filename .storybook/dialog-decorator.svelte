@@ -8,7 +8,7 @@
     title: string
   } = $props();
 
-  const [width, height] = size ?? [900, 600];
+  const [width, height] = $derived(size ?? [900, 600]);
 </script>
 
 <div class={styles.dialog}>
