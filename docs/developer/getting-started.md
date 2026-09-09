@@ -1,6 +1,6 @@
 # Getting Started
 
-GAS FIRE (Google Apps Script - Financial Independence Retire Early) is a project designed to help automate your personal finances using Google Sheets.
+YMYL (Your Money, Your Life) is a project designed to help automate your personal finances using Google Sheets.
 
 ## Prerequisites
 

@@ -34,7 +34,7 @@
 
 ## Project Description
 
-`gas-fire` automates a **Personal Finance Google Sheet**. It provides:
+`Your Money, Your Life (YMYL)` automates a **Personal Finance Google Sheet**. It provides:
 
 - A **transaction import pipeline**: File upload (CSV) → duplicate detection & rule engine → user review → batch insert.
 - A **Svelte-based dialog UI** that runs inside Google Sheets as a dialog.

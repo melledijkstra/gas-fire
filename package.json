@@ -1,8 +1,8 @@
 {
-  "name": "gas-fire",
+  "name": "your-money-your-life",
   "version": "4.18.0-beta",
   "author": "Melle Dijkstra",
-  "description": "Google App Script utilities to automate the FIRE google sheet",
+  "description": "Google App Script utilities to automate the Your Money, Your Life (YMYL) google sheet",
   "license": "MIT",
   "type": "module",
   "private": true,
