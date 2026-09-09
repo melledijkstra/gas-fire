@@ -1,5 +1,5 @@
 import { getRowHash } from '@/common/helpers'
-import { FireTable } from '@/common/table/FireTable'
+import { YMYLTable } from '@/common/table/YMYLTable'
 import type { Table } from '@/common/table/Table'
 import type { PipelineContext } from '../import-pipeline/pipeline'
 import { RuleProcessor } from './rule-processor'
@@ -39,25 +39,25 @@ export function applyPreTransformRulesStage(
 }
 
 export function postTransformRulesStage(
-  fireTable: FireTable,
+  ymylTable: YMYLTable,
   ruleProcessor: RuleProcessor,
   context: PipelineContext,
   dryRun: boolean = false,
-): FireTable {
+): YMYLTable {
   context.ruleEngine ??= {
     ...emptyRuleEngineContext,
     rulesCount: ruleProcessor.importRules.length,
   }
 
   const bankAccount = context.config.getAccountId()
-  const result = ruleProcessor.applyPostTransformRules(fireTable, bankAccount)
+  const result = ruleProcessor.applyPostTransformRules(ymylTable, bankAccount)
 
   context.ruleEngine.appliedRules.push(...result.appliedRules)
   context.ruleEngine.warnings.push(...result.warnings)
 
   // map excluded indices to hashes before sorting alters row order
   const excludedHashes = new Set<string>()
-  const data = fireTable.data
+  const data = ymylTable.data
 
   for (const index of result.excludedIndices) {
     const hash = getRowHash(data[index])
@@ -69,8 +69,8 @@ export function postTransformRulesStage(
   // remove rows permanently if this is an actual import (not preview)
   if (!dryRun && excludedHashes.size > 0) {
     const filteredData = data.filter((_row, index) => !result.excludedIndices.has(index))
-    fireTable = new FireTable(filteredData)
+    ymylTable = new YMYLTable(filteredData)
   }
 
-  return fireTable
+  return ymylTable
 }

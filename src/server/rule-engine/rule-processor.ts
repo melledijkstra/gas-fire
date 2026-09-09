@@ -1,5 +1,5 @@
 import { Logger } from '@/common/logger'
-import { FireTable } from '@/common/table/FireTable'
+import { YMYLTable } from '@/common/table/YMYLTable'
 import { Table } from '@/common/table/Table'
 import type { CellValue } from '@/common/types'
 import type { ImportRule, RuleCondition, RulePhase, RuleWarning } from './types'
@@ -241,7 +241,7 @@ export class RuleProcessor {
   }
 
   private applyRulesToTable(
-    table: Table | FireTable,
+    table: Table | YMYLTable,
     accountId: string,
     phase: RulePhase,
   ): RuleExecutionContext {
@@ -292,13 +292,13 @@ export class RuleProcessor {
   }
 
   /**
-   * Applies POST_TRANSFORM rules to a FireTable.
-   * Note: EXCLUDE rules don't remove the row from the FireTable directly in this function.
+   * Applies POST_TRANSFORM rules to a YMYLTable.
+   * Note: EXCLUDE rules don't remove the row from the YMYLTable directly in this function.
    */
   applyPostTransformRules(
-    fireTable: FireTable,
+    ymylTable: YMYLTable,
     accountId: string,
   ): RuleExecutionContext {
-    return this.applyRulesToTable(fireTable, accountId, 'POST_TRANSFORM')
+    return this.applyRulesToTable(ymylTable, accountId, 'POST_TRANSFORM')
   }
 }

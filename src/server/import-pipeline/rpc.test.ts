@@ -127,10 +127,10 @@ describe('RPC: Import Functions', () => {
     test('is able to calculate removed hashed', () => {
       const table: RawTable = [
         ['TransactionAmount', 'TransactionDate', 'Payee'],
-        ['-25.6', '2016-01-23', 'Test Payee 1'], // index 0 in FireTable
-        ['58.3', '2015-05-21', 'Test Payee 2'], // index 1 in FireTable - remove
-        ['20', '2015-05-20', 'Test Payee 3'], // index 2 in FireTable
-        ['73.2', '2015-05-22', 'Test Payee 4'], // index 3 in FireTable - remove
+        ['-25.6', '2016-01-23', 'Test Payee 1'], // index 0 in YMYLTable
+        ['58.3', '2015-05-21', 'Test Payee 2'], // index 1 in YMYLTable - remove
+        ['20', '2015-05-20', 'Test Payee 3'], // index 2 in YMYLTable
+        ['73.2', '2015-05-22', 'Test Payee 4'], // index 3 in YMYLTable - remove
       ]
 
       applyPostTransformRulesSpy.mockReturnValue({
@@ -265,8 +265,8 @@ describe('RPC: Import Functions', () => {
       const result = importPipeline(data as RawTable, 'bank-of-america')
 
       expect(importDataSpy).toHaveBeenCalled()
-      const [fireTable] = importDataSpy.mock.calls[importDataSpy.mock.calls.length - 1]
-      expect(fireTable.data).toEqual(expect.arrayContaining([
+      const [ymylTable] = importDataSpy.mock.calls[importDataSpy.mock.calls.length - 1]
+      expect(ymylTable.data).toEqual(expect.arrayContaining([
         expect.arrayContaining([new Date(2023, 8, 12), -100, 'Utility Bill Payment']),
       ]))
       expect(result.success).toBe(true)
@@ -289,8 +289,8 @@ describe('RPC: Import Functions', () => {
       importPipeline(fakeTestBankImportData, BANK_ID)
 
       expect(importDataSpy).toHaveBeenCalled()
-      const [fireTable] = importDataSpy.mock.calls[importDataSpy.mock.calls.length - 1]
-      expect(fireTable.data).toEqual([
+      const [ymylTable] = importDataSpy.mock.calls[importDataSpy.mock.calls.length - 1]
+      expect(ymylTable.data).toEqual([
         expect.arrayContaining([new Date(2016, 0, 23), -25.6]),
         expect.arrayContaining([new Date(2015, 4, 21), 58.3]),
         expect.arrayContaining([new Date(2015, 4, 20), 20]),
