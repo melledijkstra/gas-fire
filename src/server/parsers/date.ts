@@ -1,5 +1,5 @@
 import { Logger } from '@/common/logger'
-import { FireSheet } from '../spreadsheet/FireSheet'
+import { YMYLSheet } from '../spreadsheet/YMYLSheet'
 
 const getDateParts = (parts: number[], locale?: string): { year: number, month: number, day: number } => {
   const [part1, part2, part3] = parts
@@ -102,7 +102,7 @@ function parseTime(timeStr: string): { hours: number, minutes: number, seconds: 
 }
 
 export function parseDate(value: string): Date {
-  const locale = FireSheet.getLocale()
+  const locale = YMYLSheet.getLocale()
 
   // Separate the date part from an optional time or timestamp component
   const [datePart, timePart] = value.trim().split(/[\sT]/)

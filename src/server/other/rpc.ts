@@ -1,12 +1,12 @@
-import { FIRE_COLUMNS } from '@/common/constants'
+import { YMYL_COLUMNS } from '@/common/constants'
 import { Logger } from '@/common/logger'
 import { NAMED_RANGES } from '../../common/constants'
 import { Config } from '../config'
-import { FireSheet } from '../spreadsheet/FireSheet'
+import { YMYLSheet } from '../spreadsheet/YMYLSheet'
 
 export const mailNetWorth = () => {
   const spreadsheet = SpreadsheetApp.getActiveSpreadsheet()
-  const locale = FireSheet.getLocale()
+  const locale = YMYLSheet.getLocale()
   const intlLocale = locale.replace('_', '-')
   const userEmail = spreadsheet.getOwner().getEmail()
 
@@ -56,12 +56,12 @@ export const executeFindDuplicates = () => {
     }
 
     const spreadSheet = SpreadsheetApp.getActiveSpreadsheet()
-    const fireSheet = new FireSheet()
+    const ymylSheet = new YMYLSheet()
 
-    const fireTable = fireSheet.getDataTable()
-    const headers = Array.from(FIRE_COLUMNS)
+    const ymylTable = ymylSheet.getDataTable()
+    const headers = Array.from(YMYL_COLUMNS)
 
-    const duplicateTable = fireTable.findDuplicates(duplicateThresholdMs)
+    const duplicateTable = ymylTable.findDuplicates(duplicateThresholdMs)
 
     if (duplicateTable.isEmpty()) {
       ui.alert('No duplicates found!')

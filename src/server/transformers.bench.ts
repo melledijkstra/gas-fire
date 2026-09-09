@@ -1,8 +1,8 @@
 import { bench, describe, vi } from 'vitest'
 import { Transformers } from './transformers'
 
-vi.mock('./spreadsheet/FireSheet', () => ({
-  FireSheet: {
+vi.mock('./spreadsheet/YMYLSheet', () => ({
+  YMYLSheet: {
     getLocale: vi.fn().mockReturnValue('en_GB'),
   },
 }))

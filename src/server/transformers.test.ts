@@ -1,13 +1,13 @@
-import { FireSheet } from './spreadsheet/FireSheet'
+import { YMYLSheet } from './spreadsheet/YMYLSheet'
 import { Transformers } from './transformers'
 
-vi.mock('./spreadsheet/FireSheet', () => ({
-  FireSheet: {
+vi.mock('./spreadsheet/YMYLSheet', () => ({
+  YMYLSheet: {
     getLocale: vi.fn().mockReturnValue('en_GB'),
   },
 }))
 
-const getLocaleMock = vi.mocked(FireSheet.getLocale)
+const getLocaleMock = vi.mocked(YMYLSheet.getLocale)
 
 describe('Transformers', () => {
   test('Transformers.transformMoney', () => {

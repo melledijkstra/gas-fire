@@ -1,5 +1,5 @@
 import { detectCategoryByTextAnalysis } from './detection'
-import { FireTable } from '@/common/table/FireTable'
+import { YMYLTable } from '@/common/table/YMYLTable'
 
 /**
  * Auto-categorizes transactions that don't have a category set.
@@ -7,17 +7,17 @@ import { FireTable } from '@/common/table/FireTable'
  *
  * @returns An object with category update values (one per row) and a count of categorized rows.
  */
-export function categorizeFireTable(fireTable: FireTable): {
+export function categorizeYMYLTable(ymylTable: YMYLTable): {
   categoryUpdates: string[][]
   rowsCategorized: number
 } {
-  const categoryColIndex = FireTable.getFireColumnIndex('category')
-  const contraAccountIndex = FireTable.getFireColumnIndex('contra_account')
+  const categoryColIndex = YMYLTable.getYMYLColumnIndex('category')
+  const contraAccountIndex = YMYLTable.getYMYLColumnIndex('contra_account')
 
   let rowsCategorized = 0
   const categoryUpdates: string[][] = []
 
-  for (const row of fireTable.data) {
+  for (const row of ymylTable.data) {
     const category = String(row[categoryColIndex] ?? '')
     const contraAccount = String(row[contraAccountIndex] ?? '')
 
@@ -36,3 +36,6 @@ export function categorizeFireTable(fireTable: FireTable): {
 
   return { categoryUpdates, rowsCategorized }
 }
+
+/** @deprecated Use categorizeYMYLTable */
+export const categorizeFireTable = categorizeYMYLTable

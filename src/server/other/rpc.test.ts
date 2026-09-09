@@ -1,4 +1,4 @@
-import { FireTable } from '@/common/table/FireTable'
+import { YMYLTable } from '@/common/table/YMYLTable'
 import {
   MailAppMock,
   RangeMock,
@@ -7,15 +7,16 @@ import {
   UIMock,
 } from '../../../test-setup'
 import { executeFindDuplicates, mailNetWorth } from '../other/rpc'
-import { FireSheet } from '../spreadsheet/FireSheet'
+import { YMYLSheet } from '../spreadsheet/YMYLSheet'
 
 vi.mock('../globals', () => ({
+  YMYLSpreadsheet: SpreadsheetMock,
   FireSpreadsheet: SpreadsheetMock,
   getSourceSheet: vi.fn(() => SheetMock),
 }))
 
-const findDuplicatesSpy = vi.spyOn(FireTable.prototype, 'findDuplicates')
-const getDataSpy = vi.spyOn(FireSheet.prototype, 'getDataTable')
+const findDuplicatesSpy = vi.spyOn(YMYLTable.prototype, 'findDuplicates')
+const getDataSpy = vi.spyOn(YMYLSheet.prototype, 'getDataTable')
 
 describe('RPC: Miscellaneous Functions', () => {
   describe('executeFindDuplicates', () => {
@@ -41,8 +42,8 @@ describe('RPC: Miscellaneous Functions', () => {
         getSelectedButton: () => UIMock.Button.OK,
         getResponseText: () => '7',
       })
-      getDataSpy.mockReturnValueOnce(new FireTable([]))
-      findDuplicatesSpy.mockReturnValue(new FireTable([]))
+      getDataSpy.mockReturnValueOnce(new YMYLTable([]))
+      findDuplicatesSpy.mockReturnValue(new YMYLTable([]))
       executeFindDuplicates()
       expect(UIMock.alert).toHaveBeenCalledWith('No duplicates found!')
     })
@@ -52,10 +53,10 @@ describe('RPC: Miscellaneous Functions', () => {
         getSelectedButton: () => UIMock.Button.OK,
         getResponseText: () => '7',
       })
-      getDataSpy.mockReturnValueOnce(new FireTable([
+      getDataSpy.mockReturnValueOnce(new YMYLTable([
         ['1', 'NL01', '2023-01-01', '100', '', 'Store A', '', '', '', '', '', '', '', '', '', ''],
       ]))
-      findDuplicatesSpy.mockReturnValue(new FireTable([
+      findDuplicatesSpy.mockReturnValue(new YMYLTable([
         ['row1', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
         ['row2', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
       ]))

@@ -1,0 +1,433 @@
+import { withLogger } from '@/common/decorators'
+import { Logger } from '@/common/logger'
+import { YMYLTable } from '@/common/table/YMYLTable'
+import type { CellValue } from '@/common/types'
+import { getSourceSheet } from '../globals'
+import { SheetsRequestBuilder } from '../request-builder'
+
+const MS_IN_DAY = 86400000
+const DAYS_FROM_JS_EPOCH_TO_SHEETS_EPOCH = 25569
+const MINUTES_IN_DAY = 1440
+
+type GetLastImportedTransactionsOptions = {
+  stopOnDifferentImportDate?: boolean
+}
+
+/**
+ * Represents the YMYL source sheet in Google Sheets.
+ *
+ * Wraps a `GoogleAppsScript.Spreadsheet.Sheet` and provides operations
+ * specific to the source sheet's structure, such as importing data,
+ * reading data as a YMYLTable, and managing filters.
+ *
+ * @example
+ * ```ts
+ * const sheet = new YMYLSheet();
+ * const ymylTable = sheet.data;
+ *
+ * sheet.importData(processedTable, [1, 5, 9]);
+ * ```
+ */
+export class YMYLSheet {
+  protected readonly _sheet: GoogleAppsScript.Spreadsheet.Sheet
+  protected static _cachedLocale: string | undefined
+  protected static _cachedDataTable: YMYLTable | null = null
+  protected static _cachedTimeZone: string | undefined
+
+  constructor() {
+    const sourceSheet = getSourceSheet()
+    if (!sourceSheet) {
+      throw new Error(
+        'Error: The source sheet was not found. Cannot operate on YMYLSheet.',
+      )
+    }
+    this._sheet = sourceSheet
+  }
+
+  // ──────────────────────────────────────────────
+  // Accessors
+  // ──────────────────────────────────────────────
+
+  get sheet(): GoogleAppsScript.Spreadsheet.Sheet {
+    return this._sheet
+  }
+
+  getSheetId(): number {
+    return this._sheet.getSheetId()
+  }
+
+  getSpreadsheetId(): string {
+    return this._sheet.getParent().getId()
+  }
+
+  // ──────────────────────────────────────────────
+  // Read operations
+  // ──────────────────────────────────────────────
+
+  /**
+   * Reads all data from the source sheet and returns it as a YMYLTable.
+   * The header row (row 1) is excluded from the data.
+   * Careful with large sheets, as this reads all data into memory. Use `getRawData()` for more control.
+   */
+  getDataTable(): YMYLTable {
+    if (YMYLSheet._cachedDataTable) {
+      return YMYLSheet._cachedDataTable.clone()
+    }
+
+    const allValues = this._sheet.getDataRange().getValues()
+    // first row is headers, omit it — YMYLTable knows its columns via YMYL_COLUMNS
+    const data = allValues.slice(1) as CellValue[][]
+    YMYLSheet._cachedDataTable = new YMYLTable(data)
+    return YMYLSheet._cachedDataTable.clone()
+  }
+
+  /**
+   * Reads all data from the source sheet including the header row.
+   * Useful when callers need the raw sheet data as-is.
+   */
+  getRawData(): CellValue[][] {
+    return this._sheet.getDataRange().getValues() as CellValue[][]
+  }
+
+  // ──────────────────────────────────────────────
+  // Write operations
+  // ──────────────────────────────────────────────
+
+  /**
+   * Imports a YMYLTable into the source sheet by inserting rows below the header.
+   *
+   * Uses the Sheets API for batch operations when available, falling back
+   * to the Apps Script API for compatibility.
+   *
+   * @param ymylTable - The data to import
+   * @param autoFillColumns - Optional 1-based column indices to autofill after import
+   */
+  @withLogger
+  importData(ymylTable: YMYLTable, autoFillColumns?: number[]): void {
+    if (ymylTable.isEmpty()) {
+      throw new Error('No data to import.')
+    }
+
+    Logger.log(`importing data (rows: ${ymylTable.getRowCount()}, cols: ${ymylTable.getColumnCount()})`)
+
+    try {
+      if (typeof Sheets !== 'undefined' && Sheets.Spreadsheets) {
+        // preferably use the Sheets API for better performance in general
+        this.importWithSheetsAPI(ymylTable, autoFillColumns)
+      }
+      else {
+        this.importWithAppsScriptAPI(ymylTable, autoFillColumns)
+      }
+      // clear cached data since sheet has changed
+      YMYLSheet.resetCache()
+    }
+    catch (error) {
+      this.handleError(error)
+    }
+  }
+
+  // ──────────────────────────────────────────────
+  // Sheet operations
+  // ──────────────────────────────────────────────
+
+  /**
+   * Activates and shows the source sheet so the user can see it.
+   */
+  activate(): this {
+    this._sheet.activate()
+    this._sheet.showSheet()
+    return this
+  }
+
+  /**
+   * Returns the filter on the source sheet, or null if no filter is set.
+   */
+  getFilter(): GoogleAppsScript.Spreadsheet.Filter | null {
+    return this._sheet.getFilter()
+  }
+
+  /**
+   * Sets values on a specific range in the sheet.
+   * @param row - 1-based starting row
+   * @param column - 1-based starting column
+   * @param numRows - number of rows
+   * @param numColumns - number of columns
+   * @param values - the values to set
+   */
+  setValues(
+    row: number,
+    column: number,
+    numRows: number,
+    numColumns: number,
+    values: CellValue[][],
+  ): void {
+    this._sheet
+      .getRange(row, column, numRows, numColumns)
+      .setValues(values)
+  }
+
+  // ──────────────────────────────────────────────
+  // Read: last import batch
+  // ──────────────────────────────────────────────
+
+  /**
+   * Reads the source sheet and returns all rows from the most recent import batch.
+   *
+   * The sheet is expected to be sorted by date descending, so the most recent
+   * import date is at the top. Stops reading once a different import date is found.
+   *
+   * @returns A YMYLTable containing only the rows from the last import, or an empty YMYLTable.
+   */
+  getLastImportedTransactions({
+    stopOnDifferentImportDate = true,
+  }: GetLastImportedTransactionsOptions = {}): YMYLTable {
+    const lastRow = this._sheet.getLastRow()
+    if (lastRow <= 1) return new YMYLTable([])
+
+    // Only read up to 500 rows since data is sorted newest-first
+    const values = this._sheet
+      .getRange(1, 1, Math.min(lastRow, 500), this._sheet.getLastColumn())
+      .getValues() as CellValue[][]
+
+    if (values.length <= 1) return new YMYLTable([])
+
+    const lastImportDate = this.getLastImportDate(values)
+
+    const importDateCol = YMYLTable.getYMYLColumnIndex('import_date')
+    const lastImportedRows: CellValue[][] = []
+
+    // Iterate from row 2 (index 1) onwards, skipping the header
+    for (let i = 1; i < values.length; i++) {
+      const row = values[i]
+      const rowDateRaw = row[importDateCol]
+
+      let rowDateTime = -1
+
+      if (rowDateRaw instanceof Date) {
+        rowDateTime = rowDateRaw.getTime()
+      }
+      else if (
+        rowDateRaw !== undefined
+        && rowDateRaw !== null
+        && rowDateRaw !== ''
+      ) {
+        rowDateTime = new Date(String(rowDateRaw)).getTime()
+      }
+
+      if (
+        stopOnDifferentImportDate
+        && rowDateTime !== lastImportDate?.getTime()
+      ) {
+        // stop reading further once we encounter a different import date, since data is sorted newest-first
+        break
+      }
+
+      lastImportedRows.push(row)
+    }
+
+    return new YMYLTable(lastImportedRows)
+  }
+
+  /**
+   * Loads hashes of already-imported transactions from the sheet for duplicate detection.
+   * Returns an empty set if the data cannot be retrieved.
+   */
+  loadExistingHashes(): Set<string> {
+    let existingHashes = new Set<string>()
+    try {
+      const lastImportedTransactions = this.getLastImportedTransactions({
+        stopOnDifferentImportDate: false,
+      })
+      if (lastImportedTransactions) {
+        existingHashes = lastImportedTransactions.getHashes(true)
+      }
+    }
+    catch (e) {
+      Logger.warn('Could not retrieve last imported transactions for duplicate detection', e)
+    }
+    return existingHashes
+  }
+
+  private handleError(error: unknown): void {
+    const message = error instanceof Error
+      ? `Error: ${error.message}`
+      : `Unknown Error: ${String(error)}`
+
+    Logger.error(message)
+  }
+
+  /**
+   * Returns the most recent import date found in sheet data.
+   * Looks at row index 1 (first data row after header) since data is sorted newest-first.
+   */
+  private getLastImportDate(data: CellValue[][]): Date | null {
+    const importDateCol = YMYLTable.getYMYLColumnIndex('import_date')
+    if (importDateCol === -1) return null
+    if (data.length < 2) return null
+
+    const lastImportDateRaw = data[1][importDateCol]
+    if (
+      lastImportDateRaw === undefined
+      || lastImportDateRaw === null
+      || lastImportDateRaw === ''
+    ) {
+      return null
+    }
+
+    const lastImportDateTime
+      = lastImportDateRaw instanceof Date
+        ? lastImportDateRaw.getTime()
+        : new Date(String(lastImportDateRaw)).getTime()
+
+    if (Number.isNaN(lastImportDateTime)) return null
+
+    return new Date(lastImportDateTime)
+  }
+
+  // ──────────────────────────────────────────────
+  // Private import strategies
+  // ──────────────────────────────────────────────
+
+  @withLogger
+  private importWithSheetsAPI(
+    ymylTable: YMYLTable,
+    autoFillColumns?: number[],
+  ): void {
+    const data = ymylTable.data
+    const rowCount = ymylTable.getRowCount()
+    const colCount = ymylTable.getColumnCount()
+    const requestBuilder = new SheetsRequestBuilder()
+    const spreadsheetId = this.getSpreadsheetId()
+    const sheetId = this.getSheetId()
+
+    requestBuilder
+      .insertRows(sheetId, 1, rowCount)
+      .insertData(sheetId, data, 1, 0, generateCellData)
+
+    if (autoFillColumns && autoFillColumns.length > 0) {
+      for (const column of autoFillColumns) {
+        if (column < 1 || column > colCount) {
+          Logger.warn(
+            `Invalid autoFill column index: ${column}. Skipping autoFill for this column.`,
+          )
+          continue
+        }
+
+        requestBuilder.autoFill(
+          {
+            sheetId,
+            startRowIndex: 1 + rowCount,
+            endRowIndex: 1 + rowCount + 1,
+            startColumnIndex: column - 1,
+            endColumnIndex: column,
+          },
+          -rowCount,
+          'ROWS',
+        )
+      }
+    }
+
+    Sheets.Spreadsheets!.batchUpdate(
+      { requests: requestBuilder.requests },
+      spreadsheetId,
+    )
+  }
+
+  @withLogger
+  private importWithAppsScriptAPI(
+    ymylTable: YMYLTable,
+    autoFillColumns?: number[],
+  ): void {
+    const data = ymylTable.data
+    const rowCount = ymylTable.getRowCount()
+    const colCount = ymylTable.getColumnCount()
+
+    Logger.warn(
+      'Sheets API not available, using native insertion of rows (slower)',
+    )
+
+    this._sheet.insertRowsBefore(2, rowCount)
+    this._sheet.getRange(2, 1, rowCount, colCount).setValues(data)
+
+    Logger.time('autoFillColumns (Apps Script API) (slower)')
+    if (autoFillColumns && autoFillColumns.length > 0) {
+      for (const column of autoFillColumns) {
+        const sourceRange = this._sheet.getRange(2 + rowCount, column)
+        const destinationRange = this._sheet.getRange(
+          2,
+          column,
+          rowCount + 1,
+        )
+        if (destinationRange) {
+          sourceRange.autoFill(
+            destinationRange,
+            SpreadsheetApp.AutoFillSeries.DEFAULT_SERIES,
+          )
+        }
+      }
+    }
+    Logger.timeEnd('autoFillColumns (Apps Script API) (slower)')
+  }
+
+  /**
+   * @see https://developers.google.com/apps-script/reference/spreadsheet/spreadsheet#getSpreadsheetTimeZone()
+   */
+  static getTimeZone(): string {
+    if (this._cachedTimeZone) {
+      return this._cachedTimeZone
+    }
+
+    this._cachedTimeZone = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone()
+
+    return this._cachedTimeZone
+  }
+
+  /**
+   * Returns the locale of the active spreadsheet, formatted with an underscore (e.g. "en_US").
+   * If the locale cannot be retrieved, returns a default value of "en_US".
+   */
+  static getLocale = (): string => {
+    if (this._cachedLocale) return this._cachedLocale
+
+    const locale = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetLocale()
+    this._cachedLocale = locale.replace('-', '_') // make sure to always use underscore
+    return this._cachedLocale
+  }
+
+  static resetCache(): void {
+    YMYLSheet._cachedDataTable = null
+    YMYLSheet._cachedLocale = undefined
+    YMYLSheet._cachedTimeZone = undefined
+  }
+}
+
+/** @deprecated Use YMYLSheet */
+export { YMYLSheet as FireSheet }
+
+// ──────────────────────────────────────────────
+// Helper: convert CellValue → Sheets API CellData
+// ──────────────────────────────────────────────
+
+export function generateCellData(
+  cell: unknown,
+): GoogleAppsScript.Sheets.Schema.CellData {
+  const extendedValue: GoogleAppsScript.Sheets.Schema.ExtendedValue = {}
+
+  if (cell === null || typeof cell === 'undefined') {
+    // no value
+  }
+  else if (cell instanceof Date) {
+    extendedValue.numberValue
+      = cell.getTime() / MS_IN_DAY
+        + DAYS_FROM_JS_EPOCH_TO_SHEETS_EPOCH
+        - cell.getTimezoneOffset() / MINUTES_IN_DAY
+  }
+  else if (typeof cell === 'number') {
+    extendedValue.numberValue = cell
+  }
+  else {
+    extendedValue.stringValue = String(cell)
+  }
+
+  return { userEnteredValue: extendedValue }
+}

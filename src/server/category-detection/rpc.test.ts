@@ -6,9 +6,10 @@ import {
 } from '../../../test-setup'
 import * as categoryDetection from '../category-detection/detection'
 import { executeAutomaticCategorization } from '../category-detection/rpc'
-import { FireSheet } from '../spreadsheet/FireSheet'
+import { YMYLSheet } from '../spreadsheet/YMYLSheet'
 
 vi.mock('../globals', () => ({
+  YMYLSpreadsheet: SpreadsheetMock,
   FireSpreadsheet: SpreadsheetMock,
   getSourceSheet: vi.fn(() => SheetMock),
 }))
@@ -21,7 +22,7 @@ const detectCategorySpy = vi.spyOn(
 describe('RPC: Automatic Categorization', () => {
   afterEach(() => {
     vi.clearAllMocks()
-    FireSheet.resetCache()
+    YMYLSheet.resetCache()
   })
 
   describe('executeAutomaticCategorization', () => {
