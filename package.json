@@ -66,7 +66,7 @@
     "gas-types-detailed": "^1.1.3",
     "husky": "^9.1.7",
     "knip": "^6.33.0",
-    "rolldown": "1.2.1",
+    "rolldown": "1.2.7",
     "storybook": "^10.5.10",
     "svelte-check": "^4.7.6",
     "tsx": "^4.23.12",
