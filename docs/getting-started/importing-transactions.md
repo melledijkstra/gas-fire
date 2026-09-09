@@ -9,7 +9,7 @@ YMYL features a custom-built interface that sits right inside your Google Sheet,
 To launch the importer:
 
 1. Look at the top menu bar of your Google Sheet.
-2. Click on the custom **FIRE** menu.
+2. Click on the custom **YMYL** menu.
 3. Click **Upload Transactions (CSV)**.
 
 *(A dialog window will pop up in the center of your screen.)*

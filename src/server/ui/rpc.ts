@@ -6,7 +6,7 @@ import { debugImportSettings, executeFindDuplicates } from '../other/rpc'
 export function onOpen(): void {
   const isDebugEnabled: boolean = SpreadsheetApp.getActiveSpreadsheet().getRangeByName(NAMED_RANGES.debug)?.getValue() ?? false
   const ui = SpreadsheetApp.getUi()
-  const menu = ui.createMenu('FIRE')
+  const menu = ui.createMenu('YMYL')
     .addItem('Upload Transactions (CSV)', openFileUploadDialog.name)
     .addItem('Auto Categorize', executeAutomaticCategorization.name)
     .addItem('Find duplicates', executeFindDuplicates.name)

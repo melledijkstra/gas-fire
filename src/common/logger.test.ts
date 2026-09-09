@@ -28,7 +28,7 @@ describe('Logger', () => {
   test('should log message when enabled', () => {
     Logger.enable()
     Logger.log('Test message')
-    expect(consoleSpy).toHaveBeenCalledWith('[FIRE]:', 'Test message')
+    expect(consoleSpy).toHaveBeenCalledWith('[YMYL]:', 'Test message')
   })
 
   test('should not log message when disabled', () => {
@@ -40,7 +40,7 @@ describe('Logger', () => {
   test('should log error when enabled', () => {
     Logger.enable()
     Logger.error('Test error message')
-    expect(consoleErrorSpy).toHaveBeenCalledWith('[FIRE ❌]:', 'Test error message')
+    expect(consoleErrorSpy).toHaveBeenCalledWith('[YMYL ❌]:', 'Test error message')
   })
 
   test('should not log error when disabled', () => {
@@ -64,7 +64,7 @@ describe('Logger', () => {
     import.meta.env.DEV = true
     Logger.reset()
     Logger.log('Test message')
-    expect(consoleSpy).toHaveBeenCalledWith('[FIRE]:', 'Test message')
+    expect(consoleSpy).toHaveBeenCalledWith('[YMYL]:', 'Test message')
   })
 
   test('should not log message if not in development', () => {
@@ -78,7 +78,7 @@ describe('Logger', () => {
     import.meta.env.DEV = true
     Logger.reset()
     Logger.error('Test error message')
-    expect(consoleErrorSpy).toHaveBeenCalledWith('[FIRE ❌]:', 'Test error message')
+    expect(consoleErrorSpy).toHaveBeenCalledWith('[YMYL ❌]:', 'Test error message')
   })
 
   test('should not log error if not in development', () => {
