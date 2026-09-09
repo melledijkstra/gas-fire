@@ -23,7 +23,7 @@ type GetLastImportedTransactionsOptions = {
  * @example
  * ```ts
  * const sheet = new YMYLSheet();
- * const ymylTable = sheet.data;
+ * const sheetData = sheet.data;
  *
  * sheet.importData(processedTable, [1, 5, 9]);
  * ```
@@ -386,7 +386,7 @@ export class YMYLSheet {
    * Returns the locale of the active spreadsheet, formatted with an underscore (e.g. "en_US").
    * If the locale cannot be retrieved, returns a default value of "en_US".
    */
-  static getLocale = (): string => {
+  static readonly getLocale = (): string => {
     if (this._cachedLocale) return this._cachedLocale
 
     const locale = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetLocale()

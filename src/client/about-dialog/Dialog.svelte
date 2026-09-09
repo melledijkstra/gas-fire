@@ -6,7 +6,7 @@
 </script>
 
 <Application>
-  <p class="mb-4">Thank you for using Your Money, Your Life (YMYL)</p>
+  <p class="mb-4">Thank you for using <strong>YMYL</strong> - "Your Money, Your Life"</p>
   <p class="mb-4">The code for this Google Apps Script can be found here:</p>
   <A class="mb-4" target="_blank" href="https://github.com/melledijkstra/gas-fire">
     @melledijkstra/gas-fire

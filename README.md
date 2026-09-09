@@ -2,7 +2,7 @@
 
 [![Build Check](https://github.com/melledijkstra/gas-fire/actions/workflows/ci.yml/badge.svg)](https://github.com/melledijkstra/gas-fire/actions/workflows/ci.yml)
 
-Your Money, Your Life (YMYL) helps automate your personal finances with Google Sheets.
+"Your Money, Your Life" (YMYL) helps automate your personal finances with Google Sheets.
 
 More info can be found here:
 https://developers.google.com/apps-script/guides/typescript

@@ -56,7 +56,7 @@ describe('YMYLTableFactory.fromAccountSpecification', () => {
     const result = YMYLTableFactory.fromAccountSpecification({ headers, rows, config })
 
     const descriptionIndex = YMYLTable.getYMYLColumnIndex('description')
-    expect(result.data[0][descriptionIndex]).toBe(null)
+    expect(result.data[0][descriptionIndex]).toBeNull()
   })
 
   it('should correctly import mapped data from input table when column map is provided', () => {
