@@ -9,6 +9,7 @@
 - Preferably use the Sheets API for operations on the Google Sheets document for better performance. If the Sheets API is not available, fall back to using the Apps Script API.
 - A clear 3-line solution beats a 1-line trick.
 - Client RPC only via `serverFunctions` proxy. Never call `google.script.run` directly.
+- Always use the `browser_subagent` tool if available for browser tasks and taking screenshots instead of Chrome DevTools.
 
 ## Code Style Guidelines
 
@@ -20,14 +21,14 @@
 
 ### Naming
 
-| Construct                     | Convention                    | Example                               |
-| ---                           | ---                           | ---                                   |
-| Variables, functions, methods | `camelCase`                   | `getBankAccounts`, `removeEmptyRows`  |
-| Classes, types, interfaces    | `PascalCase`                  | `FireTable`, `ServerResponse`         |
-| Module-level constants        | `UPPER_SNAKE_CASE`            | `FIRE_COLUMNS`, `SOURCE_SHEET_ID`     |
-| FIRE column keys              | `snake_case`                  | `contra_account`, `import_date`       |
-| Test files                    | colocated, `.test.ts` suffix  | `Table.test.ts` next to `Table.ts`    |
-| Svelte state files            | `.svelte.ts` suffix           | `import.svelte.ts`                    |
+| Construct                     | Convention                   | Example                              |
+| ----------------------------- | ---------------------------- | ------------------------------------ |
+| Variables, functions, methods | `camelCase`                  | `getBankAccounts`, `removeEmptyRows` |
+| Classes, types, interfaces    | `PascalCase`                 | `FireTable`, `ServerResponse`        |
+| Module-level constants        | `UPPER_SNAKE_CASE`           | `FIRE_COLUMNS`, `SOURCE_SHEET_ID`    |
+| FIRE column keys              | `snake_case`                 | `contra_account`, `import_date`      |
+| Test files                    | colocated, `.test.ts` suffix | `Table.test.ts` next to `Table.ts`   |
+| Svelte state files            | `.svelte.ts` suffix          | `import.svelte.ts`                   |
 
 ---
 
@@ -41,19 +42,19 @@
 
 ## Tech Stack
 
-|          Layer          |                       Technology                        |
-| ----------------------- | ------------------------------------------------------- |
-| Backend runtime         | Google Apps Script (V8, ES2019 target)                  |
-| Backend language        | TypeScript                                              |
-| Frontend framework      | Svelte 5                                                |
-| Styling                 | Tailwind CSS 4, Flowbite Svelte                         |
-| Bundler                 | Vite                                                    |
-| GAS deployment          | `@google/clasp`                                         |
-| Client ↔ Server RPC     | `gas-client`                                            |
-| CSV parsing             | PapaParse                                               |
-| Test runner             | Vitest                                                  |
-| Linter                  | ESLint + TypeScript ESLint + `@stylistic/eslint-plugin` |
-| Dead code detection     | Knip                                                    |
+| Layer               | Technology                                              |
+| ------------------- | ------------------------------------------------------- |
+| Backend runtime     | Google Apps Script (V8, ES2019 target)                  |
+| Backend language    | TypeScript                                              |
+| Frontend framework  | Svelte 5                                                |
+| Styling             | Tailwind CSS 4, Flowbite Svelte                         |
+| Bundler             | Vite                                                    |
+| GAS deployment      | `@google/clasp`                                         |
+| Client ↔ Server RPC | `gas-client`                                            |
+| CSV parsing         | PapaParse                                               |
+| Test runner         | Vitest                                                  |
+| Linter              | ESLint + TypeScript ESLint + `@stylistic/eslint-plugin` |
+| Dead code detection | Knip                                                    |
 
 ---
 
