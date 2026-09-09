@@ -1,11 +1,40 @@
 {
   "version": 1,
   "skills": {
+    "gws-docs": {
+      "source": "googleworkspace/cli",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/gws-docs/SKILL.md",
+      "computedHash": "10dc2a8aa8cb28524a9d285ddba5602c24c21cbb640718fce522b58d90ee7b97"
+    },
+    "gws-script": {
+      "source": "googleworkspace/cli",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/gws-script/SKILL.md",
+      "computedHash": "799025ea93e295538fdecdff445dc2c054c388e1ecaebafeb3195fb5607b2f97"
+    },
+    "gws-shared": {
+      "source": "googleworkspace/cli",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/gws-shared/SKILL.md",
+      "computedHash": "b197590681ce3d5a52e9c15a68652b5445d111dbfc0dc453f68fb0785aac443c"
+    },
     "gws-sheets": {
       "source": "googleworkspace/cli",
       "ref": "main",
       "sourceType": "github",
+      "skillPath": "skills/gws-sheets/SKILL.md",
       "computedHash": "21c951f8bf399bb941740ab8b048157b43088ad96b743976e88abb0046d263d2"
+    },
+    "gws-sheets-read": {
+      "source": "googleworkspace/cli",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "skills/gws-sheets-read/SKILL.md",
+      "computedHash": "082f6b6ee503a7438b12338024471f772f90193326cca3b6428e2450879785ff"
     }
   }
 }
