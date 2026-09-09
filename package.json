@@ -1,6 +1,6 @@
 {
   "name": "your-money-your-life",
-  "version": "4.18.0-beta",
+  "version": "4.19.0-beta",
   "author": "Melle Dijkstra",
   "description": "Google App Script utilities to automate the Your Money, Your Life (YMYL) google sheet",
   "license": "MIT",
