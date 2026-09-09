@@ -202,9 +202,4 @@ export class Config {
       return this.columnMap[columnName]
     }
   }
-
-  /** @deprecated Use getImportColumnNameByYMYLColumn */
-  getImportColumnNameByFireColumn(columnName: YMYLColumn): string | undefined {
-    return this.getImportColumnNameByYMYLColumn(columnName)
-  }
 }

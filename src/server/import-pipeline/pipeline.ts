@@ -96,9 +96,6 @@ export function transformToYMYLTableStage(input: Table, context: PipelineContext
   })
 }
 
-/** @deprecated Use transformToYMYLTableStage */
-export const transformToFireTableStage = transformToYMYLTableStage
-
 /** Sorts the YMYLTable by date. */
 export function sortByDateStage<T extends YMYLTable>(input: T, _context: PipelineContext): T {
   return input.sortByDate()

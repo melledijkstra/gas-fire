@@ -401,9 +401,6 @@ export class YMYLSheet {
   }
 }
 
-/** @deprecated Use YMYLSheet */
-export { YMYLSheet as FireSheet }
-
 // ──────────────────────────────────────────────
 // Helper: convert CellValue → Sheets API CellData
 // ──────────────────────────────────────────────

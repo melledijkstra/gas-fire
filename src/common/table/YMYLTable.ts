@@ -47,11 +47,6 @@ export class YMYLTable extends Table<CellValue> {
     return this.retrieveColumn(index)
   }
 
-  /** @deprecated Use getYMYLColumn */
-  getFireColumn(column: YMYLColumn): CellValue[] {
-    return this.getYMYLColumn(column)
-  }
-
   // ──────────────────────────────────────────────
   // YMYL-specific operations
   // ──────────────────────────────────────────────
@@ -178,12 +173,4 @@ export class YMYLTable extends Table<CellValue> {
   static getYMYLColumnIndex(column: YMYLColumn): number {
     return YMYL_COLUMNS.findIndex(col => col.toLowerCase() === column)
   }
-
-  /** @deprecated Use getYMYLColumnIndex */
-  static getFireColumnIndex(column: YMYLColumn): number {
-    return this.getYMYLColumnIndex(column)
-  }
 }
-
-/** @deprecated Use YMYLTable */
-export { YMYLTable as FireTable }

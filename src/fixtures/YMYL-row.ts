@@ -27,6 +27,3 @@ export const buildYMYLTableRow = (overrides: Partial<Record<YMYLColumn, string>>
   const merged = { ...defaults, ...overrides }
   return YMYL_COLUMNS.map(col => merged[col])
 }
-
-/** @deprecated Use buildYMYLTableRow */
-export const buildFireTableRow = buildYMYLTableRow

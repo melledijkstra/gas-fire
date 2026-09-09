@@ -90,6 +90,3 @@ export class YMYLTableFactory {
     return new YMYLTable(transposed)
   }
 }
-
-/** @deprecated Use YMYLTableFactory */
-export const FireTableFactory = YMYLTableFactory

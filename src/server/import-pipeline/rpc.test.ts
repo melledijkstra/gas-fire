@@ -24,7 +24,6 @@ import {
 
 vi.mock('../globals', () => ({
   YMYLSpreadsheet: SpreadsheetMock,
-  FireSpreadsheet: SpreadsheetMock,
   getSourceSheet: vi.fn(() => SheetMock),
   getImportRulesSheet: vi.fn(() => undefined),
 }))

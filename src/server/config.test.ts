@@ -50,7 +50,6 @@ describe('Configuration Tests', () => {
     expect(firstConfig.autoCategorizationEnabled).toBe(true)
     expect(firstConfig.autoFillColumnIndices).toEqual([1, 5, 9, 13, 14])
     expect(firstConfig.getImportColumnNameByYMYLColumn('date')).toBe('Date')
-    expect(firstConfig.getImportColumnNameByFireColumn('date')).toBe('Date')
   })
 
   describe('rabobank amount issue', () => {

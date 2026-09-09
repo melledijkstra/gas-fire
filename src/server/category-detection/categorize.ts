@@ -36,6 +36,3 @@ export function categorizeYMYLTable(ymylTable: YMYLTable): {
 
   return { categoryUpdates, rowsCategorized }
 }
-
-/** @deprecated Use categorizeYMYLTable */
-export const categorizeFireTable = categorizeYMYLTable

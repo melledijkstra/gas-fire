@@ -37,11 +37,6 @@ export const YMYL_COLUMNS = [
 
 export type YMYLColumn = (typeof YMYL_COLUMNS)[number]
 
-/** @deprecated Use YMYL_COLUMNS */
-export const FIRE_COLUMNS = YMYL_COLUMNS
-/** @deprecated Use YMYLColumn */
-export type FireColumn = YMYLColumn
-
 export const SOURCE_SHEET_ID = 1093484485
 
 export const IMPORT_RULES_SHEET_NAME = 'import-rules'

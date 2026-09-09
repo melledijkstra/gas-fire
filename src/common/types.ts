@@ -100,6 +100,3 @@ export type YMYLTransaction = {
   contra_iban: string
   currency: string
 }
-
-/** @deprecated Use YMYLTransaction */
-export type FireTransaction = YMYLTransaction

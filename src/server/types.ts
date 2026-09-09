@@ -17,6 +17,3 @@ export interface YMYLColumnParsers {
   contra_iban: ColumnRule<string>
   currency?: ColumnRule<string>
 }
-
-/** @deprecated Use YMYLColumnParsers */
-export type FireColumnParsers = YMYLColumnParsers

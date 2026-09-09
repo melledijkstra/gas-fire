@@ -72,6 +72,3 @@ export function fetchAndMapToYMYLTable(enableBankingAccount: string, config: Con
 
   return new YMYLTable(data)
 }
-
-/** @deprecated Use fetchAndMapToYMYLTable */
-export const fetchAndMapToFireTable = fetchAndMapToYMYLTable

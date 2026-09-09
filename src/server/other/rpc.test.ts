@@ -11,7 +11,6 @@ import { YMYLSheet } from '../spreadsheet/YMYLSheet'
 
 vi.mock('../globals', () => ({
   YMYLSpreadsheet: SpreadsheetMock,
-  FireSpreadsheet: SpreadsheetMock,
   getSourceSheet: vi.fn(() => SheetMock),
 }))
 
