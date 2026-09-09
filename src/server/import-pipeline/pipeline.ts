@@ -1,12 +1,12 @@
 import { getRowHash } from '@/common/helpers'
 import { Logger } from '@/common/logger'
-import { FireTable } from '@/common/table/FireTable'
+import { YMYLTable } from '@/common/table/YMYLTable'
 import { Table } from '@/common/table/Table'
 import type { TransactionAction, UserDecisions } from '@/common/types'
 import { Config } from '../config'
 import type { RuleEngineResult } from '../rule-engine/types'
-import { FireSheet } from '../spreadsheet/FireSheet'
-import { FireTableFactory } from './fire-table-factory'
+import { YMYLSheet } from '../spreadsheet/YMYLSheet'
+import { YMYLTableFactory } from './YMYL-table-factory'
 
 export interface PipelineContext {
   config: Config
@@ -81,23 +81,26 @@ export function removeEmptyRowsStage(input: Table, _context: PipelineContext): T
 }
 
 /**
- * Transforms a Table into a FireTable using the headers in the first row.
+ * Transforms a Table into a YMYLTable using the headers in the first row.
  * The input table is expected to have headers as its first row (using Table.from).
  */
-export function transformToFireTableStage(input: Table, context: PipelineContext): FireTable {
+export function transformToYMYLTableStage(input: Table, context: PipelineContext): YMYLTable {
   if (!input.headers || input.headers.length === 0) {
     throw new Error('No header row detected in import data!')
   }
 
-  return FireTableFactory.fromAccountSpecification({
+  return YMYLTableFactory.fromAccountSpecification({
     headers: input.headers,
     rows: input.data,
     config: context.config,
   })
 }
 
-/** Sorts the FireTable by date. */
-export function sortByDateStage<T extends FireTable>(input: T, _context: PipelineContext): T {
+/** @deprecated Use transformToYMYLTableStage */
+export const transformToFireTableStage = transformToYMYLTableStage
+
+/** Sorts the YMYLTable by date. */
+export function sortByDateStage<T extends YMYLTable>(input: T, _context: PipelineContext): T {
   return input.sortByDate()
 }
 
@@ -105,9 +108,9 @@ export function sortByDateStage<T extends FireTable>(input: T, _context: Pipelin
  * Detects duplicates by comparing row hashes against existing hashes in the context.
  * Populates the context metadata with status, hashes, and counts.
  */
-export function duplicateDetectionStage(input: FireTable, context: PreviewPipelineContext): FireTable {
-  const fireSheet = new FireSheet()
-  const existingHashes = fireSheet.loadExistingHashes()
+export function duplicateDetectionStage(input: YMYLTable, context: PreviewPipelineContext): YMYLTable {
+  const ymylSheet = new YMYLSheet()
+  const existingHashes = ymylSheet.loadExistingHashes()
   Logger.log(`Loaded ${existingHashes?.size} existing transaction hashes for duplicate detection`)
 
   for (const row of input.data) {
@@ -125,7 +128,7 @@ export function duplicateDetectionStage(input: FireTable, context: PreviewPipeli
  * Replaces empty cells in auto-fill columns with a placeholder for preview purposes.
  * This stage modifies the table data in-place.
  */
-export function autoFillPreviewStage<T extends FireTable>(input: T, context: PipelineContext): T {
+export function autoFillPreviewStage<T extends YMYLTable>(input: T, context: PipelineContext): T {
   const config = context.config
   const autoFillColumns = config.autoFillEnabled ? config.autoFillColumnIndices : []
 
@@ -150,7 +153,7 @@ export function autoFillPreviewStage<T extends FireTable>(input: T, context: Pip
  * Filters rows based on explicit user decisions stored in the context.
  * Rows default to 'import' unless the user has explicitly decided otherwise.
  */
-export function applyUserDecisionsStage(input: FireTable, context: ImportPipelineContext): FireTable {
+export function applyUserDecisionsStage(input: YMYLTable, context: ImportPipelineContext): YMYLTable {
   const decisions = context.userDecisions
   if (!decisions || decisions.size === 0) return input
 
@@ -167,7 +170,7 @@ export function applyUserDecisionsStage(input: FireTable, context: ImportPipelin
  * Removes rows that have been flagged as duplicates or excluded by rules.
  * This is particularly useful for automated imports where user intervention is not possible.
  */
-export function filterOutDuplicatesStage(input: FireTable, context: PreviewPipelineContext): FireTable {
+export function filterOutDuplicatesStage(input: YMYLTable, context: PreviewPipelineContext): YMYLTable {
   const excludedHashes = new Set<string>([
     ...context.duplicateHashes,
     ...(context.ruleEngine?.removedHashes ?? []),

@@ -1,9 +1,9 @@
-import type { FireColumn } from '@/common/constants'
-import { FIRE_COLUMNS } from '@/common/constants'
+import type { YMYLColumn } from '@/common/constants'
+import { YMYL_COLUMNS } from '@/common/constants'
 import { slugify } from '@/common/helpers'
 import { Logger } from '@/common/logger'
 import type { CellValue } from '@/common/types'
-import { FireSpreadsheet } from './globals'
+import { YMYLSpreadsheet } from './globals'
 
 const CONFIG_CACHE_KEY = 'cache.config'
 
@@ -15,7 +15,7 @@ const parseBoolean = (value: string | boolean) =>
   String(value).toLowerCase() === 'true' || value === true
 
 type ColumnMap = {
-  [key in FireColumn]?: string;
+  [key in YMYLColumn]?: string;
 }
 
 type ConfigParams = {
@@ -52,8 +52,8 @@ export class Config {
     return this.accountId
   }
 
-  getColumnIndex(fireColumn: FireColumn, headers: string[]): number | undefined {
-    const importColumn = this.columnMap?.[fireColumn]
+  getColumnIndex(ymylColumn: YMYLColumn, headers: string[]): number | undefined {
+    const importColumn = this.columnMap?.[ymylColumn]
     if (importColumn) {
       return headers.indexOf(importColumn)
     }
@@ -76,22 +76,22 @@ export class Config {
       result[account] = {}
     }
 
-    // filter out any empty rows which do not contain a fire column definition
+    // filter out any empty rows which do not contain a ymyl column definition
     const filteredTable = columnMapValues.filter(row => !!row?.[0])
 
     for (const row of filteredTable) {
-      const fireColumnName = row[0] as FireColumn // first column contains the FIRE column name
-      if (!FIRE_COLUMNS.includes(fireColumnName)) {
+      const ymylColumnName = row[0] as YMYLColumn // first column contains the YMYL column name
+      if (!YMYL_COLUMNS.includes(ymylColumnName)) {
         continue
       }
-      // ignore first row which contains the FIRE column name
+      // ignore first row which contains the YMYL column name
       // ensure we only take as many columns as there are accounts
       const columnValues = row.slice(1, accountIdentifiers.length + 1)
-      // iterate over the accounts and map fire column with the import column
+      // iterate over the accounts and map ymyl column with the import column
       for (let i = 0; i < accountIdentifiers.length; i++) {
         const account = accountIdentifiers[i]
         const value = columnValues[i]
-        result[account][fireColumnName] = value ? String(value) : undefined
+        result[account][ymylColumnName] = value ? String(value) : undefined
       }
     }
 
@@ -102,7 +102,7 @@ export class Config {
    * Function that loads the configuration from the CONFIG_SHEET_NAME sheet.
    */
   private static loadConfigurations(): Record<string, Config> {
-    const configSheet = FireSpreadsheet.getSheetByName(CONFIG_SHEET_NAME)
+    const configSheet = YMYLSpreadsheet.getSheetByName(CONFIG_SHEET_NAME)
 
     if (!configSheet) {
       throw new Error(`Sheet ${CONFIG_SHEET_NAME} not found`)
@@ -193,13 +193,18 @@ export class Config {
   }
 
   /**
-   * Retrieves the column name of this account's specific configuration for the given FIRE column.
-   * @param columnName the FIRE column lookup name to match with the import column name
+   * Retrieves the column name of this account's specific configuration for the given YMYL column.
+   * @param columnName the YMYL column lookup name to match with the import column name
    * @returns {string} the reference column name or undefined if not found
    */
-  getImportColumnNameByFireColumn(columnName: FireColumn): string | undefined {
+  getImportColumnNameByYMYLColumn(columnName: YMYLColumn): string | undefined {
     if (this.columnMap?.[columnName]) {
       return this.columnMap[columnName]
     }
+  }
+
+  /** @deprecated Use getImportColumnNameByYMYLColumn */
+  getImportColumnNameByFireColumn(columnName: YMYLColumn): string | undefined {
+    return this.getImportColumnNameByYMYLColumn(columnName)
   }
 }

@@ -1,4 +1,4 @@
-import type { FireTable } from '@/common/table/FireTable'
+import type { YMYLTable } from '@/common/table/YMYLTable'
 import type {
   AccountOptions,
   ImportPreviewResult,
@@ -68,7 +68,7 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
   }
 
   async enableBankingPipeline(
-    _fireTable: FireTable,
+    _ymylTable: YMYLTable,
     _bankAccount: string,
   ): Promise<ServerResponse<{
     ruleEngine?: PackedRuleEngineResult

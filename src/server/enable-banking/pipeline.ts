@@ -1,5 +1,5 @@
-import { FIRE_COLUMNS } from '@/common/constants'
-import { FireTable } from '@/common/table/FireTable'
+import { YMYL_COLUMNS } from '@/common/constants'
+import { YMYLTable } from '@/common/table/YMYLTable'
 import { AccountUtils } from '../accounts/account-utils'
 import { Config } from '../config'
 import { Transformers } from '../transformers'
@@ -38,7 +38,7 @@ function getTransactionAmount(tx: EnableBankingTransaction): string {
   return amount
 }
 
-export function fetchAndMapToFireTable(enableBankingAccount: string, config: Config): FireTable | null {
+export function fetchAndMapToYMYLTable(enableBankingAccount: string, config: Config): YMYLTable | null {
   // Only fetch transactions from the last 7 days to avoid huge payloads,
   // duplicate detection will handle overlaps.
   const dateFrom = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
@@ -54,21 +54,24 @@ export function fetchAndMapToFireTable(enableBankingAccount: string, config: Con
   const iban = AccountUtils.getAccountIban(config.getAccountId())
 
   const data = transactions.map((tx) => {
-    const row = new Array(FIRE_COLUMNS.length).fill(null)
+    const row = new Array(YMYL_COLUMNS.length).fill(null)
 
-    row[FireTable.getFireColumnIndex('amount')] = Transformers.transformMoney(getTransactionAmount(tx))
-    row[FireTable.getFireColumnIndex('currency')] = tx.transaction_amount?.currency || ''
-    row[FireTable.getFireColumnIndex('date')] = Transformers.transformDate(getTransactionDate(tx))
-    row[FireTable.getFireColumnIndex('contra_account')] = tx.creditor?.name || tx.debtor?.name || ''
+    row[YMYLTable.getYMYLColumnIndex('amount')] = Transformers.transformMoney(getTransactionAmount(tx))
+    row[YMYLTable.getYMYLColumnIndex('currency')] = tx.transaction_amount?.currency || ''
+    row[YMYLTable.getYMYLColumnIndex('date')] = Transformers.transformDate(getTransactionDate(tx))
+    row[YMYLTable.getYMYLColumnIndex('contra_account')] = tx.creditor?.name || tx.debtor?.name || ''
 
-    row[FireTable.getFireColumnIndex('contra_iban')] = resolveContraIban(tx, iban)
+    row[YMYLTable.getYMYLColumnIndex('contra_iban')] = resolveContraIban(tx, iban)
 
-    row[FireTable.getFireColumnIndex('description')] = tx.remittance_information?.join(' ') || tx.note || ''
-    row[FireTable.getFireColumnIndex('import_date')] = importDate
-    row[FireTable.getFireColumnIndex('iban')] = iban
+    row[YMYLTable.getYMYLColumnIndex('description')] = tx.remittance_information?.join(' ') || tx.note || ''
+    row[YMYLTable.getYMYLColumnIndex('import_date')] = importDate
+    row[YMYLTable.getYMYLColumnIndex('iban')] = iban
 
     return row
   })
 
-  return new FireTable(data)
+  return new YMYLTable(data)
 }
+
+/** @deprecated Use fetchAndMapToYMYLTable */
+export const fetchAndMapToFireTable = fetchAndMapToYMYLTable
