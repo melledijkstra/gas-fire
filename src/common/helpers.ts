@@ -1,8 +1,8 @@
-import { FIRE_COLUMNS } from './constants'
+import { YMYL_COLUMNS } from './constants'
 import { HASH_COLUMNS } from './settings'
 import type { CellValue } from './types'
 
-const hashColumns = HASH_COLUMNS.map(col => Array.from(FIRE_COLUMNS).indexOf(col))
+const hashColumns = HASH_COLUMNS.map(col => Array.from(YMYL_COLUMNS).indexOf(col))
 
 export const slugify = (text: string): string =>
   text.trim() // trim leading/trailing white space
