@@ -1,6 +1,6 @@
 import { withLogger } from '@/common/decorators'
 import { Logger } from '@/common/logger'
-import { FireTable } from '@/common/table/FireTable'
+import { YMYLTable } from '@/common/table/YMYLTable'
 import type { CellValue } from '@/common/types'
 import { getSourceSheet } from '../globals'
 import { SheetsRequestBuilder } from '../request-builder'
@@ -14,31 +14,31 @@ type GetLastImportedTransactionsOptions = {
 }
 
 /**
- * Represents the FIRE source sheet in Google Sheets.
+ * Represents the YMYL source sheet in Google Sheets.
  *
  * Wraps a `GoogleAppsScript.Spreadsheet.Sheet` and provides operations
  * specific to the source sheet's structure, such as importing data,
- * reading data as a FireTable, and managing filters.
+ * reading data as a YMYLTable, and managing filters.
  *
  * @example
  * ```ts
- * const sheet = new FireSheet();
- * const fireTable = sheet.data;
+ * const sheet = new YMYLSheet();
+ * const sheetData = sheet.data;
  *
  * sheet.importData(processedTable, [1, 5, 9]);
  * ```
  */
-export class FireSheet {
+export class YMYLSheet {
   protected readonly _sheet: GoogleAppsScript.Spreadsheet.Sheet
   protected static _cachedLocale: string | undefined
-  protected static _cachedDataTable: FireTable | null = null
+  protected static _cachedDataTable: YMYLTable | null = null
   protected static _cachedTimeZone: string | undefined
 
   constructor() {
     const sourceSheet = getSourceSheet()
     if (!sourceSheet) {
       throw new Error(
-        'Error: The source sheet was not found. Cannot operate on FireSheet.',
+        'Error: The source sheet was not found. Cannot operate on YMYLSheet.',
       )
     }
     this._sheet = sourceSheet
@@ -65,20 +65,20 @@ export class FireSheet {
   // ──────────────────────────────────────────────
 
   /**
-   * Reads all data from the source sheet and returns it as a FireTable.
+   * Reads all data from the source sheet and returns it as a YMYLTable.
    * The header row (row 1) is excluded from the data.
    * Careful with large sheets, as this reads all data into memory. Use `getRawData()` for more control.
    */
-  getDataTable(): FireTable {
-    if (FireSheet._cachedDataTable) {
-      return FireSheet._cachedDataTable.clone()
+  getDataTable(): YMYLTable {
+    if (YMYLSheet._cachedDataTable) {
+      return YMYLSheet._cachedDataTable.clone()
     }
 
     const allValues = this._sheet.getDataRange().getValues()
-    // first row is headers, omit it — FireTable knows its columns via FIRE_COLUMNS
+    // first row is headers, omit it — YMYLTable knows its columns via YMYL_COLUMNS
     const data = allValues.slice(1) as CellValue[][]
-    FireSheet._cachedDataTable = new FireTable(data)
-    return FireSheet._cachedDataTable.clone()
+    YMYLSheet._cachedDataTable = new YMYLTable(data)
+    return YMYLSheet._cachedDataTable.clone()
   }
 
   /**
@@ -94,32 +94,32 @@ export class FireSheet {
   // ──────────────────────────────────────────────
 
   /**
-   * Imports a FireTable into the source sheet by inserting rows below the header.
+   * Imports a YMYLTable into the source sheet by inserting rows below the header.
    *
    * Uses the Sheets API for batch operations when available, falling back
    * to the Apps Script API for compatibility.
    *
-   * @param fireTable - The data to import
+   * @param ymylTable - The data to import
    * @param autoFillColumns - Optional 1-based column indices to autofill after import
    */
   @withLogger
-  importData(fireTable: FireTable, autoFillColumns?: number[]): void {
-    if (fireTable.isEmpty()) {
+  importData(ymylTable: YMYLTable, autoFillColumns?: number[]): void {
+    if (ymylTable.isEmpty()) {
       throw new Error('No data to import.')
     }
 
-    Logger.log(`importing data (rows: ${fireTable.getRowCount()}, cols: ${fireTable.getColumnCount()})`)
+    Logger.log(`importing data (rows: ${ymylTable.getRowCount()}, cols: ${ymylTable.getColumnCount()})`)
 
     try {
       if (typeof Sheets !== 'undefined' && Sheets.Spreadsheets) {
         // preferably use the Sheets API for better performance in general
-        this.importWithSheetsAPI(fireTable, autoFillColumns)
+        this.importWithSheetsAPI(ymylTable, autoFillColumns)
       }
       else {
-        this.importWithAppsScriptAPI(fireTable, autoFillColumns)
+        this.importWithAppsScriptAPI(ymylTable, autoFillColumns)
       }
       // clear cached data since sheet has changed
-      FireSheet.resetCache()
+      YMYLSheet.resetCache()
     }
     catch (error) {
       this.handleError(error)
@@ -176,24 +176,24 @@ export class FireSheet {
    * The sheet is expected to be sorted by date descending, so the most recent
    * import date is at the top. Stops reading once a different import date is found.
    *
-   * @returns A FireTable containing only the rows from the last import, or an empty FireTable.
+   * @returns A YMYLTable containing only the rows from the last import, or an empty YMYLTable.
    */
   getLastImportedTransactions({
     stopOnDifferentImportDate = true,
-  }: GetLastImportedTransactionsOptions = {}): FireTable {
+  }: GetLastImportedTransactionsOptions = {}): YMYLTable {
     const lastRow = this._sheet.getLastRow()
-    if (lastRow <= 1) return new FireTable([])
+    if (lastRow <= 1) return new YMYLTable([])
 
     // Only read up to 500 rows since data is sorted newest-first
     const values = this._sheet
       .getRange(1, 1, Math.min(lastRow, 500), this._sheet.getLastColumn())
       .getValues() as CellValue[][]
 
-    if (values.length <= 1) return new FireTable([])
+    if (values.length <= 1) return new YMYLTable([])
 
     const lastImportDate = this.getLastImportDate(values)
 
-    const importDateCol = FireTable.getFireColumnIndex('import_date')
+    const importDateCol = YMYLTable.getYMYLColumnIndex('import_date')
     const lastImportedRows: CellValue[][] = []
 
     // Iterate from row 2 (index 1) onwards, skipping the header
@@ -225,7 +225,7 @@ export class FireSheet {
       lastImportedRows.push(row)
     }
 
-    return new FireTable(lastImportedRows)
+    return new YMYLTable(lastImportedRows)
   }
 
   /**
@@ -261,7 +261,7 @@ export class FireSheet {
    * Looks at row index 1 (first data row after header) since data is sorted newest-first.
    */
   private getLastImportDate(data: CellValue[][]): Date | null {
-    const importDateCol = FireTable.getFireColumnIndex('import_date')
+    const importDateCol = YMYLTable.getYMYLColumnIndex('import_date')
     if (importDateCol === -1) return null
     if (data.length < 2) return null
 
@@ -290,12 +290,12 @@ export class FireSheet {
 
   @withLogger
   private importWithSheetsAPI(
-    fireTable: FireTable,
+    ymylTable: YMYLTable,
     autoFillColumns?: number[],
   ): void {
-    const data = fireTable.data
-    const rowCount = fireTable.getRowCount()
-    const colCount = fireTable.getColumnCount()
+    const data = ymylTable.data
+    const rowCount = ymylTable.getRowCount()
+    const colCount = ymylTable.getColumnCount()
     const requestBuilder = new SheetsRequestBuilder()
     const spreadsheetId = this.getSpreadsheetId()
     const sheetId = this.getSheetId()
@@ -335,12 +335,12 @@ export class FireSheet {
 
   @withLogger
   private importWithAppsScriptAPI(
-    fireTable: FireTable,
+    ymylTable: YMYLTable,
     autoFillColumns?: number[],
   ): void {
-    const data = fireTable.data
-    const rowCount = fireTable.getRowCount()
-    const colCount = fireTable.getColumnCount()
+    const data = ymylTable.data
+    const rowCount = ymylTable.getRowCount()
+    const colCount = ymylTable.getColumnCount()
 
     Logger.warn(
       'Sheets API not available, using native insertion of rows (slower)',
@@ -386,7 +386,7 @@ export class FireSheet {
    * Returns the locale of the active spreadsheet, formatted with an underscore (e.g. "en_US").
    * If the locale cannot be retrieved, returns a default value of "en_US".
    */
-  static getLocale = (): string => {
+  static readonly getLocale = (): string => {
     if (this._cachedLocale) return this._cachedLocale
 
     const locale = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetLocale()
@@ -395,9 +395,9 @@ export class FireSheet {
   }
 
   static resetCache(): void {
-    FireSheet._cachedDataTable = null
-    FireSheet._cachedLocale = undefined
-    FireSheet._cachedTimeZone = undefined
+    YMYLSheet._cachedDataTable = null
+    YMYLSheet._cachedLocale = undefined
+    YMYLSheet._cachedTimeZone = undefined
   }
 }
 

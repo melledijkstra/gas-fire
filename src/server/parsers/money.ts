@@ -1,11 +1,11 @@
 import { Logger } from '@/common/logger'
-import { FireSheet } from '../spreadsheet/FireSheet'
+import { YMYLSheet } from '../spreadsheet/YMYLSheet'
 
 let cachedNumberFormatter: Intl.NumberFormat
 
 function getNumberFormatter() {
   if (!cachedNumberFormatter) {
-    const locale = FireSheet.getLocale()
+    const locale = YMYLSheet.getLocale()
     const normalizedLocale = locale.replace('_', '-')
     cachedNumberFormatter = new Intl.NumberFormat(normalizedLocale)
   }

@@ -1,9 +1,8 @@
-# GAS - FIRE
+# Your Money, Your Life
 
 [![Build Check](https://github.com/melledijkstra/gas-fire/actions/workflows/ci.yml/badge.svg)](https://github.com/melledijkstra/gas-fire/actions/workflows/ci.yml)
 
-The title stands for Google Apps Script - Financial Independence Retire Early.
-This project helps with google sheets tasks and is used to keep my finances automated.
+"Your Money, Your Life" (YMYL) helps automate your personal finances with Google Sheets.
 
 More info can be found here:
 https://developers.google.com/apps-script/guides/typescript

@@ -1,10 +1,10 @@
-import { FIRE_COLUMNS } from '@/common/constants'
+import { YMYL_COLUMNS } from '@/common/constants'
 import { getRowHash } from '@/common/helpers'
-import { FireTable } from '@/common/table/FireTable'
+import { YMYLTable } from '@/common/table/YMYLTable'
 import { Table } from '@/common/table/Table'
 import type { CellValue } from '@/common/types'
 import { Config } from '../config'
-import { FireSheet } from '../spreadsheet/FireSheet'
+import { YMYLSheet } from '../spreadsheet/YMYLSheet'
 import type { ImportPipelineContext, PipelineContext, PreviewPipelineContext } from './pipeline'
 import {
   applyUserDecisionsStage,
@@ -12,12 +12,12 @@ import {
   duplicateDetectionStage,
   removeEmptyRowsStage,
   sortByDateStage,
-  transformToFireTableStage,
+  transformToYMYLTableStage,
 } from './pipeline'
 
-vi.mock('../spreadsheet/FireSheet')
+vi.mock('../spreadsheet/YMYLSheet')
 
-const loadExistingHashesMock = vi.mocked(FireSheet.prototype.loadExistingHashes)
+const loadExistingHashesMock = vi.mocked(YMYLSheet.prototype.loadExistingHashes)
 
 describe('Import Pipeline Stages', () => {
   const mockConfig = new Config({
@@ -43,33 +43,33 @@ describe('Import Pipeline Stages', () => {
     })
   })
 
-  describe('transformToFireTableStage', () => {
-    it('should transform a Table to a FireTable using config', () => {
+  describe('transformToYMYLTableStage', () => {
+    it('should transform a Table to a YMYLTable using config', () => {
       const table = new Table(['Date', 'Amount', 'Desc'], [['2023-01-01', '10.50', 'Test']])
-      const result = transformToFireTableStage(table, createContext())
-      expect(result).toBeInstanceOf(FireTable)
+      const result = transformToYMYLTableStage(table, createContext())
+      expect(result).toBeInstanceOf(YMYLTable)
       expect(result.getRowCount()).toBe(1)
 
-      const amountIndex = FireTable.getFireColumnIndex('amount')
+      const amountIndex = YMYLTable.getYMYLColumnIndex('amount')
       expect(result.data[0][amountIndex]).toBe(10.5)
     })
 
     it('should throw if no headers are present', () => {
       const table = new Table([], [['data']])
-      expect(() => transformToFireTableStage(table, createContext())).toThrow()
+      expect(() => transformToYMYLTableStage(table, createContext())).toThrow()
     })
   })
 
   describe('sortByDateStage', () => {
     it('should sort rows by date descending', () => {
-      const dateIndex = FireTable.getFireColumnIndex('date')
-      const data = new Array(2).fill(null).map(() => new Array(FIRE_COLUMNS.length).fill(null))
+      const dateIndex = YMYLTable.getYMYLColumnIndex('date')
+      const data = new Array(2).fill(null).map(() => new Array(YMYL_COLUMNS.length).fill(null))
 
       data[0][dateIndex] = new Date('2023-01-01')
       data[1][dateIndex] = new Date('2023-01-05')
 
-      const fireTable = new FireTable(data)
-      const result = sortByDateStage(fireTable, createContext())
+      const ymylTable = new YMYLTable(data)
+      const result = sortByDateStage(ymylTable, createContext())
 
       expect(result.data[0][dateIndex]).toEqual(new Date('2023-01-05'))
       expect(result.data[1][dateIndex]).toEqual(new Date('2023-01-01'))
@@ -78,11 +78,11 @@ describe('Import Pipeline Stages', () => {
 
   describe('duplicateDetectionStage', () => {
     it('should mark duplicates based on existing hashes', () => {
-      const data = new Array(2).fill(null).map(() => new Array(FIRE_COLUMNS.length).fill(null))
+      const data = new Array(2).fill(null).map(() => new Array(YMYL_COLUMNS.length).fill(null))
 
-      const dateIdx = FireTable.getFireColumnIndex('date')
-      const amountIdx = FireTable.getFireColumnIndex('amount')
-      const ibanIdx = FireTable.getFireColumnIndex('iban')
+      const dateIdx = YMYLTable.getYMYLColumnIndex('date')
+      const amountIdx = YMYLTable.getYMYLColumnIndex('amount')
+      const ibanIdx = YMYLTable.getYMYLColumnIndex('iban')
 
       const date = new Date('2023-01-01')
       data[0][dateIdx] = date
@@ -95,7 +95,7 @@ describe('Import Pipeline Stages', () => {
 
       const hash = getRowHash(data[0])
 
-      const fireTable = new FireTable(data)
+      const ymylTable = new YMYLTable(data)
       const context: PreviewPipelineContext = {
         ...createContext(),
         duplicateHashes: new Set<string>(),
@@ -103,7 +103,7 @@ describe('Import Pipeline Stages', () => {
 
       loadExistingHashesMock.mockReturnValue(new Set([hash]))
 
-      const result = duplicateDetectionStage(fireTable, context)
+      const result = duplicateDetectionStage(ymylTable, context)
 
       expect(result.data.length).toBe(2)
       expect(context.duplicateHashes.has(hash)).toBe(true)
@@ -119,12 +119,12 @@ describe('Import Pipeline Stages', () => {
       })
 
       const data = [['val1', 'val2', 'val3', 'val4', '']]
-      const fireTable = new FireTable(data)
+      const ymylTable = new YMYLTable(data)
       const context = createContext({ config })
 
-      autoFillPreviewStage(fireTable, context)
+      autoFillPreviewStage(ymylTable, context)
 
-      expect(fireTable.data[0][4]).toBe('(auto-filled)')
+      expect(ymylTable.data[0][4]).toBe('(auto-filled)')
     })
 
     it('should not modify non-empty cells', () => {
@@ -135,20 +135,20 @@ describe('Import Pipeline Stages', () => {
       })
 
       const data = [['original']]
-      const fireTable = new FireTable(data)
+      const ymylTable = new YMYLTable(data)
       const context = createContext({ config })
 
-      autoFillPreviewStage(fireTable, context)
+      autoFillPreviewStage(ymylTable, context)
 
-      expect(fireTable.data[0][0]).toBe('original')
+      expect(ymylTable.data[0][0]).toBe('original')
     })
   })
 
   describe('applyUserDecisionsStage', () => {
     it('should filter out rows marked as skip', () => {
-      const data = new Array(2).fill(null).map(() => new Array(FIRE_COLUMNS.length).fill(null))
-      const dateIdx = FireTable.getFireColumnIndex('date')
-      const ibanIdx = FireTable.getFireColumnIndex('iban')
+      const data = new Array(2).fill(null).map(() => new Array(YMYL_COLUMNS.length).fill(null))
+      const dateIdx = YMYLTable.getYMYLColumnIndex('date')
+      const ibanIdx = YMYLTable.getYMYLColumnIndex('iban')
 
       data[0][dateIdx] = new Date('2023-01-01')
       data[0][ibanIdx] = 'IBAN1'
@@ -157,13 +157,13 @@ describe('Import Pipeline Stages', () => {
 
       const hash1 = getRowHash(data[0])
 
-      const fireTable = new FireTable(data)
+      const ymylTable = new YMYLTable(data)
       const context: ImportPipelineContext = {
         ...createContext(),
         userDecisions: new Map([[hash1, 'skip']]),
       }
 
-      const result = applyUserDecisionsStage(fireTable, context)
+      const result = applyUserDecisionsStage(ymylTable, context)
 
       expect(result.getRowCount()).toBe(1)
       expect(result.data[0][dateIdx]).toEqual(new Date('2023-01-02'))

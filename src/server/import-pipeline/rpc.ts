@@ -1,7 +1,7 @@
 import { getRowHash, structuredClone } from '@/common/helpers'
 import { Logger } from '@/common/logger'
 import { FEATURES } from '@/common/settings'
-import { FireTable } from '@/common/table/FireTable'
+import { YMYLTable } from '@/common/table/YMYLTable'
 import { Table } from '@/common/table/Table'
 import type {
   ImportPreviewResult,
@@ -15,7 +15,7 @@ import { applyPreTransformRulesStage, postTransformRulesStage } from '../rule-en
 import { RuleParser } from '../rule-engine/rule-parser'
 import { RuleProcessor } from '../rule-engine/rule-processor'
 import type { PackedRuleEngineResult } from '../rule-engine/types'
-import { FireSheet } from '../spreadsheet/FireSheet'
+import { YMYLSheet } from '../spreadsheet/YMYLSheet'
 import { RuleSheet } from '../spreadsheet/RuleSheet'
 import { removeFilterCriteria } from '../spreadsheet/spreadsheet'
 import type { ImportPipelineContext, PipelineContext, PreviewPipelineContext } from './pipeline'
@@ -27,32 +27,32 @@ import {
   filterOutDuplicatesStage,
   removeEmptyRowsStage,
   sortByDateStage,
-  transformToFireTableStage,
+  transformToYMYLTableStage,
 } from './pipeline'
 
 /**
  * Activates the target sheet and removes any active filters.
  * Filters must be removed before importing to avoid data corruption.
  */
-function prepareSheetForImport(fireSheet: FireSheet): void {
-  fireSheet.activate()
+function prepareSheetForImport(ymylSheet: YMYLSheet): void {
+  ymylSheet.activate()
 
-  const filter = fireSheet.getFilter()
+  const filter = ymylSheet.getFilter()
   if (filter && !removeFilterCriteria(filter, true)) {
     throw new Error('Filters need to be removed before importing, cancelling import')
   }
 }
 
-function calculateNewBalance(fireTable: FireTable, previewContext: PreviewPipelineContext): number {
+function calculateNewBalance(ymylTable: YMYLTable, previewContext: PreviewPipelineContext): number {
   const excludedHashes = new Set<string>([
     ...previewContext?.duplicateHashes ?? [],
     ...previewContext?.ruleEngine?.removedHashes ?? [],
   ])
 
-  const amountColIndex = FireTable.getFireColumnIndex('amount')
+  const amountColIndex = YMYLTable.getYMYLColumnIndex('amount')
   const validAmounts: number[] = []
 
-  for (const row of fireTable.data) {
+  for (const row of ymylTable.data) {
     const hash = getRowHash(row)
     if (!excludedHashes.has(hash)) {
       const amount = row[amountColIndex]
@@ -101,7 +101,7 @@ class PipelineRPC {
     return ruleParser.parseRulesByAccount(rawRulesData, bankAccount)
   }
 
-  static setupCommonPipeline<C extends PipelineContext>(bankAccount: string, context: C, dryRun = false): Pipeline<Table, FireTable, C> {
+  static setupCommonPipeline<C extends PipelineContext>(bankAccount: string, context: C, dryRun = false): Pipeline<Table, YMYLTable, C> {
     let pipeline = Pipeline.create<Table, C>()
       .addStage(removeEmptyRowsStage)
 
@@ -120,7 +120,7 @@ class PipelineRPC {
       pipeline = pipeline.addStage(input => applyPreTransformRulesStage(input, ruleProcessor, context))
     }
 
-    let transformedPipeline = pipeline.addStage(transformToFireTableStage)
+    let transformedPipeline = pipeline.addStage(transformToYMYLTableStage)
 
     if (FEATURES.RULE_ENGINE_ENABLED) {
       transformedPipeline = transformedPipeline.addStage(input => postTransformRulesStage(input, ruleProcessor, context, dryRun))
@@ -131,16 +131,16 @@ class PipelineRPC {
 
   /**
    * Dedicated pipeline for background Enable Banking synchronization.
-   * Maps transactions directly to a FireTable and applies deduplication and rule engine.
+   * Maps transactions directly to a YMYLTable and applies deduplication and rule engine.
    */
   @withPipelineLogger
   static enableBankingPipeline(
-    fireTable: FireTable,
+    ymylTable: YMYLTable,
     bankAccount: string,
   ): ServerResponse<{
     ruleEngine?: PackedRuleEngineResult
   }> {
-    const fireSheet = new FireSheet()
+    const ymylSheet = new YMYLSheet()
     const config = Config.getAccountConfiguration(bankAccount)
 
     const context: PreviewPipelineContext = {
@@ -161,7 +161,7 @@ class PipelineRPC {
       }
     }
 
-    let pipeline = Pipeline.create<FireTable, PreviewPipelineContext>()
+    let pipeline = Pipeline.create<YMYLTable, PreviewPipelineContext>()
 
     if (FEATURES.RULE_ENGINE_ENABLED) {
       // dryRun = false to permanently apply rule engine results (e.g. categorization or exclusion)
@@ -175,7 +175,7 @@ class PipelineRPC {
     const finalTable = pipeline
       .addStage(filterOutDuplicatesStage)
       .addStage(sortByDateStage)
-      .execute(fireTable, context)
+      .execute(ymylTable, context)
 
     if (finalTable.isEmpty()) {
       const msg = 'No new rows to import after rules and deduplication.'
@@ -184,7 +184,7 @@ class PipelineRPC {
     }
 
     const autoFillColumns = config.autoFillEnabled ? config.autoFillColumnIndices : undefined
-    fireSheet.importData(finalTable, autoFillColumns)
+    ymylSheet.importData(finalTable, autoFillColumns)
 
     const msg = `Synced ${finalTable.getRowCount()} transactions!`
     Logger.log(msg)
@@ -223,13 +223,13 @@ class PipelineRPC {
   ): ServerResponse<{
     ruleEngine?: PackedRuleEngineResult
   }> {
-    const fireSheet = new FireSheet()
+    const ymylSheet = new YMYLSheet()
     const accountConfig = Config.getAccountConfiguration(bankAccount)
     const userDecisionsMap = userDecisions ? new Map(Object.entries(userDecisions)) : undefined
 
     Logger.log('account configuration used for import', accountConfig)
 
-    prepareSheetForImport(fireSheet)
+    prepareSheetForImport(ymylSheet)
 
     const context: ImportPipelineContext = {
       config: accountConfig,
@@ -240,24 +240,24 @@ class PipelineRPC {
 
     const pipeline = this.setupCommonPipeline<ImportPipelineContext>(bankAccount, context)
 
-    const fireTable = pipeline
+    const ymylTable = pipeline
       .addStage(applyUserDecisionsStage)
       .addStage(sortByDateStage)
       .execute(inputTable, context)
 
-    if (fireTable.isEmpty()) {
+    if (ymylTable.isEmpty()) {
       const msg = 'No rows to import, check your import data, rules, row decisions or configuration!'
       Logger.log(msg)
       return { success: false, error: msg }
     }
 
     const autoFillColumns = accountConfig.autoFillEnabled ? accountConfig.autoFillColumnIndices : undefined
-    fireSheet.importData(fireTable, autoFillColumns)
+    ymylSheet.importData(ymylTable, autoFillColumns)
 
     const appliedRules = context?.ruleEngine?.appliedRules || []
 
     const rulesMsg = appliedRules.length > 0 ? ` (Applied ${appliedRules.length} rules)` : ''
-    const msg = `imported ${fireTable.getRowCount()} rows!${rulesMsg}`
+    const msg = `imported ${ymylTable.getRowCount()} rows!${rulesMsg}`
     Logger.log(msg)
 
     return {

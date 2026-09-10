@@ -91,7 +91,7 @@ describe('helpers', () => {
   describe('getRowHash', () => {
     it('should generate a hash from specific columns', () => {
       const date = new Date('2023-01-01T00:00:00.000Z')
-      // FIRE_COLUMNS = ['ref', 'iban', 'date', 'amount', 'balance', 'contra_account', 'description', ...]
+      // YMYL_COLUMNS = ['ref', 'iban', 'date', 'amount', 'balance', 'contra_account', 'description', ...]
       // HASH_COLUMNS = ['iban', 'date', 'amount', 'contra_account', 'description']
       // Indices: 1, 2, 3, 5, 6
       const row = [

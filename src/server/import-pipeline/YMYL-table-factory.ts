@@ -1,25 +1,25 @@
-import type { FireColumn } from '@/common/constants'
-import { FIRE_COLUMNS } from '@/common/constants'
+import type { YMYLColumn } from '@/common/constants'
+import { YMYL_COLUMNS } from '@/common/constants'
 import { Logger } from '@/common/logger'
-import { FireTable } from '@/common/table/FireTable'
+import { YMYLTable } from '@/common/table/YMYLTable'
 import { Table } from '@/common/table/Table'
 import type { CellValue } from '@/common/types'
 import { AccountUtils } from '../accounts/account-utils'
 import { Config } from '../config'
 import { Transformers } from '../transformers'
-import type { FireColumnParsers } from '../types'
+import type { YMYLColumnParsers } from '../types'
 
-export class FireTableFactory {
+export class YMYLTableFactory {
   /**
-   * Processes raw CSV input data and shapes it into the FIRE spreadsheet structure.
+   * Processes raw CSV input data and shapes it into the YMYL spreadsheet structure.
    *
-   * Uses the account configuration to map CSV columns to FIRE columns, applying
+   * Uses the account configuration to map CSV columns to YMYL columns, applying
    * transformations where needed (date parsing, money parsing, etc.).
    *
    * @param headers - The CSV header row
    * @param rows - The CSV data rows (without header)
    * @param config - The account configuration with column mappings
-   * @returns A FireTable with data structured according to FIRE_COLUMNS
+   * @returns A YMYLTable with data structured according to YMYL_COLUMNS
    */
   static fromAccountSpecification({
     headers,
@@ -29,16 +29,16 @@ export class FireTableFactory {
     headers: string[]
     rows: CellValue[][]
     config: Config
-  }): FireTable {
+  }): YMYLTable {
     const output: CellValue[][] = []
     const rowCount = rows.length
     const cols = Table.transpose(rows)
 
     function buildColumn<T>(
-      fireColumn: FireColumn,
+      ymylColumn: YMYLColumn,
       transformer?: (value: string) => T,
     ): (T | null)[] {
-      const columnIndex = config.getColumnIndex(fireColumn, headers)
+      const columnIndex = config.getColumnIndex(ymylColumn, headers)
       if (typeof columnIndex === 'number' && cols[columnIndex] !== undefined) {
         return cols[columnIndex].map((val) => {
           if (val === '' || val === null || val === undefined) return null
@@ -50,7 +50,7 @@ export class FireTableFactory {
 
     const importDate = new Date()
 
-    const columnImportParsers: FireColumnParsers = {
+    const columnImportParsers: YMYLColumnParsers = {
       ref: null,
       iban: () => new Array(rowCount).fill(AccountUtils.getAccountIban(config.getAccountId())),
       date: () => buildColumn('date', Transformers.transformDate),
@@ -64,8 +64,8 @@ export class FireTableFactory {
       currency: () => buildColumn('currency'),
     }
 
-    for (const columnName of FIRE_COLUMNS) {
-      const colParser = columnImportParsers[columnName as keyof FireColumnParsers]
+    for (const columnName of YMYL_COLUMNS) {
+      const colParser = columnImportParsers[columnName as keyof YMYLColumnParsers]
 
       // If no parser defined for this column, fill with nulls
       if (!colParser) {
@@ -87,6 +87,6 @@ export class FireTableFactory {
 
     // output is currently column-oriented, transpose to row-oriented
     const transposed = Table.transpose(output)
-    return new FireTable(transposed)
+    return new YMYLTable(transposed)
   }
 }

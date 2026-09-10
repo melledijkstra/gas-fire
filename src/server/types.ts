@@ -4,7 +4,7 @@
  */
 type ColumnRule<T> = (() => (T | null)[]) | null
 
-export interface FireColumnParsers {
+export interface YMYLColumnParsers {
   ref: ColumnRule<string | number>
   iban: ColumnRule<string>
   date: ColumnRule<Date | string>

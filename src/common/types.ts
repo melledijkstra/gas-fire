@@ -23,7 +23,7 @@ export type AccountOptions = Record<string, string>
 /**
  * Raw table definition for client-server data transfer.
  * Tables by default should define rows and only contain string values.
- * On the server side, use the `Table` or `FireTable` classes instead
+ * On the server side, use the `Table` or `YMYLTable` classes instead
  * for richer data manipulation.
  * e.g.
  * ```
@@ -72,12 +72,13 @@ export type ServerResponse<T = void>
  *   'Commerzbank': 'DE89370400440532013000',
  *   'ING': 'NL01INGB1234567890',
  * }
+ * ```
  */
 export type Accounts = {
   [key: string]: string
 }
 
-export type FireTransaction = {
+export type YMYLTransaction = {
   // an ID for the transaction, can be anything as long as it is unique
   ref: string
   // the IBAN of this transaction, either receiving or executing the payment

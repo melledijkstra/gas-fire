@@ -1,9 +1,9 @@
-import { FireSheet } from '../spreadsheet/FireSheet'
+import { YMYLSheet } from '../spreadsheet/YMYLSheet'
 import { parseDate } from './date'
 
-vi.mock('../spreadsheet/FireSheet')
+vi.mock('../spreadsheet/YMYLSheet')
 
-const mockedGetSpreadsheetLocale = vi.mocked(FireSheet.getLocale)
+const mockedGetSpreadsheetLocale = vi.mocked(YMYLSheet.getLocale)
 mockedGetSpreadsheetLocale.mockReturnValue('en_US')
 
 describe('parseDate', () => {

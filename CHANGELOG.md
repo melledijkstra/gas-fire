@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.19.0-beta
+
+- **Refactor** - Rebranded the app and all associated code from "FIRE" to "YMYL" (Your Money Your Life)
+
 ## 4.18.0-beta
 
 - Split build configuration (fixing storybook), upgrade dependencies, and clean up server pipeline logic

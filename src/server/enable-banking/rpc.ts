@@ -2,7 +2,7 @@ import type { ServerResponse } from '@/common/types'
 import { AccountUtils } from '../accounts/account-utils'
 import { EnableBankingApi } from './api'
 import { PROP_ENABLE_BANKING_CONNECTIONS, PROP_ENABLE_BANKING_TRIGGER_FREQ_TYPE, PROP_ENABLE_BANKING_TRIGGER_FREQ_VAL, REDIRECT_URL } from './config'
-import { fetchAndMapToFireTable } from './pipeline'
+import { fetchAndMapToYMYLTable } from './pipeline'
 import type { Aspsp } from './types'
 import { getEnableBankingConnections, normalizeIban } from './utils'
 import { Config } from '../config'
@@ -222,16 +222,16 @@ export function syncEnableBankingTransactions() {
 
       try {
         const config = Config.getAccountConfiguration(account.slug)
-        const fireTable = fetchAndMapToFireTable(account.accountId, config)
+        const ymylTable = fetchAndMapToYMYLTable(account.accountId, config)
 
-        if (!fireTable) {
+        if (!ymylTable) {
           Logger.log(`No new transactions found for ${account.slug}`)
           continue
         }
 
-        Logger.log(`Converted ${fireTable.getRowCount()} transactions for ${account.slug} into FireTable`)
+        Logger.log(`Converted ${ymylTable.getRowCount()} transactions for ${account.slug} into YMYLTable`)
 
-        const result = enableBankingPipeline(fireTable, account.slug)
+        const result = enableBankingPipeline(ymylTable, account.slug)
 
         if (result.success) {
           Logger.log(`Successfully synced ${account.slug}: ${result.message}`)

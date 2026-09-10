@@ -1,29 +1,29 @@
-import type { FireColumn } from '@/common/constants'
-import { FIRE_COLUMNS } from '@/common/constants'
+import type { YMYLColumn } from '@/common/constants'
+import { YMYL_COLUMNS } from '@/common/constants'
 import { getRowHash } from '@/common/helpers'
 import type { CellValue } from '@/common/types'
 import { Table } from './Table'
 
 /**
- * A table with knowledge of the FIRE column structure.
+ * A table with knowledge of the YMYL column structure.
  *
- * Extends the generic `Table` with methods specific to the FIRE spreadsheet columns,
- * such as accessing columns by FireColumn name, sorting by date, finding duplicates,
+ * Extends the generic `Table` with methods specific to the YMYL spreadsheet columns,
+ * such as accessing columns by YMYLColumn name, sorting by date, finding duplicates,
  * and categorizing transactions.
  *
  * @example
  * ```ts
- * const fireTable = FireTable.fromCSV({ headers, rows, config });
- * fireTable.sortByDate();
+ * const ymylTable = new YMYLTable(data);
+ * ymylTable.sortByDate();
  *
- * const categories = fireTable.getFireColumn('category');
+ * const categories = ymylTable.getYMYLColumn('category');
  * ```
  */
-export class FireTable extends Table<CellValue> {
+export class YMYLTable extends Table<CellValue> {
   protected cachedHashes: Set<string> | null = null
 
   constructor(data: CellValue[][] = []) {
-    super([...FIRE_COLUMNS], data)
+    super([...YMYL_COLUMNS], data)
   }
 
   getHashes(force = false): Set<string> {
@@ -35,27 +35,27 @@ export class FireTable extends Table<CellValue> {
   }
 
   // ──────────────────────────────────────────────
-  // FIRE Column Access
+  // YMYL Column Access
   // ──────────────────────────────────────────────
 
   /**
-   * Returns all values in the given FIRE column.
+   * Returns all values in the given YMYL column.
    */
-  getFireColumn(column: FireColumn): CellValue[] {
-    const index = FireTable.getFireColumnIndex(column)
+  getYMYLColumn(column: YMYLColumn): CellValue[] {
+    const index = YMYLTable.getYMYLColumnIndex(column)
     if (index === -1) return []
     return this.retrieveColumn(index)
   }
 
   // ──────────────────────────────────────────────
-  // FIRE-specific operations
+  // YMYL-specific operations
   // ──────────────────────────────────────────────
 
   /**
-   * Sorts the table by the fire `date` column in descending order (newest first).
+   * Sorts the table by the ymyl `date` column in descending order (newest first).
    */
   sortByDate(): this {
-    const dateColumn = FireTable.getFireColumnIndex('date')
+    const dateColumn = YMYLTable.getYMYLColumnIndex('date')
     if (dateColumn !== -1) {
       this._data = this._data.toSorted(
         (row1, row2) =>
@@ -68,32 +68,31 @@ export class FireTable extends Table<CellValue> {
   }
 
   /**
-   * Finds duplicate rows based on specified FIRE columns and a time window.
+   * Finds duplicate rows based on specified YMYL columns and a time window.
    *
-   * @param compareCols - The FIRE columns to use for identifying duplicates.
    * @param timespanMs - Maximum time difference in milliseconds between duplicate rows.
-   * @param dateColumn - The FIRE column containing the date for timespan comparison.
-   * @returns A new FireTable containing only the duplicate rows.
+   * @param dateColumn - The YMYL column containing the date for timespan comparison.
+   * @returns A new YMYLTable containing only the duplicate rows.
    */
   findDuplicates(
     timespanMs: number,
-    dateColumn: FireColumn = 'date',
-  ): FireTable {
+    dateColumn: YMYLColumn = 'date',
+  ): YMYLTable {
     if (this._data.length < 2) {
-      return new FireTable([])
+      return new YMYLTable([])
     }
 
-    const dateColumnIndex = FireTable.getFireColumnIndex(dateColumn)
+    const dateColumnIndex = YMYLTable.getYMYLColumnIndex(dateColumn)
 
     const hashGroups = this.groupRowsByHash(dateColumnIndex)
     const duplicates = this.collectDuplicatesFromGroups(hashGroups, timespanMs)
 
-    return new FireTable(duplicates)
+    return new YMYLTable(duplicates)
   }
 
-  clone(): FireTable {
+  clone(): YMYLTable {
     const clonedData = this._data.map(row => [...row])
-    return new FireTable(clonedData)
+    return new YMYLTable(clonedData)
   }
 
   /** Groups rows by a hash key, pairing each with its parsed date and original index. */
@@ -167,15 +166,11 @@ export class FireTable extends Table<CellValue> {
     return this.cachedHashes
   }
 
-  // ──────────────────────────────────────────────
-  // Factory: Build a FireTable from CSV import data
-  // ──────────────────────────────────────────────
-
   /**
-   * Returns the 0-based column index for a FIRE column name.
+   * Returns the 0-based column index for a YMYL column name.
    * Returns -1 if the column is not found.
    */
-  static getFireColumnIndex(column: FireColumn): number {
-    return FIRE_COLUMNS.findIndex(col => col.toLowerCase() === column)
+  static getYMYLColumnIndex(column: YMYLColumn): number {
+    return YMYL_COLUMNS.findIndex(col => col.toLowerCase() === column)
   }
 }

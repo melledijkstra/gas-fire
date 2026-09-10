@@ -1,14 +1,14 @@
 import { Logger } from '@/common/logger'
-import { FireTable } from '@/common/table/FireTable'
-import { FireSheet } from '../spreadsheet/FireSheet'
-import { categorizeFireTable } from './categorize'
+import { YMYLTable } from '@/common/table/YMYLTable'
+import { YMYLSheet } from '../spreadsheet/YMYLSheet'
+import { categorizeYMYLTable } from './categorize'
 
 /**
  * Performs automatic categorization on the current active spreadsheet
  * Can be called from the menu
  */
 export const executeAutomaticCategorization = () => {
-  const fireSheet = new FireSheet()
+  const ymylSheet = new YMYLSheet()
 
   // 1. first part of the code focusses UX and makes sure the user is focussed on the right sheet
   // also it filters the sheet to only show rows that have no category set
@@ -25,17 +25,17 @@ export const executeAutomaticCategorization = () => {
   try {
     Logger.time('executeAutomaticCategorization')
 
-    fireSheet.activate()
+    ymylSheet.activate()
 
-    const filter = fireSheet.getFilter()
+    const filter = ymylSheet.getFilter()
     if (!filter) {
       throw new Error(
         'Automatic categorization script needs an actual filter configured on the source sheet table! Please set a filter before trying again',
       )
     }
 
-    const fireTable = fireSheet.getDataTable()
-    const categoryColIndex = FireTable.getFireColumnIndex('category')
+    const ymylTable = ymylSheet.getDataTable()
+    const categoryColIndex = YMYLTable.getYMYLColumnIndex('category')
 
     // we set a filter which shows only rows without category
     const blankFilterCriteria = SpreadsheetApp.newFilterCriteria()
@@ -44,7 +44,7 @@ export const executeAutomaticCategorization = () => {
 
     filter.setColumnFilterCriteria(categoryColIndex + 1, blankFilterCriteria)
 
-    const { categoryUpdates, rowsCategorized } = categorizeFireTable(fireTable)
+    const { categoryUpdates, rowsCategorized } = categorizeYMYLTable(ymylTable)
 
     if (rowsCategorized === 0) {
       ui.alert('No rows were categorized!')
@@ -52,7 +52,7 @@ export const executeAutomaticCategorization = () => {
     }
 
     if (categoryUpdates.length > 0) {
-      fireSheet.setValues(2, categoryColIndex + 1, categoryUpdates.length, 1, categoryUpdates)
+      ymylSheet.setValues(2, categoryColIndex + 1, categoryUpdates.length, 1, categoryUpdates)
     }
 
     ui.alert(`Succesfully categorized ${rowsCategorized} rows!`)

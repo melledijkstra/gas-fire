@@ -1,14 +1,14 @@
 import { describe, expect, it, vi } from 'vitest'
-import { FireTableFactory } from './fire-table-factory'
+import { YMYLTableFactory } from './YMYL-table-factory'
 import { Config } from '../config'
 import type { RawTable } from '@/common/types'
 import { AccountUtils } from '../accounts/account-utils'
 import { N26ImportMock } from '@/fixtures/n26'
-import { FireTable } from '@/common/table/FireTable'
+import { YMYLTable } from '@/common/table/YMYLTable'
 
-describe('FireTableFactory.fromAccountSpecification', () => {
+describe('YMYLTableFactory.fromAccountSpecification', () => {
   it('should return empty result if no rows are provided neither columnMap', () => {
-    const result = FireTableFactory.fromAccountSpecification({
+    const result = YMYLTableFactory.fromAccountSpecification({
       headers: [],
       rows: [],
       config: new Config({
@@ -29,7 +29,7 @@ describe('FireTableFactory.fromAccountSpecification', () => {
       accountId: 'TestBank',
     })
 
-    const result = FireTableFactory.fromAccountSpecification({
+    const result = YMYLTableFactory.fromAccountSpecification({
       headers: ['date', 'amount', 'accountName', 'iban', 'currency'],
       rows,
       config,
@@ -53,10 +53,10 @@ describe('FireTableFactory.fromAccountSpecification', () => {
       },
     })
 
-    const result = FireTableFactory.fromAccountSpecification({ headers, rows, config })
+    const result = YMYLTableFactory.fromAccountSpecification({ headers, rows, config })
 
-    const descriptionIndex = FireTable.getFireColumnIndex('description')
-    expect(result.data[0][descriptionIndex]).toBe(null)
+    const descriptionIndex = YMYLTable.getYMYLColumnIndex('description')
+    expect(result.data[0][descriptionIndex]).toBeNull()
   })
 
   it('should correctly import mapped data from input table when column map is provided', () => {
@@ -80,29 +80,29 @@ describe('FireTableFactory.fromAccountSpecification', () => {
       },
     })
 
-    const result = FireTableFactory.fromAccountSpecification({ headers, rows, config })
+    const result = YMYLTableFactory.fromAccountSpecification({ headers, rows, config })
     const data = result.data
 
     expect(result.getRowCount()).toBe(2)
-    expect(data[0][FireTable.getFireColumnIndex('date')]).toStrictEqual(
+    expect(data[0][YMYLTable.getYMYLColumnIndex('date')]).toStrictEqual(
       new Date(2024, 0, 1),
     )
-    expect(data[0][FireTable.getFireColumnIndex('amount')]).toBe(100)
-    expect(data[0][FireTable.getFireColumnIndex('description')]).toBe(
+    expect(data[0][YMYLTable.getYMYLColumnIndex('amount')]).toBe(100)
+    expect(data[0][YMYLTable.getYMYLColumnIndex('description')]).toBe(
       'Test payment 1',
     )
-    expect(data[0][FireTable.getFireColumnIndex('iban')]).toBe(
+    expect(data[0][YMYLTable.getYMYLColumnIndex('iban')]).toBe(
       'NL01BANK0123456789',
     )
 
-    expect(data[1][FireTable.getFireColumnIndex('date')]).toStrictEqual(
+    expect(data[1][YMYLTable.getYMYLColumnIndex('date')]).toStrictEqual(
       new Date(2024, 0, 2),
     )
-    expect(data[1][FireTable.getFireColumnIndex('amount')]).toBe(200)
-    expect(data[1][FireTable.getFireColumnIndex('description')]).toBe(
+    expect(data[1][YMYLTable.getYMYLColumnIndex('amount')]).toBe(200)
+    expect(data[1][YMYLTable.getYMYLColumnIndex('description')]).toBe(
       'Test payment 2',
     )
-    expect(data[1][FireTable.getFireColumnIndex('iban')]).toBe(
+    expect(data[1][YMYLTable.getYMYLColumnIndex('iban')]).toBe(
       'NL01BANK0123456789',
     )
   })
@@ -140,7 +140,7 @@ describe('FireTableFactory.fromAccountSpecification', () => {
     const headers = N26ImportMock[0]
     const rows: RawTable = N26ImportMock.slice(1)
 
-    const result = FireTableFactory.fromAccountSpecification({
+    const result = YMYLTableFactory.fromAccountSpecification({
       config: n26Config,
       headers,
       rows,
@@ -148,16 +148,16 @@ describe('FireTableFactory.fromAccountSpecification', () => {
     const data = result.data
 
     expect(result.getRowCount()).toBe(4)
-    expect(data[0][FireTable.getFireColumnIndex('date')]).toStrictEqual(
+    expect(data[0][YMYLTable.getYMYLColumnIndex('date')]).toStrictEqual(
       new Date(2023, 10, 26),
     )
-    expect(data[0][FireTable.getFireColumnIndex('amount')]).toBe(-11.63)
-    expect(data[0][FireTable.getFireColumnIndex('contra_account')]).toBe(
+    expect(data[0][YMYLTable.getYMYLColumnIndex('amount')]).toBe(-11.63)
+    expect(data[0][YMYLTable.getYMYLColumnIndex('contra_account')]).toBe(
       'Supermarket X',
     )
-    expect(data[0][FireTable.getFireColumnIndex('description')]).toBe(
+    expect(data[0][YMYLTable.getYMYLColumnIndex('description')]).toBe(
       'Ticket is attached to the email',
     )
-    expect(data[0][FireTable.getFireColumnIndex('iban')]).toBe('ES12345678910')
+    expect(data[0][YMYLTable.getYMYLColumnIndex('iban')]).toBe('ES12345678910')
   })
 })

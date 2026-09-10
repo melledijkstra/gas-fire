@@ -3,19 +3,19 @@ export class Logger {
 
   static log(message?: unknown, ...optionalParams: unknown[]): void {
     if (this.isEnabled) {
-      console.log(`[FIRE]:`, message, ...optionalParams)
+      console.log(`[YMYL]:`, message, ...optionalParams)
     }
   }
 
   static warn(message?: unknown, ...optionalParams: unknown[]): void {
     if (this.isEnabled) {
-      console.warn(`[FIRE ⚠️]:`, message, ...optionalParams)
+      console.warn(`[YMYL ⚠️]:`, message, ...optionalParams)
     }
   }
 
   static error(message?: unknown, ...optionalParams: unknown[]): void {
     if (this.isEnabled) {
-      console.error(`[FIRE ❌]:`, message, ...optionalParams)
+      console.error(`[YMYL ❌]:`, message, ...optionalParams)
     }
   }
 

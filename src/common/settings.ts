@@ -1,4 +1,4 @@
-import type { DialogType, FireColumn } from './constants'
+import type { DialogType, YMYLColumn } from './constants'
 
 export const DIALOG_SIZES: Record<keyof typeof DialogType, [number, number]> = {
   import: [900, 600],
@@ -13,6 +13,6 @@ export const FEATURES = {
   ENABLE_BANKING_ENABLED: true,
 } as const
 
-// These are the columns that are used to calculate the hash of a FireTable row
+// These are the columns that are used to calculate the hash of a YMYLTable row
 // ORDER IS IMPORTANT!
-export const HASH_COLUMNS: FireColumn[] = ['iban', 'date', 'amount', 'contra_account', 'description']
+export const HASH_COLUMNS: YMYLColumn[] = ['iban', 'date', 'amount', 'contra_account', 'description']

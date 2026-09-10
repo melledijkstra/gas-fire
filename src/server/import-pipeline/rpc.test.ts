@@ -1,6 +1,6 @@
 import { getRowHash, slugify } from '@/common/helpers'
 import { Logger } from '@/common/logger'
-import { FireTable } from '@/common/table/FireTable'
+import { YMYLTable } from '@/common/table/YMYLTable'
 import type { RawTable } from '@/common/types'
 import bankOfAmericaCSV from '@/fixtures/commonwealth-bank.csv?raw'
 import { N26ImportMock } from '@/fixtures/n26'
@@ -14,21 +14,21 @@ import {
 import { AccountUtils } from '../accounts/account-utils'
 import { Config } from '../config'
 import { RuleProcessor } from '../rule-engine/rule-processor'
-import { FireSheet } from '../spreadsheet/FireSheet'
+import { YMYLSheet } from '../spreadsheet/YMYLSheet'
 import { removeFilterCriteria } from '../spreadsheet/spreadsheet'
-import { FireTableFactory } from './fire-table-factory'
+import { YMYLTableFactory } from './YMYL-table-factory'
 import {
   importPipeline,
   previewPipeline,
 } from './rpc'
 
 vi.mock('../globals', () => ({
-  FireSpreadsheet: SpreadsheetMock,
+  YMYLSpreadsheet: SpreadsheetMock,
   getSourceSheet: vi.fn(() => SheetMock),
   getImportRulesSheet: vi.fn(() => undefined),
 }))
 
-vi.mock('../spreadsheet/FireSheet')
+vi.mock('../spreadsheet/YMYLSheet')
 vi.mock('../spreadsheet/spreadsheet')
 
 vi.mock('../accounts/rpc', () => ({
@@ -41,12 +41,12 @@ vi.mock('../accounts/rpc', () => ({
   })),
 }))
 
-const getLocaleMock = vi.mocked(FireSheet.getLocale)
+const getLocaleMock = vi.mocked(YMYLSheet.getLocale)
 const removeFilterCriteriaMock = vi.mocked(removeFilterCriteria)
 removeFilterCriteriaMock.mockReturnValue(true)
 
 const configSpy = vi.spyOn(Config, 'getAccountConfiguration')
-const importDataSpy = vi.spyOn(FireSheet.prototype, 'importData')
+const importDataSpy = vi.spyOn(YMYLSheet.prototype, 'importData')
 const applyPostTransformRulesSpy = vi.spyOn(RuleProcessor.prototype, 'applyPostTransformRules')
 
 const BANK_ID = 'TestBank'
@@ -77,18 +77,18 @@ describe('RPC: Import Functions', () => {
 
   describe('previewPipeline', () => {
     let getBalanceSpy: ReturnType<typeof vi.spyOn>
-    let fireSheetSpy: ReturnType<typeof vi.spyOn>
+    let ymylSheetSpy: ReturnType<typeof vi.spyOn>
     let loadExistingHashesSpy: ReturnType<typeof vi.spyOn>
 
     beforeEach(() => {
       getBalanceSpy = vi.spyOn(AccountUtils, 'getBalance').mockReturnValue(302.8)
-      fireSheetSpy = vi.spyOn(FireSheet.prototype, 'getLastImportedTransactions').mockReturnValue(new FireTable([]))
-      loadExistingHashesSpy = vi.spyOn(FireSheet.prototype, 'loadExistingHashes').mockReturnValue(new Set())
+      ymylSheetSpy = vi.spyOn(YMYLSheet.prototype, 'getLastImportedTransactions').mockReturnValue(new YMYLTable([]))
+      loadExistingHashesSpy = vi.spyOn(YMYLSheet.prototype, 'loadExistingHashes').mockReturnValue(new Set())
     })
 
     afterEach(() => {
       getBalanceSpy.mockRestore()
-      fireSheetSpy.mockRestore()
+      ymylSheetSpy.mockRestore()
       loadExistingHashesSpy.mockRestore()
     })
 
@@ -126,10 +126,10 @@ describe('RPC: Import Functions', () => {
     test('is able to calculate removed hashed', () => {
       const table: RawTable = [
         ['TransactionAmount', 'TransactionDate', 'Payee'],
-        ['-25.6', '2016-01-23', 'Test Payee 1'], // index 0 in FireTable
-        ['58.3', '2015-05-21', 'Test Payee 2'], // index 1 in FireTable - remove
-        ['20', '2015-05-20', 'Test Payee 3'], // index 2 in FireTable
-        ['73.2', '2015-05-22', 'Test Payee 4'], // index 3 in FireTable - remove
+        ['-25.6', '2016-01-23', 'Test Payee 1'], // index 0 in YMYLTable
+        ['58.3', '2015-05-21', 'Test Payee 2'], // index 1 in YMYLTable - remove
+        ['20', '2015-05-20', 'Test Payee 3'], // index 2 in YMYLTable
+        ['73.2', '2015-05-22', 'Test Payee 4'], // index 3 in YMYLTable - remove
       ]
 
       applyPostTransformRulesSpy.mockReturnValue({
@@ -147,15 +147,15 @@ describe('RPC: Import Functions', () => {
 
       expect(response.success).toBe(true)
       if (response.success) {
-        // Since we are mocking applyPostTransformRules, it uses FireTable rows for hashing.
+        // Since we are mocking applyPostTransformRules, it uses YMYLTable rows for hashing.
         // We need to calculate the hashes of the transformed rows to match what the pipeline will produce.
-        const fireTable = FireTableFactory.fromAccountSpecification({
+        const ymylTable = YMYLTableFactory.fromAccountSpecification({
           headers: table[0],
           rows: table.slice(1),
           config: Config.getAccountConfiguration(BANK_ID),
         })
-        const hash2 = getRowHash(fireTable.data[1])
-        const hash4 = getRowHash(fireTable.data[3])
+        const hash2 = getRowHash(ymylTable.data[1])
+        const hash4 = getRowHash(ymylTable.data[3])
 
         expect(response.data?.ruleEngine?.removedHashes).toEqual([hash2, hash4])
       }
@@ -167,14 +167,14 @@ describe('RPC: Import Functions', () => {
       Logger.disable()
     })
 
-    let fireSheetSpy: ReturnType<typeof vi.spyOn>
+    let ymylSheetSpy: ReturnType<typeof vi.spyOn>
 
     beforeEach(() => {
-      fireSheetSpy = vi.spyOn(FireSheet.prototype, 'getLastImportedTransactions').mockReturnValue(new FireTable([]))
+      ymylSheetSpy = vi.spyOn(YMYLSheet.prototype, 'getLastImportedTransactions').mockReturnValue(new YMYLTable([]))
     })
 
     afterEach(() => {
-      fireSheetSpy.mockRestore()
+      ymylSheetSpy.mockRestore()
     })
 
     test('handles empty import', () => {
@@ -205,7 +205,7 @@ describe('RPC: Import Functions', () => {
 
       importPipeline([], 'TestBank')
 
-      expect(FireSheet.prototype.getFilter).toHaveBeenCalled()
+      expect(YMYLSheet.prototype.getFilter).toHaveBeenCalled()
     })
 
     test('is able to handle N26 import', () => {
@@ -264,8 +264,8 @@ describe('RPC: Import Functions', () => {
       const result = importPipeline(data as RawTable, 'bank-of-america')
 
       expect(importDataSpy).toHaveBeenCalled()
-      const [fireTable] = importDataSpy.mock.calls[importDataSpy.mock.calls.length - 1]
-      expect(fireTable.data).toEqual(expect.arrayContaining([
+      const [ymylTable] = importDataSpy.mock.calls[importDataSpy.mock.calls.length - 1]
+      expect(ymylTable.data).toEqual(expect.arrayContaining([
         expect.arrayContaining([new Date(2023, 8, 12), -100, 'Utility Bill Payment']),
       ]))
       expect(result.success).toBe(true)
@@ -288,8 +288,8 @@ describe('RPC: Import Functions', () => {
       importPipeline(fakeTestBankImportData, BANK_ID)
 
       expect(importDataSpy).toHaveBeenCalled()
-      const [fireTable] = importDataSpy.mock.calls[importDataSpy.mock.calls.length - 1]
-      expect(fireTable.data).toEqual([
+      const [ymylTable] = importDataSpy.mock.calls[importDataSpy.mock.calls.length - 1]
+      expect(ymylTable.data).toEqual([
         expect.arrayContaining([new Date(2016, 0, 23), -25.6]),
         expect.arrayContaining([new Date(2015, 4, 21), 58.3]),
         expect.arrayContaining([new Date(2015, 4, 20), 20]),

@@ -2,7 +2,7 @@
   import type { ImportPreviewResult, TransactionAction } from '@/common/types';
   import { importState } from '../states/import.svelte'
   import { Table as FlowTable, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell, Select, Tooltip } from 'flowbite-svelte'
-  import { FIRE_COLUMNS } from '@/common/constants'
+  import { YMYL_COLUMNS } from '@/common/constants'
   import { getRowHash } from '@/common/helpers'
   import { Table } from '@/common/table/Table'
 
@@ -18,7 +18,7 @@
 
   type RowStatus = 'import' | 'removed' | 'duplicate'
   
-  const headers = Array.from(FIRE_COLUMNS)
+  const headers = Array.from(YMYL_COLUMNS)
 
   const getRowClass = (status: RowStatus): string => {
     if (status === 'removed') return 'bg-red-100! dark:bg-red-900! line-through'

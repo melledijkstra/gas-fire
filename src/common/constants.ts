@@ -12,11 +12,11 @@ export enum NAMED_RANGES {
 }
 
 /**
- * The columns that represent the FIRE sheet
- * Make sure to keep this in sync with the columns in the FIRE sheet
+ * The columns that represent the YMYL sheet
+ * Make sure to keep this in sync with the columns in the YMYL sheet
  * The order of the columns is important because the indexes are used in calculations!
  */
-export const FIRE_COLUMNS = [
+export const YMYL_COLUMNS = [
   'ref',
   'iban',
   'date',
@@ -35,7 +35,7 @@ export const FIRE_COLUMNS = [
   'currency',
 ] as const
 
-export type FireColumn = (typeof FIRE_COLUMNS)[number]
+export type YMYLColumn = (typeof YMYL_COLUMNS)[number]
 
 export const SOURCE_SHEET_ID = 1093484485
 

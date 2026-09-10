@@ -1,4 +1,4 @@
-import { FireTable } from '@/common/table/FireTable'
+import { YMYLTable } from '@/common/table/YMYLTable'
 import { Table } from '@/common/table/Table'
 import { describe, expect, it } from 'vitest'
 import { RuleProcessor } from './rule-processor'
@@ -147,11 +147,11 @@ describe('rule-processor', () => {
   })
 
   describe('applyPostTransformRules', () => {
-    it('should correctly apply a SET action to a FIRE category column based on amount GREATER_THAN', () => {
+    it('should correctly apply a SET action to a YMYL category column based on amount GREATER_THAN', () => {
       const data = [
         ['ref1', 'iban', 'date', 1000, 1000, 'contra', 'salary desc', '', '', 'Unknown', '', new Date(), '', '', '', ''],
       ]
-      const fireTable = new FireTable(data as import('@/common/types').CellValue[][])
+      const ymylTable = new YMYLTable(data as import('@/common/types').CellValue[][])
       const rules: ImportRule[] = [{
         ruleName: 'Large Salary',
         banks: ['All'],
@@ -166,11 +166,11 @@ describe('rule-processor', () => {
       }]
 
       const processor = new RuleProcessor(rules)
-      const result = processor.applyPostTransformRules(fireTable, 'TestBank')
+      const result = processor.applyPostTransformRules(ymylTable, 'TestBank')
       expect(result.excludedIndices.size).toBe(0)
 
-      const categoryIndex = FireTable.getFireColumnIndex('category')
-      expect(fireTable.data[0][categoryIndex]).toBe('Salary')
+      const categoryIndex = YMYLTable.getYMYLColumnIndex('category')
+      expect(ymylTable.data[0][categoryIndex]).toBe('Salary')
       expect(result.rowsAffectedCount).toBe(1)
     })
   })

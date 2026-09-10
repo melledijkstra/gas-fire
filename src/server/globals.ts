@@ -1,7 +1,7 @@
 import { IMPORT_RULES_SHEET_NAME, SOURCE_SHEET_ID } from '@/common/constants'
 
-export const FireSpreadsheet = SpreadsheetApp.getActiveSpreadsheet()
-const sheets = FireSpreadsheet.getSheets()
+export const YMYLSpreadsheet = SpreadsheetApp.getActiveSpreadsheet()
+const sheets = YMYLSpreadsheet.getSheets()
 
 export function getSheetById(id: number) {
   return sheets.find(sheet => sheet.getSheetId() === id)
