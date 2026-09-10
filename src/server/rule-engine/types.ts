@@ -37,15 +37,6 @@ export interface RuleWarning {
   message: string
 }
 
-export interface RuleEngineResult {
-  warnings: RuleWarning[]
-  rulesCount: number
-  appliedRules: ImportRule[]
-  removedHashes: Set<string>
-  // maps transaction hash to the name of the rule that caused it to be excluded
-  rowExcludedRule: Record<string, string>
-}
-
 // Packed prefix is for serialized safe types, which can be safely sent over the wire without losing type information
 export interface PackedRuleEngineResult {
   warnings: RuleWarning[]
@@ -53,14 +44,4 @@ export interface PackedRuleEngineResult {
   appliedRules: ImportRule[]
   removedHashes: string[] // Set<string> converted to array for serialization
   rowExcludedRule: Record<string, string>
-}
-
-/**
- * serializes a RuleEngineResult into a PackedRuleEngineResult for RPC transmission.
- */
-export function packRuleEngineResult(result: RuleEngineResult): PackedRuleEngineResult {
-  return {
-    ...result,
-    removedHashes: Array.from(result.removedHashes),
-  }
 }

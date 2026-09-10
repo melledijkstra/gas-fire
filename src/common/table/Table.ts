@@ -1,5 +1,5 @@
 import { Logger } from '@/common/logger'
-import type { CellValue, PackedCellValue, PackedTable } from '@/common/types'
+import type { CellValue, IPackable, PackedCellValue, PackedTable } from '@/common/types'
 
 const EMPTY = ''
 
@@ -19,7 +19,7 @@ const EMPTY = ''
  * table.removeEmptyRows().sortByColumn(1);
  * ```
  */
-export class Table<T = CellValue> {
+export class Table<T = CellValue> implements IPackable<PackedTable> {
   protected _data: T[][]
   protected _headers: string[]
 

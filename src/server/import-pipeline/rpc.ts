@@ -14,12 +14,11 @@ import { Config } from '../config'
 import {
   applyPostTransformRules,
   applyPreTransformRules,
-  createRuleEngineResult,
 } from '../rule-engine/pipeline'
 import { RuleParser } from '../rule-engine/rule-parser'
 import { RuleProcessor } from '../rule-engine/rule-processor'
-import type { PackedRuleEngineResult, RuleEngineResult } from '../rule-engine/types'
-import { packRuleEngineResult } from '../rule-engine/types'
+import type { PackedRuleEngineResult } from '../rule-engine/types'
+import { RuleEngineResult } from '../rule-engine/rule-engine-result'
 import { YMYLSheet } from '../spreadsheet/YMYLSheet'
 import { RuleSheet } from '../spreadsheet/RuleSheet'
 import { removeFilterCriteria } from '../spreadsheet/spreadsheet'
@@ -119,7 +118,7 @@ export const previewPipeline = withRpcHandler(
     if (FEATURES.RULE_ENGINE_ENABLED) {
       const { rules, warnings } = fetchParsingRules(bankAccount)
       ruleProcessor = new RuleProcessor(rules)
-      ruleEngineResult = createRuleEngineResult(rules.length)
+      ruleEngineResult = new RuleEngineResult(rules.length)
       ruleEngineResult.warnings.push(...warnings)
 
       applyPreTransformRules(rawTable, ruleProcessor, bankAccount, ruleEngineResult)
@@ -160,7 +159,7 @@ export const previewPipeline = withRpcHandler(
         table: ymylTable.pack(),
         newBalance,
         duplicateHashes: Array.from(duplicateHashes),
-        ...(ruleEngineResult ? { ruleEngine: packRuleEngineResult(ruleEngineResult) } : {}),
+        ...(ruleEngineResult ? { ruleEngine: ruleEngineResult.pack() } : {}),
       },
     }
 
@@ -198,7 +197,7 @@ export const importPipeline = withRpcHandler(
     if (FEATURES.RULE_ENGINE_ENABLED) {
       const { rules, warnings } = fetchParsingRules(bankAccount)
       ruleProcessor = new RuleProcessor(rules)
-      ruleEngineResult = createRuleEngineResult(rules.length)
+      ruleEngineResult = new RuleEngineResult(rules.length)
       ruleEngineResult.warnings.push(...warnings)
 
       applyPreTransformRules(table, ruleProcessor, bankAccount, ruleEngineResult)
@@ -231,7 +230,7 @@ export const importPipeline = withRpcHandler(
       success: true,
       message: msg,
       data: {
-        ...(ruleEngineResult ? { ruleEngine: packRuleEngineResult(ruleEngineResult) } : {}),
+        ...(ruleEngineResult ? { ruleEngine: ruleEngineResult.pack() } : {}),
       },
     }
   },
@@ -253,7 +252,7 @@ export const enableBankingPipeline = withRpcHandler(
     if (FEATURES.RULE_ENGINE_ENABLED) {
       const { rules, warnings } = fetchParsingRules(bankAccount)
       const ruleProcessor = new RuleProcessor(rules)
-      ruleEngineResult = createRuleEngineResult(rules.length)
+      ruleEngineResult = new RuleEngineResult(rules.length)
       ruleEngineResult.warnings.push(...warnings)
 
       ymylTable = applyPostTransformRules(ymylTable, ruleProcessor, bankAccount, ruleEngineResult, false)
@@ -283,7 +282,7 @@ export const enableBankingPipeline = withRpcHandler(
       success: true,
       message: msg,
       data: {
-        ...(ruleEngineResult ? { ruleEngine: packRuleEngineResult(ruleEngineResult) } : {}),
+        ...(ruleEngineResult ? { ruleEngine: ruleEngineResult.pack() } : {}),
       },
     }
   },

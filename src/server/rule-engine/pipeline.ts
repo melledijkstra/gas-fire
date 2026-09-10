@@ -1,21 +1,8 @@
 import { getRowHash } from '@/common/helpers'
 import { YMYLTable } from '@/common/table/YMYLTable'
 import type { Table } from '@/common/table/Table'
-import type { RuleEngineResult } from './types'
+import type { RuleEngineResult } from './rule-engine-result'
 import type { RuleProcessor } from './rule-processor'
-
-/**
- * creates an initial empty RuleEngineResult.
- */
-export function createRuleEngineResult(rulesCount = 0): RuleEngineResult {
-  return {
-    warnings: [],
-    appliedRules: [],
-    removedHashes: new Set<string>(),
-    rowExcludedRule: {},
-    rulesCount,
-  }
-}
 
 /**
  * applies PRE_TRANSFORM rules to raw Table data before conversion to YMYL schema.
