@@ -7,6 +7,13 @@
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="./index.ts"></script>
+    <script type="module">
+      import { mount } from "svelte";
+      import Dialog from "./Dialog.svelte";
+
+      mount(Dialog, {
+        target: document.getElementById("app"),
+      });
+    </script>
   </body>
 </html>

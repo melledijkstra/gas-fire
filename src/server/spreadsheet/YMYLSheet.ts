@@ -3,7 +3,7 @@ import { Logger } from '@/common/logger'
 import { YMYLTable } from '@/common/table/YMYLTable'
 import type { CellValue } from '@/common/types'
 import { getSourceSheet } from '../globals'
-import { SheetsRequestBuilder } from '../request-builder'
+import { buildAutoFillRequest, buildInsertDataRequest, buildInsertRowsRequest } from '../request-builder'
 
 const MS_IN_DAY = 86400000
 const DAYS_FROM_JS_EPOCH_TO_SHEETS_EPOCH = 25569
@@ -296,13 +296,12 @@ export class YMYLSheet {
     const data = ymylTable.data
     const rowCount = ymylTable.getRowCount()
     const colCount = ymylTable.getColumnCount()
-    const requestBuilder = new SheetsRequestBuilder()
+    const requests: GoogleAppsScript.Sheets.Schema.Request[] = []
     const spreadsheetId = this.getSpreadsheetId()
     const sheetId = this.getSheetId()
 
-    requestBuilder
-      .insertRows(sheetId, 1, rowCount)
-      .insertData(sheetId, data, 1, 0, generateCellData)
+    requests.push(buildInsertRowsRequest(sheetId, 1, rowCount))
+    requests.push(buildInsertDataRequest(sheetId, data, 1, 0, generateCellData))
 
     if (autoFillColumns && autoFillColumns.length > 0) {
       for (const column of autoFillColumns) {
@@ -313,7 +312,7 @@ export class YMYLSheet {
           continue
         }
 
-        requestBuilder.autoFill(
+        requests.push(buildAutoFillRequest(
           {
             sheetId,
             startRowIndex: 1 + rowCount,
@@ -323,12 +322,12 @@ export class YMYLSheet {
           },
           -rowCount,
           'ROWS',
-        )
+        ))
       }
     }
 
     Sheets.Spreadsheets!.batchUpdate(
-      { requests: requestBuilder.requests },
+      { requests },
       spreadsheetId,
     )
   }

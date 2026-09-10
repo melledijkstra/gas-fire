@@ -16,7 +16,7 @@ import { Config } from '../config'
 import { RuleProcessor } from '../rule-engine/rule-processor'
 import { YMYLSheet } from '../spreadsheet/YMYLSheet'
 import { removeFilterCriteria } from '../spreadsheet/spreadsheet'
-import { YMYLTableFactory } from './YMYL-table-factory'
+import { buildYMYLTable } from './YMYL-table-factory'
 import {
   importPipeline,
   previewPipeline,
@@ -149,7 +149,7 @@ describe('RPC: Import Functions', () => {
       if (response.success) {
         // Since we are mocking applyPostTransformRules, it uses YMYLTable rows for hashing.
         // We need to calculate the hashes of the transformed rows to match what the pipeline will produce.
-        const ymylTable = YMYLTableFactory.fromAccountSpecification({
+        const ymylTable = buildYMYLTable({
           headers: table[0],
           rows: table.slice(1),
           config: Config.getAccountConfiguration(BANK_ID),

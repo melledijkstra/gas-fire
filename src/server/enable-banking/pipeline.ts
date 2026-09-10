@@ -2,7 +2,8 @@ import { YMYL_COLUMNS } from '@/common/constants'
 import { YMYLTable } from '@/common/table/YMYLTable'
 import { AccountUtils } from '../accounts/account-utils'
 import { Config } from '../config'
-import { Transformers } from '../transformers'
+import { parseDate } from '../parsers/date'
+import { parseMoney } from '../parsers/money'
 import { EnableBankingApi } from './api'
 import type { EnableBankingTransaction } from './types'
 import { normalizeIban } from './utils'
@@ -56,9 +57,9 @@ export function fetchAndMapToYMYLTable(enableBankingAccount: string, config: Con
   const data = transactions.map((tx) => {
     const row = new Array(YMYL_COLUMNS.length).fill(null)
 
-    row[YMYLTable.getYMYLColumnIndex('amount')] = Transformers.transformMoney(getTransactionAmount(tx))
+    row[YMYLTable.getYMYLColumnIndex('amount')] = parseMoney(getTransactionAmount(tx))
     row[YMYLTable.getYMYLColumnIndex('currency')] = tx.transaction_amount?.currency || ''
-    row[YMYLTable.getYMYLColumnIndex('date')] = Transformers.transformDate(getTransactionDate(tx))
+    row[YMYLTable.getYMYLColumnIndex('date')] = parseDate(getTransactionDate(tx))
     row[YMYLTable.getYMYLColumnIndex('contra_account')] = tx.creditor?.name || tx.debtor?.name || ''
 
     row[YMYLTable.getYMYLColumnIndex('contra_iban')] = resolveContraIban(tx, iban)

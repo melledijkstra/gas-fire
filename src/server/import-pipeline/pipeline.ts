@@ -6,7 +6,7 @@ import type { TransactionAction, UserDecisions } from '@/common/types'
 import { Config } from '../config'
 import type { RuleEngineResult } from '../rule-engine/types'
 import { YMYLSheet } from '../spreadsheet/YMYLSheet'
-import { YMYLTableFactory } from './YMYL-table-factory'
+import { buildYMYLTable } from './YMYL-table-factory'
 
 export interface PipelineContext {
   config: Config
@@ -89,7 +89,7 @@ export function transformToYMYLTableStage(input: Table, context: PipelineContext
     throw new Error('No header row detected in import data!')
   }
 
-  return YMYLTableFactory.fromAccountSpecification({
+  return buildYMYLTable({
     headers: input.headers,
     rows: input.data,
     config: context.config,
