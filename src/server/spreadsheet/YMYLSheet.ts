@@ -300,8 +300,10 @@ export class YMYLSheet {
     const spreadsheetId = this.getSpreadsheetId()
     const sheetId = this.getSheetId()
 
-    requests.push(buildInsertRowsRequest(sheetId, 1, rowCount))
-    requests.push(buildInsertDataRequest(sheetId, data, 1, 0, generateCellData))
+    requests.push(
+      buildInsertRowsRequest(sheetId, 1, rowCount),
+      buildInsertDataRequest(sheetId, data, 1, 0, generateCellData),
+    )
 
     if (autoFillColumns && autoFillColumns.length > 0) {
       for (const column of autoFillColumns) {
