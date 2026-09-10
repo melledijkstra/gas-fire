@@ -11,28 +11,30 @@ import type {
 } from '@/common/types'
 import { AccountUtils, isNumeric } from '../accounts/account-utils'
 import { Config } from '../config'
-import { applyPreTransformRulesStage, postTransformRulesStage } from '../rule-engine/pipeline'
+import {
+  applyPostTransformRules,
+  applyPreTransformRules,
+  createRuleEngineResult,
+} from '../rule-engine/pipeline'
 import { RuleParser } from '../rule-engine/rule-parser'
 import { RuleProcessor } from '../rule-engine/rule-processor'
-import type { PackedRuleEngineResult } from '../rule-engine/types'
+import type { PackedRuleEngineResult, RuleEngineResult } from '../rule-engine/types'
+import { packRuleEngineResult } from '../rule-engine/types'
 import { YMYLSheet } from '../spreadsheet/YMYLSheet'
 import { RuleSheet } from '../spreadsheet/RuleSheet'
 import { removeFilterCriteria } from '../spreadsheet/spreadsheet'
-import type { ImportPipelineContext, PipelineContext, PreviewPipelineContext } from './pipeline'
 import {
-  Pipeline,
-  applyUserDecisionsStage,
-  autoFillPreviewStage,
-  duplicateDetectionStage,
-  filterOutDuplicatesStage,
-  removeEmptyRowsStage,
-  sortByDateStage,
-  transformToYMYLTableStage,
+  applyUserDecisions,
+  autoFillPreview,
+  detectDuplicates,
+  filterOutExcluded,
+  removeEmptyRows,
+  transformToYMYLTable,
 } from './pipeline'
 
 /**
- * Activates the target sheet and removes any active filters.
- * Filters must be removed before importing to avoid data corruption.
+ * activates the target sheet and removes any active filters.
+ * filters must be removed before importing to avoid data corruption.
  */
 function prepareSheetForImport(ymylSheet: YMYLSheet): void {
   ymylSheet.activate()
@@ -43,12 +45,14 @@ function prepareSheetForImport(ymylSheet: YMYLSheet): void {
   }
 }
 
-function calculateNewBalance(ymylTable: YMYLTable, previewContext: PreviewPipelineContext): number {
-  const excludedHashes = new Set<string>([
-    ...previewContext?.duplicateHashes ?? [],
-    ...previewContext?.ruleEngine?.removedHashes ?? [],
-  ])
-
+/**
+ * calculates the new balance after considering non-excluded transactions.
+ */
+function calculateNewBalance(
+  ymylTable: YMYLTable,
+  accountId: string,
+  excludedHashes: Set<string>,
+): number {
   const amountColIndex = YMYLTable.getYMYLColumnIndex('amount')
   const validAmounts: number[] = []
 
@@ -62,23 +66,29 @@ function calculateNewBalance(ymylTable: YMYLTable, previewContext: PreviewPipeli
     }
   }
 
-  return AccountUtils.calculateNewBalance(previewContext.config.getAccountId(), validAmounts)
+  return AccountUtils.calculateNewBalance(accountId, validAmounts)
 }
 
 /**
- * Wraps a pipeline function with standardised error handling and logging.
+ * fetches and parses rules configured for the given bank account.
  */
-function withPipelineLogger(
-  _target: unknown,
-  propertyKey: string,
-  descriptor: PropertyDescriptor,
-): PropertyDescriptor {
-  const originalMethod = descriptor.value
-  descriptor.value = function (this: unknown, ...args: unknown[]) {
+function fetchParsingRules(bankAccount: string) {
+  const rawRulesData = RuleSheet.getRulesData()
+  const ruleParser = new RuleParser()
+  return ruleParser.parseRulesByAccount(rawRulesData, bankAccount)
+}
+
+/**
+ * wraps an RPC function with standardized error handling and execution timing.
+ */
+function withRpcHandler<TArgs extends unknown[], TReturn>(
+  name: string,
+  fn: (...args: TArgs) => ServerResponse<TReturn>,
+): (...args: TArgs) => ServerResponse<TReturn> {
+  return (...args: TArgs): ServerResponse<TReturn> => {
     try {
-      Logger.time(propertyKey)
-      const result = originalMethod.apply(this, args)
-      return result
+      Logger.time(name)
+      return fn(...args)
     }
     catch (error) {
       Logger.error(error)
@@ -88,162 +98,120 @@ function withPipelineLogger(
       }
     }
     finally {
-      Logger.timeEnd(propertyKey)
+      Logger.timeEnd(name)
     }
   }
-  return descriptor
 }
 
-class PipelineRPC {
-  private static fetchParsingRules(bankAccount: string) {
-    const rawRulesData = RuleSheet.getRulesData()
-    const ruleParser = new RuleParser()
-    return ruleParser.parseRulesByAccount(rawRulesData, bankAccount)
-  }
-
-  static setupCommonPipeline<C extends PipelineContext>(bankAccount: string, context: C, dryRun = false): Pipeline<Table, YMYLTable, C> {
-    let pipeline = Pipeline.create<Table, C>()
-      .addStage(removeEmptyRowsStage)
-
-    const { rules, warnings } = this.fetchParsingRules(bankAccount)
-    const ruleProcessor = new RuleProcessor(rules)
-
-    if (FEATURES.RULE_ENGINE_ENABLED) {
-      context.ruleEngine = {
-        warnings: warnings,
-        rulesCount: rules.length,
-        appliedRules: [],
-        rowExcludedRule: {},
-        removedHashes: new Set<string>(),
-      }
-
-      pipeline = pipeline.addStage(input => applyPreTransformRulesStage(input, ruleProcessor, context))
-    }
-
-    let transformedPipeline = pipeline.addStage(transformToYMYLTableStage)
-
-    if (FEATURES.RULE_ENGINE_ENABLED) {
-      transformedPipeline = transformedPipeline.addStage(input => postTransformRulesStage(input, ruleProcessor, context, dryRun))
-    }
-
-    return transformedPipeline
-  }
-
-  /**
-   * Dedicated pipeline for background Enable Banking synchronization.
-   * Maps transactions directly to a YMYLTable and applies deduplication and rule engine.
-   */
-  @withPipelineLogger
-  static enableBankingPipeline(
-    ymylTable: YMYLTable,
-    bankAccount: string,
-  ): ServerResponse<{
-    ruleEngine?: PackedRuleEngineResult
-  }> {
-    const ymylSheet = new YMYLSheet()
+/**
+ * handles incoming CSV data and returns a preview report for user review.
+ */
+export const previewPipeline = withRpcHandler(
+  'previewPipeline',
+  (table: RawTable, bankAccount: string): ServerResponse<ImportPreviewResult> => {
     const config = Config.getAccountConfiguration(bankAccount)
+    const rawTable = Table.from(structuredClone(table))
+    removeEmptyRows(rawTable)
 
-    const context: PreviewPipelineContext = {
-      config,
-      duplicateHashes: new Set(),
-    }
-
-    const { rules, warnings } = this.fetchParsingRules(bankAccount)
-    const ruleProcessor = new RuleProcessor(rules)
+    let ruleEngineResult: RuleEngineResult | undefined
+    let ruleProcessor: RuleProcessor | undefined
 
     if (FEATURES.RULE_ENGINE_ENABLED) {
-      context.ruleEngine = {
-        warnings,
-        rulesCount: rules.length,
-        appliedRules: [],
-        rowExcludedRule: {},
-        removedHashes: new Set<string>(),
+      const { rules, warnings } = fetchParsingRules(bankAccount)
+      ruleProcessor = new RuleProcessor(rules)
+      ruleEngineResult = createRuleEngineResult(rules.length)
+      ruleEngineResult.warnings.push(...warnings)
+
+      applyPreTransformRules(rawTable, ruleProcessor, bankAccount, ruleEngineResult)
+    }
+
+    const ymylTable = transformToYMYLTable(rawTable, config)
+
+    if (FEATURES.RULE_ENGINE_ENABLED && ruleProcessor && ruleEngineResult) {
+      applyPostTransformRules(ymylTable, ruleProcessor, bankAccount, ruleEngineResult, true)
+    }
+
+    const duplicateHashes = new Set<string>()
+    if (FEATURES.IMPORT_DUPLICATE_DETECTION) {
+      const ymylSheet = new YMYLSheet()
+      const existingHashes = ymylSheet.loadExistingHashes()
+      Logger.log(`Loaded ${existingHashes?.size} existing transaction hashes for duplicate detection`)
+      const found = detectDuplicates(ymylTable, existingHashes)
+      for (const hash of found) {
+        duplicateHashes.add(hash)
       }
     }
 
-    let pipeline = Pipeline.create<YMYLTable, PreviewPipelineContext>()
+    ymylTable.sortByDate()
 
-    if (FEATURES.RULE_ENGINE_ENABLED) {
-      // dryRun = false to permanently apply rule engine results (e.g. categorization or exclusion)
-      pipeline = pipeline.addStage(input => postTransformRulesStage(input, ruleProcessor, context, false))
+    if (config.autoFillEnabled) {
+      autoFillPreview(ymylTable, config.autoFillColumnIndices)
     }
 
-    if (FEATURES.IMPORT_DUPLICATE_DETECTION) {
-      pipeline = pipeline.addStage(duplicateDetectionStage)
-    }
+    const excludedHashes = new Set<string>([
+      ...duplicateHashes,
+      ...(ruleEngineResult?.removedHashes ?? []),
+    ])
+    const newBalance = calculateNewBalance(ymylTable, config.getAccountId(), excludedHashes)
 
-    const finalTable = pipeline
-      .addStage(filterOutDuplicatesStage)
-      .addStage(sortByDateStage)
-      .execute(ymylTable, context)
-
-    if (finalTable.isEmpty()) {
-      const msg = 'No new rows to import after rules and deduplication.'
-      Logger.log(msg)
-      return { success: true, message: msg, data: {} }
-    }
-
-    const autoFillColumns = config.autoFillEnabled ? config.autoFillColumnIndices : undefined
-    ymylSheet.importData(finalTable, autoFillColumns)
-
-    const msg = `Synced ${finalTable.getRowCount()} transactions!`
-    Logger.log(msg)
-
-    return {
+    const result: ServerResponse<ImportPreviewResult> = {
       success: true,
-      message: msg,
       data: {
-        ...(context.ruleEngine
-          ? {
-              ruleEngine: {
-                ...context.ruleEngine,
-                removedHashes: Array.from(context.ruleEngine.removedHashes),
-              },
-            }
-          : {}),
+        table: ymylTable.pack(),
+        newBalance,
+        duplicateHashes: Array.from(duplicateHashes),
+        ...(ruleEngineResult ? { ruleEngine: packRuleEngineResult(ruleEngineResult) } : {}),
       },
     }
-  }
 
-  /**
-   * Handles incoming CSV (already parsed by the frontend) and processes it in order to be imported
-   * into the spreadsheet.
-   *
-   * It uses configuration from the user to determine how the CSV should be processed.
-   *
-   * @param {RawTable} rawTable - The table object which contains the CSV data
-   * @param {string} bankAccount - The bank account identifier which is used to lookup configuration
-   * @returns {ServerResponse} A response object which contains a message to be displayed to the user
-   */
-  @withPipelineLogger
-  static importPipeline(
+    Logger.log('newBalance', result.data.newBalance)
+    Logger.log('duplicateHashes', result.data.duplicateHashes)
+    Logger.log('rule engine result', result.data?.ruleEngine)
+
+    return result
+  },
+)
+
+/**
+ * handles incoming CSV and inserts transactions into the spreadsheet.
+ */
+export const importPipeline = withRpcHandler(
+  'importPipeline',
+  (
     rawTable: RawTable,
     bankAccount: string,
     userDecisions?: Record<string, TransactionAction>,
-  ): ServerResponse<{
-    ruleEngine?: PackedRuleEngineResult
-  }> {
+  ): ServerResponse<{ ruleEngine?: PackedRuleEngineResult }> => {
     const ymylSheet = new YMYLSheet()
     const accountConfig = Config.getAccountConfiguration(bankAccount)
-    const userDecisionsMap = userDecisions ? new Map(Object.entries(userDecisions)) : undefined
 
     Logger.log('account configuration used for import', accountConfig)
 
     prepareSheetForImport(ymylSheet)
 
-    const context: ImportPipelineContext = {
-      config: accountConfig,
-      userDecisions: userDecisionsMap,
+    const table = Table.from(structuredClone(rawTable))
+    removeEmptyRows(table)
+
+    let ruleEngineResult: RuleEngineResult | undefined
+    let ruleProcessor: RuleProcessor | undefined
+
+    if (FEATURES.RULE_ENGINE_ENABLED) {
+      const { rules, warnings } = fetchParsingRules(bankAccount)
+      ruleProcessor = new RuleProcessor(rules)
+      ruleEngineResult = createRuleEngineResult(rules.length)
+      ruleEngineResult.warnings.push(...warnings)
+
+      applyPreTransformRules(table, ruleProcessor, bankAccount, ruleEngineResult)
     }
 
-    const inputTable = Table.from(structuredClone(rawTable))
+    let ymylTable = transformToYMYLTable(table, accountConfig)
 
-    const pipeline = this.setupCommonPipeline<ImportPipelineContext>(bankAccount, context)
+    if (FEATURES.RULE_ENGINE_ENABLED && ruleProcessor && ruleEngineResult) {
+      ymylTable = applyPostTransformRules(ymylTable, ruleProcessor, bankAccount, ruleEngineResult, false)
+    }
 
-    const ymylTable = pipeline
-      .addStage(applyUserDecisionsStage)
-      .addStage(sortByDateStage)
-      .execute(inputTable, context)
+    applyUserDecisions(ymylTable, userDecisions)
+    ymylTable.sortByDate()
 
     if (ymylTable.isEmpty()) {
       const msg = 'No rows to import, check your import data, rules, row decisions or configuration!'
@@ -254,8 +222,7 @@ class PipelineRPC {
     const autoFillColumns = accountConfig.autoFillEnabled ? accountConfig.autoFillColumnIndices : undefined
     ymylSheet.importData(ymylTable, autoFillColumns)
 
-    const appliedRules = context?.ruleEngine?.appliedRules || []
-
+    const appliedRules = ruleEngineResult?.appliedRules || []
     const rulesMsg = appliedRules.length > 0 ? ` (Applied ${appliedRules.length} rules)` : ''
     const msg = `imported ${ymylTable.getRowCount()} rows!${rulesMsg}`
     Logger.log(msg)
@@ -264,71 +231,60 @@ class PipelineRPC {
       success: true,
       message: msg,
       data: {
-        ...(context.ruleEngine
-          ? {
-              ruleEngine: {
-                ...context.ruleEngine,
-                removedHashes: Array.from(context.ruleEngine.removedHashes),
-              },
-            }
-          : {}),
+        ...(ruleEngineResult ? { ruleEngine: packRuleEngineResult(ruleEngineResult) } : {}),
       },
     }
-  }
+  },
+)
 
-  @withPipelineLogger
-  static previewPipeline(
-    table: RawTable,
+/**
+ * dedicated pipeline for background Enable Banking synchronization.
+ */
+export const enableBankingPipeline = withRpcHandler(
+  'enableBankingPipeline',
+  (
+    ymylTable: YMYLTable,
     bankAccount: string,
-  ): ServerResponse<ImportPreviewResult> {
+  ): ServerResponse<{ ruleEngine?: PackedRuleEngineResult }> => {
+    const ymylSheet = new YMYLSheet()
     const config = Config.getAccountConfiguration(bankAccount)
-    const rawTable = Table.from(structuredClone(table))
 
-    const context: PreviewPipelineContext = {
-      config,
-      duplicateHashes: new Set(),
+    let ruleEngineResult: RuleEngineResult | undefined
+    if (FEATURES.RULE_ENGINE_ENABLED) {
+      const { rules, warnings } = fetchParsingRules(bankAccount)
+      const ruleProcessor = new RuleProcessor(rules)
+      ruleEngineResult = createRuleEngineResult(rules.length)
+      ruleEngineResult.warnings.push(...warnings)
+
+      ymylTable = applyPostTransformRules(ymylTable, ruleProcessor, bankAccount, ruleEngineResult, false)
     }
-
-    let pipeline = this.setupCommonPipeline<PreviewPipelineContext>(bankAccount, context, true)
 
     if (FEATURES.IMPORT_DUPLICATE_DETECTION) {
-      pipeline = pipeline.addStage(duplicateDetectionStage)
+      const existingHashes = ymylSheet.loadExistingHashes()
+      const duplicates = detectDuplicates(ymylTable, existingHashes)
+      filterOutExcluded(ymylTable, duplicates)
     }
 
-    pipeline = pipeline
-      .addStage(sortByDateStage)
-      .addStage(autoFillPreviewStage)
+    ymylTable.sortByDate()
 
-    const previewTable = pipeline.execute(rawTable, context)
+    if (ymylTable.isEmpty()) {
+      const msg = 'No new rows to import after rules and deduplication.'
+      Logger.log(msg)
+      return { success: true, message: msg, data: {} }
+    }
 
-    const newBalance = calculateNewBalance(previewTable, context)
+    const autoFillColumns = config.autoFillEnabled ? config.autoFillColumnIndices : undefined
+    ymylSheet.importData(ymylTable, autoFillColumns)
 
-    const result = {
+    const msg = `Synced ${ymylTable.getRowCount()} transactions!`
+    Logger.log(msg)
+
+    return {
       success: true,
+      message: msg,
       data: {
-        table: previewTable.pack(),
-        newBalance: newBalance,
-        duplicateHashes: Array.from(context.duplicateHashes),
-        ...(context.ruleEngine
-          ? {
-              ruleEngine: {
-                ...context.ruleEngine,
-                removedHashes: Array.from(context.ruleEngine.removedHashes),
-              },
-            }
-          : {}),
+        ...(ruleEngineResult ? { ruleEngine: packRuleEngineResult(ruleEngineResult) } : {}),
       },
-    } satisfies ServerResponse<ImportPreviewResult>
-
-    Logger.log('newBalance', result.data.newBalance)
-    Logger.log('duplicateHashes', result.data.duplicateHashes)
-    Logger.log('rule engine result', result.data?.ruleEngine)
-
-    return result
-  }
-}
-
-// exported pipeline functions which can be called by the frontend
-export const importPipeline = PipelineRPC.importPipeline.bind(PipelineRPC)
-export const previewPipeline = PipelineRPC.previewPipeline.bind(PipelineRPC)
-export const enableBankingPipeline = PipelineRPC.enableBankingPipeline.bind(PipelineRPC)
+    }
+  },
+)

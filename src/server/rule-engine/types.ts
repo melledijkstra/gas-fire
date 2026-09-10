@@ -48,9 +48,19 @@ export interface RuleEngineResult {
 
 // Packed prefix is for serialized safe types, which can be safely sent over the wire without losing type information
 export interface PackedRuleEngineResult {
-  warnings: RuleEngineResult['warnings']
-  rulesCount: RuleEngineResult['rulesCount']
-  appliedRules: RuleEngineResult['appliedRules']
+  warnings: RuleWarning[]
+  rulesCount: number
+  appliedRules: ImportRule[]
   removedHashes: string[] // Set<string> converted to array for serialization
   rowExcludedRule: Record<string, string>
+}
+
+/**
+ * serializes a RuleEngineResult into a PackedRuleEngineResult for RPC transmission.
+ */
+export function packRuleEngineResult(result: RuleEngineResult): PackedRuleEngineResult {
+  return {
+    ...result,
+    removedHashes: Array.from(result.removedHashes),
+  }
 }

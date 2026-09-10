@@ -1,74 +1,75 @@
 import { getRowHash } from '@/common/helpers'
 import { YMYLTable } from '@/common/table/YMYLTable'
 import type { Table } from '@/common/table/Table'
-import type { PipelineContext } from '../import-pipeline/pipeline'
-import { RuleProcessor } from './rule-processor'
+import type { RuleEngineResult } from './types'
+import type { RuleProcessor } from './rule-processor'
 
-const emptyRuleEngineContext = {
-  warnings: [],
-  appliedRules: [],
-  removedHashes: new Set<string>(),
-  rowExcludedRule: {},
-  rulesCount: 0,
+/**
+ * creates an initial empty RuleEngineResult.
+ */
+export function createRuleEngineResult(rulesCount = 0): RuleEngineResult {
+  return {
+    warnings: [],
+    appliedRules: [],
+    removedHashes: new Set<string>(),
+    rowExcludedRule: {},
+    rulesCount,
+  }
 }
 
-export function applyPreTransformRulesStage(
+/**
+ * applies PRE_TRANSFORM rules to raw Table data before conversion to YMYL schema.
+ */
+export function applyPreTransformRules(
   input: Table,
   ruleProcessor: RuleProcessor,
-  context: PipelineContext,
+  bankAccount: string,
+  result: RuleEngineResult,
 ): Table {
-  context.ruleEngine ??= {
-    ...emptyRuleEngineContext,
-    rulesCount: ruleProcessor.importRules.length,
-  }
+  const execResult = ruleProcessor.applyPreTransformRules(input, bankAccount)
 
-  const bankAccount = context.config.getAccountId()
+  result.appliedRules.push(...execResult.appliedRules)
+  result.warnings.push(...execResult.warnings)
 
-  const result = ruleProcessor.applyPreTransformRules(input, bankAccount)
-
-  context.ruleEngine.appliedRules.push(...result.appliedRules)
-  context.ruleEngine.warnings.push(...result.warnings)
-
-  for (const index of result.excludedIndices) {
+  for (const index of execResult.excludedIndices) {
     const hash = getRowHash(input.data[index])
-    context.ruleEngine.rowExcludedRule[hash] = result.excludedByRule.get(index)!
-    context.ruleEngine.removedHashes.add(hash)
+    result.rowExcludedRule[hash] = execResult.excludedByRule.get(index)!
+    result.removedHashes.add(hash)
   }
 
   return input
 }
 
-export function postTransformRulesStage(
+/**
+ * applies POST_TRANSFORM rules to a YMYLTable.
+ * if dryRun is false, permanently removes excluded rows from the returned table.
+ */
+export function applyPostTransformRules(
   ymylTable: YMYLTable,
   ruleProcessor: RuleProcessor,
-  context: PipelineContext,
-  dryRun: boolean = false,
+  bankAccount: string,
+  result: RuleEngineResult,
+  dryRun = false,
 ): YMYLTable {
-  context.ruleEngine ??= {
-    ...emptyRuleEngineContext,
-    rulesCount: ruleProcessor.importRules.length,
-  }
+  const execResult = ruleProcessor.applyPostTransformRules(ymylTable, bankAccount)
 
-  const bankAccount = context.config.getAccountId()
-  const result = ruleProcessor.applyPostTransformRules(ymylTable, bankAccount)
-
-  context.ruleEngine.appliedRules.push(...result.appliedRules)
-  context.ruleEngine.warnings.push(...result.warnings)
+  result.appliedRules.push(...execResult.appliedRules)
+  result.warnings.push(...execResult.warnings)
 
   // map excluded indices to hashes before sorting alters row order
   const excludedHashes = new Set<string>()
   const data = ymylTable.data
 
-  for (const index of result.excludedIndices) {
+  for (const index of execResult.excludedIndices) {
     const hash = getRowHash(data[index])
     excludedHashes.add(hash)
-    context.ruleEngine.rowExcludedRule[hash] = result.excludedByRule.get(index)!
-    context.ruleEngine.removedHashes.add(hash)
+    result.rowExcludedRule[hash] = execResult.excludedByRule.get(index)!
+    result.removedHashes.add(hash)
   }
 
   // remove rows permanently if this is an actual import (not preview)
   if (!dryRun && excludedHashes.size > 0) {
-    const filteredData = data.filter((_row, index) => !result.excludedIndices.has(index))
+    const filteredData = data.filter((_row, index) => !execResult.excludedIndices.has(index))
     ymylTable = new YMYLTable(filteredData)
   }
 
