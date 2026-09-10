@@ -11,7 +11,7 @@ const entries = clientEntrypoints.map((entry) => {
 
 export default {
   entry: entries,
-  project: ['src/**/*.{ts,svelte}'],
+  project: ['src/**/*.{ts,svelte,css,mdx}'],
   ignoreBinaries: [
     // used in the dev server to create a secure tunnel with a real domain
     // PENDING: double check if this is a built-in binary on the OS or not
@@ -20,12 +20,5 @@ export default {
   ignoreDependencies: [
     // global types for Google Apps Script
     '@types/google-apps-script',
-    // from the core package we never directly import
-    // instead from 'flowbite-svelte'
-    'flowbite',
-  ],
-  ignore: [
-    // plugin that generates the frontend bundles, but is not imported in the src code
-    'src/plugins/frontendBundlesPlugin.ts',
   ],
 } satisfies KnipConfig
