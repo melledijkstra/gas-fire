@@ -7,8 +7,6 @@ import { YMYLSpreadsheet } from './globals'
 
 const CONFIG_CACHE_KEY = 'cache.config'
 
-// PENDING: Make this configurable by the user, what if they rename the sheets?
-export const CATEGORIES_SHEET_NAME = 'categories'
 const CONFIG_SHEET_NAME = 'import-settings'
 
 const parseBoolean = (value: string | boolean) =>

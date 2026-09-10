@@ -1,6 +1,5 @@
 import { NAMED_RANGES } from '@/common/constants'
 import { DIALOG_SIZES, FEATURES } from '@/common/settings'
-import { executeAutomaticCategorization } from '../category-detection/rpc'
 import { debugImportSettings, executeFindDuplicates } from '../other/rpc'
 
 export function onOpen(): void {
@@ -8,7 +7,6 @@ export function onOpen(): void {
   const ui = SpreadsheetApp.getUi()
   const menu = ui.createMenu('YMYL')
     .addItem('Upload Transactions (CSV)', openFileUploadDialog.name)
-    .addItem('Auto Categorize', executeAutomaticCategorization.name)
     .addItem('Find duplicates', executeFindDuplicates.name)
 
   if (FEATURES.ENABLE_BANKING_ENABLED) {

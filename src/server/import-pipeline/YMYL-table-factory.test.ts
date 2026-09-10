@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { YMYLTableFactory } from './YMYL-table-factory'
+import { buildYMYLTable } from './YMYL-table-factory'
 import { Config } from '../config'
 import type { RawTable } from '@/common/types'
 import { AccountUtils } from '../accounts/account-utils'
@@ -8,7 +8,7 @@ import { YMYLTable } from '@/common/table/YMYLTable'
 
 describe('YMYLTableFactory.fromAccountSpecification', () => {
   it('should return empty result if no rows are provided neither columnMap', () => {
-    const result = YMYLTableFactory.fromAccountSpecification({
+    const result = buildYMYLTable({
       headers: [],
       rows: [],
       config: new Config({
@@ -29,7 +29,7 @@ describe('YMYLTableFactory.fromAccountSpecification', () => {
       accountId: 'TestBank',
     })
 
-    const result = YMYLTableFactory.fromAccountSpecification({
+    const result = buildYMYLTable({
       headers: ['date', 'amount', 'accountName', 'iban', 'currency'],
       rows,
       config,
@@ -53,7 +53,7 @@ describe('YMYLTableFactory.fromAccountSpecification', () => {
       },
     })
 
-    const result = YMYLTableFactory.fromAccountSpecification({ headers, rows, config })
+    const result = buildYMYLTable({ headers, rows, config })
 
     const descriptionIndex = YMYLTable.getYMYLColumnIndex('description')
     expect(result.data[0][descriptionIndex]).toBeNull()
@@ -80,7 +80,7 @@ describe('YMYLTableFactory.fromAccountSpecification', () => {
       },
     })
 
-    const result = YMYLTableFactory.fromAccountSpecification({ headers, rows, config })
+    const result = buildYMYLTable({ headers, rows, config })
     const data = result.data
 
     expect(result.getRowCount()).toBe(2)
@@ -140,7 +140,7 @@ describe('YMYLTableFactory.fromAccountSpecification', () => {
     const headers = N26ImportMock[0]
     const rows: RawTable = N26ImportMock.slice(1)
 
-    const result = YMYLTableFactory.fromAccountSpecification({
+    const result = buildYMYLTable({
       config: n26Config,
       headers,
       rows,

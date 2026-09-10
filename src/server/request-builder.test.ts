@@ -1,24 +1,13 @@
 import type { CellValue } from '@/common/types'
-import { beforeEach, describe, expect, it } from 'vitest'
-import { SheetsRequestBuilder } from './request-builder'
+import { describe, expect, it } from 'vitest'
+import { buildInsertRowsRequest, buildInsertDataRequest, buildAutoFillRequest } from './request-builder'
 
-describe('SheetsRequestBuilder', () => {
-  let builder: SheetsRequestBuilder
-
-  beforeEach(() => {
-    builder = new SheetsRequestBuilder()
-  })
-
-  it('should initialize with an empty requests array', () => {
-    expect(builder.requests).toEqual([])
-  })
-
-  describe('insertRows', () => {
+describe('request-builder', () => {
+  describe('buildInsertRowsRequest', () => {
     it('should build a request to insert rows with default inheritance', () => {
-      builder.insertRows(123, 5, 10)
+      const request = buildInsertRowsRequest(123, 5, 10)
 
-      expect(builder.requests).toHaveLength(1)
-      expect(builder.requests[0]).toEqual({
+      expect(request).toEqual({
         insertDimension: {
           range: {
             sheetId: 123,
@@ -32,10 +21,9 @@ describe('SheetsRequestBuilder', () => {
     })
 
     it('should build a request to insert rows with inheritFromBefore = true', () => {
-      builder.insertRows(123, 5, 10, true)
+      const request = buildInsertRowsRequest(123, 5, 10, true)
 
-      expect(builder.requests).toHaveLength(1)
-      expect(builder.requests[0]).toEqual({
+      expect(request).toEqual({
         insertDimension: {
           range: {
             sheetId: 123,
@@ -47,71 +35,9 @@ describe('SheetsRequestBuilder', () => {
         },
       })
     })
-
-    it('should handle data arrays with empty rows correctly', () => {
-      const data: CellValue[][] = [[]]
-      const generator = (cell: unknown): GoogleAppsScript.Sheets.Schema.CellData => ({
-        userEnteredValue: { stringValue: String(cell) },
-      })
-
-      builder.insertData(123, data, 10, 5, generator)
-
-      expect(builder.requests).toHaveLength(1)
-      expect(builder.requests[0]).toEqual({
-        updateCells: {
-          rows: [{ values: [] }],
-          fields: 'userEnteredValue',
-          range: {
-            sheetId: 123,
-            startRowIndex: 10,
-            endRowIndex: 11,
-            startColumnIndex: 5,
-            endColumnIndex: 5,
-          },
-        },
-      })
-    })
-
-    it('should handle data arrays with uneven row lengths safely based on the longest row', () => {
-      const data: CellValue[][] = [
-        ['A1'],
-        ['A2', 'B2', 'C2'],
-        ['A3', 'B3'],
-      ]
-
-      const generator = (cell: unknown): GoogleAppsScript.Sheets.Schema.CellData => ({
-        userEnteredValue: { stringValue: String(cell) },
-      })
-
-      builder.insertData(123, data, 10, 5, generator)
-
-      expect(builder.requests).toHaveLength(1)
-      expect(builder.requests[0]?.updateCells?.range?.endColumnIndex).toBe(8) // 5 + 3 (max row length is 3)
-    })
-
-    it('should handle data where the first row is empty but subsequent rows are not', () => {
-      const data: CellValue[][] = [
-        [],
-        ['A2', 'B2'],
-      ]
-
-      const generator = (cell: unknown): GoogleAppsScript.Sheets.Schema.CellData => ({
-        userEnteredValue: { stringValue: String(cell) },
-      })
-
-      builder.insertData(123, data, 10, 5, generator)
-
-      expect(builder.requests).toHaveLength(1)
-      expect(builder.requests[0]?.updateCells?.range?.endColumnIndex).toBe(7) // 5 + 2
-    })
-
-    it('should return this to allow chaining', () => {
-      const result = builder.insertRows(123, 5, 10)
-      expect(result).toBe(builder)
-    })
   })
 
-  describe('insertData', () => {
+  describe('buildInsertDataRequest', () => {
     it('should build an updateCells request with given data and cell generator', () => {
       const data = [
         ['A1', 'B1'],
@@ -122,10 +48,9 @@ describe('SheetsRequestBuilder', () => {
         userEnteredValue: { stringValue: String(cell) },
       })
 
-      builder.insertData(123, data, 10, 5, generator)
+      const request = buildInsertDataRequest(123, data, 10, 5, generator)
 
-      expect(builder.requests).toHaveLength(1)
-      expect(builder.requests[0]).toEqual({
+      expect(request).toEqual({
         updateCells: {
           rows: [
             { values: [{ userEnteredValue: { stringValue: 'A1' } }, { userEnteredValue: { stringValue: 'B1' } }] },
@@ -149,10 +74,9 @@ describe('SheetsRequestBuilder', () => {
         userEnteredValue: { stringValue: String(cell) },
       })
 
-      builder.insertData(123, data, 10, 5, generator, 'userEnteredValue,userEnteredFormat')
+      const request = buildInsertDataRequest(123, data, 10, 5, generator, 'userEnteredValue,userEnteredFormat')
 
-      expect(builder.requests).toHaveLength(1)
-      expect(builder.requests[0]?.updateCells?.fields).toBe('userEnteredValue,userEnteredFormat')
+      expect(request?.updateCells?.fields).toBe('userEnteredValue,userEnteredFormat')
     })
 
     it('should handle an empty data array correctly', () => {
@@ -161,10 +85,9 @@ describe('SheetsRequestBuilder', () => {
         userEnteredValue: { stringValue: String(cell) },
       })
 
-      builder.insertData(123, data, 10, 5, generator)
+      const request = buildInsertDataRequest(123, data, 10, 5, generator)
 
-      expect(builder.requests).toHaveLength(1)
-      expect(builder.requests[0]).toEqual({
+      expect(request).toEqual({
         updateCells: {
           rows: [],
           fields: 'userEnteredValue',
@@ -179,14 +102,24 @@ describe('SheetsRequestBuilder', () => {
       })
     })
 
-    it('should return this to allow chaining', () => {
-      const data = [['A1']]
-      const result = builder.insertData(123, data, 10, 5, _c => ({}))
-      expect(result).toBe(builder)
+    it('should handle data arrays with uneven row lengths safely based on the longest row', () => {
+      const data: CellValue[][] = [
+        ['A1'],
+        ['A2', 'B2', 'C2'],
+        ['A3', 'B3'],
+      ]
+
+      const generator = (cell: unknown): GoogleAppsScript.Sheets.Schema.CellData => ({
+        userEnteredValue: { stringValue: String(cell) },
+      })
+
+      const request = buildInsertDataRequest(123, data, 10, 5, generator)
+
+      expect(request?.updateCells?.range?.endColumnIndex).toBe(8) // 5 + 3
     })
   })
 
-  describe('autoFill', () => {
+  describe('buildAutoFillRequest', () => {
     it('should build an autoFill request with default dimension and alternate series flag', () => {
       const sourceRange = {
         sheetId: 123,
@@ -196,10 +129,9 @@ describe('SheetsRequestBuilder', () => {
         endColumnIndex: 2,
       }
 
-      builder.autoFill(sourceRange, 5)
+      const request = buildAutoFillRequest(sourceRange, 5)
 
-      expect(builder.requests).toHaveLength(1)
-      expect(builder.requests[0]).toEqual({
+      expect(request).toEqual({
         autoFill: {
           useAlternateSeries: false,
           sourceAndDestination: {
@@ -220,10 +152,9 @@ describe('SheetsRequestBuilder', () => {
         endColumnIndex: 2,
       }
 
-      builder.autoFill(sourceRange, 5, 'COLUMNS', true)
+      const request = buildAutoFillRequest(sourceRange, 5, 'COLUMNS', true)
 
-      expect(builder.requests).toHaveLength(1)
-      expect(builder.requests[0]).toEqual({
+      expect(request).toEqual({
         autoFill: {
           useAlternateSeries: true,
           sourceAndDestination: {
@@ -233,31 +164,6 @@ describe('SheetsRequestBuilder', () => {
           },
         },
       })
-    })
-
-    it('should return this to allow chaining', () => {
-      const sourceRange = {
-        sheetId: 123,
-        startRowIndex: 1,
-        endRowIndex: 2,
-        startColumnIndex: 1,
-        endColumnIndex: 2,
-      }
-
-      const result = builder.autoFill(sourceRange, 5)
-      expect(result).toBe(builder)
-    })
-  })
-
-  describe('chaining', () => {
-    it('should support chaining multiple methods', () => {
-      builder
-        .insertRows(123, 5, 10)
-        .autoFill({ sheetId: 123 }, 5)
-
-      expect(builder.requests).toHaveLength(2)
-      expect(builder.requests[0]).toHaveProperty('insertDimension')
-      expect(builder.requests[1]).toHaveProperty('autoFill')
     })
   })
 })

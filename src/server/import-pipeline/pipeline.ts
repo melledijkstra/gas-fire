@@ -1,134 +1,55 @@
 import { getRowHash } from '@/common/helpers'
-import { Logger } from '@/common/logger'
-import { YMYLTable } from '@/common/table/YMYLTable'
-import { Table } from '@/common/table/Table'
+import type { YMYLTable } from '@/common/table/YMYLTable'
+import type { Table } from '@/common/table/Table'
 import type { TransactionAction, UserDecisions } from '@/common/types'
-import { Config } from '../config'
-import type { RuleEngineResult } from '../rule-engine/types'
-import { YMYLSheet } from '../spreadsheet/YMYLSheet'
-import { YMYLTableFactory } from './YMYL-table-factory'
-
-export interface PipelineContext {
-  config: Config
-  ruleEngine?: RuleEngineResult
-}
-
-export interface ImportPipelineContext extends PipelineContext {
-  userDecisions?: UserDecisions
-}
-
-export interface PreviewPipelineContext extends PipelineContext {
-  duplicateHashes: Set<string>
-}
-
-export type PipelineStage<I, O, C> = (input: I, context: C) => O
+import type { Config } from '../config'
+import { buildYMYLTable } from './YMYL-table-factory'
 
 /**
- * A generic Pipeline pattern implementation that chains together multiple stages.
- * Each stage transforms an input into an output, passing it to the next stage.
- * It uses a functional approach to build up a single composed action that is only
- * evaluated when `execute` is called.
+ * removes empty rows from the input table in-place.
  */
-export class Pipeline<I, O, C> {
-  /**
-   * @param action The composed function representing all pipeline stages up to this point.
-   */
-  constructor(private readonly action: (input: I, context: C) => O) {}
-
-  /** Initializes a new, empty pipeline that simply returns its input. */
-  static create<T, C = PipelineContext>(): Pipeline<T, T, C> {
-    return new Pipeline((input: T) => input)
-  }
-
-  /**
-   * Appends a new stage to the pipeline.
-   * Creates a new Pipeline instance representing the composed transformation.
-   *
-   * @param stage The next stage to execute in the sequence.
-   * @returns A new Pipeline with the added stage.
-   */
-  addStage<TNext>(stage: PipelineStage<O, TNext, C>): Pipeline<I, TNext, C> {
-    return new Pipeline<I, TNext, C>((input, context) => {
-      // Execute all previous stages to get the intermediate output
-      const currentOut = this.action(input, context)
-      // Execute the newly added stage with the intermediate output
-      return stage(currentOut, context)
-    })
-  }
-
-  /**
-   * Executes the entire composed pipeline sequence.
-   *
-   * @param input The initial input to the pipeline.
-   * @param context Shared context passed to every stage.
-   * @returns The final output after all stages have been executed.
-   */
-  execute(input: I, context: C): O {
-    return this.action(input, context)
-  }
-}
-
-// ------------------------------------------
-// Concrete Stages
-// ------------------------------------------
-
-/**
- * Removes empty rows from the input Table.
- */
-export function removeEmptyRowsStage(input: Table, _context: PipelineContext): Table {
+export function removeEmptyRows(input: Table): Table {
   input.removeEmptyRows()
   return input
 }
 
 /**
- * Transforms a Table into a YMYLTable using the headers in the first row.
- * The input table is expected to have headers as its first row (using Table.from).
+ * transforms a Table into a YMYLTable using the account configuration.
  */
-export function transformToYMYLTableStage(input: Table, context: PipelineContext): YMYLTable {
+export function transformToYMYLTable(input: Table, config: Config): YMYLTable {
   if (!input.headers || input.headers.length === 0) {
     throw new Error('No header row detected in import data!')
   }
 
-  return YMYLTableFactory.fromAccountSpecification({
+  return buildYMYLTable({
     headers: input.headers,
     rows: input.data,
-    config: context.config,
+    config,
   })
 }
 
-/** Sorts the YMYLTable by date. */
-export function sortByDateStage<T extends YMYLTable>(input: T, _context: PipelineContext): T {
-  return input.sortByDate()
-}
-
 /**
- * Detects duplicates by comparing row hashes against existing hashes in the context.
- * Populates the context metadata with status, hashes, and counts.
+ * detects duplicates in the table against a set of existing transaction hashes.
+ * returns a set of duplicate hashes found in the input table.
  */
-export function duplicateDetectionStage(input: YMYLTable, context: PreviewPipelineContext): YMYLTable {
-  const ymylSheet = new YMYLSheet()
-  const existingHashes = ymylSheet.loadExistingHashes()
-  Logger.log(`Loaded ${existingHashes?.size} existing transaction hashes for duplicate detection`)
+export function detectDuplicates(input: YMYLTable, existingHashes: Set<string>): Set<string> {
+  const duplicates = new Set<string>()
 
   for (const row of input.data) {
     const hash = getRowHash(row)
-
     if (existingHashes.has(hash)) {
-      context.duplicateHashes?.add(hash)
+      duplicates.add(hash)
     }
   }
 
-  return input
+  return duplicates
 }
 
 /**
- * Replaces empty cells in auto-fill columns with a placeholder for preview purposes.
- * This stage modifies the table data in-place.
+ * replaces empty cells in auto-fill columns with a placeholder for preview purposes.
+ * autoFillColumns expects 1-based column indices.
  */
-export function autoFillPreviewStage<T extends YMYLTable>(input: T, context: PipelineContext): T {
-  const config = context.config
-  const autoFillColumns = config.autoFillEnabled ? config.autoFillColumnIndices : []
-
+export function autoFillPreview<T extends YMYLTable>(input: T, autoFillColumns: number[]): T {
   if (autoFillColumns.length === 0) return input
 
   input.map((row) => {
@@ -147,16 +68,24 @@ export function autoFillPreviewStage<T extends YMYLTable>(input: T, context: Pip
 }
 
 /**
- * Filters rows based on explicit user decisions stored in the context.
- * Rows default to 'import' unless the user has explicitly decided otherwise.
+ * filters rows based on explicit user decisions.
+ * rows default to 'import' unless the user has explicitly decided otherwise.
  */
-export function applyUserDecisionsStage(input: YMYLTable, context: ImportPipelineContext): YMYLTable {
-  const decisions = context.userDecisions
-  if (!decisions || decisions.size === 0) return input
+export function applyUserDecisions(
+  input: YMYLTable,
+  userDecisions?: UserDecisions | Record<string, TransactionAction>,
+): YMYLTable {
+  if (!userDecisions) return input
+
+  const decisionsMap = userDecisions instanceof Map
+    ? userDecisions
+    : new Map(Object.entries(userDecisions))
+
+  if (decisionsMap.size === 0) return input
 
   input.filter((row) => {
     const hash = getRowHash(row)
-    const action: TransactionAction = decisions.get(hash) ?? 'import'
+    const action: TransactionAction = decisionsMap.get(hash) ?? 'import'
     return action === 'import'
   })
 
@@ -164,18 +93,11 @@ export function applyUserDecisionsStage(input: YMYLTable, context: ImportPipelin
 }
 
 /**
- * Removes rows that have been flagged as duplicates or excluded by rules.
- * This is particularly useful for automated imports where user intervention is not possible.
+ * removes rows whose hash matches any hash in the excluded set.
  */
-export function filterOutDuplicatesStage(input: YMYLTable, context: PreviewPipelineContext): YMYLTable {
-  const excludedHashes = new Set<string>([
-    ...context.duplicateHashes,
-    ...(context.ruleEngine?.removedHashes ?? []),
-  ])
-
+export function filterOutExcluded(input: YMYLTable, excludedHashes: Set<string>): YMYLTable {
   if (excludedHashes.size === 0) return input
 
   input.filter(row => !excludedHashes.has(getRowHash(row)))
-
   return input
 }

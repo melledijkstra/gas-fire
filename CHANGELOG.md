@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.20.0-beta
+
+- Code cleanup
+
 ## 4.19.0-beta
 
 - **Refactor** - Rebranded the app and all associated code from "FIRE" to "YMYL" (Your Money Your Life)

@@ -38,6 +38,13 @@ export type RawTable<T = string> = T[][]
 export type PackedCellValue = string | number | boolean | null | { __type: 'Date', value: string }
 
 /**
+ * represents an entity that can be packed into a wire-safe format for transport.
+ */
+export interface IPackable<T = unknown> {
+  pack(): T
+}
+
+/**
  * A serialize-safe table structure that can be sent over the wire.
  */
 export interface PackedTable {

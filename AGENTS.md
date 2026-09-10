@@ -3,7 +3,6 @@
 ## Memory
 
 - Always use `pnpm` instead of `npm` for this project.
-- Start comments in lowercase.
 - Use Runes API only for Svelte 5 state management.
 - Keep functions small and focused. If a function's cognitive complexity exceeds 15, extract inner loops or complex conditional blocks into smaller, well-named helper functions.
 - Preferably use the Sheets API for operations on the Google Sheets document for better performance. If the Sheets API is not available, fall back to using the Apps Script API.
@@ -93,8 +92,11 @@ scripts/                     # Development utilities
 # Find unused exports/dependencies
 pnpm knip
 
-# Local CI (lint + build + test — run before opening a PR)
+# Local CI (lint, build, test, etc. — run before opening a PR)
 pnpm local:ci
+
+# Build + push to GAS (production - no logging)
+pnpm release
 
 # Build + push to GAS (development which enables logging)
 pnpm release:dev
@@ -106,6 +108,5 @@ pnpm switch-env <env>
 ## PR Requirements (Definition of Done)
 
 - [ ] `pnpm local:ci` passes (lint + build + tests)
-- [ ] `pnpm typecheck` passes with no errors
 - [ ] `pnpm knip` clean (no new unused exports)
 - [ ] unit tests created for new code
