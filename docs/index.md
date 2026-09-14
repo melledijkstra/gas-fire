@@ -5,7 +5,7 @@ layout: home
 hero:
   name: "YMYL"
   text: "Your Money, Your Life"
-  tagline: "Automate your personal finances with Google Sheets"
+  tagline: "Automate and track your personal finances with Google Sheets"
   actions:
     - theme: brand
       text: Get Started
@@ -15,10 +15,13 @@ hero:
       link: https://github.com/melledijkstra/gas-fire
 
 features:
-  - title: Complete Financial Breakdown
+  - icon: 💸
+    title: Complete Financial Breakdown
     details: Get a complete financial breakdown of every single transaction over your lifetime, categorizing and aggregating your spending effortlessly.
-  - title: Net Worth Tracking
+  - icon: 🏅
+    title: Net Worth Tracking
     details: Gain an insight into the economic past, present, and future of your finances with integrated Capital, Investments, and Debt tracking.
-  - title: Automated Imports
+  - icon: 🔁
+    title: Automated Imports
     details: Set up powerful rules to auto-categorize your bank CSV exports and save hours of manual entry.
 ---

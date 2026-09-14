@@ -7,12 +7,17 @@ export default defineConfig({
   description: 'Your Money, Your Life - Google Sheet Personal Finance Automation',
   base: '/gas-fire/docs/',
   outDir: '.vitepress/dist/docs',
+  lastUpdated: true,
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Getting Started', link: '/getting-started/welcome' },
     ],
+
+    search: {
+      provider: 'local',
+    },
 
     sidebar: [
       {

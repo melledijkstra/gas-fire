@@ -1,3 +1,7 @@
+---
+search: false
+---
+
 # Test Page
 
 <script setup>
