@@ -71,6 +71,8 @@ Each of the rows corresponds to one of your bank accounts. Make sure every accou
 
 At last, your final result should look something like this:
 
-![Configuration setup result](./final-configuration-result.png)
+# TODO add image of final setup
+
+<!-- ![Configuration setup result](./final-configuration-result.png) -->
 
 When you've added all your accounts and setup the initial balances _(transactions)_, let's move on to mapping your CSV exports in [Configuring Imports](./import-settings).
