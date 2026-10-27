@@ -30,6 +30,7 @@
     // include normal sources
     "src/**/*",
     // the typescript of storybook configuration should also be included
-    ".storybook/**/*"
+    ".storybook/**/*",
+    "./scripts/**/*"
   ]
 }

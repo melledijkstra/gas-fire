@@ -1,6 +1,6 @@
-import { FireTransaction } from '../../src/common/types'
+import type { YMYLTransaction } from '../../src/common/types'
 
-export const convertFireTransactionToBankDefinition = (transaction: FireTransaction): Record<string, unknown> => {
+export const convertYMYLTransactionToBankDefinition = (transaction: YMYLTransaction): Record<string, unknown> => {
   return {
     Date: transaction.date,
     Amount: transaction.amount,

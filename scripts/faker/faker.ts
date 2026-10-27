@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker'
 import fs from 'fs'
-import type { Accounts, FireTransaction, RawTable } from '../../src/common/types'
-import { convertFireTransactionToBankDefinition } from './commonwealth-bank'
+import type { Accounts, YMYLTransaction, RawTable } from '../../src/common/types'
+import { convertYMYLTransactionToBankDefinition } from './commonwealth-bank'
 
 const fakeBankAccountsConfig: Accounts = {
   'Commonwealth Bank': 'US1234567890',
@@ -11,10 +11,10 @@ const fakeBankAccountsConfig: Accounts = {
   'TestBank': 'TEST123456789',
 } as const
 
-type TransactionTransformer = (transaction: FireTransaction) => Record<string, unknown>
+type TransactionTransformer = (transaction: YMYLTransaction) => Record<string, unknown>
 
 const bankTransformersMap: Record<string, TransactionTransformer> = {
-  'Commonwealth Bank': convertFireTransactionToBankDefinition,
+  'Commonwealth Bank': convertYMYLTransactionToBankDefinition,
 }
 
 const outDir = 'transactions/'
@@ -87,8 +87,8 @@ function generateAmount(): number {
 }
 
 function createTransaction(
-  overrides?: Partial<FireTransaction>,
-): FireTransaction {
+  overrides?: Partial<YMYLTransaction>,
+): YMYLTransaction {
   const date = faker.date.between({ from: '2010-01-01', to: '2024-10-30' })
 
   return {
@@ -130,7 +130,7 @@ function jsonToTable(input: Record<string, unknown>[]): RawTable {
 
 type GenerateOptions = {
   years: number
-  overrides: Partial<FireTransaction>
+  overrides: Partial<YMYLTransaction>
   generateIncome?: boolean
 }
 
@@ -138,8 +138,8 @@ function generateYearlyTransactions({
   years = 1,
   overrides,
   generateIncome = true,
-}: GenerateOptions): Array<FireTransaction> {
-  const transactions: Array<FireTransaction> = []
+}: GenerateOptions): Array<YMYLTransaction> {
+  const transactions: Array<YMYLTransaction> = []
 
   const thisYear = new Date().getFullYear()
   // we start with the past years
