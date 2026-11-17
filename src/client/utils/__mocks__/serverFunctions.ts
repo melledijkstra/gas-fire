@@ -2,11 +2,15 @@ import type { YMYLTable } from '@/common/table/YMYLTable'
 import type {
   AccountOptions,
   ImportPreviewResult,
+  MobileDashboardData,
+  MobileTransactionUpdatePayload,
   RawTable,
   ServerResponse,
   TransactionAction,
 } from '@/common/types'
-import type { Aspsp, EnableBankingConnection } from '@/server/enable-banking/types'
+import { buildMobileDashboardFixture } from '@/fixtures/mobile-budget'
+import type { Aspsp } from '@/server/enable-banking/types'
+import type { EnableBankingConnection } from '@/server/enable-banking/rpc'
 import type * as publicServerFunctions from '@/server/index'
 import type { PackedRuleEngineResult } from '@/server/rule-engine/types'
 
@@ -89,6 +93,10 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     throw new Error('Mock not implemented')
   }
 
+  async doGet(): Promise<GoogleAppsScript.HTML.HtmlOutput> {
+    throw new Error('Mock not implemented')
+  }
+
   async openFileUploadDialog(): Promise<void> {
     throw new Error('Mock not implemented')
   }
@@ -98,6 +106,10 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
   }
 
   async openSettingsDialog(): Promise<void> {
+    throw new Error('Mock not implemented')
+  }
+
+  async openMobileBudgetDialog(): Promise<void> {
     throw new Error('Mock not implemented')
   }
 
@@ -203,6 +215,28 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
         frequencyType: _frequencyType,
         frequencyValue: _frequencyValue,
       },
+    }
+  }
+
+  async getMobileDashboardData(): Promise<ServerResponse<MobileDashboardData>> {
+    await this.delay(300)
+    const now = new Date()
+    return {
+      success: true,
+      data: buildMobileDashboardFixture({
+        currentYear: now.getFullYear(),
+        referenceMonth: now.getMonth() + 1,
+      }),
+    }
+  }
+
+  async updateMobileTransaction(
+    payload: MobileTransactionUpdatePayload,
+  ): Promise<ServerResponse<{ rowIndex: number }>> {
+    await this.delay(250)
+    return {
+      success: true,
+      data: { rowIndex: payload.rowIndex },
     }
   }
 }

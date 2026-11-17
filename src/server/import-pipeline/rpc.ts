@@ -22,6 +22,7 @@ import { RuleEngineResult } from '../rule-engine/rule-engine-result'
 import { YMYLSheet } from '../spreadsheet/YMYLSheet'
 import { RuleSheet } from '../spreadsheet/RuleSheet'
 import { removeFilterCriteria } from '../spreadsheet/spreadsheet'
+import { withRpcHandler } from '../rpc-handler'
 import {
   applyUserDecisions,
   autoFillPreview,
@@ -75,31 +76,6 @@ function fetchParsingRules(bankAccount: string) {
   const rawRulesData = RuleSheet.getRulesData()
   const ruleParser = new RuleParser()
   return ruleParser.parseRulesByAccount(rawRulesData, bankAccount)
-}
-
-/**
- * wraps an RPC function with standardized error handling and execution timing.
- */
-function withRpcHandler<TArgs extends unknown[], TReturn>(
-  name: string,
-  fn: (...args: TArgs) => ServerResponse<TReturn>,
-): (...args: TArgs) => ServerResponse<TReturn> {
-  return (...args: TArgs): ServerResponse<TReturn> => {
-    try {
-      Logger.time(name)
-      return fn(...args)
-    }
-    catch (error) {
-      Logger.error(error)
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : String(error),
-      }
-    }
-    finally {
-      Logger.timeEnd(name)
-    }
-  }
 }
 
 /**

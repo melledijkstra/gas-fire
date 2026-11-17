@@ -1,5 +1,5 @@
-import { Logger } from '@/common/logger'
 import type { AccountOptions, ServerResponse } from '@/common/types'
+import { withRpcHandler } from '../rpc-handler'
 import { AccountUtils } from './account-utils'
 
 /**
@@ -15,16 +15,10 @@ import { AccountUtils } from './account-utils'
  * }
  * ```
  */
-export function getAccountOptions(): ServerResponse<AccountOptions> {
-  try {
-    const options = AccountUtils.getAccountOptions()
-    return { success: true, data: options }
-  }
-  catch (error) {
-    Logger.error(error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : String(error),
-    }
-  }
-}
+export const getAccountOptions = withRpcHandler(
+  'getAccountOptions',
+  (): ServerResponse<AccountOptions> => ({
+    success: true,
+    data: AccountUtils.getAccountOptions(),
+  }),
+)

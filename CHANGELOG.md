@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.21.0-beta
+
+- **Feature** - 📱 Added standalone Mobile Budget Web App (`doGet`) and desktop menu launcher with Overview, 20-category Monthly/YTD Budgets, 12-month category trend charts, and optimistic transaction categorization
+
 ## 4.20.0-beta
 
 - Code cleanup

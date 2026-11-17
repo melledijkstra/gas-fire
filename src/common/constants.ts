@@ -3,6 +3,7 @@ export enum DialogType {
   settings,
   about,
   enableBanking,
+  mobileBudget,
 }
 
 export enum NAMED_RANGES {
@@ -40,3 +41,5 @@ export type YMYLColumn = (typeof YMYL_COLUMNS)[number]
 export const SOURCE_SHEET_ID = 1093484485
 
 export const IMPORT_RULES_SHEET_NAME = 'import-rules'
+
+export const CATEGORIES_SHEET_NAME = 'categories'
