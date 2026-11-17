@@ -63,9 +63,9 @@ export interface ImportPreviewResult {
 
 export type UserDecisions = Map<string, TransactionAction>
 
-export type EmptyServerResponse = { success: true, message?: string }
-export type ErrorServerResponse = { success: false, error: string }
-export type PayloadServerResponse<T> = { success: true, data: T, message?: string }
+type EmptyServerResponse = { success: true, message?: string }
+type ErrorServerResponse = { success: false, error: string }
+type PayloadServerResponse<T> = { success: true, data: T, message?: string }
 
 export type ServerResponse<T = void>
   = | (T extends void ? EmptyServerResponse : PayloadServerResponse<T>)
@@ -106,4 +106,69 @@ export type YMYLTransaction = {
   disabled: boolean | ''
   contra_iban: string
   currency: string
+}
+
+export interface MobileCategoryInfo {
+  name: string
+  icon: string
+  description: string
+}
+
+export interface MobileAccountBalance {
+  slug: string
+  label: string
+  iban: string
+  balance: number
+}
+
+export interface MobileCategoryMonthMetric {
+  month: number // 1-12
+  actual: number
+  budget: number
+  difference: number
+  runningTotal: number
+}
+
+export interface MobileCategoryBudget {
+  category: string
+  icon: string
+  description: string
+  months: MobileCategoryMonthMetric[]
+}
+
+export interface MobileTransaction {
+  rowIndex: number
+  ref: string
+  iban: string
+  accountLabel: string
+  date: string // ISO YYYY-MM-DD
+  year: number
+  month: number // 1-12
+  amount: number
+  contraAccount: string
+  description: string
+  comments: string
+  icon: string
+  category: string
+  label: string
+  currency: string
+}
+
+export interface MobileDashboardData {
+  currentYear: number
+  availableYears: number[]
+  categories: MobileCategoryInfo[]
+  accounts: MobileAccountBalance[]
+  totalLiquidBalance: number
+  budgetsByYear: Record<number, MobileCategoryBudget[]>
+  transactions: MobileTransaction[]
+  uncategorizedCount: number
+  webAppUrl: string
+}
+
+export interface MobileTransactionUpdatePayload {
+  rowIndex: number
+  ref: string
+  category: string
+  comments: string
 }
