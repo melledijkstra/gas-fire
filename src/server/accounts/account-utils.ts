@@ -1,6 +1,7 @@
 import { NAMED_RANGES } from '@/common/constants'
 import { cleanString, slugify } from '@/common/helpers'
 import { Table } from '@/common/table/Table'
+import type { MobileAccountBalance } from '@/common/types'
 import { YMYLSpreadsheet } from '../globals'
 
 const BANK_ACCOUNTS_CACHE_KEY = 'bank_accounts_v2'
@@ -165,6 +166,16 @@ export class AccountUtils {
 
   static getAccountIdentifiers(): string[] {
     return Object.keys(this.fetchAccountsData())
+  }
+
+  static getAccountsWithBalances(): MobileAccountBalance[] {
+    const data = this.fetchAccountsData()
+    return Object.entries(data).map(([slug, info]) => ({
+      slug,
+      label: info.label,
+      iban: info.iban,
+      balance: info.balance ?? 0,
+    }))
   }
 
   static calculateNewBalance(accountId: string, values: number[]) {
