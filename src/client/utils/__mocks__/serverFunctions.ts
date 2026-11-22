@@ -3,12 +3,18 @@ import type {
   AccountOptions,
   ImportPreviewResult,
   MobileDashboardData,
+  MobileSubcategoryBudgetUpdatePayload,
+  MobileSubcategoryBudgetUpdateResult,
+  MobileTransactionsPage,
   MobileTransactionUpdatePayload,
   RawTable,
   ServerResponse,
   TransactionAction,
 } from '@/common/types'
-import { buildMobileDashboardFixture } from '@/fixtures/mobile-budget'
+import {
+  buildMobileDashboardFixture,
+  buildMobileTransactionsPageFixture,
+} from '@/fixtures/mobile-budget'
 import type { Aspsp } from '@/server/enable-banking/types'
 import type { EnableBankingConnection } from '@/server/enable-banking/rpc'
 import type * as publicServerFunctions from '@/server/index'
@@ -106,10 +112,6 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
   }
 
   async openSettingsDialog(): Promise<void> {
-    throw new Error('Mock not implemented')
-  }
-
-  async openMobileBudgetDialog(): Promise<void> {
     throw new Error('Mock not implemented')
   }
 
@@ -230,6 +232,17 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     }
   }
 
+  async getMobileTransactionsPage(
+    offset: number,
+    limit = 200,
+  ): Promise<ServerResponse<MobileTransactionsPage>> {
+    await this.delay(350)
+    return {
+      success: true,
+      data: buildMobileTransactionsPageFixture(offset, Math.min(limit, 20), 60),
+    }
+  }
+
   async updateMobileTransaction(
     payload: MobileTransactionUpdatePayload,
   ): Promise<ServerResponse<{ rowIndex: number }>> {
@@ -237,6 +250,20 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
     return {
       success: true,
       data: { rowIndex: payload.rowIndex },
+    }
+  }
+
+  async updateMobileSubcategoryBudget(
+    payload: MobileSubcategoryBudgetUpdatePayload,
+  ): Promise<ServerResponse<MobileSubcategoryBudgetUpdateResult>> {
+    await this.delay(300)
+    const updatedSubcategoryMonths = Array.from({ length: 12 }, (_, idx) => payload.monthUpdates[idx + 1] ?? -100)
+    return {
+      success: true,
+      data: {
+        rowIndex: payload.rowIndex,
+        updatedSubcategoryMonths,
+      },
     }
   }
 }

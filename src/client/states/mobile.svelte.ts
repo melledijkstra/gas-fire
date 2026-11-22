@@ -1,20 +1,25 @@
 import type {
   MobileCategoryBudget,
   MobileDashboardData,
+  MobileSubcategoryBudgetUpdatePayload,
   MobileTransaction,
 } from '@/common/types'
 import { SvelteSet } from 'svelte/reactivity'
 import {
-  applyOptimisticTransactionEdit,
+  applyConfirmedSubcategoryBudgetEdit,
+  applyConfirmedTransactionEdit,
   type BudgetViewMode,
   computeCategoryDetail,
   computeMonthlyExpenseSummary,
   computeOverBudgetCategories,
   filterMobileTransactions,
+  mergeTransactionPages,
   type MobileTab,
   type TransactionFilterMode,
 } from '../utils/mobile-budget'
 import { serverFunctions } from '../utils/serverFunctions'
+
+const TRANSACTIONS_PAGE_SIZE = 200
 
 export interface MobileState {
   activeTab: MobileTab
@@ -25,7 +30,9 @@ export interface MobileState {
   transactionFilter: TransactionFilterMode
   searchQuery: string
   isLoading: boolean
+  isLoadingMoreTransactions: boolean
   isSyncing: boolean
+  isSavingSubcategory: boolean
   errorMessage: string | null
   statusMessage: string | null
   dashboard: MobileDashboardData | null
@@ -43,7 +50,9 @@ export const mobileState: MobileState = $state({
   transactionFilter: 'uncategorized',
   searchQuery: '',
   isLoading: false,
+  isLoadingMoreTransactions: false,
   isSyncing: false,
+  isSavingSubcategory: false,
   errorMessage: null,
   statusMessage: null,
   dashboard: null,
@@ -100,6 +109,32 @@ export async function loadMobileDashboard(): Promise<void> {
   mobileState.isLoading = false
 }
 
+export async function loadMoreMobileTransactions(): Promise<void> {
+  const dashboard = mobileState.dashboard
+  if (!dashboard || !dashboard.hasMoreTransactions || mobileState.isLoadingMoreTransactions) {
+    return
+  }
+
+  mobileState.isLoadingMoreTransactions = true
+  mobileState.errorMessage = null
+
+  const res = await serverFunctions.getMobileTransactionsPage(
+    dashboard.nextCategorizedOffset,
+    TRANSACTIONS_PAGE_SIZE,
+  )
+
+  if (res.success) {
+    dashboard.transactions = mergeTransactionPages(dashboard.transactions, res.data.transactions)
+    dashboard.nextCategorizedOffset = res.data.nextOffset
+    dashboard.hasMoreTransactions = res.data.hasMore
+  }
+  else {
+    mobileState.errorMessage = `Failed to load more transactions: ${res.error}`
+  }
+
+  mobileState.isLoadingMoreTransactions = false
+}
+
 export async function syncMobileBankTransactions(): Promise<void> {
   mobileState.isSyncing = true
   mobileState.errorMessage = null
@@ -107,8 +142,8 @@ export async function syncMobileBankTransactions(): Promise<void> {
 
   const res = await serverFunctions.triggerEnableBankingSync()
   if (res.success) {
-    mobileState.statusMessage = res.message ?? 'Bank sync completed!'
     await loadMobileDashboard()
+    mobileState.statusMessage = res.message ?? 'Bank sync completed!'
   }
   else {
     mobileState.errorMessage = `Sync failed: ${res.error}`
@@ -123,38 +158,64 @@ export async function saveMobileTransactionEdit(
   newComments: string,
 ): Promise<boolean> {
   const dashboard = mobileState.dashboard
-  if (!dashboard) {
-    return false
-  }
-
-  const snapshot = applyOptimisticTransactionEdit(dashboard, ref, newCategory, newComments)
-  if (!snapshot) {
+  const tx = dashboard?.transactions.find(item => item.ref === ref)
+  if (!dashboard || !tx) {
     return false
   }
 
   mobileState.savingRefs.add(ref)
   mobileState.errorMessage = null
 
+  const trimmedCategory = newCategory.trim()
+  const trimmedComments = newComments.trim()
+
   const res = await serverFunctions.updateMobileTransaction({
-    rowIndex: snapshot.transaction.rowIndex,
+    rowIndex: tx.rowIndex,
     ref,
-    category: snapshot.transaction.category,
-    comments: snapshot.transaction.comments,
+    category: trimmedCategory,
+    comments: trimmedComments,
   })
 
   mobileState.savingRefs.delete(ref)
 
   if (res.success) {
-    snapshot.transaction.rowIndex = res.data.rowIndex
+    applyConfirmedTransactionEdit(dashboard, ref, trimmedCategory, trimmedComments, res.data.rowIndex)
+    mobileState.statusMessage = 'Transaction saved.'
     return true
   }
 
-  applyOptimisticTransactionEdit(
-    dashboard,
-    ref,
-    snapshot.previousCategory,
-    snapshot.previousComments,
-  )
   mobileState.errorMessage = `Failed to save transaction: ${res.error}`
+  return false
+}
+
+export async function saveSubcategoryBudgetEdit(
+  payload: MobileSubcategoryBudgetUpdatePayload,
+): Promise<boolean> {
+  const dashboard = mobileState.dashboard
+  if (!dashboard) {
+    return false
+  }
+
+  mobileState.isSavingSubcategory = true
+  mobileState.errorMessage = null
+
+  const res = await serverFunctions.updateMobileSubcategoryBudget(payload)
+
+  mobileState.isSavingSubcategory = false
+
+  if (res.success) {
+    applyConfirmedSubcategoryBudgetEdit(
+      dashboard,
+      payload.year,
+      payload.category,
+      payload.subcategoryName,
+      res.data.rowIndex,
+      res.data.updatedSubcategoryMonths,
+    )
+    mobileState.statusMessage = `Saved ${payload.subcategoryName} budget (${payload.year}).`
+    return true
+  }
+
+  mobileState.errorMessage = `Failed to save budget: ${res.error}`
   return false
 }

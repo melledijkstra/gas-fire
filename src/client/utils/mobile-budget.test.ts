@@ -2,15 +2,18 @@ import type { MobileDashboardData } from '@/common/types'
 import {
   buildMobileCategoryBudget,
   buildMobileDashboardFixture,
+  buildMobileSubcategoryBudget,
   buildMobileTransaction,
 } from '@/fixtures/mobile-budget'
 import {
-  applyOptimisticTransactionEdit,
+  applyConfirmedSubcategoryBudgetEdit,
+  applyConfirmedTransactionEdit,
   computeCategoryDetail,
   computeMonthlyExpenseSummary,
   computeOverBudgetCategories,
   filterMobileTransactions,
   formatCurrency,
+  mergeTransactionPages,
 } from './mobile-budget'
 
 function createTestDashboard(): MobileDashboardData {
@@ -50,6 +53,18 @@ function createTestDashboard(): MobileDashboardData {
         }),
       ],
     },
+    subcategoriesByYear: {
+      2026: {
+        'Food & Groceries': [
+          buildMobileSubcategoryBudget({
+            rowIndex: 42,
+            category: 'Food & Groceries',
+            name: 'Groceries',
+            monthlyAmount: -200,
+          }),
+        ],
+      },
+    },
     transactions: [
       buildMobileTransaction({
         rowIndex: 2,
@@ -86,39 +101,81 @@ describe('mobile-budget utilities', () => {
     expect(formatCurrency(-210.5)).toContain('210.50')
   })
 
-  test('applyOptimisticTransactionEdit updates transaction, uncategorizedCount, and category budget', () => {
+  test('applyConfirmedTransactionEdit updates transaction, uncategorizedCount, rowIndex, and category budget', () => {
     const dashboard = createTestDashboard()
-    const snapshot = applyOptimisticTransactionEdit(
+    const applied = applyConfirmedTransactionEdit(
       dashboard,
       'tx-1',
       'Restaurants & Bars',
       'Friday dinner',
+      9,
       new Date(2026, 10, 16),
     )
 
-    expect(snapshot?.previousCategory).toBe('')
+    expect(applied).toBe(true)
     expect(dashboard.uncategorizedCount).toBe(0)
 
     const updatedTx = dashboard.transactions.find(t => t.ref === 'tx-1')!
     expect(updatedTx.category).toBe('Restaurants & Bars')
     expect(updatedTx.comments).toBe('Friday dinner')
     expect(updatedTx.icon).toBe('🍽')
+    expect(updatedTx.rowIndex).toBe(9)
 
     const diningBudget = dashboard.budgetsByYear[2026].find(b => b.category === 'Restaurants & Bars')!
     const novMetric = diningBudget.months[10]
     expect(novMetric.actual).toBe(-130)
     expect(novMetric.difference).toBe(20)
 
-    applyOptimisticTransactionEdit(
+    applyConfirmedTransactionEdit(
       dashboard,
       'tx-1',
       'Food & Groceries',
       'Actually groceries',
+      undefined,
       new Date(2026, 10, 16),
     )
     expect(diningBudget.months[10].actual).toBe(-100)
     const foodBudget = dashboard.budgetsByYear[2026].find(b => b.category === 'Food & Groceries')!
     expect(foodBudget.months[10].actual).toBe(-240)
+  })
+
+  test('applyConfirmedSubcategoryBudgetEdit updates subcategory months and parent category budget metrics', () => {
+    const dashboard = createTestDashboard()
+    const updatedMonths = Array.from({ length: 12 }, (_, idx) => (idx === 10 ? -250 : -200))
+
+    const applied = applyConfirmedSubcategoryBudgetEdit(
+      dashboard,
+      2026,
+      'Food & Groceries',
+      'Groceries',
+      45,
+      updatedMonths,
+      new Date(2026, 10, 16),
+    )
+
+    expect(applied).toBe(true)
+    const sub = dashboard.subcategoriesByYear[2026]['Food & Groceries'][0]
+    expect(sub.rowIndex).toBe(45)
+    expect(sub.months[10]).toBe(-250)
+
+    const foodBudget = dashboard.budgetsByYear[2026].find(b => b.category === 'Food & Groceries')!
+    expect(foodBudget.months[10].budget).toBe(-250)
+    expect(foodBudget.months[10].difference).toBe(40) // actual -210 - (-250) = +40
+  })
+
+  test('mergeTransactionPages appends unique transactions while preserving existing entries', () => {
+    const existing = [
+      buildMobileTransaction({ ref: 'tx-1', comments: 'edited locally' }),
+      buildMobileTransaction({ ref: 'tx-2' }),
+    ]
+    const incoming = [
+      buildMobileTransaction({ ref: 'tx-2', comments: 'older copy' }),
+      buildMobileTransaction({ ref: 'tx-3' }),
+    ]
+
+    const merged = mergeTransactionPages(existing, incoming)
+    expect(merged.map(t => t.ref)).toEqual(['tx-1', 'tx-2', 'tx-3'])
+    expect(merged[0].comments).toBe('edited locally')
   })
 
   test('computeOverBudgetCategories returns categories exceeding their monthly budget', () => {
@@ -161,12 +218,13 @@ describe('mobile-budget utilities', () => {
     ).toEqual(['tx-2'])
   })
 
-  test('computeCategoryDetail returns 12-month budget and month transactions', () => {
+  test('computeCategoryDetail returns 12-month budget, subcategories, and month transactions', () => {
     const dashboard = createTestDashboard()
     const detail = computeCategoryDetail(dashboard, 2026, 11, 'Food & Groceries')
 
     expect(detail?.budget.category).toBe('Food & Groceries')
     expect(detail?.transactions.map(t => t.ref)).toEqual(['tx-2'])
+    expect(detail?.subcategories.map(s => s.name)).toEqual(['Groceries'])
     expect(computeCategoryDetail(dashboard, 2026, 11, null)).toBeNull()
   })
 })

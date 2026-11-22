@@ -1,12 +1,14 @@
 import {
   adjustMonthMetricActual,
   getMaxElapsedMonth,
+  recalculateCategoryBudgetMonths,
   roundCurrency,
 } from '@/common/budget'
 import type {
   MobileCategoryBudget,
   MobileCategoryMonthMetric,
   MobileDashboardData,
+  MobileSubcategoryBudget,
   MobileTransaction,
 } from '@/common/types'
 
@@ -53,27 +55,20 @@ export function formatCurrency(value: number, currency = 'EUR'): string {
   }).format(value)
 }
 
-export function applyOptimisticTransactionEdit(
+export function applyConfirmedTransactionEdit(
   dashboard: MobileDashboardData,
   ref: string,
   newCategory: string,
   newComments: string,
+  updatedRowIndex?: number,
   referenceDate: Date = new Date(),
-): {
-  previousCategory: string
-  previousComments: string
-  previousIcon: string
-  transaction: MobileTransaction
-} | null {
+): boolean {
   const tx = dashboard.transactions.find(item => item.ref === ref)
   if (!tx) {
-    return null
+    return false
   }
 
   const previousCategory = tx.category
-  const previousComments = tx.comments
-  const previousIcon = tx.icon
-
   const trimmedCategory = newCategory.trim()
   const trimmedComments = newComments.trim()
 
@@ -92,13 +87,66 @@ export function applyOptimisticTransactionEdit(
   tx.category = trimmedCategory
   tx.comments = trimmedComments
   tx.icon = trimmedCategory ? (categoryInfo?.icon ?? '⍰') : '⛔'
-
-  return {
-    previousCategory,
-    previousComments,
-    previousIcon,
-    transaction: tx,
+  if (updatedRowIndex !== undefined) {
+    tx.rowIndex = updatedRowIndex
   }
+
+  return true
+}
+
+export function applyConfirmedSubcategoryBudgetEdit(
+  dashboard: MobileDashboardData,
+  year: number,
+  category: string,
+  subcategoryName: string,
+  updatedRowIndex: number,
+  updatedSubcategoryMonths: number[],
+  referenceDate: Date = new Date(),
+): boolean {
+  const yearSubcategories = dashboard.subcategoriesByYear[year]
+  const categorySubcategories = yearSubcategories?.[category]
+  const targetSub = categorySubcategories?.find(s => s.name === subcategoryName)
+  if (!targetSub) {
+    return false
+  }
+
+  const budgetDeltasByMonth: Record<number, number> = {}
+  for (let i = 0; i < updatedSubcategoryMonths.length; i++) {
+    const prevVal = targetSub.months[i] ?? 0
+    const nextVal = roundCurrency(updatedSubcategoryMonths[i] ?? 0)
+    const delta = roundCurrency(nextVal - prevVal)
+    if (delta !== 0) {
+      budgetDeltasByMonth[i + 1] = delta
+    }
+  }
+
+  targetSub.rowIndex = updatedRowIndex
+  targetSub.months = updatedSubcategoryMonths.map(v => roundCurrency(v))
+
+  const parentBudget = (dashboard.budgetsByYear[year] ?? []).find(b => b.category === category)
+  if (parentBudget && Object.keys(budgetDeltasByMonth).length > 0) {
+    const maxMonth = getMaxElapsedMonth(year, referenceDate)
+    recalculateCategoryBudgetMonths(parentBudget.months, budgetDeltasByMonth, maxMonth)
+  }
+
+  return true
+}
+
+export function mergeTransactionPages(
+  existing: MobileTransaction[],
+  incoming: MobileTransaction[],
+): MobileTransaction[] {
+  const seenRefs = new Set(existing.map(tx => tx.ref))
+  const merged = [...existing]
+
+  for (const tx of incoming) {
+    if (!seenRefs.has(tx.ref)) {
+      seenRefs.add(tx.ref)
+      merged.push(tx)
+    }
+  }
+
+  return merged
 }
 
 function updateUncategorizedCounter(
@@ -262,6 +310,7 @@ export function computeCategoryDetail(
 ): {
   budget: MobileCategoryBudget
   transactions: MobileTransaction[]
+  subcategories: MobileSubcategoryBudget[]
 } | null {
   if (!categoryName || !dashboard) {
     return null
@@ -280,5 +329,7 @@ export function computeCategoryDetail(
       && tx.month === month,
   )
 
-  return { budget, transactions }
+  const subcategories = dashboard.subcategoriesByYear[year]?.[categoryName] ?? []
+
+  return { budget, transactions, subcategories }
 }
