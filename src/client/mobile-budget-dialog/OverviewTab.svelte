@@ -45,59 +45,39 @@
 
 <div class="space-y-4 pb-4">
   <!-- In-App Alerts Section -->
-  <section class="space-y-2">
-    {#if uncategorizedCount > 0}
-      <div class="flex items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 p-3.5 text-amber-900 shadow-xs dark:border-amber-700/60 dark:bg-amber-950/50 dark:text-amber-100">
-        <div class="flex items-center gap-2.5">
-          <span class="text-xl">⛔</span>
-          <div>
-            <p class="text-sm font-semibold">
-              {uncategorizedCount} uncategorized {uncategorizedCount === 1 ? 'transaction' : 'transactions'}
-            </p>
-            <p class="text-xs text-amber-700 dark:text-amber-300">Review and assign categories to keep your budget accurate.</p>
+  {#if uncategorizedCount > 0 || overBudgetList.length === 0}
+    <section class="space-y-2">
+      {#if uncategorizedCount > 0}
+        <div class="flex items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 p-3.5 text-amber-900 shadow-xs dark:border-amber-700/60 dark:bg-amber-950/50 dark:text-amber-100">
+          <div class="flex items-center gap-2.5">
+            <span class="text-xl">⛔</span>
+            <div>
+              <p class="text-sm font-semibold">
+                {uncategorizedCount} uncategorized {uncategorizedCount === 1 ? 'transaction' : 'transactions'}
+              </p>
+              <p class="text-xs text-amber-700 dark:text-amber-300">Review and assign categories to keep your budget accurate.</p>
+            </div>
           </div>
+          <button
+            type="button"
+            class="shrink-0 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700"
+            onclick={goToUncategorized}
+          >
+            Review →
+          </button>
         </div>
-        <button
-          type="button"
-          class="shrink-0 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700"
-          onclick={goToUncategorized}
-        >
-          Review →
-        </button>
-      </div>
-    {/if}
+      {/if}
 
-    {#if overBudgetList.length > 0}
-      <div class="rounded-xl border border-rose-200 bg-rose-50 p-3.5 text-rose-900 shadow-xs dark:border-rose-800/60 dark:bg-rose-950/50 dark:text-rose-100">
-        <div class="mb-2 flex items-center justify-between">
-          <p class="text-sm font-semibold">
-            ⚠️ {overBudgetList.length} {overBudgetList.length === 1 ? 'category' : 'categories'} over budget in {monthLabel}
+      {#if uncategorizedCount === 0 && overBudgetList.length === 0}
+        <div class="flex items-center gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-emerald-900 dark:border-emerald-800/60 dark:bg-emerald-950/50 dark:text-emerald-100">
+          <span class="text-lg">✅</span>
+          <p class="text-xs font-medium">
+            All transactions categorized and all {monthLabel} budgets on track!
           </p>
         </div>
-        <div class="flex flex-wrap gap-1.5">
-          {#each overBudgetList as item (item.category)}
-            <button
-              type="button"
-              class="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-white px-2.5 py-1 text-xs font-medium text-rose-800 hover:bg-rose-100 dark:border-rose-800 dark:bg-gray-900 dark:text-rose-200 dark:hover:bg-rose-950"
-              onclick={() => openCategory(item.category)}
-            >
-              <span>{item.icon} {item.category}</span>
-              <span class="font-bold text-rose-600 dark:text-rose-400">({formatCurrency(item.difference)})</span>
-            </button>
-          {/each}
-        </div>
-      </div>
-    {/if}
-
-    {#if uncategorizedCount === 0 && overBudgetList.length === 0}
-      <div class="flex items-center gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-emerald-900 dark:border-emerald-800/60 dark:bg-emerald-950/50 dark:text-emerald-100">
-        <span class="text-lg">✅</span>
-        <p class="text-xs font-medium">
-          All transactions categorized and all {monthLabel} budgets on track!
-        </p>
-      </div>
-    {/if}
-  </section>
+      {/if}
+    </section>
+  {/if}
 
   <!-- Net Worth & Accounts Hero Card -->
   {#if dashboard}
@@ -245,4 +225,27 @@
       {/each}
     </div>
   </section>
+
+  <!-- Over Budget Categories Section -->
+  {#if overBudgetList.length > 0}
+    <section class="rounded-xl border border-rose-200 bg-rose-50 p-3.5 text-rose-900 shadow-xs dark:border-rose-800/60 dark:bg-rose-950/50 dark:text-rose-100">
+      <div class="mb-2 flex items-center justify-between">
+        <p class="text-sm font-semibold">
+          ⚠️ {overBudgetList.length} {overBudgetList.length === 1 ? 'category' : 'categories'} over budget in {monthLabel}
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-1.5">
+        {#each overBudgetList as item (item.category)}
+          <button
+            type="button"
+            class="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-white px-2.5 py-1 text-xs font-medium text-rose-800 hover:bg-rose-100 dark:border-rose-800 dark:bg-gray-900 dark:text-rose-200 dark:hover:bg-rose-950"
+            onclick={() => openCategory(item.category)}
+          >
+            <span>{item.icon} {item.category}</span>
+            <span class="font-bold text-rose-600 dark:text-rose-400">({formatCurrency(item.difference)})</span>
+          </button>
+        {/each}
+      </div>
+    </section>
+  {/if}
 </div>
