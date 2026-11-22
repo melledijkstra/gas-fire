@@ -154,16 +154,56 @@ export interface MobileTransaction {
   currency: string
 }
 
+export interface MobileNetWorthSummary {
+  netWorth: number | null
+  liquidAssets: number
+  capital: number | null
+  investments: number | null
+  debt: number | null
+}
+
+export interface MobileSubcategoryBudget {
+  rowIndex: number
+  category: string
+  name: string
+  months: number[] // 12 monthly budget values (Jan..Dec)
+}
+
+export interface MobileSubcategoryBudgetUpdatePayload {
+  year: number
+  category: string
+  subcategoryName: string
+  rowIndex: number
+  /** Map of 1-based month number (1..12) to new user-chosen signed budget number */
+  monthUpdates: Record<number, number>
+}
+
+export interface MobileSubcategoryBudgetUpdateResult {
+  rowIndex: number
+  updatedSubcategoryMonths: number[]
+}
+
+export interface MobileTransactionsPage {
+  transactions: MobileTransaction[]
+  nextOffset: number
+  hasMore: boolean
+  totalCategorizedCount: number
+}
+
 export interface MobileDashboardData {
   currentYear: number
   availableYears: number[]
   categories: MobileCategoryInfo[]
   accounts: MobileAccountBalance[]
   totalLiquidBalance: number
+  netWorth: MobileNetWorthSummary
   budgetsByYear: Record<number, MobileCategoryBudget[]>
+  subcategoriesByYear: Record<number, Record<string, MobileSubcategoryBudget[]>>
   transactions: MobileTransaction[]
   uncategorizedCount: number
-  webAppUrl: string
+  nextCategorizedOffset: number
+  hasMoreTransactions: boolean
+  totalTransactionCount: number
 }
 
 export interface MobileTransactionUpdatePayload {

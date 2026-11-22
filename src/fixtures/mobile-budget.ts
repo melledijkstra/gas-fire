@@ -4,7 +4,9 @@ import type {
   MobileCategoryBudget,
   MobileCategoryInfo,
   MobileDashboardData,
+  MobileSubcategoryBudget,
   MobileTransaction,
+  MobileTransactionsPage,
 } from '@/common/types'
 
 const DEFAULT_MOBILE_CATEGORIES: MobileCategoryInfo[] = [
@@ -67,6 +69,19 @@ export function buildMobileCategoryBudget(
   }
 }
 
+export function buildMobileSubcategoryBudget(
+  overrides: Partial<MobileSubcategoryBudget> & { monthlyAmount?: number } = {},
+): MobileSubcategoryBudget {
+  const { monthlyAmount = -100, ...rest } = overrides
+  return {
+    rowIndex: 30,
+    category: 'Food & Groceries',
+    name: 'Groceries',
+    months: Array.from({ length: MONTHS_IN_YEAR }, () => monthlyAmount),
+    ...rest,
+  }
+}
+
 export function buildMobileTransaction(
   overrides: Partial<MobileTransaction> = {},
 ): MobileTransaction {
@@ -118,18 +133,97 @@ function buildDefaultYearCategoryBudgets(
   })
 }
 
-export function buildMobileDashboardFixture(
-  overrides: Partial<MobileDashboardData> & { referenceMonth?: number } = {},
-): MobileDashboardData {
-  const currentYear = overrides.currentYear ?? 2026
-  const currentMonth = overrides.referenceMonth ?? 11
-  const monthStr = String(currentMonth).padStart(2, '0')
-  const accounts = overrides.accounts ?? DEFAULT_MOBILE_ACCOUNTS
-  const totalLiquidBalance = overrides.totalLiquidBalance ?? roundCurrency(
-    accounts.reduce((sum, a) => sum + a.balance, 0),
-  )
+function buildDefaultYearSubcategories(): Record<string, MobileSubcategoryBudget[]> {
+  return {
+    'Income': [
+      buildMobileSubcategoryBudget({ rowIndex: 30, category: 'Income', name: 'Refunds', monthlyAmount: 0 }),
+      buildMobileSubcategoryBudget({ rowIndex: 31, category: 'Income', name: 'Side Projects', monthlyAmount: 0 }),
+    ],
+    'Salary': [
+      buildMobileSubcategoryBudget({ rowIndex: 35, category: 'Salary', name: 'Base Salary', monthlyAmount: 3000 }),
+      buildMobileSubcategoryBudget({ rowIndex: 36, category: 'Salary', name: 'Bonus', monthlyAmount: 0 }),
+    ],
+    'Food & Groceries': [
+      buildMobileSubcategoryBudget({ rowIndex: 40, category: 'Food & Groceries', name: 'Groceries', monthlyAmount: -300 }),
+    ],
+    'Restaurants & Bars': [
+      buildMobileSubcategoryBudget({ rowIndex: 43, category: 'Restaurants & Bars', name: 'Restaurants', monthlyAmount: -100 }),
+      buildMobileSubcategoryBudget({ rowIndex: 44, category: 'Restaurants & Bars', name: 'Cafes & Bars', monthlyAmount: -50 }),
+    ],
+    'Household & Utilities': [
+      buildMobileSubcategoryBudget({ rowIndex: 48, category: 'Household & Utilities', name: 'Rent / Mortgage', monthlyAmount: -750 }),
+      buildMobileSubcategoryBudget({ rowIndex: 49, category: 'Household & Utilities', name: 'Electricity & Water', monthlyAmount: -100 }),
+      buildMobileSubcategoryBudget({ rowIndex: 50, category: 'Household & Utilities', name: 'Internet', monthlyAmount: -50 }),
+    ],
+    'Subscriptions': [
+      buildMobileSubcategoryBudget({ rowIndex: 55, category: 'Subscriptions', name: 'Music & Video', monthlyAmount: -20 }),
+      buildMobileSubcategoryBudget({ rowIndex: 56, category: 'Subscriptions', name: 'Cloud & Apps', monthlyAmount: -20 }),
+    ],
+    'Transport & Car': [
+      buildMobileSubcategoryBudget({ rowIndex: 60, category: 'Transport & Car', name: 'Public Transit', monthlyAmount: -50 }),
+      buildMobileSubcategoryBudget({ rowIndex: 61, category: 'Transport & Car', name: 'Fuel', monthlyAmount: -30 }),
+    ],
+    'Leisure & Entertainment': [
+      buildMobileSubcategoryBudget({ rowIndex: 65, category: 'Leisure & Entertainment', name: 'Concerts & Cinema', monthlyAmount: -60 }),
+      buildMobileSubcategoryBudget({ rowIndex: 66, category: 'Leisure & Entertainment', name: 'Hobbies', monthlyAmount: -40 }),
+    ],
+    'Savings & Investments': [
+      buildMobileSubcategoryBudget({ rowIndex: 70, category: 'Savings & Investments', name: 'Index ETFs', monthlyAmount: -350 }),
+      buildMobileSubcategoryBudget({ rowIndex: 71, category: 'Savings & Investments', name: 'Emergency Savings', monthlyAmount: -150 }),
+    ],
+  }
+}
 
-  const transactions = overrides.transactions ?? [
+export function buildMobileTransactionsPageFixture(
+  offset: number,
+  limit = 20,
+  totalCategorizedCount = 60,
+): MobileTransactionsPage {
+  const safeOffset = Math.max(0, offset)
+  const count = Math.max(0, Math.min(limit, totalCategorizedCount - safeOffset))
+  const merchants = ['Supermarket X', 'Bistro Central', 'Corner Bakery', 'City Transit', 'Stream App']
+  const categories = [
+    { name: 'Food & Groceries', icon: '🛒' },
+    { name: 'Restaurants & Bars', icon: '🍽' },
+    { name: 'Restaurants & Bars', icon: '🍽' },
+    { name: 'Transport & Car', icon: '🚌' },
+    { name: 'Subscriptions', icon: '🔃' },
+  ]
+
+  const transactions: MobileTransaction[] = Array.from({ length: count }, (_, i) => {
+    const idx = safeOffset + i
+    const cat = categories[idx % categories.length]
+    const month = ((10 - Math.floor(idx / 8) + 12) % 12) + 1
+    const day = ((27 - (idx % 25)) % 28) + 1
+    return buildMobileTransaction({
+      rowIndex: 20 + idx,
+      ref: `tx-hist-${idx + 1}`,
+      date: `2026-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+      year: 2026,
+      month,
+      amount: -roundCurrency(10 + (idx % 7) * 6.5),
+      contraAccount: merchants[idx % merchants.length],
+      description: 'Synthetic historical card payment',
+      icon: cat.icon,
+      category: cat.name,
+    })
+  })
+
+  const nextOffset = safeOffset + transactions.length
+  return {
+    transactions,
+    nextOffset,
+    hasMore: nextOffset < totalCategorizedCount,
+    totalCategorizedCount,
+  }
+}
+
+function buildDefaultMobileTransactions(
+  currentYear: number,
+  currentMonth: number,
+): MobileTransaction[] {
+  const monthStr = String(currentMonth).padStart(2, '0')
+  return [
     buildMobileTransaction({
       rowIndex: 2,
       ref: 'tx-uncat-1',
@@ -164,22 +258,53 @@ export function buildMobileDashboardFixture(
       category: 'Restaurants & Bars',
     }),
   ]
+}
 
-  const uncategorizedCount = overrides.uncategorizedCount
+export function buildMobileDashboardFixture(
+  overrides: Partial<MobileDashboardData> & { referenceMonth?: number } = {},
+): MobileDashboardData {
+  const { referenceMonth, ...dashboardOverrides } = overrides
+  const currentYear = dashboardOverrides.currentYear ?? 2026
+  const currentMonth = referenceMonth ?? 11
+  const accounts = dashboardOverrides.accounts ?? DEFAULT_MOBILE_ACCOUNTS
+  const totalLiquidBalance = dashboardOverrides.totalLiquidBalance ?? roundCurrency(
+    accounts.reduce((sum, a) => sum + a.balance, 0),
+  )
+  const transactions = dashboardOverrides.transactions
+    ?? buildDefaultMobileTransactions(currentYear, currentMonth)
+  const uncategorizedCount = dashboardOverrides.uncategorizedCount
     ?? transactions.filter(t => t.category === '').length
 
-  return {
+  const defaults: MobileDashboardData = {
     currentYear,
-    availableYears: overrides.availableYears ?? [currentYear, currentYear - 1],
-    categories: overrides.categories ?? DEFAULT_MOBILE_CATEGORIES,
+    availableYears: [currentYear, currentYear - 1],
+    categories: DEFAULT_MOBILE_CATEGORIES,
     accounts,
     totalLiquidBalance,
-    budgetsByYear: overrides.budgetsByYear ?? {
+    netWorth: {
+      netWorth: roundCurrency(totalLiquidBalance + 12000 + 35000 - 4500),
+      liquidAssets: totalLiquidBalance,
+      capital: 12000,
+      investments: 35000,
+      debt: -4500,
+    },
+    budgetsByYear: {
       [currentYear]: buildDefaultYearCategoryBudgets(currentMonth),
       [currentYear - 1]: buildDefaultYearCategoryBudgets(MONTHS_IN_YEAR),
     },
+    subcategoriesByYear: {
+      [currentYear]: buildDefaultYearSubcategories(),
+      [currentYear - 1]: buildDefaultYearSubcategories(),
+    },
     transactions,
     uncategorizedCount,
-    webAppUrl: overrides.webAppUrl ?? 'https://script.google.com/macros/s/mock-deployment-id/exec',
+    nextCategorizedOffset: transactions.length - uncategorizedCount,
+    hasMoreTransactions: true,
+    totalTransactionCount: Math.max(transactions.length, 60),
+  }
+
+  return {
+    ...defaults,
+    ...dashboardOverrides,
   }
 }

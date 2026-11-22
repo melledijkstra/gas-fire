@@ -66,3 +66,24 @@ export function adjustMonthMetricActual(
     metric.runningTotal = runningTotal
   }
 }
+
+export function recalculateCategoryBudgetMonths(
+  months: MobileCategoryMonthMetric[],
+  budgetDeltasByMonth: Record<number, number>,
+  maxRunningTotalMonth: number,
+): void {
+  let runningTotal = 0
+
+  for (const metric of months) {
+    const delta = budgetDeltasByMonth[metric.month]
+    if (delta !== undefined && delta !== 0) {
+      metric.budget = roundCurrency(metric.budget + delta)
+      metric.difference = roundCurrency(metric.actual - metric.budget)
+    }
+
+    if (metric.month <= maxRunningTotalMonth) {
+      runningTotal = roundCurrency(runningTotal + metric.difference)
+    }
+    metric.runningTotal = runningTotal
+  }
+}

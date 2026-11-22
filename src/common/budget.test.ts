@@ -2,6 +2,7 @@ import {
   adjustMonthMetricActual,
   buildCategoryMonthMetrics,
   getMaxElapsedMonth,
+  recalculateCategoryBudgetMonths,
   roundCurrency,
 } from './budget'
 
@@ -44,5 +45,23 @@ describe('shared budget helpers', () => {
     expect(months[0].difference).toBe(0)
     expect(months[0].runningTotal).toBe(0)
     expect(months[1].runningTotal).toBe(-50)
+  })
+
+  test('recalculateCategoryBudgetMonths updates budgets, differences, and YTD running totals', () => {
+    const budgets = [-200, -200, -200, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    const actuals = [-180, -250, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    const months = buildCategoryMonthMetrics(budgets, actuals, 2)
+
+    // Increase Feb budget allowance by -50 (from -200 to -250) and Mar by +50 (from -200 to -150)
+    recalculateCategoryBudgetMonths(months, { 2: -50, 3: 50 }, 2)
+
+    expect(months[0].runningTotal).toBe(20)
+    expect(months[1].budget).toBe(-250)
+    expect(months[1].difference).toBe(0)
+    expect(months[1].runningTotal).toBe(20)
+    expect(months[2].budget).toBe(-150)
+    expect(months[2].difference).toBe(150)
+    // Month 3 is beyond maxRunningTotalMonth (2), so runningTotal stays at month 2's total
+    expect(months[2].runningTotal).toBe(20)
   })
 })

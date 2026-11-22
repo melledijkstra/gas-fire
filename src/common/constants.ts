@@ -3,11 +3,13 @@ export enum DialogType {
   settings,
   about,
   enableBanking,
-  mobileBudget,
 }
 
 export enum NAMED_RANGES {
   netWorth = 'netWorth',
+  totalCapital = 'totalCapital',
+  totalInvestment = 'totalInvestment',
+  totalDebt = 'totalDebt',
   accounts = 'accounts',
   debug = 'DEBUG',
 }
