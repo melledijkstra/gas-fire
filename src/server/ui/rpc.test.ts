@@ -1,5 +1,4 @@
-import { DIALOG_SIZES } from '@/common/settings'
-import { doGet, onOpen, openMobileBudgetDialog } from './rpc'
+import { doGet, onOpen } from './rpc'
 
 describe('UI RPC functions', () => {
   const addMetaTagMock = vi.fn().mockReturnThis()
@@ -31,22 +30,7 @@ describe('UI RPC functions', () => {
     expect(addMetaTagMock).toHaveBeenCalledWith('viewport', 'width=device-width, initial-scale=1')
   })
 
-  test('openMobileBudgetDialog opens modal dialog with configured mobileBudget size', () => {
-    const showModalDialogMock = vi.fn()
-    vi.spyOn(SpreadsheetApp, 'getUi').mockReturnValueOnce({
-      showModalDialog: showModalDialogMock,
-    } as unknown as GoogleAppsScript.Base.Ui)
-
-    openMobileBudgetDialog()
-
-    const [expectedWidth, expectedHeight] = DIALOG_SIZES.mobileBudget
-    expect(createTemplateFromFileMock).toHaveBeenCalledWith('mobile-budget-dialog')
-    expect(setWidthMock).toHaveBeenCalledWith(expectedWidth)
-    expect(setHeightMock).toHaveBeenCalledWith(expectedHeight)
-    expect(showModalDialogMock).toHaveBeenCalledWith(expect.anything(), 'Mobile Budget App')
-  })
-
-  test('onOpen registers Mobile Budget App in the YMYL menu', () => {
+  test('onOpen builds YMYL menu without desktop Mobile Budget App launcher', () => {
     const addItemMock = vi.fn().mockReturnThis()
     const addSubMenuMock = vi.fn().mockReturnThis()
     const addToUiMock = vi.fn()
@@ -63,7 +47,7 @@ describe('UI RPC functions', () => {
     onOpen()
 
     expect(createMenuMock).toHaveBeenCalledWith('YMYL')
-    expect(addItemMock).toHaveBeenCalledWith('Mobile Budget App', 'openMobileBudgetDialog')
+    expect(addItemMock).not.toHaveBeenCalledWith('Mobile Budget App', expect.anything())
     expect(addToUiMock).toHaveBeenCalledTimes(1)
   })
 })

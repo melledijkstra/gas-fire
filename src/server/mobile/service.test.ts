@@ -1,4 +1,4 @@
-import { YMYL_COLUMNS } from '@/common/constants'
+import { NAMED_RANGES, YMYL_COLUMNS } from '@/common/constants'
 import type { CellValue } from '@/common/types'
 import { buildYMYLCellRow } from '@/fixtures/YMYL-row'
 import { AccountUtils } from '../accounts/account-utils'
@@ -8,12 +8,16 @@ import {
   buildYearCategoryBudgets,
   formatIsoDate,
   getAvailableBudgetYears,
+  getTransactionsPage,
   isRowDisabled,
   parseNumberCell,
   parseRowDate,
+  parseYearSubcategories,
   readCategories,
+  readNetWorthSummary,
   readYearBudgetMap,
   scanSourceTransactions,
+  updateSubcategoryBudgetInSheet,
   updateTransactionInSheet,
 } from './service'
 
@@ -55,6 +59,42 @@ describe('mobile budget service', () => {
   })
 
   describe('sheet readers', () => {
+    test('readNetWorthSummary reads wealth named ranges and normalizes debt as negative', () => {
+      const namedValues: Record<string, number> = {
+        [NAMED_RANGES.netWorth]: 45000,
+        [NAMED_RANGES.totalCapital]: 10000,
+        [NAMED_RANGES.totalInvestment]: 35000,
+        [NAMED_RANGES.totalDebt]: 5000,
+      }
+      const mockSpreadsheet = {
+        getRangeByName: vi.fn((name: string) =>
+          name in namedValues ? { getValue: () => namedValues[name] } : null,
+        ),
+      } as unknown as GoogleAppsScript.Spreadsheet.Spreadsheet
+
+      expect(readNetWorthSummary(mockSpreadsheet, 5000)).toEqual({
+        netWorth: 45000,
+        liquidAssets: 5000,
+        capital: 10000,
+        investments: 35000,
+        debt: -5000,
+      })
+    })
+
+    test('readNetWorthSummary gracefully handles missing named ranges', () => {
+      const mockSpreadsheet = {
+        getRangeByName: vi.fn(() => null),
+      } as unknown as GoogleAppsScript.Spreadsheet.Spreadsheet
+
+      expect(readNetWorthSummary(mockSpreadsheet, 1250.5)).toEqual({
+        netWorth: null,
+        liquidAssets: 1250.5,
+        capital: null,
+        investments: null,
+        debt: null,
+      })
+    })
+
     test('readCategories extracts category icon, name, and description in order', () => {
       const mockSheet = {
         getDataRange: () => ({
@@ -111,10 +151,42 @@ describe('mobile budget service', () => {
       ])
       expect(map.has('Ignored Below Blank')).toBe(false)
     })
+
+    test('parseYearSubcategories extracts subcategories beneath category header rows below summary block', () => {
+      const values: CellValue[][] = [
+        ['2026', '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        ['Food & Groceries', '🛒', -300, -300, -300, -300, -300, -300, -300, -300, -300, -300, -300, -300],
+        ['Restaurants & Bars', '🍽', -150, -150, -150, -150, -150, -150, -150, -150, -150, -150, -150, -150],
+        ['', '', -450, -450, -450, -450, -450, -450, -450, -450, -450, -450, -450, -450],
+        ['Food & Groceries', '🛒', -300, -300, -300, -300, -300, -300, -300, -300, -300, -300, -300, -300],
+        ['Groceries', '', -300, -300, -300, -300, -300, -300, -300, -300, -300, -300, -300, -300],
+        ['Restaurants & Bars', '🍽', -150, -150, -150, -150, -150, -150, -150, -150, -150, -150, -150, -150],
+        ['Restaurants', '', -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100],
+        ['Cafes', '', -50, -50, -50, -50, -50, -50, -50, -50, -50, -50, -50, -50],
+      ]
+
+      const grouped = parseYearSubcategories(
+        values,
+        new Set(['Food & Groceries', 'Restaurants & Bars']),
+      )
+
+      expect(grouped['Food & Groceries']).toHaveLength(1)
+      expect(grouped['Food & Groceries'][0]).toEqual({
+        rowIndex: 6,
+        category: 'Food & Groceries',
+        name: 'Groceries',
+        months: Array.from({ length: 12 }, () => -300),
+      })
+
+      expect(grouped['Restaurants & Bars'].map(s => ({ rowIndex: s.rowIndex, name: s.name }))).toEqual([
+        { rowIndex: 8, name: 'Restaurants' },
+        { rowIndex: 9, name: 'Cafes' },
+      ])
+    })
   })
 
-  describe('scanSourceTransactions & buildYearCategoryBudgets', () => {
-    test('aggregates actuals, counts uncategorized rows, and skips disabled rows', () => {
+  describe('scanSourceTransactions, pagination & buildYearCategoryBudgets', () => {
+    test('aggregates actuals, counts uncategorized rows, skips disabled rows, and reports pagination flags', () => {
       const rawRows: CellValue[][] = [
         Array.from(YMYL_COLUMNS),
         buildYMYLCellRow({
@@ -132,6 +204,12 @@ describe('mobile budget service', () => {
           category: 'Food & Groceries',
         }),
         buildYMYLCellRow({
+          ref: 'tx-groceries-2',
+          date: new Date(2026, 10, 10),
+          amount: -20,
+          category: 'Food & Groceries',
+        }),
+        buildYMYLCellRow({
           ref: 'tx-groceries-disabled',
           date: new Date(2026, 10, 12),
           amount: -100,
@@ -142,23 +220,25 @@ describe('mobile budget service', () => {
 
       const accountsByIban = new Map([['TEST01BANK0000000001', 'Aurora Bank']])
       const categoryIcons = new Map([['Food & Groceries', '🛒']])
-      const cutoffMs = new Date(2026, 9, 1).getTime()
 
-      const { actualsByYear, transactions, uncategorizedCount } = scanSourceTransactions(
-        rawRows,
-        accountsByIban,
-        categoryIcons,
-        cutoffMs,
-      )
+      const result = scanSourceTransactions(rawRows, accountsByIban, categoryIcons, 1)
 
-      expect(uncategorizedCount).toBe(1)
-      expect(transactions).toHaveLength(2)
-      expect(transactions[0].ref).toBe('tx-uncat')
-      expect(transactions[0].icon).toBe('⛔')
-      expect(transactions[0].accountLabel).toBe('Aurora Bank')
+      expect(result.uncategorizedCount).toBe(1)
+      expect(result.transactions.map(t => t.ref)).toEqual(['tx-uncat', 'tx-groceries-1'])
+      expect(result.nextCategorizedOffset).toBe(1)
+      expect(result.hasMoreTransactions).toBe(true)
+      expect(result.totalTransactionCount).toBe(3)
 
-      const novActual = actualsByYear.get(2026)?.get('Food & Groceries')?.[10]
-      expect(novActual).toBe(-40.25)
+      // Actuals must still include ALL categorized rows even beyond pageLimit
+      const novActual = result.actualsByYear.get(2026)?.get('Food & Groceries')?.[10]
+      expect(novActual).toBe(-60.25)
+
+      // Fetch next page starting at offset 1
+      const page2 = getTransactionsPage(rawRows, accountsByIban, categoryIcons, 1, 2)
+      expect(page2.transactions.map(t => t.ref)).toEqual(['tx-groceries-2'])
+      expect(page2.nextOffset).toBe(2)
+      expect(page2.hasMore).toBe(false)
+      expect(page2.totalCategorizedCount).toBe(2)
     })
 
     test('computes monthly difference and cumulative YTD runningTotal up to current month', () => {
@@ -195,7 +275,7 @@ describe('mobile budget service', () => {
       expect(mar.runningTotal).toBe(-30)
     })
 
-    test('buildMobileDashboardData combines categories, accounts, budgets, and transactions', () => {
+    test('buildMobileDashboardData combines categories, accounts, net worth, budgets, subcategories, and transactions', () => {
       vi.spyOn(AccountUtils, 'getAccountsWithBalances').mockReturnValueOnce([
         { slug: 'aurora-bank', label: 'Aurora Bank', iban: 'TEST01BANK0000000001', balance: 1500.5 },
       ])
@@ -213,11 +293,17 @@ describe('mobile budget service', () => {
           getValues: () => [
             ['2026', '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
             ['Food & Groceries', '🛒', -200, -200, -200, -200, -200, -200, -200, -200, -200, -200, -200, -200],
+            ['', '', -200, -200, -200, -200, -200, -200, -200, -200, -200, -200, -200, -200],
+            ['Food & Groceries', '🛒', -200, -200, -200, -200, -200, -200, -200, -200, -200, -200, -200, -200],
+            ['Groceries', '', -200, -200, -200, -200, -200, -200, -200, -200, -200, -200, -200, -200],
           ],
         }),
       }
 
       const mockSpreadsheet = {
+        getRangeByName: vi.fn((name: string) =>
+          name === NAMED_RANGES.netWorth ? { getValue: () => 25000 } : null,
+        ),
         getSheetByName: vi.fn((name: string) => {
           if (name === 'categories') return categoriesSheet
           if (name === '2026') return yearSheet
@@ -236,9 +322,14 @@ describe('mobile budget service', () => {
       const dashboard = buildMobileDashboardData(mockSpreadsheet, mockYmylSheet, new Date(2026, 10, 16))
       expect(dashboard.currentYear).toBe(2026)
       expect(dashboard.totalLiquidBalance).toBe(1500.5)
+      expect(dashboard.netWorth.netWorth).toBe(25000)
+      expect(dashboard.netWorth.liquidAssets).toBe(1500.5)
       expect(dashboard.categories).toHaveLength(1)
       expect(dashboard.budgetsByYear[2026][0].months[10].actual).toBe(-50)
+      expect(dashboard.subcategoriesByYear[2026]['Food & Groceries']).toHaveLength(1)
+      expect(dashboard.subcategoriesByYear[2026]['Food & Groceries'][0].rowIndex).toBe(5)
       expect(dashboard.transactions).toHaveLength(1)
+      expect(dashboard.hasMoreTransactions).toBe(false)
     })
   })
 
@@ -319,6 +410,116 @@ describe('mobile budget service', () => {
           comments: '',
         }),
       ).toThrow('Transaction \'missing-ref\' was not found in the source sheet.')
+    })
+  })
+
+  describe('updateSubcategoryBudgetInSheet', () => {
+    test('writes only modified month cells and returns recalculated 12-month array', () => {
+      const monthsState = [-200, -200, -200, -200, -200, -200, -200, -200, -200, -200, -200, -200]
+      const setValueCalls: Array<{ row: number, col: number, value: number }> = []
+
+      const mockYearSheet = {
+        getRange: vi.fn((row: number, col: number, _numRows?: number, numCols?: number) => {
+          if (numCols === 12) {
+            return { getValues: () => [monthsState] }
+          }
+          if (col === 1) return { getValue: () => 'Groceries' }
+          if (col === 2) return { getValue: () => '' }
+          return {
+            setValue: (val: number) => {
+              setValueCalls.push({ row, col, value: val })
+              monthsState[col - 3] = val
+            },
+          }
+        }),
+      }
+
+      const mockSpreadsheet = {
+        getSheetByName: vi.fn((name: string) => (name === '2026' ? mockYearSheet : null)),
+      } as unknown as GoogleAppsScript.Spreadsheet.Spreadsheet
+
+      const result = updateSubcategoryBudgetInSheet(mockSpreadsheet, {
+        year: 2026,
+        category: 'Food & Groceries',
+        subcategoryName: 'Groceries',
+        rowIndex: 42,
+        monthUpdates: { 3: -250, 11: -325.5 },
+      })
+
+      expect(result.rowIndex).toBe(42)
+      expect(setValueCalls).toEqual([
+        { row: 42, col: 5, value: -250 },
+        { row: 42, col: 13, value: -325.5 },
+      ])
+      expect(result.updatedSubcategoryMonths[2]).toBe(-250)
+      expect(result.updatedSubcategoryMonths[10]).toBe(-325.5)
+      expect(result.updatedSubcategoryMonths[0]).toBe(-200)
+    })
+
+    test('falls back to scanning sheet when subcategory rowIndex shifted', () => {
+      const updatedValues = [-100, -150, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100]
+      const setValueSpy = vi.fn()
+
+      const categoriesSheet = {
+        getDataRange: () => ({
+          getValues: () => [
+            ['Icon', 'Category', 'Description'],
+            ['🍽', 'Restaurants & Bars', 'Dining'],
+          ],
+        }),
+      }
+      const yearSheet = {
+        getRange: vi.fn((row: number, col: number, _numRows?: number, numCols?: number) => {
+          if (numCols === 12) return { getValues: () => [updatedValues] }
+          if (row === 44 && col === 1) return { getValue: () => 'Different Subcategory' }
+          if (row === 44 && col === 2) return { getValue: () => '' }
+          return { setValue: setValueSpy }
+        }),
+        getDataRange: () => ({
+          getValues: () => [
+            ['2026', '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            ['Restaurants & Bars', '🍽', -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100],
+            ['', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            ['Restaurants & Bars', '🍽', -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100],
+            ['Cafes', '', -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100],
+          ],
+        }),
+      }
+
+      const mockSpreadsheet = {
+        getSheetByName: vi.fn((name: string) => {
+          if (name === 'categories') return categoriesSheet
+          if (name === '2026') return yearSheet
+          return null
+        }),
+      } as unknown as GoogleAppsScript.Spreadsheet.Spreadsheet
+
+      const result = updateSubcategoryBudgetInSheet(mockSpreadsheet, {
+        year: 2026,
+        category: 'Restaurants & Bars',
+        subcategoryName: 'Cafes',
+        rowIndex: 44,
+        monthUpdates: { 2: -150 },
+      })
+
+      expect(result.rowIndex).toBe(5)
+      expect(setValueSpy).toHaveBeenCalledWith(-150)
+    })
+
+    test('throws when year sheet does not exist', () => {
+      const mockSpreadsheet = {
+        getSheetByName: vi.fn(() => null),
+      } as unknown as GoogleAppsScript.Spreadsheet.Spreadsheet
+
+      expect(() =>
+        updateSubcategoryBudgetInSheet(mockSpreadsheet, {
+          year: 2099,
+          category: 'Food & Groceries',
+          subcategoryName: 'Groceries',
+          rowIndex: 10,
+          monthUpdates: { 1: -100 },
+        }),
+      ).toThrow('Year budget sheet \'2099\' was not found.')
     })
   })
 })

@@ -4,7 +4,7 @@ import {
   MONTHS_IN_YEAR,
   roundCurrency,
 } from '@/common/budget'
-import { CATEGORIES_SHEET_NAME, YMYL_COLUMNS } from '@/common/constants'
+import { CATEGORIES_SHEET_NAME, NAMED_RANGES, YMYL_COLUMNS } from '@/common/constants'
 import { cleanString, getRowHash } from '@/common/helpers'
 import { YMYLTable } from '@/common/table/YMYLTable'
 import type {
@@ -13,16 +13,19 @@ import type {
   MobileCategoryBudget,
   MobileCategoryInfo,
   MobileDashboardData,
+  MobileNetWorthSummary,
+  MobileSubcategoryBudget,
+  MobileSubcategoryBudgetUpdatePayload,
+  MobileSubcategoryBudgetUpdateResult,
   MobileTransaction,
+  MobileTransactionsPage,
   MobileTransactionUpdatePayload,
 } from '@/common/types'
 import { AccountUtils, isNumeric } from '../accounts/account-utils'
 import { parseDate } from '../parsers/date'
 import type { YMYLSheet } from '../spreadsheet/YMYLSheet'
 
-const RECENT_DAYS_WINDOW = 90
-const MS_PER_DAY = 24 * 60 * 60 * 1000
-const MAX_RECENT_CATEGORIZED_ROWS = 200
+export const DEFAULT_TRANSACTION_PAGE_SIZE = 200
 const MAX_BUDGET_YEARS = 2
 
 const COL_REF = YMYLTable.getYMYLColumnIndex('ref')
@@ -76,6 +79,40 @@ export function getRowIdentifier(row: CellValue[]): string {
   return ref || getRowHash(row)
 }
 
+function readNamedNumber(
+  spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet,
+  rangeName: string,
+): number | null {
+  if (typeof spreadsheet.getRangeByName !== 'function') {
+    return null
+  }
+  const range = spreadsheet.getRangeByName(rangeName)
+  if (!range) {
+    return null
+  }
+  const value = range.getValue()
+  return isNumeric(value) ? roundCurrency(Number.parseFloat(String(value))) : null
+}
+
+export function readNetWorthSummary(
+  spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet,
+  totalLiquidBalance: number,
+): MobileNetWorthSummary {
+  const rawDebt = readNamedNumber(spreadsheet, NAMED_RANGES.totalDebt)
+  let normalizedDebt: number | null = null
+  if (rawDebt !== null) {
+    normalizedDebt = rawDebt === 0 ? 0 : roundCurrency(-Math.abs(rawDebt))
+  }
+
+  return {
+    netWorth: readNamedNumber(spreadsheet, NAMED_RANGES.netWorth),
+    liquidAssets: roundCurrency(totalLiquidBalance),
+    capital: readNamedNumber(spreadsheet, NAMED_RANGES.totalCapital),
+    investments: readNamedNumber(spreadsheet, NAMED_RANGES.totalInvestment),
+    debt: normalizedDebt,
+  }
+}
+
 export function readCategories(
   spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet,
 ): MobileCategoryInfo[] {
@@ -121,17 +158,17 @@ export function getAvailableBudgetYears(
     .slice(0, MAX_BUDGET_YEARS)
 }
 
-export function readYearBudgetMap(
-  spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet,
-  year: number,
-): Map<string, number[]> {
-  const budgetMap = new Map<string, number[]>()
-  const sheet = spreadsheet.getSheetByName(String(year))
-  if (!sheet) {
-    return budgetMap
+function parseMonthValues(row: CellValue[]): number[] {
+  const months: number[] = []
+  for (let m = 0; m < MONTHS_IN_YEAR; m++) {
+    months.push(roundCurrency(parseNumberCell(row[m + 2])))
   }
+  return months
+}
 
-  const values = sheet.getDataRange().getValues() as CellValue[][]
+export function parseYearBudgetMap(values: CellValue[][]): Map<string, number[]> {
+  const budgetMap = new Map<string, number[]>()
+
   for (let i = 1; i < values.length; i++) {
     const row = values[i]
     const categoryName = cleanString(String(row?.[0] ?? ''))
@@ -139,14 +176,69 @@ export function readYearBudgetMap(
       break
     }
 
-    const months: number[] = []
-    for (let m = 0; m < MONTHS_IN_YEAR; m++) {
-      months.push(parseNumberCell(row[m + 2]))
-    }
-    budgetMap.set(categoryName, months)
+    budgetMap.set(categoryName, parseMonthValues(row))
   }
 
   return budgetMap
+}
+
+export function readYearBudgetMap(
+  spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet,
+  year: number,
+): Map<string, number[]> {
+  const sheet = spreadsheet.getSheetByName(String(year))
+  if (!sheet) {
+    return new Map<string, number[]>()
+  }
+
+  const values = sheet.getDataRange().getValues() as CellValue[][]
+  return parseYearBudgetMap(values)
+}
+
+function findSummaryEndIndex(values: CellValue[][]): number {
+  for (let i = 1; i < values.length; i++) {
+    const colA = cleanString(String(values[i]?.[0] ?? ''))
+    if (!colA) {
+      return i
+    }
+  }
+  return values.length
+}
+
+export function parseYearSubcategories(
+  values: CellValue[][],
+  categoryNames: Set<string>,
+): Record<string, MobileSubcategoryBudget[]> {
+  const result: Record<string, MobileSubcategoryBudget[]> = {}
+  const startIndex = findSummaryEndIndex(values) + 1
+  let activeCategory: string | null = null
+
+  for (let i = startIndex; i < values.length; i++) {
+    const row = values[i]
+    const colA = cleanString(String(row?.[0] ?? ''))
+    const colB = cleanString(String(row?.[1] ?? ''))
+
+    if (!colA) {
+      continue
+    }
+
+    if (categoryNames.has(colA) && colB !== '') {
+      activeCategory = colA
+      result[activeCategory] ??= []
+      continue
+    }
+
+    if (activeCategory && colB === '') {
+      result[activeCategory].push({
+        rowIndex: i + 1,
+        category: activeCategory,
+        name: colA,
+        months: parseMonthValues(row),
+      })
+    }
+  }
+
+  return result
 }
 
 function addCategoryActual(
@@ -209,15 +301,19 @@ export function scanSourceTransactions(
   rawRows: CellValue[][],
   accountsByIban: Map<string, string>,
   categoryIcons: Map<string, string>,
-  cutoffDateMs: number,
+  pageLimit: number = DEFAULT_TRANSACTION_PAGE_SIZE,
 ): {
   actualsByYear: Map<number, Map<string, number[]>>
   transactions: MobileTransaction[]
   uncategorizedCount: number
+  nextCategorizedOffset: number
+  hasMoreTransactions: boolean
+  totalTransactionCount: number
 } {
   const actualsByYear = new Map<number, Map<string, number[]>>()
   const transactions: MobileTransaction[] = []
   let uncategorizedCount = 0
+  let totalCategorizedCount = 0
   let categorizedIncludedCount = 0
 
   for (let i = 1; i < rawRows.length; i++) {
@@ -237,21 +333,71 @@ export function scanSourceTransactions(
 
     if (isUncategorized) {
       uncategorizedCount++
-    }
-    else {
-      addCategoryActual(actualsByYear, date.getFullYear(), date.getMonth() + 1, category, amount)
+      transactions.push(toMobileTransaction(row, i + 1, date, amount, accountsByIban, categoryIcons))
+      continue
     }
 
-    const isRecent = date.getTime() >= cutoffDateMs || categorizedIncludedCount < MAX_RECENT_CATEGORIZED_ROWS
-    if (isUncategorized || isRecent) {
+    totalCategorizedCount++
+    addCategoryActual(actualsByYear, date.getFullYear(), date.getMonth() + 1, category, amount)
+
+    if (categorizedIncludedCount < pageLimit) {
       transactions.push(toMobileTransaction(row, i + 1, date, amount, accountsByIban, categoryIcons))
-      if (!isUncategorized) {
-        categorizedIncludedCount++
-      }
+      categorizedIncludedCount++
     }
   }
 
-  return { actualsByYear, transactions, uncategorizedCount }
+  return {
+    actualsByYear,
+    transactions,
+    uncategorizedCount,
+    nextCategorizedOffset: categorizedIncludedCount,
+    hasMoreTransactions: categorizedIncludedCount < totalCategorizedCount,
+    totalTransactionCount: uncategorizedCount + totalCategorizedCount,
+  }
+}
+
+export function getTransactionsPage(
+  rawRows: CellValue[][],
+  accountsByIban: Map<string, string>,
+  categoryIcons: Map<string, string>,
+  offset: number,
+  limit: number = DEFAULT_TRANSACTION_PAGE_SIZE,
+): MobileTransactionsPage {
+  const safeOffset = Math.max(0, Math.floor(offset))
+  const safeLimit = Math.max(1, Math.floor(limit))
+  const transactions: MobileTransaction[] = []
+  let categorizedIndex = 0
+
+  for (let i = 1; i < rawRows.length; i++) {
+    const row = rawRows[i]
+    if (!row || isRowDisabled(row[COL_DISABLED])) {
+      continue
+    }
+
+    const date = parseRowDate(row[COL_DATE])
+    if (!date) {
+      continue
+    }
+
+    const category = cleanString(String(row[COL_CATEGORY] ?? ''))
+    if (category === '') {
+      continue
+    }
+
+    if (categorizedIndex >= safeOffset && transactions.length < safeLimit) {
+      const amount = roundCurrency(parseNumberCell(row[COL_AMOUNT]))
+      transactions.push(toMobileTransaction(row, i + 1, date, amount, accountsByIban, categoryIcons))
+    }
+    categorizedIndex++
+  }
+
+  const nextOffset = safeOffset + transactions.length
+  return {
+    transactions,
+    nextOffset,
+    hasMore: nextOffset < categorizedIndex,
+    totalCategorizedCount: categorizedIndex,
+  }
 }
 
 export function buildYearCategoryBudgets(
@@ -276,18 +422,6 @@ export function buildYearCategoryBudgets(
   })
 }
 
-export function getWebAppUrl(): string {
-  try {
-    if (typeof ScriptApp !== 'undefined' && ScriptApp.getService) {
-      return ScriptApp.getService().getUrl() ?? ''
-    }
-  }
-  catch {
-    // Ignore when ScriptApp service URL is unavailable
-  }
-  return ''
-}
-
 export function buildMobileDashboardData(
   spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet,
   ymylSheet: YMYLSheet,
@@ -296,29 +430,36 @@ export function buildMobileDashboardData(
   const currentYear = now.getFullYear()
   const categories = readCategories(spreadsheet)
   const categoryIcons = new Map(categories.map(c => [c.name, c.icon]))
+  const categoryNames = new Set(categories.map(c => c.name))
 
   const accounts: MobileAccountBalance[] = AccountUtils.getAccountsWithBalances()
   const accountsByIban = new Map(accounts.map(a => [a.iban, a.label]))
   const totalLiquidBalance = roundCurrency(
     accounts.reduce((sum, account) => sum + account.balance, 0),
   )
+  const netWorth = readNetWorthSummary(spreadsheet, totalLiquidBalance)
 
-  const cutoffDateMs = now.getTime() - RECENT_DAYS_WINDOW * MS_PER_DAY
   const rawRows = ymylSheet.getRawData()
-  const { actualsByYear, transactions, uncategorizedCount } = scanSourceTransactions(
-    rawRows,
-    accountsByIban,
-    categoryIcons,
-    cutoffDateMs,
-  )
+  const {
+    actualsByYear,
+    transactions,
+    uncategorizedCount,
+    nextCategorizedOffset,
+    hasMoreTransactions,
+    totalTransactionCount,
+  } = scanSourceTransactions(rawRows, accountsByIban, categoryIcons)
 
   const availableYears = getAvailableBudgetYears(spreadsheet, currentYear)
   const budgetsByYear: Record<number, MobileCategoryBudget[]> = {}
+  const subcategoriesByYear: Record<number, Record<string, MobileSubcategoryBudget[]>> = {}
 
   for (const year of availableYears) {
-    const budgetMap = readYearBudgetMap(spreadsheet, year)
+    const yearSheet = spreadsheet.getSheetByName(String(year))
+    const yearValues = yearSheet ? (yearSheet.getDataRange().getValues() as CellValue[][]) : []
+    const budgetMap = parseYearBudgetMap(yearValues)
     const actualsMap = actualsByYear.get(year)
     budgetsByYear[year] = buildYearCategoryBudgets(categories, budgetMap, actualsMap, year, now)
+    subcategoriesByYear[year] = parseYearSubcategories(yearValues, categoryNames)
   }
 
   return {
@@ -327,11 +468,29 @@ export function buildMobileDashboardData(
     categories,
     accounts,
     totalLiquidBalance,
+    netWorth,
     budgetsByYear,
+    subcategoriesByYear,
     transactions,
     uncategorizedCount,
-    webAppUrl: getWebAppUrl(),
+    nextCategorizedOffset,
+    hasMoreTransactions,
+    totalTransactionCount,
   }
+}
+
+export function buildMobileTransactionsPage(
+  spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet,
+  ymylSheet: YMYLSheet,
+  offset: number,
+  limit: number = DEFAULT_TRANSACTION_PAGE_SIZE,
+): MobileTransactionsPage {
+  const categories = readCategories(spreadsheet)
+  const categoryIcons = new Map(categories.map(c => [c.name, c.icon]))
+  const accounts = AccountUtils.getAccountsWithBalances()
+  const accountsByIban = new Map(accounts.map(a => [a.iban, a.label]))
+
+  return getTransactionsPage(ymylSheet.getRawData(), accountsByIban, categoryIcons, offset, limit)
 }
 
 function findMatchingRowIndex(ymylSheet: YMYLSheet, rowIndex: number, ref: string): number {
@@ -364,4 +523,65 @@ export function updateTransactionInSheet(
   ymylSheet.setValues(targetRowIndex, COL_CATEGORY + 1, 1, 1, [[payload.category]])
 
   return { rowIndex: targetRowIndex }
+}
+
+function findSubcategoryRowIndex(
+  sheet: GoogleAppsScript.Spreadsheet.Sheet,
+  spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet,
+  payload: MobileSubcategoryBudgetUpdatePayload,
+): number {
+  if (payload.rowIndex >= 2) {
+    const candidateName = cleanString(String(sheet.getRange(payload.rowIndex, 1).getValue() ?? ''))
+    const candidateIcon = cleanString(String(sheet.getRange(payload.rowIndex, 2).getValue() ?? ''))
+    if (candidateName === payload.subcategoryName && candidateIcon === '') {
+      return payload.rowIndex
+    }
+  }
+
+  const categories = readCategories(spreadsheet)
+  const categoryNames = new Set(categories.map(c => c.name))
+  const values = sheet.getDataRange().getValues() as CellValue[][]
+  const grouped = parseYearSubcategories(values, categoryNames)
+  const match = (grouped[payload.category] ?? []).find(sub => sub.name === payload.subcategoryName)
+
+  if (match) {
+    return match.rowIndex
+  }
+
+  throw new Error(
+    `Subcategory '${payload.subcategoryName}' under '${payload.category}' was not found in sheet '${payload.year}'.`,
+  )
+}
+
+export function updateSubcategoryBudgetInSheet(
+  spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet,
+  payload: MobileSubcategoryBudgetUpdatePayload,
+): MobileSubcategoryBudgetUpdateResult {
+  const sheet = spreadsheet.getSheetByName(String(payload.year))
+  if (!sheet) {
+    throw new Error(`Year budget sheet '${payload.year}' was not found.`)
+  }
+
+  const targetRowIndex = findSubcategoryRowIndex(sheet, spreadsheet, payload)
+
+  for (const [monthKey, rawValue] of Object.entries(payload.monthUpdates)) {
+    const month = Number.parseInt(monthKey, 10)
+    if (month < 1 || month > MONTHS_IN_YEAR || !Number.isFinite(rawValue)) {
+      continue
+    }
+    sheet.getRange(targetRowIndex, month + 2).setValue(roundCurrency(rawValue))
+  }
+
+  if (typeof SpreadsheetApp !== 'undefined' && typeof SpreadsheetApp.flush === 'function') {
+    SpreadsheetApp.flush()
+  }
+
+  const updatedRow = sheet
+    .getRange(targetRowIndex, 3, 1, MONTHS_IN_YEAR)
+    .getValues()[0] as CellValue[]
+
+  return {
+    rowIndex: targetRowIndex,
+    updatedSubcategoryMonths: updatedRow.map(cell => roundCurrency(parseNumberCell(cell))),
+  }
 }

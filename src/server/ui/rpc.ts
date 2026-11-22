@@ -23,7 +23,6 @@ export function onOpen(): void {
     menu.addItem('Enable Banking (Beta)', openEnableBankingDialog.name)
   }
 
-  menu.addItem('Mobile Budget App', openMobileBudgetDialog.name)
   menu.addItem('About', openAboutDialog.name)
 
   if (isDebugEnabled) {
@@ -56,8 +55,4 @@ export function openSettingsDialog(): void {
 
 export function openEnableBankingDialog(): void {
   showModalDialog('enable-banking-dialog', DIALOG_SIZES.enableBanking, 'Enable Banking (Beta)')
-}
-
-export function openMobileBudgetDialog(): void {
-  showModalDialog('mobile-budget-dialog', DIALOG_SIZES.mobileBudget, 'Mobile Budget App')
 }
