@@ -9,6 +9,7 @@
 - A clear 3-line solution beats a 1-line trick.
 - Client RPC only via `serverFunctions` proxy. Never call `google.script.run` directly.
 - Always use the `browser_subagent` tool if available for browser tasks and taking screenshots instead of Chrome DevTools.
+- **Data Privacy & Anonymization (CRITICAL):** Never copy, hardcode, or commit real personal or financial data from connected Google Sheets/Drive resources into source code, tests, fixtures (`src/fixtures/`), mocks, stories, commit messages, or pull request descriptions. This includes real IBANs, account balances, salary/budget amounts, merchant/payee names, transaction descriptions, personal comments, and spreadsheet IDs. Always use clearly synthetic/fictional placeholders (e.g., `TEST01BANK0000000001`, `Aurora Bank`, `Supermarket X`, `Restaurant X`, and round synthetic numbers).
 
 ## Code Style Guidelines
 
@@ -110,3 +111,4 @@ pnpm switch-env <env>
 - [ ] `pnpm local:ci` passes (lint + build + tests)
 - [ ] `pnpm knip` clean (no new unused exports)
 - [ ] unit tests created for new code
+- [ ] all test/fixture/mock data is strictly anonymized (no personal IBANs, balances, payees, or comments)

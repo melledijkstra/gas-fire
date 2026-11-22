@@ -28,6 +28,11 @@ export const clientEntrypoints: Array<DialogEntry> = [
     filename: 'enable-banking-dialog',
     template: 'enable-banking-dialog/index.html',
   },
+  {
+    name: 'CLIENT:mobile-budget',
+    filename: 'mobile-budget-dialog',
+    template: 'mobile-budget-dialog/index.html',
+  },
 ]
 
 const clientBuildConfig = ({ filename, template }: DialogEntry) =>

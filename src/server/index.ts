@@ -8,5 +8,8 @@ export * from './import-pipeline/rpc'
 // Enable Banking logic
 export * from './enable-banking/rpc'
 
+// Mobile Budget Web App RPCs
+export * from './mobile/rpc'
+
 // Custom functions that can be used within the Spreadsheet UI
 export * from './other/rpc'

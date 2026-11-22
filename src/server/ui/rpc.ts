@@ -2,6 +2,16 @@ import { NAMED_RANGES } from '@/common/constants'
 import { DIALOG_SIZES, FEATURES } from '@/common/settings'
 import { debugImportSettings, executeFindDuplicates } from '../other/rpc'
 
+function showModalDialog(templateFile: string, size: [number, number], title: string): void {
+  const [width, height] = size
+  // Make sure that the file name here matches the output when generating the bundle!
+  const html = HtmlService.createTemplateFromFile(templateFile)
+    .evaluate()
+    .setWidth(width)
+    .setHeight(height)
+  SpreadsheetApp.getUi().showModalDialog(html, title)
+}
+
 export function onOpen(): void {
   const isDebugEnabled: boolean = SpreadsheetApp.getActiveSpreadsheet().getRangeByName(NAMED_RANGES.debug)?.getValue() ?? false
   const ui = SpreadsheetApp.getUi()
@@ -24,39 +34,25 @@ export function onOpen(): void {
   menu.addToUi()
 }
 
-export function openFileUploadDialog(): void {
-  const [width, height] = DIALOG_SIZES.import
-  // Make sure that the file name here is correct with the output when generating the bundle!
-  const html = HtmlService.createTemplateFromFile('import-dialog')
+export function doGet(): GoogleAppsScript.HTML.HtmlOutput {
+  return HtmlService.createTemplateFromFile('mobile-budget-dialog')
     .evaluate()
-    .setWidth(width)
-    .setHeight(height)
-  SpreadsheetApp.getUi().showModalDialog(html, 'File upload dialog')
+    .setTitle('YMYL Mobile Budget')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+}
+
+export function openFileUploadDialog(): void {
+  showModalDialog('import-dialog', DIALOG_SIZES.import, 'File upload dialog')
 }
 
 export function openAboutDialog(): void {
-  const [width, height] = DIALOG_SIZES.about
-  const html = HtmlService.createTemplateFromFile('about-dialog')
-    .evaluate()
-    .setWidth(width)
-    .setHeight(height)
-  SpreadsheetApp.getUi().showModalDialog(html, 'About')
+  showModalDialog('about-dialog', DIALOG_SIZES.about, 'About')
 }
 
 export function openSettingsDialog(): void {
-  const [width, height] = DIALOG_SIZES.settings
-  const html = HtmlService.createTemplateFromFile('settings-dialog')
-    .evaluate()
-    .setWidth(width)
-    .setHeight(height)
-  SpreadsheetApp.getUi().showModalDialog(html, 'Settings Dialog')
+  showModalDialog('settings-dialog', DIALOG_SIZES.settings, 'Settings Dialog')
 }
 
 export function openEnableBankingDialog(): void {
-  const [width, height] = DIALOG_SIZES.enableBanking
-  const html = HtmlService.createTemplateFromFile('enable-banking-dialog')
-    .evaluate()
-    .setWidth(width)
-    .setHeight(height)
-  SpreadsheetApp.getUi().showModalDialog(html, 'Enable Banking (Beta)')
+  showModalDialog('enable-banking-dialog', DIALOG_SIZES.enableBanking, 'Enable Banking (Beta)')
 }

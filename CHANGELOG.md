@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.21.0-beta
+
+- **Feature** - 📱 Added standalone Mobile Budget Web App (`doGet`) with dark mode, Net Worth & wealth breakdown, 20-category Monthly/YTD Budgets, 12-month subcategory budget editor, virtualized paginated transactions with explicit Save, and Enable Banking sync
+
 ## 4.20.0-beta
 
 - Code cleanup

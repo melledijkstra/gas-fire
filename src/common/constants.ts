@@ -7,6 +7,9 @@ export enum DialogType {
 
 export enum NAMED_RANGES {
   netWorth = 'netWorth',
+  totalCapital = 'totalCapital',
+  totalInvestment = 'totalInvestment',
+  totalDebt = 'totalDebt',
   accounts = 'accounts',
   debug = 'DEBUG',
 }
@@ -40,3 +43,5 @@ export type YMYLColumn = (typeof YMYL_COLUMNS)[number]
 export const SOURCE_SHEET_ID = 1093484485
 
 export const IMPORT_RULES_SHEET_NAME = 'import-rules'
+
+export const CATEGORIES_SHEET_NAME = 'categories'

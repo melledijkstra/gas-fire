@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YMYL Mobile Budget</title>
+  </head>
+  <body class="bg-gray-50 text-gray-900 antialiased dark:bg-gray-950 dark:text-gray-100">
+    <div id="app"></div>
+    <script type="module">
+      import { mount } from "svelte";
+      import Dialog from "./Dialog.svelte";
+
+      mount(Dialog, {
+        target: document.getElementById("app"),
+      });
+    </script>
+  </body>
+</html>

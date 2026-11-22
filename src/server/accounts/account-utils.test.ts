@@ -131,6 +131,20 @@ describe('Utility tests', () => {
       ])
     })
   })
+
+  describe('getAccountsWithBalances', () => {
+    test('should return accounts with numeric balances and default null balance to 0', () => {
+      RangeMock.getValues.mockReturnValueOnce([
+        ['Aurora Bank', 'DB123456789', '1250.50'],
+        ['Cerulean Bank', 'BANK123456789', ''],
+      ])
+
+      expect(AccountUtils.getAccountsWithBalances()).toStrictEqual([
+        { slug: 'aurora-bank', label: 'Aurora Bank', iban: 'DB123456789', balance: 1250.5 },
+        { slug: 'cerulean-bank', label: 'Cerulean Bank', iban: 'BANK123456789', balance: 0 },
+      ])
+    })
+  })
 })
 
 describe('calculateNewBalance', () => {

@@ -2,11 +2,21 @@ import type { YMYLTable } from '@/common/table/YMYLTable'
 import type {
   AccountOptions,
   ImportPreviewResult,
+  MobileDashboardData,
+  MobileSubcategoryBudgetUpdatePayload,
+  MobileSubcategoryBudgetUpdateResult,
+  MobileTransactionsPage,
+  MobileTransactionUpdatePayload,
   RawTable,
   ServerResponse,
   TransactionAction,
 } from '@/common/types'
-import type { Aspsp, EnableBankingConnection } from '@/server/enable-banking/types'
+import {
+  buildMobileDashboardFixture,
+  buildMobileTransactionsPageFixture,
+} from '@/fixtures/mobile-budget'
+import type { Aspsp } from '@/server/enable-banking/types'
+import type { EnableBankingConnection } from '@/server/enable-banking/rpc'
 import type * as publicServerFunctions from '@/server/index'
 import type { PackedRuleEngineResult } from '@/server/rule-engine/types'
 
@@ -86,6 +96,10 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
   }
 
   async onOpen(): Promise<void> {
+    throw new Error('Mock not implemented')
+  }
+
+  async doGet(): Promise<GoogleAppsScript.HTML.HtmlOutput> {
     throw new Error('Mock not implemented')
   }
 
@@ -202,6 +216,53 @@ class ServerFunctions implements PromisifiedServerFunctionsInterface {
         enabled: _enabled,
         frequencyType: _frequencyType,
         frequencyValue: _frequencyValue,
+      },
+    }
+  }
+
+  async getMobileDashboardData(): Promise<ServerResponse<MobileDashboardData>> {
+    await this.delay(300)
+    const now = new Date()
+    return {
+      success: true,
+      data: buildMobileDashboardFixture({
+        currentYear: now.getFullYear(),
+        referenceMonth: now.getMonth() + 1,
+      }),
+    }
+  }
+
+  async getMobileTransactionsPage(
+    offset: number,
+    limit = 200,
+  ): Promise<ServerResponse<MobileTransactionsPage>> {
+    await this.delay(350)
+    return {
+      success: true,
+      data: buildMobileTransactionsPageFixture(offset, Math.min(limit, 20), 60),
+    }
+  }
+
+  async updateMobileTransaction(
+    payload: MobileTransactionUpdatePayload,
+  ): Promise<ServerResponse<{ rowIndex: number }>> {
+    await this.delay(250)
+    return {
+      success: true,
+      data: { rowIndex: payload.rowIndex },
+    }
+  }
+
+  async updateMobileSubcategoryBudget(
+    payload: MobileSubcategoryBudgetUpdatePayload,
+  ): Promise<ServerResponse<MobileSubcategoryBudgetUpdateResult>> {
+    await this.delay(300)
+    const updatedSubcategoryMonths = Array.from({ length: 12 }, (_, idx) => payload.monthUpdates[idx + 1] ?? -100)
+    return {
+      success: true,
+      data: {
+        rowIndex: payload.rowIndex,
+        updatedSubcategoryMonths,
       },
     }
   }
